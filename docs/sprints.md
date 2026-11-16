@@ -17,7 +17,7 @@ Nguồn chi tiết: `docs/movie-app-mvp-design.md` (số mục ghi ở từng sp
 - [ ] Quyền truy cập đúng: mọi trang/API server dùng `requireUser()` / `requireAdmin()` (không chỉ dựa vào middleware); dữ liệu cá nhân lọc theo `userId` từ session.
 - [ ] `scripts/seed.ts` cập nhật đủ dữ liệu mẫu để thử tính năng của sprint.
 - [ ] Không có lỗi build/runtime (kiểm tra bằng Next.js DevTools MCP khi `npm run dev` đang chạy).
-- [ ] Deploy lên staging (HTTPS) và bạn thử tính năng trên điện thoại thật.
+- [ ] Thử trên local: Chrome DevTools khổ iPhone 13 và iPhone 14 Pro, hoặc điện thoại qua mạng LAN (không dùng được Google OAuth). Thử trên máy thật qua HTTPS làm ở giai đoạn triển khai (Sprint 8).
 - [ ] Tính năng chia thành các commit nhỏ, mỗi commit chạy được.
 - [ ] Mọi chuỗi giao diện đi qua i18n, có đủ `vi` và `en`; test kiểm tra hai bộ khóa khớp nhau. Chữ theo `.claude/rules/copy.md`.
 - [ ] Thời gian lưu UTC, hiển thị và tính ngày/tuần/tháng theo `Asia/Ho_Chi_Minh`; số điện thoại lưu dạng `84xxxxxxxxx`.
@@ -27,8 +27,8 @@ Nguồn chi tiết: `docs/movie-app-mvp-design.md` (số mục ghi ở từng sp
 
 | Sprint | Nội dung chính | Phụ thuộc | Trạng thái |
 |---|---|---|---|
-| 0 | Khung nền: scaffold, auth, layout, theme, i18n (vi, en), staging HTTPS | — | Đang làm |
-| 1 | Master data, quản lý người dùng, cài đặt hệ thống, hồ sơ cơ bản | 0 | Chưa bắt đầu |
+| 0 | Khung nền: scaffold, auth, layout, theme, i18n (vi, en) | — | Xong |
+| 1 | Master data, quản lý người dùng, cài đặt hệ thống, hồ sơ cơ bản | 0 | Đang làm |
 | 2 | Editor phòng chiếu, sơ đồ ghế, điểm ghế, versioning | 1 | Chưa bắt đầu |
 | 3 | Phim (trailer), suất chiếu, trang rạp & lịch chiếu cho user, đánh dấu ghế cá nhân | 2 | Chưa bắt đầu |
 | 4 | Lịch hẹn giai đoạn 1 (mời, vote, chốt người), bạn bè, thông báo in-app, worker, Web Push | 3 | Chưa bắt đầu |
@@ -58,22 +58,22 @@ Trạng thái: Chưa bắt đầu · Đang làm · Chờ kiểm tra · Xong
 - Layout user và admin; header có menu avatar (Hồ sơ, Đăng xuất); thanh dưới cùng cấu hình được danh sách tab, chỉ hiện tab đã có
   tính năng, `/` chuyển tới tab đầu tiên khả dụng; font, dark mode; PWA: manifest, icon PNG 192/512/maskable, apple-touch-icon, `theme-color`, thẻ Apple, loại `sw.js` khỏi chặn đăng nhập.
 - **Hạ tầng i18n (vi, en):** thư viện i18n, file chuỗi `vi` và `en`, chọn ngôn ngữ (`users.locale`, rồi cookie, rồi `Accept-Language`, mặc định `vi`), `<html lang>`, trang Cài đặt (`/settings`, `/admin/settings`) là nơi duy nhất cấu hình ngôn ngữ, chuyển toàn bộ chuỗi đang viết cứng, test đồng bộ khóa (`.claude/rules/i18n.md`).
-- **Staging:** deploy lên dịch vụ Node chạy liên tục có HTTPS (thiết kế mục 1, Triển khai); cấu hình Google OAuth redirect cho staging;
-  tách database dev/staging/production; `npm run seed` từ chối chạy ở production trừ khi có cờ rõ ràng (chỉ seed admin).
+- **Tách database** dev/staging/production; `npm run seed` từ chối chạy ở production trừ khi có cờ rõ ràng (chỉ seed admin).
+- **Staging HTTPS: hoãn sang Sprint 8.** Giai đoạn này dev trên local trước (quyết định của chủ dự án); deploy, Google OAuth redirect cho staging và thử máy thật làm khi triển khai.
 - Khung `src/ai/core/types.ts`; luật ESLint cấm import SDK AI ngoài `src/ai/providers`.
 - `.env.example`, seed tài khoản admin đầu tiên.
 
 **Ngoài phạm vi:** master data, màn hình admin tạo/reset tài khoản (làm ở Sprint 1), bất kỳ màn hình nghiệp vụ nào, adapter AI, Web Push.
 
 **Tiêu chí hoàn thành**
-- [ ] Đăng nhập được bằng Google (email đã seed) và bằng username/password; email Google lạ bị từ chối.
-- [ ] Đăng xuất xóa session và về `/login`; sai 5 lần thì khóa 15 phút, các đợt sau gấp đôi (tối đa 24 giờ); đăng nhập đúng hoặc admin reset thì xóa bộ đếm; có test cho hàm tính thời gian khóa.
-- [ ] `/admin` bị chặn khi chưa đăng nhập hoặc là role user; admin bị hạ quyền hoặc khóa thì request kế tiếp bị chặn dù JWT chưa hết hạn.
-- [ ] Đăng nhập (Google và mật khẩu) hoạt động trên staging, thử bằng điện thoại thật.
-- [ ] Cài lên màn hình chính iPhone (icon Bubu và Dudu đúng, mở ở chế độ toàn màn hình, thanh trạng thái hòa với nền) và Android.
-- [ ] Đổi ngôn ngữ trong Cài đặt thì toàn bộ chữ (kể cả lỗi) đổi theo, không còn chuỗi viết cứng; đăng xuất rồi đăng nhập lại vẫn giữ ngôn ngữ đã chọn.
-- [ ] `npm run seed` tạo admin, chạy lại không tạo trùng.
-- [ ] `/login` hiển thị đúng và không cuộn ở iPhone 13 (390×844) và iPhone 14 Pro (393×852).
+- [x] Đăng nhập được bằng Google (email đã seed) và bằng username/password; email Google lạ bị từ chối.
+- [x] Đăng xuất xóa session và về `/login`; sai 5 lần thì khóa 15 phút, các đợt sau gấp đôi (tối đa 24 giờ); đăng nhập đúng hoặc admin reset thì xóa bộ đếm; có test cho hàm tính thời gian khóa.
+- [x] `/admin` bị chặn khi chưa đăng nhập hoặc là role user; admin bị hạ quyền hoặc khóa thì request kế tiếp bị chặn dù JWT chưa hết hạn.
+- [ ] ~~Đăng nhập (Google và mật khẩu) hoạt động trên staging, thử bằng điện thoại thật.~~ Hoãn sang Sprint 8.
+- [ ] ~~Cài lên màn hình chính iPhone và Android (icon, toàn màn hình, thanh trạng thái).~~ Hoãn sang Sprint 8.
+- [x] Đổi ngôn ngữ trong Cài đặt thì toàn bộ chữ (kể cả lỗi) đổi theo, không còn chuỗi viết cứng; đăng xuất rồi đăng nhập lại vẫn giữ ngôn ngữ đã chọn.
+- [x] `npm run seed` tạo admin, chạy lại không tạo trùng.
+- [x] `/login` hiển thị đúng và không cuộn ở iPhone 13 (390×844) và iPhone 14 Pro (393×852).
 
 ---
 
@@ -294,6 +294,7 @@ giới hạn tra cứu, kết bạn cần chấp nhận (thiết kế mục 6 v�
 **Tham chiếu:** thiết kế mục 1 (Triển khai), 4.3.
 
 **Phạm vi**
+- **Staging HTTPS** (hoãn từ Sprint 0): deploy lên dịch vụ Node chạy liên tục (Railway, Render hoặc VPS), Google OAuth redirect cho staging, DB staging riêng; thử đăng nhập Google và mật khẩu trên điện thoại thật; cài PWA lên iPhone 13, iPhone 14 Pro và Android; đo lại các màn vừa khít và vùng an toàn trên máy thật.
 - Môi trường production tách khỏi staging: database riêng, biến môi trường (Atlas, Google OAuth redirect, Cloudinary, AI, khóa VAPID riêng cho Web Push), domain; không commit secret.
 - MongoDB Atlas: giới hạn IP/tài khoản, index cần thiết, sao lưu định kỳ và thử khôi phục.
 - Seed admin production bằng cờ rõ ràng; kiểm tra PWA cài được trên iOS và Android.
@@ -311,6 +312,13 @@ giới hạn tra cứu, kết bạn cần chấp nhận (thiết kế mục 6 v�
 
 ## Nhật ký tiến độ
 Mỗi sprint xong thêm 3 đến 6 dòng: đã làm gì, còn dở gì, quyết định đã chốt, file chính nằm ở đâu.
+
+### Sprint 0 (2026-11-16)
+- Xong: scaffold Next.js, đăng nhập mật khẩu và Google (chỉ email được cấp), khóa đăng nhập tăng dần, `requireUser`/`requireAdmin` đọc DB mỗi request,
+  đổi mật khẩu bắt buộc, layout user và admin, i18n vi/en (cấu hình ở Cài đặt), PWA cơ bản (icon, manifest, thẻ Apple), logo và nhân vật, seed admin, test với MongoDB replica set.
+- Quyết định: tên app SeatMate; logo là ảnh `duo-watching`; màu nhấn hồng-magenta `#C61583`; không có đăng ký công khai; Web Push thay Zalo trong MVP; dev trên local trước.
+- Còn dở (hoãn sang Sprint 8): staging HTTPS, thử máy thật, cài PWA, service worker và trang offline làm ở Sprint 4.
+- File chính: `src/auth.ts`, `src/lib/auth/guards.ts`, `src/services/user.service.ts`, `src/i18n/`, `src/messages/`, `.claude/rules/`.
 
 <!-- Ví dụ:
 ### Sprint 2 (2026-12-01)

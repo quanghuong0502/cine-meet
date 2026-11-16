@@ -7,7 +7,7 @@ paths:
 # Quy tắc PWA (tối ưu ở mọi bước)
 
 Chủ dự án yêu cầu: **mọi tính năng và mọi màn hình phải tối ưu cho PWA** (cài ra màn hình chính iPhone và Android), không để PWA là việc làm sau.
-Mỗi sprint phải thử bản cài trên iPhone 13 và iPhone 14 Pro (xem `devices.md`) trước khi chốt.
+Viết code đúng quy tắc ngay từ đầu. Thử bản cài trên iPhone 13 và iPhone 14 Pro (xem `devices.md`) làm khi có HTTPS (staging, Sprint 8); trong lúc dev local kiểm tra bằng DevTools.
 
 ## Hiện trạng (cập nhật khi thay đổi)
 

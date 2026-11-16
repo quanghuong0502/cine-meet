@@ -41,4 +41,4 @@ và thanh công cụ, giá trị chính xác tùy phiên bản iOS và vị trí
 ## Cách kiểm tra
 
 - Chrome DevTools, chế độ thiết bị, kích thước tùy chọn **390×844** và **393×852**, DPR 3, bật cảm ứng; đo thêm 390×660. Chụp cả sáng và tối.
-- Trước khi chốt một sprint: thử trên **máy thật** qua staging HTTPS (cài PWA lên màn hình chính và mở cả trong Safari).
+- Giai đoạn dev local: thử bằng DevTools và điện thoại qua mạng LAN. Thử trên **máy thật** qua HTTPS (cài PWA lên màn hình chính và mở cả trong Safari) làm khi triển khai (Sprint 8).
