@@ -16,8 +16,6 @@ import { measure } from "./measure";
  */
 
 const STORAGE_KEY = "devDomRecorder";
-// Marks "this app session has already started recording" (sessionStorage is cleared when the app is closed).
-const SESSION_KEY = "devDomRecorderSession";
 /** Wait for the changes to settle before sending, and never send more often than this. */
 const SETTLE_MS = 500;
 const MIN_GAP_MS = 1_500;
@@ -39,8 +37,10 @@ function readOn(): boolean {
     return memoryOn;
   }
 }
-/** True the first time in an app session, and again after the switch was turned on: the old data on the dev server is dropped. */
+/** True after the switch was turned on: the first thing sent replaces whatever the dev server still has from an earlier run. */
 let startFresh = false;
+/** The send that is on its way, so that clearing waits for it (it would otherwise write the file again right after). */
+let inFlight: Promise<unknown> = Promise.resolve();
 
 function writeOn(value: boolean) {
   memoryOn = value;
@@ -63,15 +63,6 @@ export function DomRecorder() {
     let timer: ReturnType<typeof setTimeout> | undefined;
     let lastSent = 0;
     let stopped = false;
-
-    try {
-      if (sessionStorage.getItem(SESSION_KEY) !== "1") {
-        sessionStorage.setItem(SESSION_KEY, "1");
-        startFresh = true;
-      }
-    } catch {
-      // No sessionStorage: only turning the switch on starts fresh.
-    }
 
     async function send(changes: string[]) {
       lastSent = Date.now();
@@ -116,7 +107,7 @@ export function DomRecorder() {
       timer = undefined;
       const changes = pending;
       pending = [];
-      void send(changes);
+      inFlight = send(changes);
     }
 
     function schedule() {
@@ -147,7 +138,15 @@ export function DomRecorder() {
   function toggle() {
     const next = !on;
     writeOn(next);
-    toast(next ? "Recording DOM changes" : "Stopped recording");
+    if (!next) {
+      // Switched off: everything measured so far is deleted on the dev server.
+      inFlight.then(() => fetch("/api/dev/dom", { method: "DELETE" })).then(
+        (response) => toast(response.ok ? "Stopped recording. Measurements cleared" : "Stopped recording, but could not clear the measurements"),
+        () => toast("Stopped recording, but could not clear the measurements"),
+      );
+      return;
+    }
+    toast("Recording DOM changes");
   }
 
   return (

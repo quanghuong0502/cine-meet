@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { NextResponse } from "next/server";
 import { getActiveUser } from "@/lib/auth/guards";
@@ -21,7 +21,7 @@ export async function POST(request: Request) {
   if (!(await getActiveUser())) return new NextResponse(null, { status: 401 });
 
   const body = (await request.json()) as { at: string; reset?: boolean; path: string; userAgent: string; window: unknown; snapshot: string; audit: unknown; changes: string[] };
-  // `reset`: the app was restarted (or the recorder switched on again), so what is on disk is from an old run.
+  // `reset`: the recorder was switched on again, so what is on disk is from an earlier run.
   const previous = body.reset ? {} as { history?: Batch[] } : await readFile(DOM_FILE, "utf8").then((text) => JSON.parse(text) as { history?: Batch[] }, () => ({}) as { history?: Batch[] });
 
   const history = [...(previous.history ?? []), { at: body.at, path: body.path, changes: body.changes }].slice(-KEEP_BATCHES);
@@ -30,5 +30,13 @@ export async function POST(request: Request) {
     DOM_FILE,
     JSON.stringify({ at: body.at, path: body.path, userAgent: body.userAgent, window: body.window, audit: body.audit, history, snapshot: body.snapshot }, null, 2),
   );
+  return NextResponse.json({ ok: true });
+}
+
+/** The recorder was switched off: forget everything measured so far. */
+export async function DELETE() {
+  if (process.env.NODE_ENV === "production") return new NextResponse(null, { status: 404 });
+  if (!(await getActiveUser())) return new NextResponse(null, { status: 401 });
+  await rm(DOM_FILE, { force: true });
   return NextResponse.json({ ok: true });
 }
