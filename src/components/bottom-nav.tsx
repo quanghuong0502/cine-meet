@@ -35,6 +35,7 @@ export function BottomNav({ label, items, className }: BottomNavProps) {
   return (
     <nav
       aria-label={label}
+      data-bottom-fixed
       className={cn(
         "pointer-events-none fixed inset-x-0 bottom-0 z-40 px-3 pb-[calc(var(--spacing-nav-gap)+env(safe-area-inset-bottom))]",
         className,

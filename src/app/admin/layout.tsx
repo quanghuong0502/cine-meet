@@ -39,6 +39,7 @@ export default async function AdminLayout({
         </header>
         {/* --bottom-nav-h: room taken by the bottom bar on phones, used to keep content and the sticky "Add" button clear of it. */}
         <main
+          data-app-scroll
           className={cn(
             "flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain",
             hasBottomNav && "pb-[var(--bottom-nav-h)] [--bottom-nav-h:calc(var(--spacing-nav)+2*var(--spacing-nav-gap)+env(safe-area-inset-bottom))] md:[--bottom-nav-h:0px]",

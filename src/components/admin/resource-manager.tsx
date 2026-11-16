@@ -348,7 +348,7 @@ export function ResourceManager({ items, fields, query, labels, saveAction, remo
 
       {/* Primary action: fixed above the bottom menu (not inside the flow), so it stays in thumb reach, at the same
           place whether the list is empty, short or long. On wide screens it starts after the sidebar. */}
-      <div className="pointer-events-none fixed inset-x-0 bottom-[var(--bottom-nav-h,0px)] z-30 bg-gradient-to-t from-background via-background to-transparent px-4 pt-6 pb-4 md:left-64">
+      <div data-bottom-fixed className="pointer-events-none fixed inset-x-0 bottom-[var(--bottom-nav-h,0px)] z-30 bg-gradient-to-t from-background via-background to-transparent px-4 pt-6 pb-4 md:left-64">
         <Button type="button" onClick={() => setDialog({ mode: "create" })} className="pointer-events-auto mx-auto flex h-control w-full max-w-sm rounded-full text-base font-semibold">
           <Plus aria-hidden />
           {labels.addButton}
