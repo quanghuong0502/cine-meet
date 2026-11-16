@@ -57,4 +57,14 @@ Dùng cá nhân; không đưa ra công khai khi chưa có ảnh gốc hoặc gi�
 | `duo-watching` | Hai nhân vật xem laptop, ăn snack | lịch hẹn xem cùng nhau, mời bạn, chưa có lịch hẹn |
 | `popcorn` | Hộp bắp rang (đạo cụ, nét vẽ khác) | phần đồ ăn/combo, trang trí nhỏ |
 
-Chưa có: tư thế buồn, ngạc nhiên, ăn mừng, đang chọn ghế, đang tính tiền. Cần thì hỏi người dùng xin ảnh.
+Chưa có: tư thế buồn, ngạc nhiên, ăn mừng, đang chọn ghế, đang tính tiền.
+
+## Khi thiếu ảnh: báo người dùng để họ chuẩn bị
+
+Claude **luôn báo trước** khi một màn hình cần tư thế chưa có trong `MASCOT_POSES`, để người dùng kịp chuẩn bị ảnh. Không dùng tạm ảnh không hợp ngữ cảnh.
+- **Khi nào báo:** ngay lúc nêu kế hoạch cho sprint (trước khi làm), không đợi tới cuối sprint. Mỗi kế hoạch sprint có một mục
+  "Ảnh nhân vật cần chuẩn bị" (ghi "không cần thêm" nếu đủ). Nếu giữa chừng mới phát hiện thiếu thì báo ngay trong lúc làm.
+- **Báo những gì**, mỗi ảnh một dòng: tên file đề xuất (`<nhân-vật>-<tư-thế>.png`), nhân vật, tư thế/biểu cảm cần có,
+  màn hình và ngữ cảnh dùng, độ ưu tiên (bắt buộc hay có cũng được), kích thước đề xuất (từ 512px; nền phẳng một màu để dễ tách nền).
+- **Trong lúc chờ ảnh:** màn hình vẫn hoàn thành với `EmptyState` dùng tư thế gần nhất đang có, ghi chú trong báo cáo sprint
+  là "đang dùng tạm", và đổi sang ảnh đúng ngay khi người dùng gửi (chỉ cần thêm một mục vào `MASCOT_POSES`).

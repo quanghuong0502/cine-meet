@@ -44,7 +44,7 @@ Next.js (App Router, `src/`) · TypeScript strict · MongoDB Atlas + Mongoose ·
 - API key và connection string chỉ ở biến môi trường (`.env.local`), không đưa vào code hay file docs.
 - Trước khi báo hoàn thành: chạy `npm run lint` và `npm run typecheck`, sửa hết lỗi.
 - Việc lớn hoặc đụng nhiều file: nêu kế hoạch ngắn trước, chờ xác nhận rồi mới sửa.
-- Hai nhân vật Bubu & Dudu: dùng `Mascot`/`EmptyState`, được chủ động đặt và tạo biến thể ảnh theo `.claude/rules/mascots.md`.
+- Hai nhân vật Bubu & Dudu: dùng `Mascot`/`EmptyState`, được chủ động đặt và tạo biến thể ảnh theo `.claude/rules/mascots.md`. Màn hình nào cần tư thế chưa có thì báo người dùng ngay lúc nêu kế hoạch sprint để họ chuẩn bị ảnh.
 - Làm xong một đơn vị việc chạy được thì commit theo quy ước ở `.claude/rules/git.md` (không push nếu chưa được yêu cầu).
 
 ## Phạm vi MVP
