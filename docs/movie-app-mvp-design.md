@@ -17,6 +17,7 @@
 - Dữ liệu phim và suất chiếu do admin nhập tay hoặc import CSV.
 - Quy mô: vài người dùng (nhóm bạn), không cần tối ưu cho tải lớn.
 - 2 role: `admin`, `user`.
+- **Hai ngôn ngữ giao diện: tiếng Việt (mặc định) và tiếng Anh.** Ngôn ngữ lưu theo người dùng (`users.locale`); thông báo gửi theo ngôn ngữ của người nhận (xem `.claude/rules/i18n.md`).
 
 ---
 
@@ -278,6 +279,7 @@ DRAFT → INVITING → PARTICIPANTS_LOCKED → PLANNING → CONFIRMED → COMPLE
 ### 3.5 Hồ sơ người dùng
 - Tên, avatar, email, **số điện thoại** (dùng để bạn bè tìm thấy bạn; không bắt buộc).
 - Bật/tắt từng loại thông báo; bật/tắt thông báo đẩy theo từng thiết bị.
+- Ngôn ngữ giao diện: Tiếng Việt hoặc English (mặc định Tiếng Việt).
 - Sở thích ngồi (gần lối đi, giữa, phía sau…), dùng cho gợi ý ghế và chatbot.
 - Ngân sách tháng.
 
@@ -302,6 +304,8 @@ DRAFT → INVITING → PARTICIPANTS_LOCKED → PLANNING → CONFIRMED → COMPLE
 | 11 | Chi tiêu chạm 80% / 100% ngân sách | Chính user | Web Push + in-app | ✅ |
 | 12 | Phim thể loại yêu thích sắp khởi chiếu | User | Web Push + in-app | Giai đoạn 2 |
 | 13 | Người tham gia rút lui | Người tạo | Web Push + in-app | ✅ |
+
+**Ngôn ngữ:** nội dung thông báo viết theo `locale` của người nhận.
 
 **Quy tắc kênh:** mọi sự kiện luôn ghi in-app, và gửi thêm Web Push tới mọi thiết bị user đã bật. Kênh lỗi không chặn kênh khác. Zalo ZNS là kênh bổ sung ở giai đoạn sau (mục 4.2).
 
@@ -350,7 +354,7 @@ Nguyên tắc: **nhúng** (embed) dữ liệu nhỏ và gắn chặt với docum
 
 ```
 users                    { name, username?, email?, phone, avatar, role, status, authProviders[],
-                           passwordHash?, mustChangePassword, preferences{seat, notifications}, monthlyBudget }
+                           passwordHash?, mustChangePassword, locale (vi|en), preferences{seat, notifications}, monthlyBudget }
                          // ít nhất một trong username/email; unique sparse index cho username, email, phone
 loginAttempts            { key (username), failCount, lockLevel, lockedUntil?, expiresAt (TTL) }
 friendships              { userA, userB, status }

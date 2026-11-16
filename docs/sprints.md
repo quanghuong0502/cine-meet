@@ -18,6 +18,7 @@ Nguồn chi tiết: `docs/movie-app-mvp-design.md` (số mục ghi ở từng sp
 - [ ] Không có lỗi build/runtime (kiểm tra bằng Next.js DevTools MCP khi `npm run dev` đang chạy).
 - [ ] Deploy lên staging (HTTPS) và bạn thử tính năng trên điện thoại thật.
 - [ ] Tính năng chia thành các commit nhỏ, mỗi commit chạy được.
+- [ ] Mọi chuỗi giao diện đi qua i18n, có đủ `vi` và `en`; test kiểm tra hai bộ khóa khớp nhau. Chữ theo `.claude/rules/copy.md`.
 - [ ] Thời gian lưu UTC, hiển thị và tính ngày/tuần/tháng theo `Asia/Ho_Chi_Minh`; số điện thoại lưu dạng `84xxxxxxxxx`.
 - [ ] Có trang 404/500 thân thiện; mỗi API dữ liệu cá nhân có test thử truy cập dữ liệu của người khác (phải bị từ chối).
 
@@ -25,7 +26,7 @@ Nguồn chi tiết: `docs/movie-app-mvp-design.md` (số mục ghi ở từng sp
 
 | Sprint | Nội dung chính | Phụ thuộc | Trạng thái |
 |---|---|---|---|
-| 0 | Khung nền: scaffold, auth, layout, theme, staging HTTPS | — | Chờ kiểm tra |
+| 0 | Khung nền: scaffold, auth, layout, theme, i18n (vi, en), staging HTTPS | — | Đang làm |
 | 1 | Master data, quản lý người dùng, cài đặt hệ thống, hồ sơ cơ bản | 0 | Chưa bắt đầu |
 | 2 | Editor phòng chiếu, sơ đồ ghế, điểm ghế, versioning | 1 | Chưa bắt đầu |
 | 3 | Phim (trailer), suất chiếu, trang rạp & lịch chiếu cho user, đánh dấu ghế cá nhân | 2 | Chưa bắt đầu |
@@ -55,6 +56,7 @@ Trạng thái: Chưa bắt đầu · Đang làm · Chờ kiểm tra · Xong
 - Model `User`: ít nhất một trong `username`/`email`, unique sparse index cho `username`, `email`, `phone`.
 - Layout user và admin; header có menu avatar (Hồ sơ, Đăng xuất); thanh dưới cùng cấu hình được danh sách tab, chỉ hiện tab đã có
   tính năng, `/` chuyển tới tab đầu tiên khả dụng; font, dark mode, PWA tối thiểu.
+- **Hạ tầng i18n (vi, en):** thư viện i18n, file chuỗi `vi` và `en`, chọn ngôn ngữ (cookie, rồi `Accept-Language`, mặc định `vi`), `<html lang>`, công tắc ngôn ngữ ở màn đăng nhập và menu avatar, chuyển toàn bộ chuỗi đang viết cứng, test đồng bộ khóa (`.claude/rules/i18n.md`).
 - **Staging:** deploy lên dịch vụ Node chạy liên tục có HTTPS (thiết kế mục 1, Triển khai); cấu hình Google OAuth redirect cho staging;
   tách database dev/staging/production; `npm run seed` từ chối chạy ở production trừ khi có cờ rõ ràng (chỉ seed admin).
 - Khung `src/ai/core/types.ts`; luật ESLint cấm import SDK AI ngoài `src/ai/providers`.
@@ -67,6 +69,7 @@ Trạng thái: Chưa bắt đầu · Đang làm · Chờ kiểm tra · Xong
 - [ ] Đăng xuất xóa session và về `/login`; sai 5 lần thì khóa 15 phút, các đợt sau gấp đôi (tối đa 24 giờ); đăng nhập đúng hoặc admin reset thì xóa bộ đếm; có test cho hàm tính thời gian khóa.
 - [ ] `/admin` bị chặn khi chưa đăng nhập hoặc là role user; admin bị hạ quyền hoặc khóa thì request kế tiếp bị chặn dù JWT chưa hết hạn.
 - [ ] Đăng nhập (Google và mật khẩu) hoạt động trên staging, thử bằng điện thoại thật.
+- [ ] Đổi ngôn ngữ ở màn đăng nhập thì toàn bộ chữ (kể cả lỗi) đổi theo, không còn chuỗi viết cứng.
 - [ ] `npm run seed` tạo admin, chạy lại không tạo trùng.
 - [ ] `/login` hiển thị đúng ở 390px.
 
@@ -83,8 +86,9 @@ Trạng thái: Chưa bắt đầu · Đang làm · Chờ kiểm tra · Xong
 - Bảng giá vé (`validFrom/validTo`) và hàm tính giá theo quy tắc ở thiết kế mục 2.1: độ cụ thể, loại ngày (lễ > ưu đãi > cuối tuần > thường), `priority`, rule tạo sau; có test.
 - Quản lý người dùng: danh sách, tìm kiếm, **tạo tài khoản (mật khẩu tạm)**, khóa/mở khóa (thu hồi phiên), đổi role, reset mật khẩu, không hạ admin cuối cùng.
 - Cài đặt hệ thống: `reminderMinutesBefore`, hạn phản hồi mặc định, thời gian quảng cáo (lưu `systemSettings`).
-- Hồ sơ cơ bản: tên, avatar (Cloudinary), số điện thoại (chuẩn hóa `84xxxxxxxxx`, unique, không bắt buộc), sở thích ngồi, đổi mật khẩu, nút đăng xuất.
+- Hồ sơ cơ bản: tên, avatar (Cloudinary), số điện thoại (chuẩn hóa `84xxxxxxxxx`, unique, không bắt buộc), ngôn ngữ giao diện (`users.locale`), sở thích ngồi, đổi mật khẩu, nút đăng xuất.
 - Audit log đơn giản cho thay đổi master data.
+- Quyết định tên tiếng Anh cho master data hiển thị cho người dùng (thể loại, định dạng chiếu, loại ghế): thêm trường tên tiếng Anh tùy chọn, rơi về tiếng Việt khi trống.
 
 **Ngoài phạm vi:** phòng chiếu, phim, suất chiếu, tùy chọn thông báo chi tiết.
 

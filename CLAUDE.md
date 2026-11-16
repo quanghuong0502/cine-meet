@@ -32,7 +32,7 @@ Next.js (App Router, `src/`) · TypeScript strict · MongoDB Atlas + Mongoose ·
 
 ## Quy tắc luôn áp dụng
 
-- Mobile-first: thiết kế cho 390px trước. UI tiếng Việt, tiền VND (`Intl.NumberFormat`).
+- Mobile-first: thiết kế cho 390px trước. UI hai ngôn ngữ: tiếng Việt (mặc định) và tiếng Anh; mọi chuỗi đi qua tầng i18n, không viết cứng (xem `.claude/rules/i18n.md`). Chữ ngắn gọn nhưng đủ ngữ cảnh (xem `.claude/rules/copy.md`). Tiền VND (`Intl.NumberFormat`).
 - Chỉ dùng shadcn/ui + Tailwind cho giao diện. Không thêm thư viện UI khác khi chưa hỏi.
 - `userId` và role luôn lấy từ session ở server. Không bao giờ nhận từ body, query hay từ AI.
 - Không dùng Redis. Job hẹn giờ dùng collection `scheduledNotifications` (xem thiết kế mục 4.3).

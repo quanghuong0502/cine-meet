@@ -16,7 +16,7 @@ paths:
 - Form dài chia thành nhiều bước. Mọi trạng thái cần có: loading, rỗng, lỗi.
 - Sơ đồ ghế là SVG tự viết trong `src/components/seat-map/`, hỗ trợ pinch-zoom và chạm từng ghế.
   Heatmap dùng thang màu cố định, không phụ thuộc theme.
-- Văn bản hiển thị bằng tiếng Việt; ngày giờ theo múi giờ Asia/Ho_Chi_Minh.
+- Văn bản hiển thị đi qua i18n (`vi`, `en`) và theo quy tắc viết chữ ở `.claude/rules/copy.md`; ngày giờ theo múi giờ Asia/Ho_Chi_Minh.
 
 - Không phụ thuộc hover: mọi tương tác phải dùng được bằng chạm.
 - Chiều cao toàn màn hình dùng `dvh` (không dùng `vh`) để không bị thanh địa chỉ của trình duyệt mobile che.
