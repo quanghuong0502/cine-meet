@@ -23,6 +23,7 @@ Căn cứ: [Apple HIG, tab bars](https://developer.apple.com/design/human-interf
 ## 2. Vùng chạm và ngón cái
 
 1. Vùng chạm tối thiểu 44px (`size-target`), nút chính 48px, hai vùng chạm cách nhau tối thiểu 8px. Hình có thể nhỏ hơn vùng bấm (avatar 40px trong vùng 44px).
+   Ngoại lệ có chủ ý: các tab của một thanh tab và các đoạn của một nút chọn (công tắc ngôn ngữ VI/EN) nằm sát nhau (mẫu iOS), vì chúng lớn (từ 44px) và được gom rõ trong cùng một khối.
 2. Hành động chính của màn đặt ở nửa dưới, trong tầm ngón cái, phía trên viên thuốc điều hướng; không đặt hành động chính ở góc trên.
    Đây là hướng dẫn, không phải luật cứng: "vùng ngón cái" cổ điển chỉ là một cách ước lượng.
 3. Không phụ thuộc hover. Cử chỉ vuốt ngang không bắt đầu sát mép trái (cử chỉ quay lại của iOS).

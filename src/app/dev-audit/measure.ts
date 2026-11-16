@@ -61,6 +61,9 @@ export function measure(route: string, win: Window): RouteReport {
       const a = targets[i]!;
       const b = targets[j]!;
       if (a.contains(b) || b.contains(a)) continue;
+      // Tabs of one tab bar and segments of one segmented control sit edge to edge by design (iOS patterns); they are big and clearly grouped.
+      const group = a.closest('[role="group"],nav[data-bottom-fixed]');
+      if (group && group === b.closest('[role="group"],nav[data-bottom-fixed]')) continue;
       const ra = a.getBoundingClientRect();
       const rb = b.getBoundingClientRect();
       const dx = Math.max(ra.left - rb.right, rb.left - ra.right);
