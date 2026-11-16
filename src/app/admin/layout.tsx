@@ -18,7 +18,7 @@ export default async function AdminLayout({
   const hasBottomNav = ENABLED_ADMIN_NAV_ITEMS.length >= MIN_BOTTOM_NAV_ITEMS;
 
   return (
-    <div className="h-dvh overflow-hidden md:grid md:grid-cols-[16rem_1fr]">
+    <div data-app-shell className="h-dvh overflow-hidden md:grid md:grid-cols-[16rem_1fr] md:grid-rows-1">
       <aside className="sticky top-0 hidden h-dvh flex-col gap-4 border-r p-4 md:flex">
         <span className="px-3 py-2">
           <Logo size={44} wordmarkClassName="text-xl" />
@@ -29,7 +29,7 @@ export default async function AdminLayout({
         </div>
       </aside>
 
-      <div className="flex h-dvh min-w-0 flex-col">
+      <div className="flex h-full min-w-0 flex-col">
         {/* Phones: logo and avatar menu on top, the menu itself is the bottom bar. */}
         <header className="z-30 flex shrink-0 items-center justify-between gap-2 border-b bg-background/95 px-4 py-1 backdrop-blur md:hidden">
           <Logo size={44} wordmarkClassName="text-xl" />
