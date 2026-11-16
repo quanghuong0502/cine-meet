@@ -45,7 +45,7 @@ export function UserMenu({ name, identity, area = "app", children }: UserMenuPro
           className="size-target rounded-full"
           aria-label={t("openMenu")}
         >
-          <span className="flex size-9 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
+          <span className="flex size-avatar items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
             {getInitials(name)}
           </span>
         </Button>

@@ -40,6 +40,8 @@ Muốn chỉnh cỡ chữ hay kích thước cho cả app thì sửa đúng ở 
 | `h-control-lg` | 56px | điều khiển rộng rãi |
 | `min-h-row` | 64px | hàng danh sách có tiêu đề và dòng phụ |
 | `min-h-nav` | 56px | một tab của thanh điều hướng dưới (thanh tự cộng vùng an toàn) |
+| `size-avatar` | 40px | hình tròn avatar trong nút menu tài khoản (vùng chạm vẫn 44px) |
+| `--spacing-nav-gap` | 12px | khoảng cách quanh viên thuốc điều hướng nổi; nội dung chừa nav + 2 khoảng này |
 
 Các giá trị mặc định của shadcn (nút cao 32px, ô nhập cao 32px) đã được đổi sang token (`button.tsx`, `input.tsx`), nên nút hoặc ô nhập thêm mới không cần ghi đè kích thước.
 
