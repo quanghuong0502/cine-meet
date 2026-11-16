@@ -5,7 +5,7 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { snapshotDom, summarizeMutations } from "./dom-snapshot";
+import { safeAreaInsets, snapshotDom, summarizeMutations } from "./dom-snapshot";
 import { measure } from "./measure";
 
 /**
@@ -17,7 +17,7 @@ import { measure } from "./measure";
 
 const STORAGE_KEY = "devDomRecorder";
 /** Wait for the changes to settle before sending, and never send more often than this. */
-const SETTLE_MS = 500;
+const SETTLE_MS = 700; // a bottom sheet takes about half a second to slide in; measure after it has stopped
 const MIN_GAP_MS = 1_500;
 
 // The switch lives in localStorage (so it survives page loads), read through useSyncExternalStore so the server render
@@ -82,7 +82,8 @@ export function DomRecorder() {
             window: {
               w: innerWidth,
               h: innerHeight,
-              visualViewport: visualViewport ? { w: Math.round(visualViewport.width), h: Math.round(visualViewport.height) } : null,
+              visualViewport: visualViewport ? { w: Math.round(visualViewport.width), h: Math.round(visualViewport.height), offsetTop: Math.round(visualViewport.offsetTop), scale: visualViewport.scale } : null,
+              safeArea: safeAreaInsets(),
               dpr: devicePixelRatio,
               standalone: matchMedia("(display-mode: standalone)").matches,
               focused: document.activeElement ? document.activeElement.tagName.toLowerCase() : null,
@@ -122,6 +123,21 @@ export function DomRecorder() {
       pending = [...pending, ...lines].slice(-80);
       schedule();
     });
+    // Things that change the look without touching the DOM: the window or visual viewport resizing (keyboard, Safari bars,
+    // rotation) and the scrolling area moving. Recorded as a line of their own.
+    const note = (line: string) => {
+      pending = [...pending, line].slice(-80);
+      schedule();
+    };
+    const onResize = () => note(`~ window resized: ${innerWidth}x${innerHeight}, visual ${visualViewport ? `${Math.round(visualViewport.width)}x${Math.round(visualViewport.height)}` : "n/a"}`);
+    const onScroll = (event: Event) => {
+      const target = event.target;
+      if (target instanceof Element && target.matches("[data-app-scroll]")) note(`~ scrolled main to ${Math.round(target.scrollTop)}`);
+    };
+    window.addEventListener("resize", onResize);
+    visualViewport?.addEventListener("resize", onResize);
+    document.addEventListener("scroll", onScroll, { capture: true, passive: true });
+
     observer.observe(document.documentElement, { subtree: true, childList: true, attributes: true, attributeOldValue: true, characterData: true, characterDataOldValue: true });
 
     // The picture of the page as it is right now, so the developer is not waiting for the first change.
@@ -131,6 +147,9 @@ export function DomRecorder() {
     return () => {
       stopped = true;
       observer.disconnect();
+      window.removeEventListener("resize", onResize);
+      visualViewport?.removeEventListener("resize", onResize);
+      document.removeEventListener("scroll", onScroll, { capture: true });
       clearTimeout(timer);
     };
   }, [on]);

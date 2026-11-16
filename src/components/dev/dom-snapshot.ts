@@ -2,7 +2,7 @@
 
 const SKIP_TAGS = new Set(["SCRIPT", "STYLE", "NOSCRIPT", "LINK", "META", "TEMPLATE", "PATH", "CIRCLE", "RECT", "LINE", "POLYLINE", "POLYGON"]);
 const MAX_NODES = 1500;
-const MAX_CLASS = 200;
+const MAX_CLASS = 400;
 const MAX_TEXT = 80;
 
 function classList(el: Element): string {
@@ -57,10 +57,12 @@ export function snapshotDom(root: Element = document.body): string {
     const classes = classList(el);
     const box = hidden || (r.width === 0 && r.height === 0) ? "(not shown)" : `@${Math.round(r.left)},${Math.round(r.top)} ${Math.round(r.width)}x${Math.round(r.height)}`;
     const position = cs.position === "fixed" || cs.position === "sticky" ? ` ${cs.position}` : "";
-    const scroll = el.scrollHeight > el.clientHeight + 1 && /(auto|scroll)/.test(cs.overflowY) ? ` scrolls(${el.clientHeight}/${el.scrollHeight})` : "";
+    const scroll = el.scrollHeight > el.clientHeight + 1 && /(auto|scroll)/.test(cs.overflowY) ? ` scrolls(top=${Math.round(el.scrollTop)} view=${el.clientHeight} content=${el.scrollHeight})` : "";
+    // Font size of anything that shows text or takes typing, as the browser really computed it.
+    const font = text || el.matches("input,textarea,select,button") ? ` fs=${parseFloat(cs.fontSize)}` : "";
 
     lines.push(
-      `${"  ".repeat(depth)}${el.tagName.toLowerCase()}${el.id ? `#${el.id}` : ""}${attrs.length ? ` ${attrs.join(" ")}` : ""}${classes ? ` class="${classes}"` : ""} ${box}${position}${scroll}${text ? ` "${text}"` : ""}`,
+      `${"  ".repeat(depth)}${el.tagName.toLowerCase()}${el.id ? `#${el.id}` : ""}${attrs.length ? ` ${attrs.join(" ")}` : ""}${classes ? ` class="${classes}"` : ""} ${box}${position}${scroll}${font}${text ? ` "${text}"` : ""}`,
     );
     if (hidden) return;
     for (const child of el.children) walk(child, depth + 1);
@@ -94,4 +96,16 @@ export function summarizeMutations(records: MutationRecord[]): string[] {
     }
   }
   return out;
+}
+
+/** The safe-area insets of this device (notch, Dynamic Island, home bar), as the browser reports them. */
+export function safeAreaInsets(): { top: number; right: number; bottom: number; left: number } {
+  const probe = document.createElement("div");
+  probe.setAttribute("data-dev-dom", "");
+  probe.style.cssText = "position:fixed;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)";
+  document.body.appendChild(probe);
+  const cs = getComputedStyle(probe);
+  const insets = { top: parseFloat(cs.paddingTop), right: parseFloat(cs.paddingRight), bottom: parseFloat(cs.paddingBottom), left: parseFloat(cs.paddingLeft) };
+  probe.remove();
+  return insets;
 }
