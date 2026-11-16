@@ -249,3 +249,11 @@
 html[data-keyboard="open"] [data-app-scroll] {
   padding-bottom: 50dvh;
 }
+
+/* No scrollbars anywhere, like a native phone app: scrolling still works by touch and wheel. Outside any layer so it wins over component styles. */
+* {
+  scrollbar-width: none;
+}
+*::-webkit-scrollbar {
+  display: none;
+}
