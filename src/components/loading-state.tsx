@@ -3,7 +3,7 @@ import { Mascot } from "@/components/mascot";
 import { cn } from "@/lib/utils";
 
 interface LoadingStateProps {
-  /** Fills a whole screen (route changes) instead of just the area it is placed in. */
+  /** Fills a whole screen instead of just the area it is placed in. */
   fullScreen?: boolean;
   /** Smaller picture, for loading inside part of a page. */
   compact?: boolean;
@@ -22,7 +22,7 @@ export function LoadingState({ fullScreen = false, compact = false, className }:
       aria-live="polite"
       className={cn(
         "flex flex-col items-center justify-center gap-3",
-        fullScreen ? "min-h-dvh" : compact ? "min-h-48" : "min-h-[60dvh]",
+        fullScreen ? "min-h-dvh" : compact ? "min-h-48" : "min-h-48 flex-1",
         className,
       )}
     >

@@ -30,7 +30,9 @@ export default async function UserLayout({
       </header>
       <main
         className={
-          hasBottomNav ? "flex-1 pb-[calc(var(--spacing-nav)+env(safe-area-inset-bottom))]" : "flex-1"
+          hasBottomNav
+            ? "flex flex-1 flex-col pb-[calc(var(--spacing-nav)+env(safe-area-inset-bottom))]"
+            : "flex flex-1 flex-col"
         }
       >
         {children}

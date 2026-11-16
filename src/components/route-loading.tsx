@@ -93,7 +93,7 @@ export function BootSplash() {
     return () => clearTimeout(id);
   }, [visible]);
 
-  return visible ? <LoadingState fullScreen className="fixed inset-0 z-50 bg-background" /> : null;
+  return visible ? <LoadingState fullScreen className="fixed inset-0 z-50 min-h-0 bg-background" /> : null;
 }
 
 /** `app/loading.tsx`: shows Bubu itself only when the splash is not covering the screen. */
