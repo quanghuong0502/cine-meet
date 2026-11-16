@@ -49,7 +49,7 @@ export function AuditRunner({ routes }: { routes: string[] }) {
       if (cancelled) return;
       const report: RouteReport = win && ready
         ? measure(route, win)
-        : { route, viewport: size, loaded: false, standalone: false, devicePixelRatio: 1, visualViewport: null, scrollArea: null, smallTargets: [], tooClose: [], overlapping: [], smallText: [], smallInputs: [], horizontalOverflow: 0, outsideViewport: [], bottomFixedOverlap: [] };
+        : { route, viewport: size, loaded: false, standalone: false, devicePixelRatio: 1, visualViewport: null, focusedField: null, scrollArea: null, smallTargets: [], tooClose: [], overlapping: [], smallText: [], smallInputs: [], horizontalOverflow: 0, outsideViewport: [], bottomFixedOverlap: [] };
       reports.current = [...reports.current, report];
       const last = index + 1 >= routes.length;
       await send(last);

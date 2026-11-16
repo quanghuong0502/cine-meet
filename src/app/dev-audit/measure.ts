@@ -17,6 +17,8 @@ export interface RouteReport {
   standalone: boolean;
   devicePixelRatio: number;
   visualViewport: { w: number; h: number } | null;
+  /** The field with focus (keyboard open): where it is, and whether it is in the part of the screen the keyboard leaves free. */
+  focusedField: { label: string; top: number; bottom: number; visibleBottom: number; clearOfKeyboard: boolean } | null;
   /** The scrolling area (`main`): how much content is beyond what is visible. */
   scrollArea: { clientHeight: number; scrollHeight: number } | null;
   smallTargets: Box[];
@@ -113,6 +115,14 @@ export function measure(route: string, win: Window): RouteReport {
     standalone: win.matchMedia("(display-mode: standalone)").matches || (win.navigator as Navigator & { standalone?: boolean }).standalone === true,
     devicePixelRatio: win.devicePixelRatio,
     visualViewport: win.visualViewport ? { w: Math.round(win.visualViewport.width), h: Math.round(win.visualViewport.height) } : null,
+    focusedField: (() => {
+      const el = doc.activeElement;
+      if (!el || !el.matches("input,select,textarea")) return null;
+      const r = el.getBoundingClientRect();
+      // visualViewport is the part of the screen above the keyboard.
+      const visibleBottom = win.visualViewport ? win.visualViewport.offsetTop + win.visualViewport.height : win.innerHeight;
+      return { label: describe(el), top: Math.round(r.top), bottom: Math.round(r.bottom), visibleBottom: Math.round(visibleBottom), clearOfKeyboard: r.top >= 0 && r.bottom <= visibleBottom };
+    })(),
     scrollArea: (() => {
       const area = doc.querySelector("[data-app-scroll]");
       return area ? { clientHeight: area.clientHeight, scrollHeight: area.scrollHeight } : null;
