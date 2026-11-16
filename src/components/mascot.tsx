@@ -36,7 +36,7 @@ export const MASCOT_POSES = {
   "duo-watching": {
     src: duoWatching,
     alt: "Dudu và Bubu cùng xem phim trên laptop và ăn snack",
-    usage: "lịch hẹn xem cùng nhau, mời bạn, chưa có lịch hẹn, bạn bè",
+    usage: "màn auth (đăng nhập, đổi mật khẩu), lịch hẹn xem cùng nhau, mời bạn, chưa có lịch hẹn, bạn bè",
   },
   popcorn: {
     src: popcorn,

@@ -17,7 +17,7 @@ export default async function ChangePasswordPage() {
 
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center gap-4 p-4">
-      <Mascot pose="dudu-happy" size={88} decorative priority />
+      <Mascot pose="duo-watching" size={144} decorative priority />
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle className="text-xl">Đổi mật khẩu</CardTitle>

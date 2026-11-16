@@ -20,10 +20,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-sm flex-col justify-center gap-8 px-6 py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))]">
       <header className="flex flex-col items-center gap-2">
-        <div className="flex items-end justify-center">
-          <Mascot pose="bubu-sleepy" size={96} decorative priority />
-          <Mascot pose="dudu-happy" size={96} decorative priority flip className="-ml-3" />
-        </div>
+        <Mascot pose="duo-watching" size={200} decorative priority />
         <Wordmark className="text-xl" />
       </header>
 

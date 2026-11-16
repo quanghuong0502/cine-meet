@@ -18,12 +18,12 @@ Dùng cá nhân; không đưa ra công khai khi chưa có ảnh gốc hoặc gi�
 
 - **Bubu** (gấu trúc ngái ngủ ôm bắp rang): chờ, đang tải, vắng vẻ, không tìm thấy, lỗi nhẹ.
 - **Dudu** (gấu nâu vui vẻ ôm bắp rang): chào mừng, thành công, hoàn tất, nhắc nhở thân thiện.
-- Cả hai cùng xuất hiện chỉ ở nơi mang tính nhận diện (màn hình đăng nhập, giới thiệu).
+- Cả hai cùng xuất hiện (`duo-watching`) ở nơi mang tính nhận diện: các màn auth (đăng nhập, đổi mật khẩu), giới thiệu. Không tự ghép hai ảnh đơn.
 
 ## Cách dùng
 
 - Luôn dùng `<Mascot pose="..." />` (`src/components/mascot.tsx`) và `EmptyState` (`src/components/empty-state.tsx`); không viết `<Image>` rời cho nhân vật.
-- Nơi đang dùng: đăng nhập (`bubu-sleepy` + `dudu-happy`), đổi mật khẩu và trang chào mừng (`dudu-happy`), trang đang phát triển,
+- Nơi đang dùng: các màn auth (đăng nhập, đổi mật khẩu) dùng `duo-watching`, trang chào mừng (`dudu-happy`), trang đang phát triển,
   loading, 404 và lỗi (`bubu-sleepy`). Màn hình mới có trạng thái rỗng, thành công, lỗi hay loading thì dùng `EmptyState` kèm nhân vật phù hợp.
 - Tối đa **một** nhân vật (hoặc cặp ở màn nhận diện) trên một màn hình; không đặt lên màn hình dày dữ liệu
   (sơ đồ ghế, bảng, form dài) trừ khi là trạng thái rỗng, thành công hay lỗi. Không che nội dung hay vùng chạm.
@@ -54,7 +54,7 @@ Dùng cá nhân; không đưa ra công khai khi chưa có ảnh gốc hoặc gi�
 | `bubu-happy` | Bubu cười, ăn bắp rang | thành công, hoàn tất, thông báo tốt |
 | `bubu-going-out` | Bubu đội mũ vàng, đeo ba lô, đang đi | sắp đến giờ chiếu, nhắc lịch, "đi thôi", chỉ đường |
 | `dudu-happy` | Dudu vui vẻ ôm bắp rang | chào mừng, nhắc nhở thân thiện, bạn bè |
-| `duo-watching` | Hai nhân vật xem laptop, ăn snack | lịch hẹn xem cùng nhau, mời bạn, chưa có lịch hẹn |
+| `duo-watching` | Hai nhân vật xem laptop, ăn snack | màn auth (đăng nhập, đổi mật khẩu), lịch hẹn xem cùng nhau, mời bạn, chưa có lịch hẹn |
 | `popcorn` | Hộp bắp rang (đạo cụ, nét vẽ khác) | phần đồ ăn/combo, trang trí nhỏ |
 
 Chưa có: tư thế buồn, ngạc nhiên, ăn mừng, đang chọn ghế, đang tính tiền.
