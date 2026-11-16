@@ -1,0 +1,9 @@
+# <type>(<scope>): <mô tả ngắn, tối đa 72 ký tự, không dấu chấm cuối>
+#
+# type : feat | fix | refactor | test | docs | chore | build | style
+# scope: auth | admin | user | models | services | ui | ai | notifications | seat-map | db | seed | deps | docs
+#
+# Thân (vì sao đổi, đổi gì, lưu ý khi chạy thử):
+
+
+Sprint:
