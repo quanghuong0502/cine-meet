@@ -6,6 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Mascot } from "@/components/mascot";
 import { getSafeRedirectPath } from "@/lib/redirect";
 import { LoginForm } from "./login-form";
 import { LOGIN_ERROR_MESSAGES, LOGIN_FALLBACK_ERROR } from "./messages";
@@ -23,7 +24,11 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
     : undefined;
 
   return (
-    <main className="flex min-h-dvh items-center justify-center p-4">
+    <main className="flex min-h-dvh flex-col items-center justify-center gap-4 p-4">
+      <div className="flex items-end justify-center">
+        <Mascot name="bubu" size={96} decorative priority />
+        <Mascot name="dudu" size={96} decorative priority flip className="-ml-3" />
+      </div>
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle className="text-xl">Đăng nhập</CardTitle>

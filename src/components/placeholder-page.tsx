@@ -1,9 +1,4 @@
-import {
-  Card,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { EmptyState } from "@/components/empty-state";
 
 interface PlaceholderPageProps {
   title: string;
@@ -13,14 +8,9 @@ interface PlaceholderPageProps {
 /** Temporary body for routes whose feature is built in a later sprint. */
 export function PlaceholderPage({ title, description }: PlaceholderPageProps) {
   return (
-    <div className="flex flex-col gap-4 p-4">
-      <h1 className="text-2xl font-semibold">{title}</h1>
-      <Card>
-        <CardHeader>
-          <CardTitle>Đang phát triển</CardTitle>
-          <CardDescription>{description}</CardDescription>
-        </CardHeader>
-      </Card>
+    <div className="flex flex-col gap-2 p-4">
+      <h1 className="text-xl font-semibold">{title}</h1>
+      <EmptyState title="Đang phát triển" description={description} mascot="bubu" />
     </div>
   );
 }

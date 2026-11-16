@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Mascot } from "@/components/mascot";
 import { ChangePasswordForm } from "./change-password-form";
 import {
   Card,
@@ -15,7 +16,8 @@ export default async function ChangePasswordPage() {
   const user = await requireUser({ allowPasswordChange: true });
 
   return (
-    <main className="flex min-h-dvh items-center justify-center p-4">
+    <main className="flex min-h-dvh flex-col items-center justify-center gap-4 p-4">
+      <Mascot name="dudu" size={88} decorative priority />
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle className="text-xl">Đổi mật khẩu</CardTitle>

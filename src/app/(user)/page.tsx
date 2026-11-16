@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { PlaceholderPage } from "@/components/placeholder-page";
+import { EmptyState } from "@/components/empty-state";
 import { ENABLED_NAV_ITEMS } from "@/lib/nav";
 
 export const metadata: Metadata = { title: "Tổng quan" };
@@ -12,9 +12,11 @@ export default function HomePage() {
   if (!dashboardEnabled && firstAvailable) redirect(firstAvailable.href);
 
   return (
-    <PlaceholderPage
-      title="Chào mừng"
+    <EmptyState
+      mascot="dudu"
+      title="Chào mừng bạn!"
       description="Các tính năng sẽ lần lượt xuất hiện ở đây theo từng sprint."
+      className="min-h-[60dvh] justify-center"
     />
   );
 }
