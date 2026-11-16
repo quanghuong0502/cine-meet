@@ -25,7 +25,7 @@ export function EmptyState({
         className,
       )}
     >
-      <Mascot pose={mascot} size={140} decorative />
+      <Mascot pose={mascot} size={140} decorative priority />
       <h2 className="text-xl font-semibold">{title}</h2>
       {description ? (
         <p className="max-w-xs text-sm text-muted-foreground">{description}</p>

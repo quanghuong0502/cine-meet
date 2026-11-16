@@ -53,6 +53,11 @@ interface MascotProps {
   decorative?: boolean;
   /** Mirror the image so the mascot looks toward the content. */
   flip?: boolean;
+  /**
+   * The picture fills the height of its container (use with `h-full max-h-[..]` in `className`), for layouts
+   * that must fit the screen. Otherwise it is drawn at exactly `size` px wide.
+   */
+  fillHeight?: boolean;
   /** Only for mascots above the fold on first paint. */
   priority?: boolean;
   className?: string;
@@ -63,6 +68,7 @@ export function Mascot({
   size = 112,
   decorative = false,
   flip = false,
+  fillHeight = false,
   priority = false,
   className,
 }: MascotProps) {
@@ -80,7 +86,9 @@ export function Mascot({
       height={height}
       priority={priority}
       draggable={false}
-      className={cn("block select-none object-contain", flip && "-scale-x-100", className)}
+      // Both dimensions are also set in CSS (as Next.js asks, so the page's reset styles cannot change one of them).
+      style={fillHeight ? undefined : { width, height }}
+      className={cn("block select-none object-contain", fillHeight && "h-full w-auto", flip && "-scale-x-100", className)}
     />
   );
 }
