@@ -11,7 +11,7 @@ interface LoadingStateProps {
 }
 
 /**
- * The loading state of the app: Bubu dozing off (`bubu-sleepy`), gently breathing, with "Loading...".
+ * The loading state of the app: Bubu dozing off (`bubu-sleepy`), swaying gently as if dozing off, with "Loading...".
  * Use this for every route-level `loading.tsx` and any area that waits for data; small buttons keep their inline spinner.
  */
 export function LoadingState({ fullScreen = false, compact = false, className }: LoadingStateProps) {
@@ -31,7 +31,7 @@ export function LoadingState({ fullScreen = false, compact = false, className }:
         size={compact ? 80 : 112}
         decorative
         priority
-        className="motion-safe:animate-breathe"
+        className="origin-bottom motion-safe:animate-doze"
       />
       <p className="text-sm text-muted-foreground">{t("loading")}</p>
     </div>
