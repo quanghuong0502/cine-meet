@@ -43,7 +43,7 @@ Mục đang chọn thể hiện bằng **ba dấu hiệu, không chỉ đổi m�
 Việc cấu hình gộp thành một trang (ví dụ mọi master data trong trang Danh mục, chia bằng tab) để menu chỉ cần một liên kết. Trang chủ khu vực tự chuyển tới trang đầu tiên đã sẵn sàng.
 Nội dung trang chừa nav + 2 khoảng cách (biến `--bottom-nav-h`), nút hành động cố định đặt phía trên thanh. Header và thanh không cuộn theo trang: chỉ `main` cuộn.
 
-**Avatar** (góc trên bên phải): với người dùng, bấm vào là **mở thẳng trang Hồ sơ** (`/profile`), từ đó vào Cài đặt và Đăng xuất; Cài đặt quay lại về Hồ sơ. Với admin (không có Hồ sơ), bấm vào mở menu có Cài đặt và Đăng xuất. Mọi thiết lập tài khoản (ngôn ngữ, đổi mật khẩu, thông báo...) là một thẻ trong trang Cài đặt, không đặt thành mục riêng ở Hồ sơ.
+**Avatar** (góc trên bên phải): bấm vào **mở thẳng trang Hồ sơ**, không có menu bật lên: người dùng `/profile`, admin `/admin/profile` (cùng component `ProfileOverview`, hiện là placeholder). Từ Hồ sơ vào Cài đặt và Đăng xuất; Cài đặt quay lại về Hồ sơ. Mọi thiết lập tài khoản (ngôn ngữ, đổi mật khẩu, thông báo...) là một thẻ trong trang Cài đặt, không đặt thành mục riêng ở Hồ sơ.
 Admin chỉ có khu quản trị: không có nút "Về ứng dụng" hay liên kết sang trang người dùng.
 
 **Logo app = ảnh `duo-watching` (Bubu và Dudu) kèm wordmark**, dùng component `Logo` (`src/components/logo.tsx`) ở header và thanh bên.

@@ -33,9 +33,7 @@ export default async function AdminLayout({
         {/* Phones: logo and avatar menu on top, the menu itself is the bottom bar. */}
         <header className="z-30 flex shrink-0 items-center justify-between gap-2 border-b bg-background/95 px-4 py-1 backdrop-blur md:hidden">
           <Logo size={44} wordmarkClassName="text-xl" />
-          <UserMenu area="admin" name={admin.name} identity={admin.email ?? admin.username}>
-            <SignOutButton />
-          </UserMenu>
+          <UserMenu area="admin" name={admin.name} />
         </header>
         {/* --bottom-nav-h: room taken by the bottom bar on phones, used to keep content and the sticky "Add" button clear of it. */}
         <main

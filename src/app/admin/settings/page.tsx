@@ -17,7 +17,7 @@ export default async function AdminSettingsPage() {
   const admin = await requireAdmin();
   return (
     <div className="flex flex-col gap-4 p-4">
-      <PageHeader title={t("title")} backHref="/admin" />
+      <PageHeader title={t("title")} backHref="/admin/profile" />
       <LanguageSetting />
       <SecuritySetting hasPassword={admin.hasPassword} />
       <EmptyState

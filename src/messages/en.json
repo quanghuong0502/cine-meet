@@ -53,9 +53,7 @@
     }
   },
   "account": {
-    "openMenu": "Open account menu",
     "menuLabel": "Account menu",
-    "fallbackIdentity": "Your account",
     "profile": "Profile",
     "signOut": "Sign out",
     "settings": "Settings"

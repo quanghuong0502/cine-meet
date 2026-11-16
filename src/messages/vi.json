@@ -53,9 +53,7 @@
     }
   },
   "account": {
-    "openMenu": "Mở menu tài khoản",
     "menuLabel": "Menu tài khoản",
-    "fallbackIdentity": "Tài khoản của bạn",
     "profile": "Hồ sơ",
     "signOut": "Đăng xuất",
     "settings": "Cài đặt"
