@@ -27,9 +27,9 @@ export default async function AdminLayout({
   return (
     <div className="min-h-dvh md:grid md:grid-cols-[16rem_1fr]">
       <aside className="sticky top-0 hidden h-dvh flex-col gap-4 border-r p-4 md:flex">
-        <span className="flex items-center gap-2 px-3 py-2">
+        <span className="flex flex-col gap-0.5 px-3 py-2">
           <Logo size={44} wordmarkClassName="text-xl" />
-          <span className="text-xl font-normal text-muted-foreground">· {t("title")}</span>
+          <span className="text-xs font-medium text-muted-foreground">{t("title")}</span>
         </span>
         <AdminNav />
         <div className="mt-auto">
@@ -37,7 +37,7 @@ export default async function AdminLayout({
         </div>
       </aside>
 
-      <div className="flex min-w-0 flex-col">
+      <div className="flex min-h-dvh min-w-0 flex-col">
         <header className="sticky top-0 z-30 flex items-center gap-2 border-b bg-background/95 px-2 py-1 backdrop-blur md:hidden">
           <Sheet>
             <SheetTrigger asChild>
@@ -58,7 +58,7 @@ export default async function AdminLayout({
           </Sheet>
           <span className="font-semibold">{t("title")}</span>
         </header>
-        <main className="flex-1">{children}</main>
+        <main className="flex flex-1 flex-col">{children}</main>
       </div>
     </div>
   );

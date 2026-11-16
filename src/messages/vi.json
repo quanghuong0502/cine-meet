@@ -79,6 +79,80 @@
       "auditoriums": "Phòng chiếu",
       "movies": "Phim & suất chiếu",
       "settings": "Cài đặt"
+    },
+    "common": {
+      "back": "Quay lại",
+      "add": "Thêm",
+      "edit": "Sửa",
+      "delete": "Xóa",
+      "save": "Lưu",
+      "saving": "Đang lưu...",
+      "cancel": "Hủy",
+      "searchLabel": "Tìm kiếm",
+      "searchPlaceholder": "Tìm theo tên",
+      "optional": "Không bắt buộc",
+      "noResultsTitle": "Không có kết quả",
+      "noResultsDescription": "Thử một từ khóa khác.",
+      "saved": "Đã lưu",
+      "deleted": "Đã xóa",
+      "deleteTitle": "Xóa \"{name}\"?",
+      "deleteDescription": "Thao tác này không hoàn tác được.",
+      "itemCount": "{count, plural, other {# mục}}",
+      "errors": {
+        "validation": "Kiểm tra lại các ô được đánh dấu.",
+        "duplicate": "Tên này đã tồn tại.",
+        "in_use": "Đang được dùng ở nơi khác nên chưa xóa được.",
+        "not_found": "Mục này không còn tồn tại. Hãy tải lại trang.",
+        "unknown": "Không lưu được. Hãy thử lại."
+      }
+    },
+    "validation": {
+      "required": "Không được để trống",
+      "too_long": "Quá dài",
+      "invalid_url": "Đường dẫn không hợp lệ, cần bắt đầu bằng https://",
+      "invalid_color": "Màu không hợp lệ",
+      "invalid_number": "Số không hợp lệ",
+      "out_of_range": "Giá trị ngoài phạm vi cho phép",
+      "invalid_date": "Ngày không hợp lệ",
+      "invalid": "Giá trị không hợp lệ"
+    },
+    "masterData": {
+      "title": "Danh mục",
+      "description": "Dữ liệu nền dùng cho lịch chiếu và giá vé.",
+      "sections": {
+        "brands": {
+          "title": "Thương hiệu",
+          "description": "Các cụm rạp như CGV, BHD, Beta."
+        }
+      }
+    },
+    "brands": {
+      "title": "Thương hiệu",
+      "createTitle": "Thêm thương hiệu",
+      "editTitle": "Sửa thương hiệu",
+      "addButton": "Thêm thương hiệu",
+      "emptyTitle": "Chưa có thương hiệu",
+      "emptyDescription": "Thêm cụm rạp như CGV, BHD, Beta để bắt đầu.",
+      "fields": {
+        "name": {
+          "label": "Tên"
+        },
+        "color": {
+          "label": "Màu thương hiệu",
+          "hint": "Dùng để tô màu thẻ và nhãn"
+        },
+        "logoUrl": {
+          "label": "Logo",
+          "hint": "Đường dẫn ảnh logo"
+        },
+        "websiteUrl": {
+          "label": "Website"
+        },
+        "appUrl": {
+          "label": "Liên kết app",
+          "hint": "Mở app đặt vé của rạp"
+        }
+      }
     }
   },
   "placeholders": {
@@ -90,10 +164,6 @@
       "users": {
         "title": "Người dùng",
         "description": "Sắp có: danh sách, khóa/mở khóa và đổi vai trò."
-      },
-      "masterData": {
-        "title": "Danh mục",
-        "description": "Sắp có: thương hiệu, chi nhánh, thể loại, định dạng và bảng giá."
       },
       "auditoriums": {
         "title": "Phòng chiếu",

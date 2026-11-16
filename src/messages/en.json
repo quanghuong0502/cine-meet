@@ -79,6 +79,80 @@
       "auditoriums": "Auditoriums",
       "movies": "Movies & showtimes",
       "settings": "Settings"
+    },
+    "common": {
+      "back": "Back",
+      "add": "Add",
+      "edit": "Edit",
+      "delete": "Delete",
+      "save": "Save",
+      "saving": "Saving...",
+      "cancel": "Cancel",
+      "searchLabel": "Search",
+      "searchPlaceholder": "Search by name",
+      "optional": "Optional",
+      "noResultsTitle": "No results",
+      "noResultsDescription": "Try a different keyword.",
+      "saved": "Saved",
+      "deleted": "Deleted",
+      "deleteTitle": "Delete \"{name}\"?",
+      "deleteDescription": "This can't be undone.",
+      "itemCount": "{count, plural, one {# item} other {# items}}",
+      "errors": {
+        "validation": "Check the highlighted fields.",
+        "duplicate": "This name already exists.",
+        "in_use": "It's used elsewhere, so it can't be deleted yet.",
+        "not_found": "This item no longer exists. Reload the page.",
+        "unknown": "Couldn't save. Try again."
+      }
+    },
+    "validation": {
+      "required": "This can't be empty",
+      "too_long": "Too long",
+      "invalid_url": "Invalid link, it must start with https://",
+      "invalid_color": "Invalid color",
+      "invalid_number": "Invalid number",
+      "out_of_range": "Value is out of the allowed range",
+      "invalid_date": "Invalid date",
+      "invalid": "Invalid value"
+    },
+    "masterData": {
+      "title": "Catalog",
+      "description": "Base data used for showtimes and ticket prices.",
+      "sections": {
+        "brands": {
+          "title": "Brands",
+          "description": "Cinema chains like CGV, BHD, Beta."
+        }
+      }
+    },
+    "brands": {
+      "title": "Brands",
+      "createTitle": "Add brand",
+      "editTitle": "Edit brand",
+      "addButton": "Add brand",
+      "emptyTitle": "No brands yet",
+      "emptyDescription": "Add cinema chains like CGV, BHD or Beta to get started.",
+      "fields": {
+        "name": {
+          "label": "Name"
+        },
+        "color": {
+          "label": "Brand color",
+          "hint": "Used to tint cards and chips"
+        },
+        "logoUrl": {
+          "label": "Logo",
+          "hint": "Link to the logo image"
+        },
+        "websiteUrl": {
+          "label": "Website"
+        },
+        "appUrl": {
+          "label": "App link",
+          "hint": "Opens the cinema's booking app"
+        }
+      }
     }
   },
   "placeholders": {
@@ -90,10 +164,6 @@
       "users": {
         "title": "Users",
         "description": "Coming soon: user list, lock/unlock and role changes."
-      },
-      "masterData": {
-        "title": "Catalog",
-        "description": "Coming soon: brands, cinemas, genres, formats and price rules."
       },
       "auditoriums": {
         "title": "Auditoriums",
