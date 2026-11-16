@@ -292,7 +292,7 @@ export function ResourceManager({ items, fields, query, labels, saveAction, remo
           <p className="text-sm text-muted-foreground">{t("itemCount", { count: items.length })}</p>
           <ul className="grid gap-3 md:grid-cols-2">
             {items.map((item) => (
-              <li key={item.id} className="flex items-center gap-1 rounded-xl border bg-card pr-1">
+              <li key={item.id} className="flex items-center gap-2 rounded-xl border bg-card pr-2">
                 <button
                   type="button"
                   onClick={() => setDialog({ mode: "edit", item })}
