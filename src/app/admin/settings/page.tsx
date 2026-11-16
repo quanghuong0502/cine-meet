@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { EmptyState } from "@/components/empty-state";
+import { PageHeader } from "@/components/page-header";
 import { LanguageSetting } from "@/components/language-setting";
 import { SecuritySetting } from "@/components/security-setting";
 import { requireAdmin } from "@/lib/auth/guards";
@@ -16,7 +17,7 @@ export default async function AdminSettingsPage() {
   const admin = await requireAdmin();
   return (
     <div className="flex flex-col gap-4 p-4">
-      <h1 className="text-2xl font-semibold">{t("title")}</h1>
+      <PageHeader title={t("title")} backHref="/admin" />
       <LanguageSetting />
       <SecuritySetting hasPassword={admin.hasPassword} />
       <EmptyState

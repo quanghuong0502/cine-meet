@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { LanguageSetting } from "@/components/language-setting";
+import { PageHeader } from "@/components/page-header";
 import { SecuritySetting } from "@/components/security-setting";
 import { requireUser } from "@/lib/auth/guards";
 
@@ -15,7 +16,7 @@ export default async function SettingsPage() {
   const user = await requireUser();
   return (
     <div className="flex flex-col gap-4 p-4">
-      <h1 className="text-2xl font-semibold">{t("title")}</h1>
+      <PageHeader title={t("title")} backHref="/" />
       <LanguageSetting />
       <SecuritySetting hasPassword={user.hasPassword} />
     </div>

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
+import { PageHeader } from "@/components/page-header";
 import {
   Card,
   CardContent,
@@ -20,7 +21,7 @@ export default async function ProfilePage() {
 
   return (
     <div className="flex flex-col gap-4 p-4">
-      <h1 className="text-2xl font-semibold">{t("title")}</h1>
+      <PageHeader title={t("title")} backHref="/" />
       <Card>
         <CardHeader>
           <CardTitle>{user.name}</CardTitle>

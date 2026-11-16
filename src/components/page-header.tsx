@@ -5,13 +5,13 @@ import { Button } from "@/components/ui/button";
 
 interface PageHeaderProps {
   title: string;
-  /** Where the back button goes. An installed PWA has no browser Back button, so every inner screen sets this. */
+  /** Where the back button goes. An installed PWA has no browser Back button, so every inner screen (not a tab) sets this. */
   backHref?: string;
   description?: string;
 }
 
 export function PageHeader({ title, backHref, description }: PageHeaderProps) {
-  const t = useTranslations("admin.common");
+  const t = useTranslations("nav");
   return (
     <header className="flex items-start gap-2">
       {backHref ? (

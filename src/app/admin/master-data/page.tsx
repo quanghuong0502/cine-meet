@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
-import { PageHeader } from "@/components/admin/page-header";
+import { PageHeader } from "@/components/page-header";
 import { MASTER_DATA_SECTIONS } from "@/lib/master-data-sections";
 import { cn } from "@/lib/utils";
 import { SECTION_COMPONENTS } from "./_sections";
