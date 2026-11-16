@@ -1,0 +1,34 @@
+import type { Metadata } from "next";
+import { ChangePasswordForm } from "./change-password-form";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { requireUser } from "@/lib/auth/guards";
+
+export const metadata: Metadata = { title: "Đổi mật khẩu" };
+
+export default async function ChangePasswordPage() {
+  const user = await requireUser({ allowPasswordChange: true });
+
+  return (
+    <main className="flex min-h-dvh items-center justify-center p-4">
+      <Card className="w-full max-w-sm">
+        <CardHeader>
+          <CardTitle className="text-xl">Đổi mật khẩu</CardTitle>
+          <CardDescription>
+            {user.mustChangePassword
+              ? "Đây là lần đăng nhập đầu hoặc mật khẩu vừa được đặt lại. Hãy đặt mật khẩu mới của riêng bạn."
+              : "Nhập mật khẩu hiện tại và mật khẩu mới."}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ChangePasswordForm />
+        </CardContent>
+      </Card>
+    </main>
+  );
+}
