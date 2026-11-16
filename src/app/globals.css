@@ -91,10 +91,10 @@
   --spacing-nav: 3.5rem; /* 56px: one tab of the bottom navigation bar (the bar adds the home-bar inset) */
 
   /* Bubu dozing off for the loading state: sways slowly side to side from the bottom, like a head nodding. Use as `motion-safe:animate-doze`. */
-  --animate-doze: doze 3.6s ease-in-out infinite;
+  --animate-doze: doze 1.8s ease-in-out infinite alternate;
   @keyframes doze {
-    0%, 100% { transform: rotate(-4deg); }
-    50% { transform: rotate(4deg); }
+    from { transform: rotate(-4deg); }
+    to { transform: rotate(4deg); }
   }
 
   --radius-sm: calc(var(--radius) * 0.6);
