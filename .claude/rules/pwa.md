@@ -11,7 +11,7 @@ Mỗi sprint phải thử bản cài trên iPhone 13 và iPhone 14 Pro (xem `dev
 
 ## Hiện trạng (cập nhật khi thay đổi)
 
-- Có: manifest (`src/app/manifest.ts`: standalone, dọc, màu nền, icon PNG 192, 512 và maskable, hình Bubu và Dudu trên nền hồng thương hiệu), `apple-icon.png` (iPhone), favicon PNG,
+- Có: manifest (`src/app/manifest.ts`: standalone, dọc, màu nền, icon PNG 192, 512 và maskable, là logo app: ảnh `duo-watching` trên nền hồng thương hiệu; xuất lại bằng `sharp` khi đổi logo), `apple-icon.png` (iPhone), favicon PNG,
   `theme-color`, thẻ Apple (`appleWebApp`, thanh trạng thái đen), `viewport-fit=cover`, vùng an toàn và `dvh`.
 - Chưa có (làm ở Sprint 4 cùng Web Push): service worker `public/sw.js`, trang `/offline`, hướng dẫn cài app. `proxy.ts` đã loại `sw.js` và `offline`
   khỏi yêu cầu đăng nhập để trình duyệt đăng ký và tải được khi chưa đăng nhập.

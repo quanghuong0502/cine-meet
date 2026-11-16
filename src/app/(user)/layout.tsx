@@ -1,4 +1,4 @@
-import { Wordmark } from "@/components/wordmark";
+import { Logo } from "@/components/logo";
 import { UserMenu } from "@/components/user-menu";
 import { SignOutButton } from "@/components/sign-out-button";
 import { UserBottomNav } from "@/components/user-bottom-nav";
@@ -17,7 +17,7 @@ export default async function UserLayout({
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-2xl flex-col">
       <header className="flex items-center justify-between border-b px-4 py-1">
-        <Wordmark className="text-xl" />
+        <Logo size={40} wordmarkClassName="text-xl" />
         <UserMenu name={user.name} identity={user.email ?? user.username}>
           <SignOutButton />
         </UserMenu>

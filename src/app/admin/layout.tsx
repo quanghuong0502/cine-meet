@@ -1,5 +1,6 @@
 import { Menu } from "lucide-react";
 import { AdminNav } from "@/components/admin/admin-nav";
+import { Logo } from "@/components/logo";
 import { Wordmark } from "@/components/wordmark";
 import { getTranslations } from "next-intl/server";
 import { SignOutButton } from "@/components/sign-out-button";
@@ -26,7 +27,10 @@ export default async function AdminLayout({
   return (
     <div className="min-h-dvh md:grid md:grid-cols-[16rem_1fr]">
       <aside className="sticky top-0 hidden h-dvh flex-col gap-4 border-r p-4 md:flex">
-        <span className="px-3 py-2 text-xl"><Wordmark /> <span className="font-normal text-muted-foreground">· {t("title")}</span></span>
+        <span className="flex items-center gap-2 px-3 py-2">
+          <Logo size={36} wordmarkClassName="text-xl" />
+          <span className="text-xl font-normal text-muted-foreground">· {t("title")}</span>
+        </span>
         <AdminNav />
         <div className="mt-auto">
           <SignOutButton />

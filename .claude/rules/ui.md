@@ -37,6 +37,10 @@ Hướng thị giác tham khảo: app đặt vé/chọn chỗ hiện đại, s�
 - Không viết class màu theo kiểu `dark:` để vá từng chỗ; để token tự đổi theo theme.
 - Poster và heatmap giữ nguyên màu ở cả hai theme (heatmap dùng thang cố định).
 
+**Logo app = ảnh `duo-watching` (Bubu và Dudu) kèm wordmark**, dùng component `Logo` (`src/components/logo.tsx`) ở header và thanh bên.
+Cùng ảnh này, đặt trên nền hồng `#C61583`, là icon khi thêm app vào màn hình chính (`public/icons/*`, `src/app/apple-icon.png`, favicon).
+Không dùng ảnh khác làm logo hay icon; đổi logo thì xuất lại toàn bộ icon PWA.
+
 **Tên app: SeatMate.** Luôn hiển thị bằng `<Wordmark />` (`src/components/wordmark.tsx`): "Seat" màu chữ thường, "Mate" màu `primary-text`.
 Không viết tay chữ tên app trong giao diện; dùng hằng `APP_NAME` khi cần tên dạng chữ thuần (tiêu đề trang, manifest, thông báo).
 
