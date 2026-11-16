@@ -362,7 +362,9 @@ export function ResourceManager({ items, fields, query, labels, saveAction, remo
         </Button>
       </div>
 
-      <Drawer open={dialog !== null} onOpenChange={(open) => (open ? undefined : closeDialog())}>
+      {/* repositionInputs off: the sheet stays where it is and the keyboard simply covers its lower part, instead of the sheet
+          being resized and lifted to sit above the keyboard. The form body scrolls, so a field can be brought into view. */}
+      <Drawer open={dialog !== null} onOpenChange={(open) => (open ? undefined : closeDialog())} repositionInputs={false}>
         <DrawerContent className="max-h-[92dvh]">
           <DrawerHeader className="text-left">
             <DrawerTitle>{dialog?.mode === "edit" ? labels.editTitle : labels.createTitle}</DrawerTitle>
