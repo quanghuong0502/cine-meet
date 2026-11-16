@@ -1,6 +1,7 @@
 import { Menu } from "lucide-react";
 import { AdminNav } from "@/components/admin/admin-nav";
 import { Wordmark } from "@/components/wordmark";
+import { getTranslations } from "next-intl/server";
 import { SignOutButton } from "@/components/sign-out-button";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,11 +21,12 @@ export default async function AdminLayout({
 }) {
   // proxy.ts only sees the JWT; this re-reads role and status from the database.
   await requireAdmin();
+  const t = await getTranslations("admin");
 
   return (
     <div className="min-h-dvh md:grid md:grid-cols-[16rem_1fr]">
       <aside className="sticky top-0 hidden h-dvh flex-col gap-4 border-r p-4 md:flex">
-        <span className="px-3 py-2 text-xl"><Wordmark /> <span className="font-normal text-muted-foreground">· Admin</span></span>
+        <span className="px-3 py-2 text-xl"><Wordmark /> <span className="font-normal text-muted-foreground">· {t("title")}</span></span>
         <AdminNav />
         <div className="mt-auto">
           <SignOutButton />
@@ -35,14 +37,14 @@ export default async function AdminLayout({
         <header className="sticky top-0 z-30 flex items-center gap-2 border-b bg-background/95 px-2 py-1 backdrop-blur md:hidden">
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="size-11" aria-label="Mở menu quản trị">
+              <Button variant="ghost" size="icon" className="size-11" aria-label={t("openMenu")}>
                 <Menu aria-hidden />
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="flex w-72 flex-col gap-4 p-4">
               <SheetHeader className="p-0">
-                <SheetTitle><Wordmark /> · Admin</SheetTitle>
-                <SheetDescription>Menu quản trị</SheetDescription>
+                <SheetTitle><Wordmark /> · {t("title")}</SheetTitle>
+                <SheetDescription>{t("menuLabel")}</SheetDescription>
               </SheetHeader>
               <AdminNav insideSheet />
               <div className="mt-auto">
@@ -50,7 +52,7 @@ export default async function AdminLayout({
               </div>
             </SheetContent>
           </Sheet>
-          <span className="font-semibold">Admin</span>
+          <span className="font-semibold">{t("title")}</span>
         </header>
         <main className="flex-1">{children}</main>
       </div>

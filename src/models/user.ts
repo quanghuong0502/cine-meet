@@ -1,4 +1,5 @@
 import { model, models, Schema, type InferSchemaType, type Model } from "mongoose";
+import { LOCALES } from "@/i18n/config";
 import {
   AUTH_PROVIDERS,
   USER_ROLES,
@@ -38,6 +39,9 @@ const userSchema = new Schema(
     passwordHash: { type: String, select: false },
     // Set when an admin creates the account or resets the password with a temporary one.
     mustChangePassword: { type: Boolean, default: false },
+    // Interface language chosen in Settings; also used for notifications sent to this user.
+    // Left unset until the user chooses, so the browser language still applies on first sign-in.
+    locale: { type: String, enum: LOCALES },
   },
   { timestamps: true },
 );

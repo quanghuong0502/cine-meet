@@ -192,6 +192,24 @@ describe("changePassword", () => {
   });
 });
 
+describe("saved language", () => {
+  it("is null until the user chooses, then returns the choice", async () => {
+    const user = await User.findOne({ username: "an" });
+    const id = user?._id.toString() ?? "";
+    expect(await service.getUserLocale(id)).toBeNull();
+
+    await service.setUserLocale(id, "en");
+    expect(await service.getUserLocale(id)).toBe("en");
+
+    await service.setUserLocale(id, "vi");
+    expect(await service.getUserLocale(id)).toBe("vi");
+  });
+
+  it("returns null for an unknown id", async () => {
+    expect(await service.getUserLocale("not-an-id")).toBeNull();
+  });
+});
+
 describe("User model", () => {
   it("requires a username or an email", async () => {
     await expect(User.create({ name: "No login id" })).rejects.toThrow();

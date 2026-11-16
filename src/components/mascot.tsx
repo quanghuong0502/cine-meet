@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import Image, { type StaticImageData } from "next/image";
 import bubuGoingOut from "@/images/characters/bubu-going-out.png";
 import bubuHappy from "@/images/characters/bubu-happy.png";
@@ -10,40 +11,34 @@ import { cn } from "@/lib/utils";
 /**
  * Catalogue of mascot art (quy tắc: .claude/rules/mascots.md). Pick the pose by CONTEXT, not by looks:
  * `usage` says where each one belongs. Files live in src/images/characters as `<nhân-vật>-<tư-thế>.png`
- * (transparent PNG). Bubu = gấu trúc trắng, Dudu = gấu nâu, "duo" = cả hai, "prop" = đạo cụ.
+ * (transparent PNG); alt text lives in messages (`mascot.alt.<pose>`). Bubu = gấu trúc trắng, Dudu = gấu nâu, "duo" = cả hai, "prop" = đạo cụ.
  */
 export const MASCOT_POSES = {
   "bubu-sleepy": {
     src: bubuSleepy,
-    alt: "Bubu, chú gấu trúc ngái ngủ ôm bắp rang",
     usage: "chờ, đang tải, vắng vẻ, không tìm thấy, lỗi nhẹ",
   },
   "bubu-happy": {
     src: bubuHappy,
-    alt: "Bubu, chú gấu trúc cười vui ôm bắp rang",
     usage: "thành công, hoàn tất, nhận được thông báo tốt, trạng thái 'đã xong'",
   },
   "bubu-going-out": {
     src: bubuGoingOut,
-    alt: "Bubu đội mũ vàng, đeo ba lô, đang đi chơi",
     usage: "sắp đến giờ chiếu, nhắc lịch, 'đi thôi', hướng dẫn bắt đầu, chỉ đường tới rạp",
   },
   "dudu-happy": {
     src: duduHappy,
-    alt: "Dudu, chú gấu nâu vui vẻ ôm bắp rang",
     usage: "chào mừng, đổi mật khẩu, nhắc nhở thân thiện, danh sách bạn bè",
   },
   "duo-watching": {
     src: duoWatching,
-    alt: "Dudu và Bubu cùng xem phim trên laptop và ăn snack",
     usage: "màn auth (đăng nhập, đổi mật khẩu), lịch hẹn xem cùng nhau, mời bạn, chưa có lịch hẹn, bạn bè",
   },
   popcorn: {
     src: popcorn,
-    alt: "Hộp bắp rang",
     usage: "đạo cụ: phần đồ ăn/combo, trạng thái rỗng của đồ ăn, trang trí nhỏ (nét vẽ khác phong cách hai nhân vật)",
   },
-} as const satisfies Record<string, { src: StaticImageData; alt: string; usage: string }>;
+} as const satisfies Record<string, { src: StaticImageData; usage: string }>;
 
 export type MascotPose = keyof typeof MASCOT_POSES;
 
@@ -71,14 +66,15 @@ export function Mascot({
   priority = false,
   className,
 }: MascotProps) {
-  const { src, alt } = MASCOT_POSES[pose];
+  const t = useTranslations("mascot.alt");
+  const { src } = MASCOT_POSES[pose];
   const width = Math.min(size, Math.floor(src.width / 2));
   const height = Math.round((width * src.height) / src.width);
 
   return (
     <Image
       src={src}
-      alt={decorative ? "" : alt}
+      alt={decorative ? "" : t(pose)}
       aria-hidden={decorative ? true : undefined}
       width={width}
       height={height}

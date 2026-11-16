@@ -279,7 +279,7 @@ DRAFT → INVITING → PARTICIPANTS_LOCKED → PLANNING → CONFIRMED → COMPLE
 ### 3.5 Hồ sơ người dùng
 - Tên, avatar, email, **số điện thoại** (dùng để bạn bè tìm thấy bạn; không bắt buộc).
 - Bật/tắt từng loại thông báo; bật/tắt thông báo đẩy theo từng thiết bị.
-- Ngôn ngữ giao diện: Tiếng Việt hoặc English (mặc định Tiếng Việt).
+- Ngôn ngữ giao diện: Tiếng Việt hoặc English, **chỉ cấu hình ở trang Cài đặt** (không đặt công tắc ở các trang khác). Mặc định theo ngôn ngữ trình duyệt, không có thì Tiếng Việt.
 - Sở thích ngồi (gần lối đi, giữa, phía sau…), dùng cho gợi ý ghế và chatbot.
 - Ngân sách tháng.
 

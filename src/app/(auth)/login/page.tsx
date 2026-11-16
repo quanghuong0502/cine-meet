@@ -1,21 +1,24 @@
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import { Mascot } from "@/components/mascot";
 import { Wordmark } from "@/components/wordmark";
 import { getSafeRedirectPath } from "@/lib/redirect";
 import { LoginForm } from "./login-form";
-import { LOGIN_ERROR_MESSAGES, LOGIN_FALLBACK_ERROR } from "./messages";
+import { loginErrorKey } from "./login-errors";
 
-export const metadata: Metadata = { title: "Đăng nhập" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("auth.login");
+  return { title: t("title") };
+}
 
 interface LoginPageProps {
   searchParams: Promise<{ callbackUrl?: string; error?: string }>;
 }
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
+  const t = await getTranslations("auth.login");
   const { callbackUrl, error } = await searchParams;
-  const initialError = error
-    ? (LOGIN_ERROR_MESSAGES[error] ?? LOGIN_FALLBACK_ERROR)
-    : undefined;
+  const initialError = error ? t(`errors.${loginErrorKey(error)}`) : undefined;
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-sm flex-col justify-center gap-8 px-6 py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))]">
@@ -25,10 +28,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       </header>
 
       <div className="flex flex-col gap-1.5">
-        <h1 className="text-2xl font-semibold tracking-tight">Đăng nhập</h1>
-        <p className="text-sm text-muted-foreground">
-          Đăng nhập để lập kế hoạch xem phim cùng bạn bè.
-        </p>
+        <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
+        <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
       </div>
 
       <LoginForm

@@ -7,20 +7,23 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
+/** Keys of `nav.*` in src/messages/*.json: the label is translated where the tab is rendered. */
+export type NavKey = "overview" | "showtimes" | "appointments" | "cinemas" | "chat";
+
 export interface NavItem {
   href: string;
-  label: string;
+  key: NavKey;
   icon: LucideIcon;
   /** Turned on in the sprint that delivers the feature; disabled tabs stay hidden. */
   enabled: boolean;
 }
 
 export const NAV_ITEMS: NavItem[] = [
-  { href: "/", label: "Tổng quan", icon: LayoutDashboard, enabled: false }, // Sprint 6
-  { href: "/showtimes", label: "Lịch chiếu", icon: Clapperboard, enabled: false }, // Sprint 3
-  { href: "/appointments", label: "Lịch hẹn", icon: CalendarHeart, enabled: false }, // Sprint 4
-  { href: "/cinemas", label: "Rạp", icon: Popcorn, enabled: false }, // Sprint 3
-  { href: "/chat", label: "Chat", icon: MessageCircle, enabled: false }, // Sprint 7
+  { href: "/", key: "overview", icon: LayoutDashboard, enabled: false }, // Sprint 6
+  { href: "/showtimes", key: "showtimes", icon: Clapperboard, enabled: false }, // Sprint 3
+  { href: "/appointments", key: "appointments", icon: CalendarHeart, enabled: false }, // Sprint 4
+  { href: "/cinemas", key: "cinemas", icon: Popcorn, enabled: false }, // Sprint 3
+  { href: "/chat", key: "chat", icon: MessageCircle, enabled: false }, // Sprint 7
 ];
 
 export const ENABLED_NAV_ITEMS = NAV_ITEMS.filter((item) => item.enabled);

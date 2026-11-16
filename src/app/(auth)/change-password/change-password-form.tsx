@@ -1,14 +1,17 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { MIN_PASSWORD_LENGTH } from "@/lib/user-constants";
 import { changePasswordAction, type ChangePasswordState } from "./actions";
 
 const INITIAL_STATE: ChangePasswordState = {};
 
 export function ChangePasswordForm() {
+  const t = useTranslations("auth.changePassword");
   const [state, formAction, isPending] = useActionState(
     changePasswordAction,
     INITIAL_STATE,
@@ -17,37 +20,41 @@ export function ChangePasswordForm() {
   return (
     <form action={formAction} className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
-        <Label htmlFor="currentPassword">Mật khẩu hiện tại</Label>
+        <Label htmlFor="currentPassword">{t("currentLabel")}</Label>
         <Input
           id="currentPassword"
           name="currentPassword"
           type="password"
           autoComplete="current-password"
           required
-          className="h-11 text-base"
+          className="h-12 rounded-xl bg-card px-4 text-base"
         />
       </div>
       <div className="flex flex-col gap-2">
-        <Label htmlFor="newPassword">Mật khẩu mới</Label>
+        <Label htmlFor="newPassword">{t("newLabel")}</Label>
         <Input
           id="newPassword"
           name="newPassword"
           type="password"
           autoComplete="new-password"
-          minLength={8}
+          minLength={MIN_PASSWORD_LENGTH}
+          aria-describedby="newPasswordHint"
           required
-          className="h-11 text-base"
+          className="h-12 rounded-xl bg-card px-4 text-base"
         />
+        <p id="newPasswordHint" className="text-xs text-muted-foreground">
+          {t("newHint", { min: MIN_PASSWORD_LENGTH })}
+        </p>
       </div>
       <div className="flex flex-col gap-2">
-        <Label htmlFor="confirmPassword">Nhập lại mật khẩu mới</Label>
+        <Label htmlFor="confirmPassword">{t("confirmLabel")}</Label>
         <Input
           id="confirmPassword"
           name="confirmPassword"
           type="password"
           autoComplete="new-password"
           required
-          className="h-11 text-base"
+          className="h-12 rounded-xl bg-card px-4 text-base"
         />
       </div>
 
@@ -57,8 +64,8 @@ export function ChangePasswordForm() {
         </p>
       ) : null}
 
-      <Button type="submit" disabled={isPending} className="h-11 w-full text-base">
-        {isPending ? "Đang lưu..." : "Đổi mật khẩu"}
+      <Button type="submit" disabled={isPending} className="h-14 w-full rounded-full text-base font-semibold">
+        {isPending ? t("submitting") : t("submit")}
       </Button>
     </form>
   );

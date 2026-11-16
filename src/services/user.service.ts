@@ -6,7 +6,8 @@ import {
   MAX_FAILED_ATTEMPTS,
   remainingLockMinutes,
 } from "@/lib/login-lockout";
-import type { UserRole } from "@/lib/user-constants";
+import type { Locale } from "@/i18n/config";
+import { MIN_PASSWORD_LENGTH, type UserRole } from "@/lib/user-constants";
 import { LoginAttempt } from "@/models/login-attempt";
 import { User } from "@/models/user";
 
@@ -41,7 +42,6 @@ export type AuthResult =
   | { ok: false; reason: Exclude<AuthFailureReason, "throttled"> }
   | { ok: false; reason: "throttled"; retryAfterMinutes: number };
 
-export const MIN_PASSWORD_LENGTH = 8;
 
 // Valid bcrypt hash compared against when the account is unknown, so that response
 // time does not reveal whether an account exists.
@@ -245,6 +245,19 @@ export async function changePassword(
   user.mustChangePassword = false;
   await user.save();
   return { ok: true };
+}
+
+/** The language the user chose in Settings, or null when they never chose one. */
+export async function getUserLocale(userId: string): Promise<Locale | null> {
+  await connectToDatabase();
+  const user = await User.findById(userId).select("locale").lean().catch(() => null);
+  return user?.locale ?? null;
+}
+
+/** Saves the user's interface language. */
+export async function setUserLocale(userId: string, locale: Locale): Promise<void> {
+  await connectToDatabase();
+  await User.updateOne({ _id: userId }, { locale }).catch(() => undefined);
 }
 
 /** Clears the failed-login counter for an account (used when an admin resets a password). */

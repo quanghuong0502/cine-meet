@@ -1,6 +1,7 @@
 "use client";
 
-import { KeyRound, UserRound } from "lucide-react";
+import { KeyRound, Settings, UserRound } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,7 @@ function getInitials(name: string): string {
 
 /** Avatar button in the header; opens a bottom sheet with profile links and sign-out (works by touch, no hover). */
 export function UserMenu({ name, identity, children }: UserMenuProps) {
+  const t = useTranslations("account");
   const [open, setOpen] = useState(false);
 
   return (
@@ -39,7 +41,7 @@ export function UserMenu({ name, identity, children }: UserMenuProps) {
           variant="ghost"
           size="icon"
           className="size-11 rounded-full"
-          aria-label="Mở menu tài khoản"
+          aria-label={t("openMenu")}
         >
           <span className="flex size-9 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
             {getInitials(name)}
@@ -49,17 +51,25 @@ export function UserMenu({ name, identity, children }: UserMenuProps) {
       <DrawerContent>
         <DrawerHeader className="text-left">
           <DrawerTitle>{name}</DrawerTitle>
-          <DrawerDescription>{identity ?? "Tài khoản của bạn"}</DrawerDescription>
+          <DrawerDescription>{identity ?? t("fallbackIdentity")}</DrawerDescription>
         </DrawerHeader>
         <nav
-          aria-label="Menu tài khoản"
+          aria-label={t("menuLabel")}
           className="flex flex-col gap-1 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))]"
         >
           <DrawerClose asChild>
             <Button asChild variant="ghost" className="h-11 justify-start gap-2">
               <Link href="/profile">
                 <UserRound aria-hidden />
-                Hồ sơ
+                {t("profile")}
+              </Link>
+            </Button>
+          </DrawerClose>
+          <DrawerClose asChild>
+            <Button asChild variant="ghost" className="h-11 justify-start gap-2">
+              <Link href="/settings">
+                <Settings aria-hidden />
+                {t("settings")}
               </Link>
             </Button>
           </DrawerClose>
@@ -67,7 +77,7 @@ export function UserMenu({ name, identity, children }: UserMenuProps) {
             <Button asChild variant="ghost" className="h-11 justify-start gap-2">
               <Link href="/change-password">
                 <KeyRound aria-hidden />
-                Đổi mật khẩu
+                {t("changePassword")}
               </Link>
             </Button>
           </DrawerClose>

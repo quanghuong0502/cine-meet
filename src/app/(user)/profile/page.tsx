@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,14 +11,18 @@ import {
 } from "@/components/ui/card";
 import { requireUser } from "@/lib/auth/guards";
 
-export const metadata: Metadata = { title: "Hồ sơ" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("profile");
+  return { title: t("title") };
+}
 
 export default async function ProfilePage() {
   const user = await requireUser();
+  const t = await getTranslations("profile");
 
   return (
     <div className="flex flex-col gap-4 p-4">
-      <h1 className="text-2xl font-semibold">Hồ sơ</h1>
+      <h1 className="text-2xl font-semibold">{t("title")}</h1>
       <Card>
         <CardHeader>
           <CardTitle>{user.name}</CardTitle>
@@ -26,10 +31,10 @@ export default async function ProfilePage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-3 text-sm text-muted-foreground">
-          <p>Vai trò: {user.role === "admin" ? "Quản trị viên" : "Người dùng"}</p>
-          <p>Chỉnh sửa tên, ảnh đại diện và số điện thoại sẽ có ở Sprint 1.</p>
+          <p>{t("role", { role: user.role })}</p>
+          <p>{t("comingSoon")}</p>
           <Button asChild variant="outline" className="h-11 w-fit">
-            <Link href="/change-password">Đổi mật khẩu</Link>
+            <Link href="/change-password">{t("changePassword")}</Link>
           </Button>
         </CardContent>
       </Card>

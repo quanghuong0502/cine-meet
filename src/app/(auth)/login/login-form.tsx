@@ -1,6 +1,7 @@
 "use client";
 
 import { CircleAlert, Eye, EyeOff, LoaderCircle } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { GoogleIcon } from "@/components/google-icon";
@@ -17,6 +18,7 @@ interface LoginFormProps {
 }
 
 function GoogleButton() {
+  const t = useTranslations("auth.login");
   const { pending } = useFormStatus();
   return (
     <Button
@@ -30,12 +32,13 @@ function GoogleButton() {
       ) : (
         <GoogleIcon className="size-5" />
       )}
-      Tiếp tục với Google
+      {t("google")}
     </Button>
   );
 }
 
 export function LoginForm({ callbackUrl, initialError }: LoginFormProps) {
+  const t = useTranslations("auth.login");
   const [state, formAction, isPending] = useActionState(
     loginWithPassword,
     INITIAL_STATE,
@@ -50,7 +53,7 @@ export function LoginForm({ callbackUrl, initialError }: LoginFormProps) {
 
         <div className="flex flex-col gap-2">
           <Label htmlFor="identifier" className="text-muted-foreground">
-            Tên đăng nhập hoặc email
+            {t("identifierLabel")}
           </Label>
           <Input
             id="identifier"
@@ -67,7 +70,7 @@ export function LoginForm({ callbackUrl, initialError }: LoginFormProps) {
 
         <div className="flex flex-col gap-2">
           <Label htmlFor="password" className="text-muted-foreground">
-            Mật khẩu
+            {t("passwordLabel")}
           </Label>
           <div className="relative">
             <Input
@@ -83,7 +86,7 @@ export function LoginForm({ callbackUrl, initialError }: LoginFormProps) {
               variant="ghost"
               size="icon"
               onClick={() => setShowPassword((visible) => !visible)}
-              aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+              aria-label={showPassword ? t("hidePassword") : t("showPassword")}
               aria-pressed={showPassword}
               className="absolute top-1/2 right-0.5 size-11 -translate-y-1/2 text-muted-foreground"
             >
@@ -110,17 +113,17 @@ export function LoginForm({ callbackUrl, initialError }: LoginFormProps) {
           {isPending ? (
             <>
               <LoaderCircle className="motion-safe:animate-spin" aria-hidden />
-              Đang đăng nhập...
+              {t("submitting")}
             </>
           ) : (
-            "Đăng nhập"
+            t("submit")
           )}
         </Button>
       </form>
 
       <div className="flex items-center gap-4 text-sm text-muted-foreground">
         <span className="h-px flex-1 bg-border" />
-        hoặc
+        {t("or")}
         <span className="h-px flex-1 bg-border" />
       </div>
 
@@ -130,8 +133,9 @@ export function LoginForm({ callbackUrl, initialError }: LoginFormProps) {
       </form>
 
       <p className="text-center text-sm text-muted-foreground">
-        Quên mật khẩu hoặc chưa có tài khoản?{" "}
-        <span className="text-primary-text">Hãy liên hệ quản trị viên.</span>
+        {t.rich("help", {
+          highlight: (chunks) => <span className="text-primary-text">{chunks}</span>,
+        })}
       </p>
     </div>
   );

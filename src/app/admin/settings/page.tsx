@@ -1,13 +1,25 @@
 import type { Metadata } from "next";
-import { PlaceholderPage } from "@/components/placeholder-page";
+import { getTranslations } from "next-intl/server";
+import { EmptyState } from "@/components/empty-state";
+import { LanguageSetting } from "@/components/language-setting";
 
-export const metadata: Metadata = { title: "Cài đặt" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("placeholders.admin.settings");
+  return { title: t("title") };
+}
 
-export default function AdminSettingsPage() {
+export default async function AdminSettingsPage() {
+  const t = await getTranslations("placeholders.admin.settings");
+  const states = await getTranslations("states");
   return (
-    <PlaceholderPage
-      title="Cài đặt"
-      description="Cài đặt hệ thống, AI và template thông báo sẽ có ở Sprint 1 và 5."
-    />
+    <div className="flex flex-col gap-4 p-4">
+      <h1 className="text-2xl font-semibold">{t("title")}</h1>
+      <LanguageSetting />
+      <EmptyState
+        title={states("comingSoon")}
+        description={t("description")}
+        mascot="bubu-sleepy"
+      />
+    </div>
   );
 }

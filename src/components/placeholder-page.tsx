@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { EmptyState } from "@/components/empty-state";
 
 interface PlaceholderPageProps {
@@ -7,10 +8,11 @@ interface PlaceholderPageProps {
 
 /** Temporary body for routes whose feature is built in a later sprint. */
 export function PlaceholderPage({ title, description }: PlaceholderPageProps) {
+  const t = useTranslations("states");
   return (
     <div className="flex flex-col gap-2 p-4">
       <h1 className="text-2xl font-semibold">{title}</h1>
-      <EmptyState title="Đang phát triển" description={description} mascot="bubu-sleepy" />
+      <EmptyState title={t("comingSoon")} description={description} mascot="bubu-sleepy" />
     </div>
   );
 }

@@ -1,8 +1,11 @@
 import { LogOut } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { signOut } from "@/auth";
 import { Button } from "@/components/ui/button";
 
 export function SignOutButton() {
+  const t = useTranslations("account");
+
   async function handleSignOut() {
     "use server";
     await signOut({ redirectTo: "/login" });
@@ -12,7 +15,7 @@ export function SignOutButton() {
     <form action={handleSignOut}>
       <Button type="submit" variant="ghost" className="h-11 w-full justify-start gap-2">
         <LogOut aria-hidden />
-        Đăng xuất
+        {t("signOut")}
       </Button>
     </form>
   );

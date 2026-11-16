@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import { PlaceholderPage } from "@/components/placeholder-page";
 
-export const metadata: Metadata = { title: "Danh mục" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("placeholders.admin.masterData");
+  return { title: t("title") };
+}
 
-export default function AdminMasterDataPage() {
-  return (
-    <PlaceholderPage
-      title="Danh mục"
-      description="Thương hiệu, chi nhánh, thể loại, định dạng và bảng giá sẽ có ở Sprint 1."
-    />
-  );
+export default async function AdminMasterDataPage() {
+  const t = await getTranslations("placeholders.admin.masterData");
+  return <PlaceholderPage title={t("title")} description={t("description")} />;
 }

@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import { PlaceholderPage } from "@/components/placeholder-page";
 
-export const metadata: Metadata = { title: "Phòng chiếu" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("placeholders.admin.auditoriums");
+  return { title: t("title") };
+}
 
-export default function AdminAuditoriumsPage() {
-  return (
-    <PlaceholderPage
-      title="Phòng chiếu"
-      description="Editor phòng chiếu và sơ đồ ghế sẽ có ở Sprint 2."
-    />
-  );
+export default async function AdminAuditoriumsPage() {
+  const t = await getTranslations("placeholders.admin.auditoriums");
+  return <PlaceholderPage title={t("title")} description={t("description")} />;
 }

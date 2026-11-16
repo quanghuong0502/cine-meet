@@ -1,32 +1,21 @@
 "use server";
 
+import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireUser } from "@/lib/auth/guards";
-import { changePassword, MIN_PASSWORD_LENGTH } from "@/services/user.service";
+import { MIN_PASSWORD_LENGTH } from "@/lib/user-constants";
+import { changePassword } from "@/services/user.service";
 
 export interface ChangePasswordState {
   error?: string;
 }
 
-const schema = z
-  .object({
-    currentPassword: z.string().min(1, "Vui lòng nhập mật khẩu hiện tại."),
-    newPassword: z
-      .string()
-      .min(MIN_PASSWORD_LENGTH, `Mật khẩu mới cần ít nhất ${MIN_PASSWORD_LENGTH} ký tự.`),
-    confirmPassword: z.string(),
-  })
-  .refine((value) => value.newPassword === value.confirmPassword, {
-    path: ["confirmPassword"],
-    error: "Mật khẩu nhập lại không khớp.",
-  });
-
-const REASON_MESSAGES = {
-  wrong_current: "Mật khẩu hiện tại không đúng.",
-  same_password: "Mật khẩu mới phải khác mật khẩu hiện tại.",
-  too_short: `Mật khẩu mới cần ít nhất ${MIN_PASSWORD_LENGTH} ký tự.`,
-  no_password: "Tài khoản này đăng nhập bằng Google, không có mật khẩu để đổi.",
+const REASON_KEYS = {
+  wrong_current: "wrongCurrent",
+  same_password: "samePassword",
+  too_short: "tooShort",
+  no_password: "noPassword",
 } as const;
 
 export async function changePasswordAction(
@@ -35,6 +24,18 @@ export async function changePasswordAction(
 ): Promise<ChangePasswordState> {
   // userId comes from the session on the server, never from the form.
   const user = await requireUser({ allowPasswordChange: true });
+  const t = await getTranslations("auth.changePassword.errors");
+
+  const schema = z
+    .object({
+      currentPassword: z.string().min(1, t("currentRequired")),
+      newPassword: z.string().min(MIN_PASSWORD_LENGTH, t("tooShort", { min: MIN_PASSWORD_LENGTH })),
+      confirmPassword: z.string(),
+    })
+    .refine((value) => value.newPassword === value.confirmPassword, {
+      path: ["confirmPassword"],
+      error: t("mismatch"),
+    });
 
   const parsed = schema.safeParse({
     currentPassword: formData.get("currentPassword"),
@@ -42,7 +43,7 @@ export async function changePasswordAction(
     confirmPassword: formData.get("confirmPassword"),
   });
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ." };
+    return { error: parsed.error.issues[0]?.message ?? t("invalid") };
   }
 
   const result = await changePassword(
@@ -50,7 +51,10 @@ export async function changePasswordAction(
     parsed.data.currentPassword,
     parsed.data.newPassword,
   );
-  if (!result.ok) return { error: REASON_MESSAGES[result.reason] };
+  if (!result.ok) {
+    const key = REASON_KEYS[result.reason];
+    return { error: key === "tooShort" ? t(key, { min: MIN_PASSWORD_LENGTH }) : t(key) };
+  }
 
   redirect("/");
 }

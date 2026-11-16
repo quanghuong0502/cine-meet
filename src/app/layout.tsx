@@ -1,4 +1,6 @@
 import type { Metadata, Viewport } from "next";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getTranslations } from "next-intl/server";
 import { Be_Vietnam_Pro } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { APP_NAME } from "@/components/wordmark";
@@ -11,15 +13,17 @@ const beVietnamPro = Be_Vietnam_Pro({
   display: "swap",
 });
 
-export const metadata: Metadata = {
-  title: {
-    default: APP_NAME,
-    template: `%s · ${APP_NAME}`,
-  },
-  description:
-    "Lập kế hoạch xem phim cùng bạn bè, ghi nhớ ghế đẹp ở từng phòng chiếu, chia tiền và theo dõi chi tiêu.",
-  applicationName: APP_NAME,
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("meta");
+  return {
+    title: {
+      default: APP_NAME,
+      template: `%s · ${APP_NAME}`,
+    },
+    description: t("description"),
+    applicationName: APP_NAME,
+  };
+}
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -28,17 +32,21 @@ export const viewport: Viewport = {
   colorScheme: "dark",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const locale = await getLocale();
+
   return (
     // Dark mode is the default: the `dark` class activates the shadcn dark tokens.
-    <html lang="vi" className={`${beVietnamPro.variable} dark h-full antialiased`}>
+    <html lang={locale} className={`${beVietnamPro.variable} dark h-full antialiased`}>
       <body className="min-h-full bg-background text-foreground">
-        {children}
-        <Toaster theme="dark" />
+        <NextIntlClientProvider>
+          {children}
+          <Toaster theme="dark" />
+        </NextIntlClientProvider>
       </body>
     </html>
   );

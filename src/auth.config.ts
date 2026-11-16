@@ -38,8 +38,8 @@ export const authConfig = {
       }
 
       if (isAdminApi) {
-        if (!isLoggedIn) return Response.json({ error: "Chưa đăng nhập." }, { status: 401 });
-        if (!isAdmin) return Response.json({ error: "Không đủ quyền truy cập." }, { status: 403 });
+        if (!isLoggedIn) return Response.json({ error: "unauthenticated" }, { status: 401 });
+        if (!isAdmin) return Response.json({ error: "forbidden" }, { status: 403 });
         return true;
       }
 

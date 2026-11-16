@@ -9,24 +9,27 @@ import {
   Users,
   type LucideIcon,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { SheetClose } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 
+type AdminNavKey = "overview" | "users" | "masterData" | "auditoriums" | "movies" | "settings";
+
 interface AdminNavItem {
   href: string;
-  label: string;
+  key: AdminNavKey;
   icon: LucideIcon;
 }
 
 const ADMIN_NAV_ITEMS: AdminNavItem[] = [
-  { href: "/admin", label: "Tổng quan", icon: LayoutDashboard },
-  { href: "/admin/users", label: "Người dùng", icon: Users },
-  { href: "/admin/master-data", label: "Danh mục", icon: Database },
-  { href: "/admin/auditoriums", label: "Phòng chiếu", icon: Projector },
-  { href: "/admin/movies", label: "Phim & suất chiếu", icon: Clapperboard },
-  { href: "/admin/settings", label: "Cài đặt", icon: Settings },
+  { href: "/admin", key: "overview", icon: LayoutDashboard },
+  { href: "/admin/users", key: "users", icon: Users },
+  { href: "/admin/master-data", key: "masterData", icon: Database },
+  { href: "/admin/auditoriums", key: "auditoriums", icon: Projector },
+  { href: "/admin/movies", key: "movies", icon: Clapperboard },
+  { href: "/admin/settings", key: "settings", icon: Settings },
 ];
 
 function isActive(pathname: string, href: string): boolean {
@@ -39,12 +42,13 @@ interface AdminNavProps {
 }
 
 export function AdminNav({ insideSheet = false }: AdminNavProps) {
+  const t = useTranslations("admin");
   const pathname = usePathname();
 
   return (
-    <nav aria-label="Menu quản trị">
+    <nav aria-label={t("menuLabel")}>
       <ul className="flex flex-col gap-1">
-        {ADMIN_NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+        {ADMIN_NAV_ITEMS.map(({ href, key, icon: Icon }) => {
           const active = isActive(pathname, href);
           const link = (
             <Link
@@ -58,7 +62,7 @@ export function AdminNav({ insideSheet = false }: AdminNavProps) {
               )}
             >
               <Icon className="size-4" aria-hidden />
-              {label}
+              {t(`nav.${key}`)}
             </Link>
           );
           return (

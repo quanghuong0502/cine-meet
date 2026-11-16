@@ -1,0 +1,171 @@
+{
+  "meta": {
+    "description": "Lập kế hoạch xem phim cùng bạn bè, ghi nhớ ghế đẹp ở từng phòng chiếu, chia tiền và theo dõi chi tiêu."
+  },
+  "locale": {
+    "label": "Ngôn ngữ"
+  },
+  "auth": {
+    "login": {
+      "title": "Đăng nhập",
+      "subtitle": "Đăng nhập để lập kế hoạch xem phim cùng bạn bè.",
+      "identifierLabel": "Tên đăng nhập hoặc email",
+      "passwordLabel": "Mật khẩu",
+      "showPassword": "Hiện mật khẩu",
+      "hidePassword": "Ẩn mật khẩu",
+      "submit": "Đăng nhập",
+      "submitting": "Đang đăng nhập...",
+      "or": "hoặc",
+      "google": "Tiếp tục với Google",
+      "help": "Quên mật khẩu hoặc chưa có tài khoản? <highlight>Hãy liên hệ quản trị viên.</highlight>",
+      "errors": {
+        "invalidInput": "Nhập tên đăng nhập (hoặc email) và mật khẩu.",
+        "invalidCredentials": "Tên đăng nhập/email hoặc mật khẩu không đúng.",
+        "accountLocked": "Tài khoản đã bị khóa. Hãy liên hệ quản trị viên.",
+        "tooManyAttempts": "Bạn đã nhập sai quá nhiều lần. Thử lại sau {minutes, plural, other {# phút}}.",
+        "emailUnverified": "Email Google chưa được xác minh nên không thể đăng nhập.",
+        "notRegistered": "Tài khoản chưa được cấp quyền. Hãy liên hệ quản trị viên.",
+        "sessionExpired": "Phiên đăng nhập đã hết hiệu lực. Hãy đăng nhập lại.",
+        "accessDenied": "Bạn không có quyền đăng nhập bằng tài khoản này.",
+        "fallback": "Không đăng nhập được. Hãy thử lại."
+      }
+    },
+    "changePassword": {
+      "title": "Đổi mật khẩu",
+      "descriptionRequired": "Đây là lần đăng nhập đầu hoặc mật khẩu vừa được đặt lại. Hãy đặt mật khẩu mới của riêng bạn.",
+      "description": "Nhập mật khẩu hiện tại và mật khẩu mới.",
+      "currentLabel": "Mật khẩu hiện tại",
+      "newLabel": "Mật khẩu mới",
+      "newHint": "Ít nhất {min} ký tự",
+      "confirmLabel": "Nhập lại mật khẩu mới",
+      "submit": "Đổi mật khẩu",
+      "submitting": "Đang lưu...",
+      "errors": {
+        "currentRequired": "Nhập mật khẩu hiện tại.",
+        "tooShort": "Mật khẩu mới cần ít nhất {min} ký tự.",
+        "mismatch": "Mật khẩu nhập lại không khớp.",
+        "wrongCurrent": "Mật khẩu hiện tại không đúng.",
+        "samePassword": "Mật khẩu mới phải khác mật khẩu hiện tại.",
+        "noPassword": "Tài khoản này đăng nhập bằng Google nên không có mật khẩu để đổi.",
+        "invalid": "Dữ liệu không hợp lệ."
+      }
+    }
+  },
+  "account": {
+    "openMenu": "Mở menu tài khoản",
+    "menuLabel": "Menu tài khoản",
+    "fallbackIdentity": "Tài khoản của bạn",
+    "profile": "Hồ sơ",
+    "changePassword": "Đổi mật khẩu",
+    "signOut": "Đăng xuất",
+    "settings": "Cài đặt"
+  },
+  "nav": {
+    "label": "Điều hướng chính",
+    "overview": "Tổng quan",
+    "showtimes": "Lịch chiếu",
+    "appointments": "Lịch hẹn",
+    "cinemas": "Rạp",
+    "chat": "Chat"
+  },
+  "admin": {
+    "title": "Quản trị",
+    "openMenu": "Mở menu quản trị",
+    "menuLabel": "Menu quản trị",
+    "nav": {
+      "overview": "Tổng quan",
+      "users": "Người dùng",
+      "masterData": "Danh mục",
+      "auditoriums": "Phòng chiếu",
+      "movies": "Phim & suất chiếu",
+      "settings": "Cài đặt"
+    }
+  },
+  "placeholders": {
+    "admin": {
+      "overview": {
+        "title": "Tổng quan quản trị",
+        "description": "Sắp có: số liệu tổng quan hệ thống."
+      },
+      "users": {
+        "title": "Người dùng",
+        "description": "Sắp có: danh sách, khóa/mở khóa và đổi vai trò."
+      },
+      "masterData": {
+        "title": "Danh mục",
+        "description": "Sắp có: thương hiệu, chi nhánh, thể loại, định dạng và bảng giá."
+      },
+      "auditoriums": {
+        "title": "Phòng chiếu",
+        "description": "Sắp có: chỉnh sửa phòng chiếu và sơ đồ ghế."
+      },
+      "movies": {
+        "title": "Phim & suất chiếu",
+        "description": "Sắp có: quản lý phim, trailer và suất chiếu."
+      },
+      "settings": {
+        "title": "Cài đặt",
+        "description": "Sắp có: cài đặt hệ thống, AI và thông báo."
+      }
+    },
+    "user": {
+      "appointments": {
+        "title": "Lịch hẹn",
+        "description": "Sắp có: mời bạn bè, chốt người tham gia và xếp ghế."
+      },
+      "chat": {
+        "title": "Chat",
+        "description": "Sắp có: trợ lý AI giúp chọn ghế và tra cứu."
+      },
+      "cinemas": {
+        "title": "Rạp",
+        "description": "Sắp có: danh sách rạp và sơ đồ phòng chiếu."
+      },
+      "showtimes": {
+        "title": "Lịch chiếu",
+        "description": "Sắp có: danh sách suất chiếu và trailer phim."
+      }
+    }
+  },
+  "states": {
+    "comingSoon": "Đang phát triển",
+    "loading": "Đang tải...",
+    "welcome": {
+      "title": "Chào mừng bạn!",
+      "description": "Các tính năng sẽ lần lượt xuất hiện ở đây."
+    },
+    "notFound": {
+      "title": "Không tìm thấy trang",
+      "description": "Trang bạn tìm không tồn tại hoặc đã được chuyển đi.",
+      "action": "Về trang chủ"
+    },
+    "error": {
+      "title": "Có gì đó trục trặc",
+      "description": "Đã xảy ra lỗi ngoài ý muốn. Hãy thử tải lại.",
+      "retry": "Thử lại"
+    }
+  },
+  "profile": {
+    "title": "Hồ sơ",
+    "role": "Vai trò: {role, select, admin {Quản trị viên} other {Người dùng}}",
+    "comingSoon": "Sắp có: chỉnh sửa tên, ảnh đại diện và số điện thoại.",
+    "changePassword": "Đổi mật khẩu"
+  },
+  "mascot": {
+    "alt": {
+      "bubu-sleepy": "Bubu, chú gấu trúc ngái ngủ ôm bắp rang",
+      "bubu-happy": "Bubu, chú gấu trúc cười vui ôm bắp rang",
+      "bubu-going-out": "Bubu đội mũ vàng, đeo ba lô, đang đi chơi",
+      "dudu-happy": "Dudu, chú gấu nâu vui vẻ ôm bắp rang",
+      "duo-watching": "Dudu và Bubu cùng xem phim trên laptop và ăn snack",
+      "popcorn": "Hộp bắp rang"
+    }
+  },
+  "settings": {
+    "title": "Cài đặt",
+    "language": {
+      "title": "Ngôn ngữ",
+      "description": "Dùng cho giao diện và thông báo gửi cho bạn."
+    }
+  }
+}

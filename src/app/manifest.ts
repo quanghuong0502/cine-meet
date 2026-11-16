@@ -7,6 +7,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: APP_NAME,
     short_name: APP_NAME,
+    // The manifest is static (one file for everyone), so it stays in the default language.
     description: "Lập kế hoạch và quản lý xem phim cùng bạn bè.",
     lang: "vi",
     start_url: "/",

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ENABLED_NAV_ITEMS } from "@/lib/nav";
@@ -10,19 +11,20 @@ function isActive(pathname: string, href: string): boolean {
 }
 
 export function UserBottomNav() {
+  const t = useTranslations("nav");
   const pathname = usePathname();
   if (ENABLED_NAV_ITEMS.length === 0) return null;
 
   return (
     <nav
-      aria-label="Điều hướng chính"
+      aria-label={t("label")}
       className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur"
     >
       <ul
         className="mx-auto grid max-w-2xl"
         style={{ gridTemplateColumns: `repeat(${ENABLED_NAV_ITEMS.length}, minmax(0, 1fr))` }}
       >
-        {ENABLED_NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+        {ENABLED_NAV_ITEMS.map(({ href, key, icon: Icon }) => {
           const active = isActive(pathname, href);
           return (
             <li key={href}>
@@ -35,7 +37,7 @@ export function UserBottomNav() {
                 )}
               >
                 <Icon className="size-5" aria-hidden />
-                {label}
+                {t(key)}
               </Link>
             </li>
           );

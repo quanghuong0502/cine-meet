@@ -56,7 +56,7 @@ Trạng thái: Chưa bắt đầu · Đang làm · Chờ kiểm tra · Xong
 - Model `User`: ít nhất một trong `username`/`email`, unique sparse index cho `username`, `email`, `phone`.
 - Layout user và admin; header có menu avatar (Hồ sơ, Đăng xuất); thanh dưới cùng cấu hình được danh sách tab, chỉ hiện tab đã có
   tính năng, `/` chuyển tới tab đầu tiên khả dụng; font, dark mode, PWA tối thiểu.
-- **Hạ tầng i18n (vi, en):** thư viện i18n, file chuỗi `vi` và `en`, chọn ngôn ngữ (cookie, rồi `Accept-Language`, mặc định `vi`), `<html lang>`, công tắc ngôn ngữ ở màn đăng nhập và menu avatar, chuyển toàn bộ chuỗi đang viết cứng, test đồng bộ khóa (`.claude/rules/i18n.md`).
+- **Hạ tầng i18n (vi, en):** thư viện i18n, file chuỗi `vi` và `en`, chọn ngôn ngữ (`users.locale`, rồi cookie, rồi `Accept-Language`, mặc định `vi`), `<html lang>`, trang Cài đặt (`/settings`, `/admin/settings`) là nơi duy nhất cấu hình ngôn ngữ, chuyển toàn bộ chuỗi đang viết cứng, test đồng bộ khóa (`.claude/rules/i18n.md`).
 - **Staging:** deploy lên dịch vụ Node chạy liên tục có HTTPS (thiết kế mục 1, Triển khai); cấu hình Google OAuth redirect cho staging;
   tách database dev/staging/production; `npm run seed` từ chối chạy ở production trừ khi có cờ rõ ràng (chỉ seed admin).
 - Khung `src/ai/core/types.ts`; luật ESLint cấm import SDK AI ngoài `src/ai/providers`.
@@ -69,7 +69,7 @@ Trạng thái: Chưa bắt đầu · Đang làm · Chờ kiểm tra · Xong
 - [ ] Đăng xuất xóa session và về `/login`; sai 5 lần thì khóa 15 phút, các đợt sau gấp đôi (tối đa 24 giờ); đăng nhập đúng hoặc admin reset thì xóa bộ đếm; có test cho hàm tính thời gian khóa.
 - [ ] `/admin` bị chặn khi chưa đăng nhập hoặc là role user; admin bị hạ quyền hoặc khóa thì request kế tiếp bị chặn dù JWT chưa hết hạn.
 - [ ] Đăng nhập (Google và mật khẩu) hoạt động trên staging, thử bằng điện thoại thật.
-- [ ] Đổi ngôn ngữ ở màn đăng nhập thì toàn bộ chữ (kể cả lỗi) đổi theo, không còn chuỗi viết cứng.
+- [ ] Đổi ngôn ngữ trong Cài đặt thì toàn bộ chữ (kể cả lỗi) đổi theo, không còn chuỗi viết cứng; đăng xuất rồi đăng nhập lại vẫn giữ ngôn ngữ đã chọn.
 - [ ] `npm run seed` tạo admin, chạy lại không tạo trùng.
 - [ ] `/login` hiển thị đúng ở 390px.
 

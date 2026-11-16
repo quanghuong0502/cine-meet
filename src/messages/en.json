@@ -1,0 +1,171 @@
+{
+  "meta": {
+    "description": "Plan movie nights with friends, remember the best seats in every auditorium, split costs and track your spending."
+  },
+  "locale": {
+    "label": "Language"
+  },
+  "auth": {
+    "login": {
+      "title": "Sign in",
+      "subtitle": "Sign in to plan movie nights with friends.",
+      "identifierLabel": "Username or email",
+      "passwordLabel": "Password",
+      "showPassword": "Show password",
+      "hidePassword": "Hide password",
+      "submit": "Sign in",
+      "submitting": "Signing in...",
+      "or": "or",
+      "google": "Continue with Google",
+      "help": "Forgot your password or need an account? <highlight>Contact an admin.</highlight>",
+      "errors": {
+        "invalidInput": "Enter your username (or email) and password.",
+        "invalidCredentials": "Username/email or password is incorrect.",
+        "accountLocked": "This account is locked. Contact an admin.",
+        "tooManyAttempts": "Too many failed attempts. Try again in {minutes, plural, one {# minute} other {# minutes}}.",
+        "emailUnverified": "Your Google email isn't verified, so you can't sign in with it.",
+        "notRegistered": "This account hasn't been given access. Contact an admin.",
+        "sessionExpired": "Your session has expired. Sign in again.",
+        "accessDenied": "You don't have permission to sign in with this account.",
+        "fallback": "Couldn't sign you in. Try again."
+      }
+    },
+    "changePassword": {
+      "title": "Change password",
+      "descriptionRequired": "This is your first sign-in, or your password was just reset. Set a new password of your own.",
+      "description": "Enter your current password and a new one.",
+      "currentLabel": "Current password",
+      "newLabel": "New password",
+      "newHint": "At least {min} characters",
+      "confirmLabel": "Confirm new password",
+      "submit": "Change password",
+      "submitting": "Saving...",
+      "errors": {
+        "currentRequired": "Enter your current password.",
+        "tooShort": "The new password must be at least {min} characters.",
+        "mismatch": "The passwords don't match.",
+        "wrongCurrent": "Current password is incorrect.",
+        "samePassword": "The new password must differ from the current one.",
+        "noPassword": "This account signs in with Google, so it has no password to change.",
+        "invalid": "Invalid input."
+      }
+    }
+  },
+  "account": {
+    "openMenu": "Open account menu",
+    "menuLabel": "Account menu",
+    "fallbackIdentity": "Your account",
+    "profile": "Profile",
+    "changePassword": "Change password",
+    "signOut": "Sign out",
+    "settings": "Settings"
+  },
+  "nav": {
+    "label": "Main navigation",
+    "overview": "Overview",
+    "showtimes": "Showtimes",
+    "appointments": "Plans",
+    "cinemas": "Cinemas",
+    "chat": "Chat"
+  },
+  "admin": {
+    "title": "Admin",
+    "openMenu": "Open admin menu",
+    "menuLabel": "Admin menu",
+    "nav": {
+      "overview": "Overview",
+      "users": "Users",
+      "masterData": "Catalog",
+      "auditoriums": "Auditoriums",
+      "movies": "Movies & showtimes",
+      "settings": "Settings"
+    }
+  },
+  "placeholders": {
+    "admin": {
+      "overview": {
+        "title": "Admin overview",
+        "description": "Coming soon: system overview numbers."
+      },
+      "users": {
+        "title": "Users",
+        "description": "Coming soon: user list, lock/unlock and role changes."
+      },
+      "masterData": {
+        "title": "Catalog",
+        "description": "Coming soon: brands, cinemas, genres, formats and price rules."
+      },
+      "auditoriums": {
+        "title": "Auditoriums",
+        "description": "Coming soon: auditorium editor and seat maps."
+      },
+      "movies": {
+        "title": "Movies & showtimes",
+        "description": "Coming soon: manage movies, trailers and showtimes."
+      },
+      "settings": {
+        "title": "Settings",
+        "description": "Coming soon: system, AI and notification settings."
+      }
+    },
+    "user": {
+      "appointments": {
+        "title": "Plans",
+        "description": "Coming soon: invite friends, lock in attendees and assign seats."
+      },
+      "chat": {
+        "title": "Chat",
+        "description": "Coming soon: an AI assistant to help you pick seats and look things up."
+      },
+      "cinemas": {
+        "title": "Cinemas",
+        "description": "Coming soon: cinema list and auditorium seat maps."
+      },
+      "showtimes": {
+        "title": "Showtimes",
+        "description": "Coming soon: showtime list and movie trailers."
+      }
+    }
+  },
+  "states": {
+    "comingSoon": "In progress",
+    "loading": "Loading...",
+    "welcome": {
+      "title": "Welcome!",
+      "description": "New features will show up here as they're added."
+    },
+    "notFound": {
+      "title": "Page not found",
+      "description": "This page doesn't exist or has moved.",
+      "action": "Back to home"
+    },
+    "error": {
+      "title": "Something went wrong",
+      "description": "An unexpected error occurred. Try reloading.",
+      "retry": "Try again"
+    }
+  },
+  "profile": {
+    "title": "Profile",
+    "role": "Role: {role, select, admin {Admin} other {User}}",
+    "comingSoon": "Coming soon: edit your name, avatar and phone number.",
+    "changePassword": "Change password"
+  },
+  "mascot": {
+    "alt": {
+      "bubu-sleepy": "Bubu, a sleepy panda hugging popcorn",
+      "bubu-happy": "Bubu, a happy panda eating popcorn",
+      "bubu-going-out": "Bubu in a yellow hat and backpack, heading out",
+      "dudu-happy": "Dudu, a cheerful brown bear hugging popcorn",
+      "duo-watching": "Dudu and Bubu watching a movie on a laptop with snacks",
+      "popcorn": "A bucket of popcorn"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "language": {
+      "title": "Language",
+      "description": "Used for the interface and the notifications sent to you."
+    }
+  }
+}

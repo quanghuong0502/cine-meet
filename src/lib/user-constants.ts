@@ -11,3 +11,6 @@ export type UserStatus = (typeof USER_STATUSES)[number];
 
 export const AUTH_PROVIDERS = ["google", "credentials"] as const;
 export type AuthProviderName = (typeof AUTH_PROVIDERS)[number];
+
+/** Minimum length for a new password (shared by the service, the form hint and validation). */
+export const MIN_PASSWORD_LENGTH = 8;
