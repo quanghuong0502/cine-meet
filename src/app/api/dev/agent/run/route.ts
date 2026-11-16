@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 import { timingSafeEqual } from "node:crypto";
 import { join } from "node:path";
 import { NextResponse } from "next/server";
-import { runOnDevice } from "@/lib/dev-agent";
+import { isDeviceConnected, runOnDevice } from "@/lib/dev-agent";
 
 /**
  * Developer side of the dev agent: `POST { code, timeoutMs? }` with the secret in `x-dev-agent-token`
@@ -12,7 +12,7 @@ import { runOnDevice } from "@/lib/dev-agent";
 const TOKEN_FILE = join(process.cwd(), ".next", "dev-agent-token");
 const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]"]);
 
-export async function POST(request: Request) {
+async function guard(request: Request): Promise<NextResponse | null> {
   if (process.env.NODE_ENV === "production") return new NextResponse(null, { status: 404 });
   // The Host header (request.url is normalised to the server's own name): a request that came in by the LAN address is not ours.
   const host = (request.headers.get("host") ?? "").replace(/:\d+$/, "");
@@ -21,7 +21,19 @@ export async function POST(request: Request) {
   const expected = await readFile(TOKEN_FILE, "utf8").then((text) => text.trim(), () => "");
   const given = request.headers.get("x-dev-agent-token") ?? "";
   const valid = expected.length >= 32 && given.length === expected.length && timingSafeEqual(Buffer.from(given), Buffer.from(expected));
-  if (!valid) return new NextResponse(null, { status: 401 });
+  return valid ? null : new NextResponse(null, { status: 401 });
+}
+
+/** Is a phone listening? Runs nothing on it. */
+export async function GET(request: Request) {
+  const blocked = await guard(request);
+  if (blocked) return blocked;
+  return NextResponse.json({ connected: isDeviceConnected() });
+}
+
+export async function POST(request: Request) {
+  const blocked = await guard(request);
+  if (blocked) return blocked;
 
   const { code, timeoutMs } = (await request.json()) as { code?: string; timeoutMs?: number };
   if (typeof code !== "string" || !code.trim()) return NextResponse.json({ ok: false, error: "code is required" }, { status: 400 });
