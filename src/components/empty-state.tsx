@@ -1,10 +1,10 @@
-import { Mascot, type MascotName } from "@/components/mascot";
+import { Mascot, type MascotPose } from "@/components/mascot";
 import { cn } from "@/lib/utils";
 
 interface EmptyStateProps {
   title: string;
   description?: string;
-  mascot?: MascotName;
+  mascot?: MascotPose;
   /** Mascot placement is decorative here: the title already explains the state. */
   action?: React.ReactNode;
   className?: string;
@@ -14,7 +14,7 @@ interface EmptyStateProps {
 export function EmptyState({
   title,
   description,
-  mascot = "bubu",
+  mascot = "bubu-sleepy",
   action,
   className,
 }: EmptyStateProps) {
@@ -25,7 +25,7 @@ export function EmptyState({
         className,
       )}
     >
-      <Mascot name={mascot} size={140} decorative />
+      <Mascot pose={mascot} size={140} decorative />
       <h2 className="text-xl font-semibold">{title}</h2>
       {description ? (
         <p className="max-w-xs text-sm text-muted-foreground">{description}</p>

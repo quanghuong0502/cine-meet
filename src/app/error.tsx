@@ -7,7 +7,7 @@ export default function ErrorPage({ reset }: { error: Error; reset: () => void }
   return (
     <main className="flex min-h-dvh items-center justify-center">
       <EmptyState
-        mascot="bubu"
+        mascot="bubu-sleepy"
         title="Có gì đó trục trặc"
         description="Đã xảy ra lỗi ngoài ý muốn. Bạn thử tải lại nhé."
         action={

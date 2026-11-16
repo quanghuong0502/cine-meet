@@ -13,7 +13,7 @@ export default function HomePage() {
 
   return (
     <EmptyState
-      mascot="dudu"
+      mascot="dudu-happy"
       title="Chào mừng bạn!"
       description="Các tính năng sẽ lần lượt xuất hiện ở đây theo từng sprint."
       className="min-h-[60dvh] justify-center"

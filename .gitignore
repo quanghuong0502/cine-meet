@@ -40,3 +40,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Ảnh nhân vật gốc (có nền, có watermark): chỉ giữ trên máy, không đưa lên repo
+src/images/characters/_source/

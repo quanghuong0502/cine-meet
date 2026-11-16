@@ -7,6 +7,8 @@ paths:
 
 # Quy tắc nhân vật (Bubu & Dudu)
 
+Danh mục tư thế và ngữ cảnh dùng nằm ở `MASCOT_POSES` trong `src/components/mascot.tsx` (nguồn sự thật). Chọn tư thế theo ngữ cảnh ở đó, không theo cảm tính.
+
 Hai nhân vật là "linh hồn" của app. Chủ dự án (người dùng) đã **cho phép** Claude chủ động:
 - đặt hai nhân vật ở những vị trí hợp lý trong app;
 - tạo thêm biến thể ảnh của hai nhân vật cho các trang làm sau, miễn hợp ngữ cảnh.
@@ -20,23 +22,39 @@ Dùng cá nhân; không đưa ra công khai khi chưa có ảnh gốc hoặc gi�
 
 ## Cách dùng
 
-- Luôn dùng `<Mascot name="bubu" | "dudu" />` (`src/components/mascot.tsx`) và `EmptyState` (`src/components/empty-state.tsx`); không viết `<Image>` rời cho nhân vật.
-- Nơi đang dùng: đăng nhập (cả hai), đổi mật khẩu (Dudu), trang chào mừng (Dudu), trang đang phát triển và loading (Bubu),
-  404 và lỗi (Bubu). Màn hình mới có trạng thái rỗng, thành công, lỗi hay loading thì dùng `EmptyState` kèm nhân vật phù hợp.
+- Luôn dùng `<Mascot pose="..." />` (`src/components/mascot.tsx`) và `EmptyState` (`src/components/empty-state.tsx`); không viết `<Image>` rời cho nhân vật.
+- Nơi đang dùng: đăng nhập (`bubu-sleepy` + `dudu-happy`), đổi mật khẩu và trang chào mừng (`dudu-happy`), trang đang phát triển,
+  loading, 404 và lỗi (`bubu-sleepy`). Màn hình mới có trạng thái rỗng, thành công, lỗi hay loading thì dùng `EmptyState` kèm nhân vật phù hợp.
 - Tối đa **một** nhân vật (hoặc cặp ở màn nhận diện) trên một màn hình; không đặt lên màn hình dày dữ liệu
   (sơ đồ ghế, bảng, form dài) trừ khi là trạng thái rỗng, thành công hay lỗi. Không che nội dung hay vùng chạm.
-- Kích thước hiển thị tối đa 180px (ảnh gốc chỉ 240 đến 360px). Nhân vật chỉ để trang trí: `decorative` khi đã có chữ giải thích,
+- Kích thước hiển thị tự bị giới hạn ở một nửa chiều rộng ảnh gốc để nét trên màn hình Retina (ảnh gốc chỉ 189 đến 498px). Nhân vật chỉ để trang trí: `decorative` khi đã có chữ giải thích,
   còn lại giữ `alt` tiếng Việt. Hoạt ảnh nhẹ, bọc `motion-safe:`; không bắt buộc người dùng tương tác với nhân vật.
 - `priority` chỉ cho nhân vật nằm ở màn hình đầu tiên khi tải trang.
 
 ## Ảnh và biến thể
 
-- Ảnh nguồn nằm ở `src/images/characters/`, tên `<nhân-vật>-<biến-thể>.png`, PNG nền trong suốt (RGBA).
-  Ảnh gốc có nền hoặc có chữ ký/watermark không dùng trực tiếp trong code.
+- Ảnh dùng trong code nằm ở `src/images/characters/`, tên `<nhân-vật>-<tư-thế>.png` (tiếng Anh không dấu, viết thường, nối bằng dấu gạch),
+  PNG nền trong suốt (RGBA). `<nhân-vật>` là `bubu`, `dudu`, `duo` (cả hai) hoặc không có tiền tố cho đạo cụ (ví dụ `popcorn.png`).
+- Ảnh gốc (có nền, có chữ hoặc watermark) giữ trong `src/images/characters/_source/` (đã `.gitignore`, chỉ ở máy), không đưa lên repo, không import vào code.
+- Thêm ảnh mới: tách nền, đặt tên đúng quy ước, thêm một mục vào `MASCOT_POSES` (kèm `alt` tiếng Việt và `usage`), rồi cập nhật bảng trong file này nếu cần.
 - Claude **tự tạo được** biến thể từ ảnh sẵn có bằng `sharp` (có sẵn trong dự án): lật ngang, đổi kích thước,
   viền sticker, ghép hai nhân vật, ghép với khung hoặc đạo cụ vẽ bằng SVG, tách nền. Tạo xong phải xem thử trên nền dark, light
   và màu thương hiệu (`#C61583`) để chắc không có quầng sáng hay vạch, rồi mới dùng.
 - Claude **không** vẽ hay sinh được tư thế, biểu cảm hoặc nhân vật mới. Trang nào cần tư thế mới
   (ví dụ buồn, đang chọn ghế, ăn mừng), phải nói rõ với người dùng và xin ảnh nguồn hoặc đề xuất công cụ,
   không dựng hình giả hay vẽ lại sai phong cách.
+- `_source/duo-cinema-scene-watermarked.png` (cảnh hai nhân vật ngồi ghế rạp) có nền phức tạp và watermark nên chưa dùng được; cần bản gốc sạch.
 - Không xóa watermark của tác giả. Nếu ảnh nguồn có watermark thì nhắc người dùng thay bằng bản gốc trước khi công khai.
+
+## Danh mục tư thế hiện có
+
+| Pose | Nội dung | Dùng cho |
+|---|---|---|
+| `bubu-sleepy` | Bubu ngái ngủ ôm bắp rang | chờ, đang tải, vắng vẻ, không tìm thấy, lỗi nhẹ |
+| `bubu-happy` | Bubu cười, ăn bắp rang | thành công, hoàn tất, thông báo tốt |
+| `bubu-going-out` | Bubu đội mũ vàng, đeo ba lô, đang đi | sắp đến giờ chiếu, nhắc lịch, "đi thôi", chỉ đường |
+| `dudu-happy` | Dudu vui vẻ ôm bắp rang | chào mừng, nhắc nhở thân thiện, bạn bè |
+| `duo-watching` | Hai nhân vật xem laptop, ăn snack | lịch hẹn xem cùng nhau, mời bạn, chưa có lịch hẹn |
+| `popcorn` | Hộp bắp rang (đạo cụ, nét vẽ khác) | phần đồ ăn/combo, trang trí nhỏ |
+
+Chưa có: tư thế buồn, ngạc nhiên, ăn mừng, đang chọn ghế, đang tính tiền. Cần thì hỏi người dùng xin ảnh.

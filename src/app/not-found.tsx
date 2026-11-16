@@ -6,7 +6,7 @@ export default function NotFound() {
   return (
     <main className="flex min-h-dvh items-center justify-center">
       <EmptyState
-        mascot="bubu"
+        mascot="bubu-sleepy"
         title="Không tìm thấy trang"
         description="Trang bạn tìm không tồn tại hoặc đã được chuyển đi."
         action={
