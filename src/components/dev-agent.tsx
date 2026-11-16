@@ -1,7 +1,7 @@
 "use client";
 
 import { Radio } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { measure } from "@/app/dev-audit/measure";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -12,12 +12,34 @@ const MAX_RESULT_CHARS = 200_000;
 
 const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor as new (...args: string[]) => (...values: unknown[]) => Promise<unknown>;
 
+// Where the switch lives: localStorage, with a variable as fallback when that is not available (private mode).
+// Read through useSyncExternalStore so the server render and the first client render agree (switch off), and the saved value is applied right after.
+let memoryEnabled = false;
+const listeners = new Set<() => void>();
+
+function subscribe(listener: () => void) {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
 function readEnabled(): boolean {
   try {
     return localStorage.getItem(STORAGE_KEY) === "on";
   } catch {
-    return false;
+    return memoryEnabled;
   }
+}
+
+function writeEnabled(value: boolean) {
+  memoryEnabled = value;
+  try {
+    localStorage.setItem(STORAGE_KEY, value ? "on" : "off");
+  } catch {
+    // Not available: the variable above is used instead.
+  }
+  listeners.forEach((listener) => listener());
 }
 
 function serialize(value: unknown): unknown {
@@ -33,7 +55,7 @@ function serialize(value: unknown): unknown {
  * without anyone touching the phone. The switch survives page loads, so it keeps working while the agent navigates.
  */
 export function DevAgent() {
-  const [enabled, setEnabled] = useState(readEnabled);
+  const enabled = useSyncExternalStore(subscribe, readEnabled, () => false);
 
   useEffect(() => {
     if (!enabled) return;
@@ -76,13 +98,7 @@ export function DevAgent() {
   }, [enabled]);
 
   function toggle() {
-    const next = !enabled;
-    try {
-      localStorage.setItem(STORAGE_KEY, next ? "on" : "off");
-    } catch {
-      // Private mode: the switch just lasts until the page reloads.
-    }
-    setEnabled(next);
+    writeEnabled(!enabled);
   }
 
   return (
