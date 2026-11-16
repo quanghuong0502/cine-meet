@@ -66,6 +66,8 @@ interface TraceSample {
   shellHeight: number | null;
   headerTop: number | null;
   focusTop: number | null;
+  /** The shell's computed `position`: tells which version of the keyboard CSS the phone is really running. */
+  shellPosition: string | null;
 }
 
 /** Every animation frame for TRACE_MS: where the visual viewport, the app shell and the header are. This is how a judder is seen. */
@@ -89,6 +91,7 @@ function traceFrames(label: string): Promise<{ label: string; samples: TraceSamp
         shellTop: shell ? round(shell.getBoundingClientRect().top) : null,
         shellHeight: shell ? round(shell.getBoundingClientRect().height) : null,
         headerTop: header ? round(header.getBoundingClientRect().top) : null,
+        shellPosition: shell ? getComputedStyle(shell).position : null,
         focusTop: document.activeElement && document.activeElement !== document.body ? round(document.activeElement.getBoundingClientRect().top) : null,
       };
       const last = samples[samples.length - 1];
