@@ -24,7 +24,8 @@ function isActive(pathname: string, item: BottomNavItem): boolean {
 }
 
 /**
- * Bottom navigation bar for phones: rounded top corners, room for the iPhone home bar.
+ * Bottom navigation for phones: a floating pill of frosted glass that sits above the content with a gap
+ * around it (and above the iPhone home bar), so the page scrolls visibly behind it.
  * The selected tab shows its state three ways, not just by colour: a filled icon, the accent colour and a bolder label.
  */
 export function BottomNav({ label, items, className }: BottomNavProps) {
@@ -35,12 +36,12 @@ export function BottomNav({ label, items, className }: BottomNavProps) {
     <nav
       aria-label={label}
       className={cn(
-        "fixed inset-x-0 bottom-0 z-40 rounded-t-3xl border-x border-t bg-card/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-10px_30px_-12px_rgb(0_0_0/0.45)] backdrop-blur",
+        "pointer-events-none fixed inset-x-0 bottom-0 z-40 px-3 pb-[calc(var(--spacing-nav-gap)+env(safe-area-inset-bottom))]",
         className,
       )}
     >
       <ul
-        className="mx-auto grid max-w-2xl px-1"
+        className="pointer-events-auto mx-auto grid max-w-md rounded-full border border-white/15 bg-card/55 px-2 shadow-[0_8px_32px_-8px_rgb(0_0_0/0.6),inset_0_1px_0_rgb(255_255_255/0.12)] backdrop-blur-xl backdrop-saturate-150"
         style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}
       >
         {items.map((item) => {
@@ -52,7 +53,7 @@ export function BottomNav({ label, items, className }: BottomNavProps) {
                 href={item.href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex min-h-nav flex-col items-center justify-center gap-1 rounded-xl text-xs",
+                  "flex min-h-nav flex-col items-center justify-center gap-1 rounded-full text-xs",
                   active ? "font-semibold text-primary-text" : "font-medium text-muted-foreground",
                 )}
               >

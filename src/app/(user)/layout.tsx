@@ -31,7 +31,7 @@ export default async function UserLayout({
       <main
         className={
           hasBottomNav
-            ? "flex flex-1 flex-col pb-[calc(var(--spacing-nav)+env(safe-area-inset-bottom))]"
+            ? "flex flex-1 flex-col pb-[calc(var(--spacing-nav)+2*var(--spacing-nav-gap)+env(safe-area-inset-bottom))]"
             : "flex flex-1 flex-col"
         }
       >

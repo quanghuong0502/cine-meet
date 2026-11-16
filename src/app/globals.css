@@ -88,7 +88,8 @@
   --spacing-control: 3rem; /* 48px: default height of inputs and buttons (iOS ~50, Material text field 56 / button target 48) */
   --spacing-control-lg: 3.5rem; /* 56px: roomy controls */
   --spacing-row: 4rem; /* 64px: list rows with a title and a subtitle */
-  --spacing-nav: 3.5rem; /* 56px: one tab of the bottom navigation bar (the bar adds the home-bar inset) */
+  --spacing-nav: 3.5rem; /* 56px: one tab of the floating bottom navigation pill */
+  --spacing-nav-gap: 0.75rem; /* 12px: space around the floating pill (the bar adds the home-bar inset); content clears it by nav + 2 gaps */
 
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);

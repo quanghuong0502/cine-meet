@@ -41,7 +41,7 @@ export default async function AdminLayout({
         <main
           className={cn(
             "flex flex-1 flex-col",
-            hasBottomNav && "pb-[var(--bottom-nav-h)] [--bottom-nav-h:calc(var(--spacing-nav)+env(safe-area-inset-bottom))] md:[--bottom-nav-h:0px]",
+            hasBottomNav && "pb-[var(--bottom-nav-h)] [--bottom-nav-h:calc(var(--spacing-nav)+2*var(--spacing-nav-gap)+env(safe-area-inset-bottom))] md:[--bottom-nav-h:0px]",
           )}
         >
           {children}
