@@ -22,7 +22,7 @@ Dùng cá nhân; không đưa ra công khai khi chưa có ảnh gốc hoặc gi�
 
 ## Cách dùng
 
-- **Mọi trạng thái loading của app dùng `LoadingState`** (`src/components/loading-state.tsx`): Bubu `bubu-sleepy` lắc qua lại nhẹ như đang gật gù ngủ (`animate-doze`, tắt khi người dùng giảm chuyển động) kèm chữ "Đang tải...".
+- **Mọi trạng thái loading của app dùng `LoadingState`** (`src/components/loading-state.tsx`): Bubu `bubu-sleepy` đứng yên, không animation, kèm chữ "Đang tải...".
   Dùng cho mọi `loading.tsx` ở cấp route và vùng chờ dữ liệu; nút đang xử lý vẫn dùng spinner nhỏ. Không tự dựng màn loading khác, không dùng nhân vật khác cho loading.
 - Luôn dùng `<Mascot pose="..." />` (`src/components/mascot.tsx`) và `EmptyState` (`src/components/empty-state.tsx`); không viết `<Image>` rời cho nhân vật.
 - Nơi đang dùng: các màn auth (đăng nhập, đổi mật khẩu) dùng `duo-watching`, trang chào mừng (`dudu-happy`), trang đang phát triển,

@@ -1,5 +1,5 @@
 import { useTranslations } from "next-intl";
-import { DozingMascot } from "@/components/dozing-mascot";
+import { Mascot } from "@/components/mascot";
 import { cn } from "@/lib/utils";
 
 interface LoadingStateProps {
@@ -11,7 +11,7 @@ interface LoadingStateProps {
 }
 
 /**
- * The loading state of the app: Bubu dozing off (`bubu-sleepy`), swaying gently as if dozing off, with "Loading...".
+ * The loading state of the app: Bubu dozing off (`bubu-sleepy`), a still picture with no animation, with "Loading...".
  * Use this for every route-level `loading.tsx` and any area that waits for data; small buttons keep their inline spinner.
  */
 export function LoadingState({ fullScreen = false, compact = false, className }: LoadingStateProps) {
@@ -26,7 +26,7 @@ export function LoadingState({ fullScreen = false, compact = false, className }:
         className,
       )}
     >
-      <DozingMascot pose="bubu-sleepy" size={compact ? 80 : 112} />
+      <Mascot pose="bubu-sleepy" size={compact ? 80 : 112} decorative priority />
       <p className="text-sm text-muted-foreground">{t("loading")}</p>
     </div>
   );
