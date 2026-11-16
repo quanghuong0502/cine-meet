@@ -1,11 +1,4 @@
 import type { Metadata } from "next";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Mascot } from "@/components/mascot";
 import { getSafeRedirectPath } from "@/lib/redirect";
 import { LoginForm } from "./login-form";
@@ -24,25 +17,28 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
     : undefined;
 
   return (
-    <main className="flex min-h-dvh flex-col items-center justify-center gap-4 p-4">
-      <div className="flex items-end justify-center">
-        <Mascot name="bubu" size={96} decorative priority />
-        <Mascot name="dudu" size={96} decorative priority flip className="-ml-3" />
+    <main className="mx-auto flex min-h-dvh w-full max-w-sm flex-col justify-center gap-8 px-6 py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))]">
+      <header className="flex flex-col items-center gap-2">
+        <div className="flex items-end justify-center">
+          <Mascot name="bubu" size={96} decorative priority />
+          <Mascot name="dudu" size={96} decorative priority flip className="-ml-3" />
+        </div>
+        <p className="text-lg font-semibold tracking-tight">
+          Movie <span className="text-primary-text">App</span>
+        </p>
+      </header>
+
+      <div className="flex flex-col gap-1.5">
+        <h1 className="text-3xl font-semibold tracking-tight">Đăng nhập</h1>
+        <p className="text-sm text-muted-foreground">
+          Đăng nhập để lập kế hoạch xem phim cùng bạn bè.
+        </p>
       </div>
-      <Card className="w-full max-w-sm">
-        <CardHeader>
-          <CardTitle className="text-xl">Đăng nhập</CardTitle>
-          <CardDescription>
-            Lập kế hoạch xem phim cùng bạn bè.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <LoginForm
-            callbackUrl={getSafeRedirectPath(callbackUrl)}
-            initialError={initialError}
-          />
-        </CardContent>
-      </Card>
+
+      <LoginForm
+        callbackUrl={getSafeRedirectPath(callbackUrl)}
+        initialError={initialError}
+      />
     </main>
   );
 }

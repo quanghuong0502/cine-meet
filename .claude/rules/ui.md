@@ -57,7 +57,13 @@ Hướng thị giác tham khảo: app đặt vé/chọn chỗ hiện đại, s�
   (cố định, chừa safe-area). Mỗi màn hình tối đa một nút chính.
 - Poster là nhân vật chính: tỉ lệ 2:3, bo góc, lớp phủ gradient khi có chữ đè lên.
 
+**Form (mẫu theo màn đăng nhập):** không bọc trong thẻ; nhãn phía trên ô nhập (`text-muted-foreground`); ô nhập nền `card`,
+`h-12 rounded-xl text-base`; ô mật khẩu có nút hiện/ẩn (vùng chạm 44px, `aria-pressed`); lỗi hiện trong khung `destructive`
+nhạt kèm biểu tượng; nút gửi `h-14 rounded-full` toàn chiều rộng, đang xử lý thì hiện spinner (`motion-safe:`);
+đăng nhập bằng nhà cung cấp ngoài là nút viền `rounded-full` bên dưới dòng phân cách "hoặc".
+
 **Chữ:**
+- Màn hình nhận diện (đăng nhập) được dùng tiêu đề lớn `text-3xl font-semibold`; mọi màn khác theo thang bên dưới.
 - Thang cỡ cố định: tiêu đề trang `text-xl font-semibold`, tiêu đề mục `text-base font-semibold`, nội dung `text-sm`, chú thích `text-xs text-muted-foreground`.
 - Tối đa hai độ đậm trên một màn hình. Số tiền, giờ, số ghế dùng `tabular-nums`.
 
