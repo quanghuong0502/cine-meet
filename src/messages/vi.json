@@ -58,7 +58,8 @@
     "profile": "Hồ sơ",
     "changePassword": "Đổi mật khẩu",
     "signOut": "Đăng xuất",
-    "settings": "Cài đặt"
+    "settings": "Cài đặt",
+    "admin": "Quản trị"
   },
   "nav": {
     "label": "Điều hướng chính",
@@ -153,7 +154,8 @@
           "hint": "Mở app đặt vé của rạp"
         }
       }
-    }
+    },
+    "openApp": "Về ứng dụng"
   },
   "placeholders": {
     "admin": {
@@ -202,7 +204,8 @@
     "loading": "Đang tải...",
     "welcome": {
       "title": "Chào mừng bạn!",
-      "description": "Các tính năng sẽ lần lượt xuất hiện ở đây."
+      "description": "Các tính năng sẽ lần lượt xuất hiện ở đây.",
+      "adminAction": "Vào trang quản trị"
     },
     "notFound": {
       "title": "Không tìm thấy trang",

@@ -1,6 +1,6 @@
 "use client";
 
-import { KeyRound, Settings, UserRound } from "lucide-react";
+import { KeyRound, LayoutDashboard, Settings, UserRound } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useState } from "react";
@@ -19,6 +19,8 @@ interface UserMenuProps {
   name: string;
   /** Email or username, shown under the name. */
   identity?: string;
+  /** Admins get a link to the admin area, which is otherwise not reachable from the app. */
+  isAdmin?: boolean;
   /** Sign-out form, rendered by the server so it can use a server action. */
   children: React.ReactNode;
 }
@@ -30,7 +32,7 @@ function getInitials(name: string): string {
 }
 
 /** Avatar button in the header; opens a bottom sheet with profile links and sign-out (works by touch, no hover). */
-export function UserMenu({ name, identity, children }: UserMenuProps) {
+export function UserMenu({ name, identity, isAdmin = false, children }: UserMenuProps) {
   const t = useTranslations("account");
   const [open, setOpen] = useState(false);
 
@@ -57,6 +59,16 @@ export function UserMenu({ name, identity, children }: UserMenuProps) {
           aria-label={t("menuLabel")}
           className="flex flex-col gap-1 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))]"
         >
+          {isAdmin ? (
+            <DrawerClose asChild>
+              <Button asChild variant="ghost" className="h-11 justify-start gap-2 text-primary-text">
+                <Link href="/admin">
+                  <LayoutDashboard aria-hidden />
+                  {t("admin")}
+                </Link>
+              </Button>
+            </DrawerClose>
+          ) : null}
           <DrawerClose asChild>
             <Button asChild variant="ghost" className="h-11 justify-start gap-2">
               <Link href="/profile">

@@ -18,7 +18,7 @@ export default async function UserLayout({
     <div className="mx-auto flex min-h-dvh w-full max-w-2xl flex-col">
       <header className="flex items-center justify-between border-b px-4 py-1">
         <Logo size={48} wordmarkClassName="text-xl" />
-        <UserMenu name={user.name} identity={user.email ?? user.username}>
+        <UserMenu name={user.name} identity={user.email ?? user.username} isAdmin={user.role === "admin"}>
           <SignOutButton />
         </UserMenu>
       </header>

@@ -58,7 +58,8 @@
     "profile": "Profile",
     "changePassword": "Change password",
     "signOut": "Sign out",
-    "settings": "Settings"
+    "settings": "Settings",
+    "admin": "Admin"
   },
   "nav": {
     "label": "Main navigation",
@@ -153,7 +154,8 @@
           "hint": "Opens the cinema's booking app"
         }
       }
-    }
+    },
+    "openApp": "Back to the app"
   },
   "placeholders": {
     "admin": {
@@ -202,7 +204,8 @@
     "loading": "Loading...",
     "welcome": {
       "title": "Welcome!",
-      "description": "New features will show up here as they're added."
+      "description": "New features will show up here as they're added.",
+      "adminAction": "Open admin"
     },
     "notFound": {
       "title": "Page not found",

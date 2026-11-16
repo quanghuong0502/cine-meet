@@ -1,4 +1,5 @@
-import { Menu } from "lucide-react";
+import { House, Menu } from "lucide-react";
+import Link from "next/link";
 import { AdminNav } from "@/components/admin/admin-nav";
 import { Logo } from "@/components/logo";
 import { Wordmark } from "@/components/wordmark";
@@ -7,6 +8,7 @@ import { SignOutButton } from "@/components/sign-out-button";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
+  SheetClose,
   SheetContent,
   SheetDescription,
   SheetHeader,
@@ -32,7 +34,13 @@ export default async function AdminLayout({
           <span className="text-xs font-medium text-muted-foreground">{t("title")}</span>
         </span>
         <AdminNav />
-        <div className="mt-auto">
+        <div className="mt-auto flex flex-col">
+          <Button asChild variant="ghost" className="h-11 w-full justify-start gap-2">
+            <Link href="/">
+              <House aria-hidden />
+              {t("openApp")}
+            </Link>
+          </Button>
           <SignOutButton />
         </div>
       </aside>
@@ -51,7 +59,15 @@ export default async function AdminLayout({
                 <SheetDescription>{t("menuLabel")}</SheetDescription>
               </SheetHeader>
               <AdminNav insideSheet />
-              <div className="mt-auto">
+              <div className="mt-auto flex flex-col">
+                <SheetClose asChild>
+                  <Button asChild variant="ghost" className="h-11 w-full justify-start gap-2">
+                    <Link href="/">
+                      <House aria-hidden />
+                      {t("openApp")}
+                    </Link>
+                  </Button>
+                </SheetClose>
                 <SignOutButton />
               </div>
             </SheetContent>
