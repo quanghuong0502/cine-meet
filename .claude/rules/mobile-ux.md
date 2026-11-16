@@ -32,9 +32,11 @@ Căn cứ: [Apple HIG, tab bars](https://developer.apple.com/design/human-interf
 ## 3. Bố cục cố định và bàn phím (PWA iOS)
 
 1. **Header và thanh dưới không bao giờ cuộn theo trang:** khung app cao đúng một màn hình (`h-dvh`), chỉ vùng `main` (có `data-app-scroll`) cuộn.
-2. **Phần tử cố định ở đáy (menu, nút hành động) có `data-bottom-fixed`:** chúng ẩn khi bàn phím mở (`KeyboardWatcher`), vì trên app đã cài bàn phím che đáy trang thay vì thu nhỏ trang
-   (báo cáo WebKit; chưa kiểm chứng trên mọi bản iOS, phải thử trên máy thật). Nút hành động chính cố định đặt phía trên menu bằng `--bottom-nav-h`, và danh sách có đệm cuối để mục cuối không bị che.
-3. Ô nhập: cỡ chữ 16px, đúng `type`, `inputMode`, `autoComplete`, `autoCapitalize`, `enterKeyHint` (mật khẩu, email, số điện thoại, URL, số). Ô nhập gần đáy trang phải cuộn lên được trên bàn phím (đã có đệm 50dvh khi bàn phím mở).
+2. **Phần tử cố định ở đáy (menu, nút hành động) có `data-bottom-fixed`:** chúng ẩn khi bàn phím mở (`KeyboardWatcher`), vì trên app đã cài bàn phím che đáy trang thay vì thu nhỏ trang,
+   và chúng sẽ nổi lơ lửng giữa màn hình. Nút hành động chính cố định đặt phía trên menu bằng `--bottom-nav-h`, và danh sách có đệm cuối để mục cuối không bị che.
+   **Ngoài việc ẩn này, không can thiệp vào bố cục khi bàn phím mở** (không đổi chiều cao hay vị trí khung app, không khóa cuộn): đã thử và đo trên iPhone, Safari tự cuộn trang tới ô đang gõ và vẽ trước một khung hình rồi mới báo cho trang,
+   nên mọi chỉnh sửa từ JavaScript đều đến chậm một nhịp và gây giật. Hành vi mặc định mượt hơn.
+3. Ô nhập: cỡ chữ 16px, đúng `type`, `inputMode`, `autoComplete`, `autoCapitalize`, `enterKeyHint` (mật khẩu, email, số điện thoại, URL, số).
 4. Chiều cao toàn màn hình dùng `dvh`; mọi thứ dính mép dưới cộng `env(safe-area-inset-bottom)`. Không đặt `position: fixed` bên trong vùng đã `overflow: hidden` cho form.
 5. **Toast** nằm trên menu dưới và nút cố định (`--toast-offset`), không đè lên chúng.
 6. Bottom sheet (Drawer) cho form ngắn và menu; form dài chia bước. Sheet có `max-h` bằng `dvh` và cuộn bên trong.
