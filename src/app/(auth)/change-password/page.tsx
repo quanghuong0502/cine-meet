@@ -22,7 +22,7 @@ export default async function ChangePasswordPage() {
   const t = await getTranslations("auth.changePassword");
 
   return (
-    <main className="relative flex min-h-dvh flex-col items-center justify-center gap-4 p-4">
+    <main className="relative flex min-h-dvh flex-col items-center justify-center gap-8 p-4">
       {/* Installed PWAs have no browser Back button. Not shown when the change is required: there is nowhere to go until it is done. */}
       {user.mustChangePassword ? null : (
         // Pinned to the top left like on every other screen; inside the centred column it would float mid-screen.
