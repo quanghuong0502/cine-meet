@@ -38,8 +38,8 @@ Nguồn chính: [firt.dev, iOS PWA compatibility](https://firt.dev/notes/pwa-ios
 
 | # | Việc | Căn cứ | Trạng thái | Sprint |
 |---|---|---|---|---|
-| 1 | **Màn hình khởi động `apple-touch-startup-image`** cho từng cỡ máy (ảnh phải đúng từng pixel, nền `#13080d`, kèm `apple-mobile-web-app-capable`). iOS **bỏ qua** `background_color` của manifest, thiếu thì thấy nền trắng lúc mở app | firt.dev | **Chưa làm** | 8 (hoặc sớm hơn) |
-| 2 | **CSS cảm giác như app:** `-webkit-tap-highlight-color: transparent`, `-webkit-touch-callout: none` và `user-select: none` cho nút, thanh điều hướng, hình trang trí (không áp lên nội dung chữ và ô nhập) | blog (netguru, MagicBell), chưa chắc | **Chưa làm** | tiện tay khi sửa `globals.css` |
+| 1 | **Màn hình khởi động `apple-touch-startup-image`** cho từng cỡ máy (ảnh phải đúng từng pixel, nền `#13080d`, kèm `apple-mobile-web-app-capable`). iOS **bỏ qua** `background_color` của manifest, thiếu thì thấy nền trắng lúc mở app | firt.dev | **Đã làm** (9 cỡ iPhone, `npm run splash:generate`, danh sách ở `src/lib/splash-screens.json`; thêm máy mới thì thêm vào danh sách rồi chạy lại; chưa kiểm tra trên máy thật) | xong |
+| 2 | **CSS cảm giác như app:** `-webkit-tap-highlight-color: transparent` (Tailwind preflight đã có sẵn), `-webkit-touch-callout: none` và `user-select: none` cho nút, thanh điều hướng, header, ảnh (không áp lên nội dung chữ và ô nhập) | blog (netguru, MagicBell), chưa chắc | **Đã làm** (`globals.css`) | xong |
 | 3 | **`orientation` trong manifest bị iOS bỏ qua:** app vẫn xoay ngang. Bố cục phải chịu được hoặc hiện lời nhắc xoay dọc | firt.dev | Chưa xử lý | 8 |
 | 4 | **Thông báo đẩy chỉ chạy khi đã cài app.** Từ **iOS 18.4 có Declarative Web Push** (không cần service worker); có thêm **Badging API** (số trên icon) từ 16.4. Cân nhắc cả hai khi thiết kế thông báo | firt.dev, WebKit | Chưa làm | **4** |
 | 5 | **Hướng dẫn cài app** (Chia sẻ, rồi Thêm vào Màn hình chính): iOS không có `beforeinstallprompt` và `appinstalled` | firt.dev | Chưa làm | 4 hoặc 8 |
