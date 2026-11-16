@@ -4,6 +4,7 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { Be_Vietnam_Pro } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { NoZoom } from "@/components/no-zoom";
+import { BootSplash } from "@/components/route-loading";
 import { APP_NAME } from "@/components/wordmark";
 import "./globals.css";
 
@@ -55,6 +56,7 @@ export default async function RootLayout({
       <body className="min-h-full bg-background text-foreground">
         <NextIntlClientProvider>
           <NoZoom />
+          <BootSplash />
           {children}
           <Toaster theme="dark" />
         </NextIntlClientProvider>
