@@ -3,6 +3,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getTranslations } from "next-intl/server";
 import { Be_Vietnam_Pro } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
+import { DevAuditButton } from "@/components/dev-audit-button";
 import { KeyboardWatcher } from "@/components/keyboard-watcher";
 import { NetworkWatcher } from "@/components/network-watcher";
 import { NoZoom } from "@/components/no-zoom";
@@ -63,6 +64,7 @@ export default async function RootLayout({
           <BootSplash />
           {children}
           <Toaster theme="dark" />
+          {process.env.NODE_ENV !== "production" ? <DevAuditButton /> : null}
         </NextIntlClientProvider>
       </body>
     </html>

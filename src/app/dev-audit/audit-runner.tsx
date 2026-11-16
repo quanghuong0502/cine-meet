@@ -2,118 +2,7 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { AppOpenedMarker } from "@/components/route-loading";
-
-interface Box {
-  tag: string;
-  label: string;
-  w: number;
-  h: number;
-  x: number;
-  y: number;
-}
-
-interface RouteReport {
-  route: string;
-  viewport: { w: number; h: number };
-  loaded: boolean;
-  smallTargets: Box[];
-  tooClose: { a: string; b: string; gap: number }[];
-  overlapping: { a: string; b: string }[];
-  smallText: { label: string; px: number }[];
-  smallInputs: { label: string; px: number }[];
-  horizontalOverflow: number;
-  outsideViewport: Box[];
-  bottomFixedOverlap: string[];
-}
-
-const TARGET_SELECTOR = "a[href],button,[role=button],[role=switch],[role=tab],input:not([type=hidden]),select,textarea";
-const MIN_TARGET = 44;
-const MIN_GAP = 8;
-
-function describe(el: Element): string {
-  const label = (el.getAttribute("aria-label") || el.textContent || "").trim().replace(/\s+/g, " ").slice(0, 28);
-  return `${el.tagName.toLowerCase()}${label ? `:${label}` : ""}`;
-}
-
-function measure(route: string, win: Window): RouteReport {
-  const doc = win.document;
-  const vw = win.innerWidth;
-  const visible = (el: Element) => {
-    const r = el.getBoundingClientRect();
-    const cs = win.getComputedStyle(el);
-    return r.width > 0 && r.height > 0 && cs.visibility !== "hidden" && cs.display !== "none";
-  };
-  const box = (el: Element): Box => {
-    const r = el.getBoundingClientRect();
-    return { tag: el.tagName.toLowerCase(), label: describe(el), w: Math.round(r.width), h: Math.round(r.height), x: Math.round(r.left), y: Math.round(r.top) };
-  };
-
-  const targets = [...doc.querySelectorAll(TARGET_SELECTOR)].filter(visible);
-  const smallTargets = targets.map(box).filter((b) => b.w < MIN_TARGET || b.h < MIN_TARGET);
-
-  const tooClose: RouteReport["tooClose"] = [];
-  const overlapping: RouteReport["overlapping"] = [];
-  for (let i = 0; i < targets.length; i++) {
-    for (let j = i + 1; j < targets.length; j++) {
-      const a = targets[i]!;
-      const b = targets[j]!;
-      if (a.contains(b) || b.contains(a)) continue;
-      const ra = a.getBoundingClientRect();
-      const rb = b.getBoundingClientRect();
-      const dx = Math.max(ra.left - rb.right, rb.left - ra.right);
-      const dy = Math.max(ra.top - rb.bottom, rb.top - ra.bottom);
-      if (dx < 0 && dy < 0) overlapping.push({ a: describe(a), b: describe(b) });
-      else if (Math.max(dx, dy) < MIN_GAP) tooClose.push({ a: describe(a), b: describe(b), gap: Math.round(Math.max(dx, dy)) });
-    }
-  }
-
-  const smallText: RouteReport["smallText"] = [];
-  const smallInputs: RouteReport["smallInputs"] = [];
-  for (const el of doc.body.querySelectorAll("*")) {
-    if (!visible(el)) continue;
-    const px = parseFloat(win.getComputedStyle(el).fontSize);
-    if (el.matches("input,select,textarea")) {
-      if (px < 16) smallInputs.push({ label: describe(el), px });
-    } else if ([...el.childNodes].some((n) => n.nodeType === 3 && n.textContent?.trim()) && px < 12) {
-      smallText.push({ label: describe(el), px });
-    }
-  }
-
-  const outsideViewport = [...doc.body.querySelectorAll("*")]
-    .filter(visible)
-    .filter((el) => {
-      const r = el.getBoundingClientRect();
-      return r.right > vw + 1 || r.left < -1;
-    })
-    .slice(0, 10)
-    .map(box);
-
-  const fixed = [...doc.querySelectorAll("[data-bottom-fixed]")].filter(visible);
-  const bottomFixedOverlap: string[] = [];
-  for (let i = 0; i < fixed.length; i++) {
-    for (let j = i + 1; j < fixed.length; j++) {
-      const a = fixed[i]!.getBoundingClientRect();
-      const b = fixed[j]!.getBoundingClientRect();
-      if (a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom) {
-        bottomFixedOverlap.push(`${describe(fixed[i]!)} overlaps ${describe(fixed[j]!)}`);
-      }
-    }
-  }
-
-  return {
-    route,
-    viewport: { w: vw, h: win.innerHeight },
-    loaded: true,
-    smallTargets: smallTargets.slice(0, 30),
-    tooClose: tooClose.slice(0, 30),
-    overlapping: overlapping.slice(0, 30),
-    smallText: smallText.slice(0, 20),
-    smallInputs: smallInputs.slice(0, 20),
-    horizontalOverflow: doc.documentElement.scrollWidth - vw,
-    outsideViewport,
-    bottomFixedOverlap,
-  };
-}
+import { measure, type RouteReport } from "./measure";
 
 const LOAD_TIMEOUT_MS = 20_000;
 
@@ -160,7 +49,7 @@ export function AuditRunner({ routes }: { routes: string[] }) {
       if (cancelled) return;
       const report: RouteReport = win && ready
         ? measure(route, win)
-        : { route, viewport: size, loaded: false, smallTargets: [], tooClose: [], overlapping: [], smallText: [], smallInputs: [], horizontalOverflow: 0, outsideViewport: [], bottomFixedOverlap: [] };
+        : { route, viewport: size, loaded: false, standalone: false, devicePixelRatio: 1, visualViewport: null, scrollArea: null, smallTargets: [], tooClose: [], overlapping: [], smallText: [], smallInputs: [], horizontalOverflow: 0, outsideViewport: [], bottomFixedOverlap: [] };
       reports.current = [...reports.current, report];
       const last = index + 1 >= routes.length;
       await send(last);
