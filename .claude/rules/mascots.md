@@ -54,7 +54,7 @@ Dùng cá nhân; không đưa ra công khai khi chưa có ảnh gốc hoặc gi�
 | `bubu-happy` | Bubu cười, ăn bắp rang | thành công, hoàn tất, thông báo tốt |
 | `bubu-going-out` | Bubu đội mũ vàng, đeo ba lô, đang đi | sắp đến giờ chiếu, nhắc lịch, "đi thôi", chỉ đường |
 | `dudu-happy` | Dudu vui vẻ ôm bắp rang | chào mừng, nhắc nhở thân thiện, bạn bè |
-| `duo-watching` | Hai nhân vật xem laptop, ăn snack | màn auth (đăng nhập, đổi mật khẩu), lịch hẹn xem cùng nhau, mời bạn, chưa có lịch hẹn |
+| `duo-watching` | Hai nhân vật xem laptop, ăn snack | **logo và icon app (PWA)**, màn auth (đăng nhập, đổi mật khẩu), lịch hẹn xem cùng nhau, mời bạn, chưa có lịch hẹn |
 | `popcorn` | Hộp bắp rang (đạo cụ, nét vẽ khác) | phần đồ ăn/combo, trang trí nhỏ |
 
 Chưa có: tư thế buồn, ngạc nhiên, ăn mừng, đang chọn ghế, đang tính tiền.

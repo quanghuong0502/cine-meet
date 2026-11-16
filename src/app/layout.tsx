@@ -22,6 +22,10 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     description: t("description"),
     applicationName: APP_NAME,
+    // iOS home-screen app: opaque black status bar (the app is dark), so content starts below it.
+    // The apple-touch-icon comes from src/app/apple-icon.png.
+    appleWebApp: { capable: true, title: APP_NAME, statusBarStyle: "black" },
+    formatDetection: { telephone: false },
   };
 }
 
@@ -30,6 +34,8 @@ export const viewport: Viewport = {
   initialScale: 1,
   viewportFit: "cover",
   colorScheme: "dark",
+  // Same colour as the page background so the status bar and Dynamic Island blend in.
+  themeColor: "#13080d",
 };
 
 export default async function RootLayout({

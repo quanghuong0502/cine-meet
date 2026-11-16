@@ -44,6 +44,7 @@ Next.js (App Router, `src/`) · TypeScript strict · MongoDB Atlas + Mongoose ·
 - API key và connection string chỉ ở biến môi trường (`.env.local`), không đưa vào code hay file docs.
 - Trước khi báo hoàn thành: chạy `npm run lint` và `npm run typecheck`, sửa hết lỗi.
 - Việc lớn hoặc đụng nhiều file: nêu kế hoạch ngắn trước, chờ xác nhận rồi mới sửa.
+- **Tối ưu PWA ở mọi bước:** mỗi màn hình và tính năng phải chạy đúng khi cài ra màn hình chính (nút quay lại trong app, không phụ thuộc thanh trình duyệt, lỗi mạng hiện rõ); quy tắc ở `.claude/rules/pwa.md`.
 - Hai nhân vật Bubu & Dudu: dùng `Mascot`/`EmptyState`, được chủ động đặt và tạo biến thể ảnh theo `.claude/rules/mascots.md`. Màn hình nào cần tư thế chưa có thì báo người dùng ngay lúc nêu kế hoạch sprint để họ chuẩn bị ảnh.
 - Làm xong một đơn vị việc chạy được thì commit theo quy ước ở `.claude/rules/git.md` (không push nếu chưa được yêu cầu).
 

@@ -36,6 +36,7 @@ và thanh công cụ, giá trị chính xác tùy phiên bản iOS và vị trí
    kích thước hiển thị ở một nửa chiều rộng ảnh gốc. Ảnh nhân vật mới nên có chiều rộng từ 600px nếu muốn hiển thị ở khoảng 200px.
 8. **Chạm:** vùng chạm tối thiểu 44px, khoảng cách giữa hai vùng chạm gần nhau tối thiểu 8px, ô nhập chữ 16px trở lên (đã nêu trong `ui.md`).
 9. **PWA cài lên màn hình chính:** `theme-color` và màu nền của manifest phải trùng nền app để không lộ viền trắng ở vùng Dynamic Island và thanh home.
+   Hiện dùng thanh trạng thái iOS `black` (nội dung bắt đầu dưới thanh trạng thái); nếu đổi sang `black-translucent` thì mọi trang phải chừa `env(safe-area-inset-top)`. Chi tiết PWA ở `pwa.md`.
 
 ## Cách kiểm tra
 

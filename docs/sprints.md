@@ -12,6 +12,7 @@ Nguồn chi tiết: `docs/movie-app-mvp-design.md` (số mục ghi ở từng sp
 
 ## Quy ước chung (áp dụng mọi sprint)
 - [ ] `npm run lint`, `npm run typecheck`, `npm test` đều pass.
+- [ ] **PWA:** chạy đúng khi cài ra màn hình chính trên iPhone 13 và iPhone 14 Pro (`.claude/rules/pwa.md`): có nút quay lại trong app, không phụ thuộc thanh trình duyệt, lỗi mạng hiện rõ, mỗi màn có URL riêng.
 - [ ] Giao diện mobile-first, kiểm tra ở iPhone 13 (390×844) và iPhone 14 Pro (393×852), theo `.claude/rules/devices.md`; có trạng thái loading, rỗng, lỗi.
 - [ ] Quyền truy cập đúng: mọi trang/API server dùng `requireUser()` / `requireAdmin()` (không chỉ dựa vào middleware); dữ liệu cá nhân lọc theo `userId` từ session.
 - [ ] `scripts/seed.ts` cập nhật đủ dữ liệu mẫu để thử tính năng của sprint.
@@ -55,7 +56,7 @@ Trạng thái: Chưa bắt đầu · Đang làm · Chờ kiểm tra · Xong
   đọc lại `status` và `role` từ DB, dùng ở mọi trang và API server (thiết kế mục 6).
 - Model `User`: ít nhất một trong `username`/`email`, unique sparse index cho `username`, `email`, `phone`.
 - Layout user và admin; header có menu avatar (Hồ sơ, Đăng xuất); thanh dưới cùng cấu hình được danh sách tab, chỉ hiện tab đã có
-  tính năng, `/` chuyển tới tab đầu tiên khả dụng; font, dark mode, PWA tối thiểu.
+  tính năng, `/` chuyển tới tab đầu tiên khả dụng; font, dark mode; PWA: manifest, icon PNG 192/512/maskable, apple-touch-icon, `theme-color`, thẻ Apple, loại `sw.js` khỏi chặn đăng nhập.
 - **Hạ tầng i18n (vi, en):** thư viện i18n, file chuỗi `vi` và `en`, chọn ngôn ngữ (`users.locale`, rồi cookie, rồi `Accept-Language`, mặc định `vi`), `<html lang>`, trang Cài đặt (`/settings`, `/admin/settings`) là nơi duy nhất cấu hình ngôn ngữ, chuyển toàn bộ chuỗi đang viết cứng, test đồng bộ khóa (`.claude/rules/i18n.md`).
 - **Staging:** deploy lên dịch vụ Node chạy liên tục có HTTPS (thiết kế mục 1, Triển khai); cấu hình Google OAuth redirect cho staging;
   tách database dev/staging/production; `npm run seed` từ chối chạy ở production trừ khi có cờ rõ ràng (chỉ seed admin).
@@ -69,6 +70,7 @@ Trạng thái: Chưa bắt đầu · Đang làm · Chờ kiểm tra · Xong
 - [ ] Đăng xuất xóa session và về `/login`; sai 5 lần thì khóa 15 phút, các đợt sau gấp đôi (tối đa 24 giờ); đăng nhập đúng hoặc admin reset thì xóa bộ đếm; có test cho hàm tính thời gian khóa.
 - [ ] `/admin` bị chặn khi chưa đăng nhập hoặc là role user; admin bị hạ quyền hoặc khóa thì request kế tiếp bị chặn dù JWT chưa hết hạn.
 - [ ] Đăng nhập (Google và mật khẩu) hoạt động trên staging, thử bằng điện thoại thật.
+- [ ] Cài lên màn hình chính iPhone (icon Bubu và Dudu đúng, mở ở chế độ toàn màn hình, thanh trạng thái hòa với nền) và Android.
 - [ ] Đổi ngôn ngữ trong Cài đặt thì toàn bộ chữ (kể cả lỗi) đổi theo, không còn chuỗi viết cứng; đăng xuất rồi đăng nhập lại vẫn giữ ngôn ngữ đã chọn.
 - [ ] `npm run seed` tạo admin, chạy lại không tạo trùng.
 - [ ] `/login` hiển thị đúng và không cuộn ở iPhone 13 (390×844) và iPhone 14 Pro (393×852).
@@ -172,6 +174,7 @@ giới hạn tra cứu, kết bạn cần chấp nhận (thiết kế mục 6 v�
 - Thông báo cho sự kiện #1, #2, #4, #7, #13 (không có #3 vì cần tác vụ chạy theo giờ, làm ở Sprint 5B):
   - **In-app:** chuông trên header, badge; ghi trực tiếp vào `notifications`/`notificationDeliveries`.
   - **Worker:** `instrumentation.ts` khởi động vòng lặp khi `ENABLE_WORKER=true`; `findOneAndUpdate` để claim bản ghi, chống gửi trùng; retry tối đa 3 lần.
+  - **Service worker và offline:** `public/sw.js` (không cache dữ liệu cá nhân, ưu tiên mạng), trang `/offline`, hướng dẫn cài app trong Cài đặt (quy tắc `.claude/rules/pwa.md`).
   - **Web Push** (thiết kế mục 4.4): service worker `public/sw.js`, cặp khóa VAPID trong env, thư viện `web-push`; nút "Bật thông báo trên thiết bị này" và
     "Gửi thử" trong Hồ sơ (kèm hướng dẫn cài app cho iPhone); `pushSubscriptions`; xóa subscription khi gặp 404/410; chạm thông báo mở đúng trang.
 - Tùy chọn bật/tắt từng loại thông báo và từng thiết bị nhận push trong hồ sơ. Bật tab Lịch hẹn.
