@@ -231,5 +231,7 @@
   }
   html {
     @apply font-sans;
+    /* No rubber-band at the top and bottom of the page: the app shell stays put like a native app. */
+    overscroll-behavior: none;
   }
 }

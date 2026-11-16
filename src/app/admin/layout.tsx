@@ -18,7 +18,7 @@ export default async function AdminLayout({
   const hasBottomNav = ENABLED_ADMIN_NAV_ITEMS.length >= MIN_BOTTOM_NAV_ITEMS;
 
   return (
-    <div className="min-h-dvh md:grid md:grid-cols-[16rem_1fr]">
+    <div className="h-dvh overflow-hidden md:grid md:grid-cols-[16rem_1fr]">
       <aside className="sticky top-0 hidden h-dvh flex-col gap-4 border-r p-4 md:flex">
         <span className="px-3 py-2">
           <Logo size={44} wordmarkClassName="text-xl" />
@@ -29,9 +29,9 @@ export default async function AdminLayout({
         </div>
       </aside>
 
-      <div className="flex min-h-dvh min-w-0 flex-col">
+      <div className="flex h-dvh min-w-0 flex-col">
         {/* Phones: logo and avatar menu on top, the menu itself is the bottom bar. */}
-        <header className="sticky top-0 z-30 flex items-center justify-between gap-2 border-b bg-background/95 px-4 py-1 backdrop-blur md:hidden">
+        <header className="z-30 flex shrink-0 items-center justify-between gap-2 border-b bg-background/95 px-4 py-1 backdrop-blur md:hidden">
           <Logo size={44} wordmarkClassName="text-xl" />
           <UserMenu area="admin" name={admin.name} identity={admin.email ?? admin.username}>
             <SignOutButton />
@@ -40,7 +40,7 @@ export default async function AdminLayout({
         {/* --bottom-nav-h: room taken by the bottom bar on phones, used to keep content and the sticky "Add" button clear of it. */}
         <main
           className={cn(
-            "flex flex-1 flex-col",
+            "flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain",
             hasBottomNav && "pb-[var(--bottom-nav-h)] [--bottom-nav-h:calc(var(--spacing-nav)+2*var(--spacing-nav-gap)+env(safe-area-inset-bottom))] md:[--bottom-nav-h:0px]",
           )}
         >

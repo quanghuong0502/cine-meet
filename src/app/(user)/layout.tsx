@@ -21,8 +21,8 @@ export default async function UserLayout({
   const hasBottomNav = ENABLED_NAV_ITEMS.length > 0;
 
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-2xl flex-col">
-      <header className="flex items-center justify-between border-b px-4 py-1">
+    <div className="mx-auto flex h-dvh w-full max-w-2xl flex-col overflow-hidden">
+      <header className="flex shrink-0 items-center justify-between border-b px-4 py-1">
         <Logo size={48} wordmarkClassName="text-xl" />
         <UserMenu name={user.name} identity={user.email ?? user.username}>
           <SignOutButton />
@@ -31,8 +31,8 @@ export default async function UserLayout({
       <main
         className={
           hasBottomNav
-            ? "flex flex-1 flex-col pb-[calc(var(--spacing-nav)+2*var(--spacing-nav-gap)+env(safe-area-inset-bottom))]"
-            : "flex flex-1 flex-col"
+            ? "flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain pb-[calc(var(--spacing-nav)+2*var(--spacing-nav-gap)+env(safe-area-inset-bottom))]"
+            : "flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain"
         }
       >
         {children}
