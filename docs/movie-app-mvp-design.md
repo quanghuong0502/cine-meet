@@ -1,4 +1,4 @@
-# Thiết kế MVP: App lập kế hoạch & quản lý xem phim
+# Thiết kế MVP: SeatMate, app lập kế hoạch & quản lý xem phim
 
 > Tài liệu thiết kế tổng hợp. Dùng làm context cho Claude Project khi phát triển.
 > Phiên bản: 1.0 · Ngày: 2026-11-11

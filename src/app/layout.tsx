@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Be_Vietnam_Pro } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
+import { APP_NAME } from "@/components/wordmark";
 import "./globals.css";
 
 const beVietnamPro = Be_Vietnam_Pro({
@@ -12,12 +13,12 @@ const beVietnamPro = Be_Vietnam_Pro({
 
 export const metadata: Metadata = {
   title: {
-    default: "Movie App",
-    template: "%s · Movie App",
+    default: APP_NAME,
+    template: `%s · ${APP_NAME}`,
   },
   description:
     "Lập kế hoạch xem phim cùng bạn bè, ghi nhớ ghế đẹp ở từng phòng chiếu, chia tiền và theo dõi chi tiêu.",
-  applicationName: "Movie App",
+  applicationName: APP_NAME,
 };
 
 export const viewport: Viewport = {

@@ -37,6 +37,9 @@ Hướng thị giác tham khảo: app đặt vé/chọn chỗ hiện đại, s�
 - Không viết class màu theo kiểu `dark:` để vá từng chỗ; để token tự đổi theo theme.
 - Poster và heatmap giữ nguyên màu ở cả hai theme (heatmap dùng thang cố định).
 
+**Tên app: SeatMate.** Luôn hiển thị bằng `<Wordmark />` (`src/components/wordmark.tsx`): "Seat" màu chữ thường, "Mate" màu `primary-text`.
+Không viết tay chữ tên app trong giao diện; dùng hằng `APP_NAME` khi cần tên dạng chữ thuần (tiêu đề trang, manifest, thông báo).
+
 **Màu (token trong `src/app/globals.css`, không hard-code):**
 - Nền ba tầng: `background` < `card` < `elevated` (popover, bottom sheet). Phân tầng bằng độ sáng và viền mảnh, tối đa một mức đổ bóng.
 - Màu nhấn duy nhất là `primary` (raspberry `#C61583`, giống nhau ở cả hai theme), chỉ dùng cho hành động chính, mục đang chọn. Không tô màu nhấn lên mảng lớn.

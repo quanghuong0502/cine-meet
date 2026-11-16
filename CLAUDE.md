@@ -6,7 +6,7 @@
   admin có bố cục rộng hơn (sidebar, bảng) nhưng mọi chức năng admin vẫn phải dùng được trên điện thoại.
 - Tailwind mobile-first: viết class cho mobile trước, mở rộng bằng `md:` và `lg:`.
 
-# Movie App MVP
+# SeatMate MVP
 
 App lập kế hoạch & quản lý xem phim (sơ đồ ghế, chi tiêu, lịch hẹn nhóm). **Không bán vé.**
 Thiết kế đầy đủ: `docs/movie-app-mvp-design.md`. Trước khi làm một tính năng, đọc đúng mục liên quan

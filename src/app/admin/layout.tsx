@@ -1,5 +1,6 @@
 import { Menu } from "lucide-react";
 import { AdminNav } from "@/components/admin/admin-nav";
+import { Wordmark } from "@/components/wordmark";
 import { SignOutButton } from "@/components/sign-out-button";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,7 +24,7 @@ export default async function AdminLayout({
   return (
     <div className="min-h-dvh md:grid md:grid-cols-[16rem_1fr]">
       <aside className="sticky top-0 hidden h-dvh flex-col gap-4 border-r p-4 md:flex">
-        <span className="px-3 py-2 text-lg font-semibold">Movie App · Admin</span>
+        <span className="px-3 py-2 text-lg"><Wordmark /> <span className="font-normal text-muted-foreground">· Admin</span></span>
         <AdminNav />
         <div className="mt-auto">
           <SignOutButton />
@@ -40,7 +41,7 @@ export default async function AdminLayout({
             </SheetTrigger>
             <SheetContent side="left" className="flex w-72 flex-col gap-4 p-4">
               <SheetHeader className="p-0">
-                <SheetTitle>Movie App · Admin</SheetTitle>
+                <SheetTitle><Wordmark /> · Admin</SheetTitle>
                 <SheetDescription>Menu quản trị</SheetDescription>
               </SheetHeader>
               <AdminNav insideSheet />

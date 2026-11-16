@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Mascot } from "@/components/mascot";
+import { Wordmark } from "@/components/wordmark";
 import { getSafeRedirectPath } from "@/lib/redirect";
 import { LoginForm } from "./login-form";
 import { LOGIN_ERROR_MESSAGES, LOGIN_FALLBACK_ERROR } from "./messages";
@@ -23,9 +24,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           <Mascot name="bubu" size={96} decorative priority />
           <Mascot name="dudu" size={96} decorative priority flip className="-ml-3" />
         </div>
-        <p className="text-lg font-semibold tracking-tight">
-          Movie <span className="text-primary-text">App</span>
-        </p>
+        <Wordmark className="text-xl" />
       </header>
 
       <div className="flex flex-col gap-1.5">
