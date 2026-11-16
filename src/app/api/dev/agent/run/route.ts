@@ -14,7 +14,9 @@ const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]"]);
 
 export async function POST(request: Request) {
   if (process.env.NODE_ENV === "production") return new NextResponse(null, { status: 404 });
-  if (!LOCAL_HOSTS.has(new URL(request.url).hostname)) return new NextResponse(null, { status: 403 });
+  // The Host header (request.url is normalised to the server's own name): a request that came in by the LAN address is not ours.
+  const host = (request.headers.get("host") ?? "").replace(/:\d+$/, "");
+  if (!LOCAL_HOSTS.has(host)) return new NextResponse(null, { status: 403 });
 
   const expected = await readFile(TOKEN_FILE, "utf8").then((text) => text.trim(), () => "");
   const given = request.headers.get("x-dev-agent-token") ?? "";
