@@ -53,7 +53,11 @@ export function measure(route: string, win: Window): RouteReport {
     return { tag: el.tagName.toLowerCase(), label: describe(el), w: Math.round(r.width), h: Math.round(r.height), x: Math.round(r.left), y: Math.round(r.top) };
   };
 
-  const targets = [...doc.querySelectorAll(TARGET_SELECTOR)].filter(visible).filter((el) => !el.closest("[data-dev-audit]"));
+  // With a sheet or dialog open, the page behind it cannot be touched: measure only what is inside the dialog.
+  const dialog = doc.querySelector('[role="dialog"],[role="alertdialog"]');
+  const targets = [...doc.querySelectorAll(TARGET_SELECTOR)]
+    .filter(visible)
+    .filter((el) => !el.closest("[data-dev-audit]") && (!dialog || dialog.contains(el)));
   const smallTargets = targets.map(box).filter((b) => b.w < MIN_TARGET || b.h < MIN_TARGET);
 
   const tooClose: RouteReport["tooClose"] = [];
@@ -81,7 +85,7 @@ export function measure(route: string, win: Window): RouteReport {
     if (!visible(el)) continue;
     const px = parseFloat(win.getComputedStyle(el).fontSize);
     if (el.matches("input,select,textarea")) {
-      if (px < 16) smallInputs.push({ label: describe(el), px });
+      if (px < 16 && !el.matches("input[type=color],input[type=checkbox],input[type=radio]")) smallInputs.push({ label: describe(el), px });
     } else if ([...el.childNodes].some((n) => n.nodeType === 3 && n.textContent?.trim()) && px < 12) {
       smallText.push({ label: describe(el), px });
     }
@@ -119,8 +123,8 @@ export function measure(route: string, win: Window): RouteReport {
       const el = doc.activeElement;
       if (!el || !el.matches("input,select,textarea")) return null;
       const r = el.getBoundingClientRect();
-      // visualViewport is the part of the screen above the keyboard.
-      const visibleBottom = win.visualViewport ? win.visualViewport.offsetTop + win.visualViewport.height : win.innerHeight;
+      // The part of the screen the keyboard leaves free (visualViewport is the visible part, innerHeight the page's own).
+      const visibleBottom = Math.min(win.innerHeight, win.visualViewport?.height ?? win.innerHeight);
       return { label: describe(el), top: Math.round(r.top), bottom: Math.round(r.bottom), visibleBottom: Math.round(visibleBottom), clearOfKeyboard: r.top >= 0 && r.bottom <= visibleBottom };
     })(),
     scrollArea: (() => {
