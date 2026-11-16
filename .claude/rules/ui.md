@@ -6,7 +6,7 @@ paths:
 
 # Quy tắc UI
 
-- Mobile-first: bố cục cho 390px, sau đó mới mở rộng. Vùng chạm tối thiểu 44px.
+- Mobile-first: bố cục cho 390 đến 393px (iPhone 13 và iPhone 14 Pro, xem `devices.md`), sau đó mới mở rộng. Vùng chạm tối thiểu 44px.
 - Điều hướng dưới cùng cho user: Tổng quan · Lịch chiếu · Lịch hẹn · Rạp · Chat.
 - Chỉ dùng component shadcn (Drawer cho bottom sheet, Sheet, Dialog, Tabs, Calendar, Sonner cho toast).
   Cần component mới thì tra bằng shadcn MCP rồi cài bằng CLI.

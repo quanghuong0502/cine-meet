@@ -12,7 +12,7 @@ Nguồn chi tiết: `docs/movie-app-mvp-design.md` (số mục ghi ở từng sp
 
 ## Quy ước chung (áp dụng mọi sprint)
 - [ ] `npm run lint`, `npm run typecheck`, `npm test` đều pass.
-- [ ] Giao diện mobile-first, kiểm tra ở viewport 390px; có trạng thái loading, rỗng, lỗi.
+- [ ] Giao diện mobile-first, kiểm tra ở iPhone 13 (390×844) và iPhone 14 Pro (393×852), theo `.claude/rules/devices.md`; có trạng thái loading, rỗng, lỗi.
 - [ ] Quyền truy cập đúng: mọi trang/API server dùng `requireUser()` / `requireAdmin()` (không chỉ dựa vào middleware); dữ liệu cá nhân lọc theo `userId` từ session.
 - [ ] `scripts/seed.ts` cập nhật đủ dữ liệu mẫu để thử tính năng của sprint.
 - [ ] Không có lỗi build/runtime (kiểm tra bằng Next.js DevTools MCP khi `npm run dev` đang chạy).
@@ -71,7 +71,7 @@ Trạng thái: Chưa bắt đầu · Đang làm · Chờ kiểm tra · Xong
 - [ ] Đăng nhập (Google và mật khẩu) hoạt động trên staging, thử bằng điện thoại thật.
 - [ ] Đổi ngôn ngữ trong Cài đặt thì toàn bộ chữ (kể cả lỗi) đổi theo, không còn chuỗi viết cứng; đăng xuất rồi đăng nhập lại vẫn giữ ngôn ngữ đã chọn.
 - [ ] `npm run seed` tạo admin, chạy lại không tạo trùng.
-- [ ] `/login` hiển thị đúng ở 390px.
+- [ ] `/login` hiển thị đúng và không cuộn ở iPhone 13 (390×844) và iPhone 14 Pro (393×852).
 
 ---
 

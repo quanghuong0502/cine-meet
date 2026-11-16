@@ -1,7 +1,7 @@
 ## Nền tảng
 
 - Đây là **web app responsive** (Next.js), không phải app native. Cài lên màn hình chính được qua PWA.
-- Thiết bị chính là **điện thoại** (Safari iOS, Chrome Android). Thiết kế và kiểm tra ở 390px trước.
+- Thiết bị chính là **điện thoại** (Safari iOS, Chrome Android). Thiết kế và kiểm tra trước hết trên **iPhone 13 (390×844) và iPhone 14 Pro (393×852)**; quy tắc riêng ở `.claude/rules/devices.md`.
 - Desktop vẫn được hỗ trợ: user dùng cùng giao diện mobile, canh giữa với chiều rộng tối đa hợp lý;
   admin có bố cục rộng hơn (sidebar, bảng) nhưng mọi chức năng admin vẫn phải dùng được trên điện thoại.
 - Tailwind mobile-first: viết class cho mobile trước, mở rộng bằng `md:` và `lg:`.
@@ -32,7 +32,7 @@ Next.js (App Router, `src/`) · TypeScript strict · MongoDB Atlas + Mongoose ·
 
 ## Quy tắc luôn áp dụng
 
-- Mobile-first: thiết kế cho 390px trước. UI hai ngôn ngữ: tiếng Việt (mặc định) và tiếng Anh; mọi chuỗi đi qua tầng i18n, không viết cứng (xem `.claude/rules/i18n.md`). Chữ ngắn gọn nhưng đủ ngữ cảnh (xem `.claude/rules/copy.md`). Tiền VND (`Intl.NumberFormat`).
+- Mobile-first: thiết kế cho iPhone 13 và iPhone 14 Pro (390 đến 393px) trước. UI hai ngôn ngữ: tiếng Việt (mặc định) và tiếng Anh; mọi chuỗi đi qua tầng i18n, không viết cứng (xem `.claude/rules/i18n.md`). Chữ ngắn gọn nhưng đủ ngữ cảnh (xem `.claude/rules/copy.md`). Tiền VND (`Intl.NumberFormat`).
 - Chỉ dùng shadcn/ui + Tailwind cho giao diện. Không thêm thư viện UI khác khi chưa hỏi.
 - `userId` và role luôn lấy từ session ở server. Không bao giờ nhận từ body, query hay từ AI.
 - Không dùng Redis. Job hẹn giờ dùng collection `scheduledNotifications` (xem thiết kế mục 4.3).
