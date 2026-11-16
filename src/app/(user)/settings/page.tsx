@@ -16,7 +16,7 @@ export default async function SettingsPage() {
   const user = await requireUser();
   return (
     <div className="flex flex-col gap-4 p-4">
-      <PageHeader title={t("title")} backHref="/" />
+      <PageHeader title={t("title")} backHref="/profile" />
       <LanguageSetting />
       <SecuritySetting hasPassword={user.hasPassword} />
     </div>
