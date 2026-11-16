@@ -222,6 +222,10 @@
       "title": "Có gì đó trục trặc",
       "description": "Đã xảy ra lỗi ngoài ý muốn. Hãy thử tải lại.",
       "retry": "Thử lại"
+    },
+    "network": {
+      "offline": "Mất kết nối mạng. Thao tác sẽ chưa được lưu.",
+      "online": "Đã có mạng trở lại"
     }
   },
   "profile": {

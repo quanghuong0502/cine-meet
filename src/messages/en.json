@@ -222,6 +222,10 @@
       "title": "Something went wrong",
       "description": "An unexpected error occurred. Try reloading.",
       "retry": "Try again"
+    },
+    "network": {
+      "offline": "You're offline. Changes won't be saved.",
+      "online": "You're back online"
     }
   },
   "profile": {
