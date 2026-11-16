@@ -1,3 +1,4 @@
+import { AppOpenedMarker } from "@/components/route-loading";
 import { Logo } from "@/components/logo";
 import { redirect } from "next/navigation";
 import { UserMenu } from "@/components/user-menu";
@@ -35,6 +36,7 @@ export default async function UserLayout({
         {children}
       </main>
       <UserBottomNav />
+      <AppOpenedMarker />
     </div>
   );
 }

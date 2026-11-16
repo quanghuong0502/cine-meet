@@ -1,6 +1,7 @@
 import { AdminBottomNav } from "@/components/admin/admin-bottom-nav";
 import { AdminNav } from "@/components/admin/admin-nav";
 import { Logo } from "@/components/logo";
+import { AppOpenedMarker } from "@/components/route-loading";
 import { SignOutButton } from "@/components/sign-out-button";
 import { UserMenu } from "@/components/user-menu";
 import { ENABLED_ADMIN_NAV_ITEMS, MIN_BOTTOM_NAV_ITEMS } from "@/lib/admin-nav";
@@ -47,6 +48,7 @@ export default async function AdminLayout({
         </main>
       </div>
       <AdminBottomNav />
+      <AppOpenedMarker />
     </div>
   );
 }
