@@ -1,5 +1,5 @@
 import { useTranslations } from "next-intl";
-import { Mascot } from "@/components/mascot";
+import { DozingMascot } from "@/components/dozing-mascot";
 import { cn } from "@/lib/utils";
 
 interface LoadingStateProps {
@@ -26,13 +26,7 @@ export function LoadingState({ fullScreen = false, compact = false, className }:
         className,
       )}
     >
-      <Mascot
-        pose="bubu-sleepy"
-        size={compact ? 80 : 112}
-        decorative
-        priority
-        className="origin-bottom motion-safe:animate-doze"
-      />
+      <DozingMascot pose="bubu-sleepy" size={compact ? 80 : 112} />
       <p className="text-sm text-muted-foreground">{t("loading")}</p>
     </div>
   );
