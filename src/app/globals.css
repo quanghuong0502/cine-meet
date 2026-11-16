@@ -264,4 +264,5 @@ html[data-keyboard="open"] [data-app-scroll] {
 html[data-keyboard="open"] [data-app-shell] {
   height: var(--vv-height, 100dvh);
   transform: translateY(var(--vv-page-top, 0px));
+  will-change: transform;
 }

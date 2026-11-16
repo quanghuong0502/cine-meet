@@ -2,6 +2,12 @@
 
 import { useEffect } from "react";
 
+/** The keyboard takes a moment to slide up; look where the field ended up only after that. */
+const KEYBOARD_SETTLE_MS = 350;
+/** No viewport change for this long = the keyboard has stopped moving. */
+const HEIGHT_SETTLE_MS = 120;
+/** Breathing room between the field and the keyboard's own bar (previous, next, done). */
+const FIELD_MARGIN = 16;
 const TEXT_INPUT = "input:not([type=checkbox]):not([type=radio]):not([type=button]):not([type=submit]):not([type=range]), textarea, select, [contenteditable=true]";
 
 /**
@@ -19,12 +25,23 @@ const TEXT_INPUT = "input:not([type=checkbox]):not([type=radio]):not([type=butto
 export function KeyboardWatcher() {
   useEffect(() => {
     const root = document.documentElement;
+    const viewport = window.visualViewport;
     let timer: ReturnType<typeof setTimeout> | undefined;
 
     const onFocusIn = (event: FocusEvent) => {
       if (!(event.target instanceof Element) || !event.target.matches(TEXT_INPUT)) return;
       clearTimeout(timer);
       root.dataset.keyboard = "open";
+
+      // Once the keyboard has come up, make sure the field being typed in is in the part of the screen it leaves free.
+      const field = event.target as HTMLElement;
+      setTimeout(() => {
+        if (document.activeElement !== field) return;
+        const top = viewport?.offsetTop ?? 0;
+        const bottom = top + (viewport?.height ?? window.innerHeight) - FIELD_MARGIN;
+        const rect = field.getBoundingClientRect();
+        if (rect.bottom > bottom || rect.top < top) field.scrollIntoView({ block: "center", behavior: "smooth" });
+      }, KEYBOARD_SETTLE_MS);
     };
     const onFocusOut = () => {
       // Moving from one field to the next fires focusout then focusin: wait a beat so the menu does not flicker.
@@ -36,15 +53,25 @@ export function KeyboardWatcher() {
       }, 100);
     };
 
-    const viewport = window.visualViewport;
     let frame = 0;
-    const syncViewport = () => {
+    let heightTimer: ReturnType<typeof setTimeout> | undefined;
+    // Position follows the view on every frame (moving an element is cheap and smooth); the height is set once the keyboard
+    // has stopped moving, because changing it on every frame of the slide-up makes the whole layout recalculate and the app judder.
+    const syncPosition = () => {
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
-        if (!viewport) return;
-        root.style.setProperty("--vv-height", `${viewport.height}px`);
-        root.style.setProperty("--vv-page-top", `${viewport.pageTop}px`);
+        if (viewport) root.style.setProperty("--vv-page-top", `${viewport.pageTop}px`);
       });
+    };
+    const syncHeight = () => {
+      clearTimeout(heightTimer);
+      heightTimer = setTimeout(() => {
+        if (viewport) root.style.setProperty("--vv-height", `${viewport.height}px`);
+      }, HEIGHT_SETTLE_MS);
+    };
+    const syncViewport = () => {
+      syncPosition();
+      syncHeight();
     };
     syncViewport();
     viewport?.addEventListener("resize", syncViewport);
@@ -55,6 +82,7 @@ export function KeyboardWatcher() {
     return () => {
       clearTimeout(timer);
       cancelAnimationFrame(frame);
+      clearTimeout(heightTimer);
       viewport?.removeEventListener("resize", syncViewport);
       viewport?.removeEventListener("scroll", syncViewport);
       root.style.removeProperty("--vv-height");
