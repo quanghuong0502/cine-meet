@@ -4,6 +4,7 @@ import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireUser } from "@/lib/auth/guards";
+import { POST_LOGIN_PATH } from "@/lib/post-login";
 import { MIN_PASSWORD_LENGTH } from "@/lib/user-constants";
 import { changePassword } from "@/services/user.service";
 
@@ -56,5 +57,5 @@ export async function changePasswordAction(
     return { error: key === "tooShort" ? t(key, { min: MIN_PASSWORD_LENGTH }) : t(key) };
   }
 
-  redirect("/");
+  redirect(POST_LOGIN_PATH);
 }

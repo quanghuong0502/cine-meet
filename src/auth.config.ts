@@ -1,4 +1,5 @@
 import type { NextAuthConfig } from "next-auth";
+import { POST_LOGIN_PATH } from "@/lib/post-login";
 import { USER_ROLES, type UserRole } from "@/lib/user-constants";
 
 /**
@@ -34,7 +35,7 @@ export const authConfig = {
       if (startsWithSegment(pathname, AUTH_API_PREFIX)) return true;
 
       if (pathname === LOGIN_PATH) {
-        return isLoggedIn ? Response.redirect(new URL("/", nextUrl)) : true;
+        return isLoggedIn ? Response.redirect(new URL(POST_LOGIN_PATH, nextUrl)) : true;
       }
 
       if (isAdminApi) {

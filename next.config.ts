@@ -5,6 +5,8 @@ const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
+  // Lets a second server (e.g. for browser tests on another port) use its own build folder next to the developer's dev server.
+  distDir: process.env.NEXT_DIST_DIR ?? ".next",
 };
 
 export default withNextIntl(nextConfig);

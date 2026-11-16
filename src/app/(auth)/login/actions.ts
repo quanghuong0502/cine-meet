@@ -4,6 +4,7 @@ import { getTranslations } from "next-intl/server";
 import { AuthError, CredentialsSignin } from "next-auth";
 import { z } from "zod";
 import { ACCOUNT_LOCKED_CODE, signIn, TOO_MANY_ATTEMPTS_CODE } from "@/auth";
+import { resolvePostLoginTarget } from "@/lib/post-login";
 import { getSafeRedirectPath } from "@/lib/redirect";
 
 export interface LoginState {
@@ -19,7 +20,8 @@ const loginSchema = z.object({
 
 function readRedirectTarget(formData: FormData): string {
   const value = formData.get("callbackUrl");
-  return getSafeRedirectPath(typeof value === "string" ? value : null);
+  // A plain sign-in lands by role (admin area for admins); a requested page is kept.
+  return resolvePostLoginTarget(getSafeRedirectPath(typeof value === "string" ? value : null));
 }
 
 export async function loginWithPassword(
