@@ -63,7 +63,20 @@ interface MascotProps {
   className?: string;
 }
 
-export function Mascot({
+/**
+ * Decorative mascots need no translation, so they must not call `useTranslations`: on the server that hook waits for the
+ * request config (a database read), which would hold back a whole layout (e.g. the header logo) behind a loading screen.
+ */
+export function Mascot(props: MascotProps) {
+  return props.decorative ? <MascotImage {...props} alt="" /> : <DescribedMascot {...props} />;
+}
+
+function DescribedMascot(props: MascotProps) {
+  const t = useTranslations("mascot.alt");
+  return <MascotImage {...props} alt={t(props.pose)} />;
+}
+
+function MascotImage({
   pose,
   size = 112,
   decorative = false,
@@ -71,8 +84,8 @@ export function Mascot({
   fillHeight = false,
   priority = false,
   className,
-}: MascotProps) {
-  const t = useTranslations("mascot.alt");
+  alt,
+}: MascotProps & { alt: string }) {
   const { src } = MASCOT_POSES[pose];
   const width = Math.min(size, Math.floor(src.width / 2));
   const height = Math.round((width * src.height) / src.width);
@@ -80,7 +93,7 @@ export function Mascot({
   return (
     <Image
       src={src}
-      alt={decorative ? "" : t(pose)}
+      alt={alt}
       aria-hidden={decorative ? true : undefined}
       width={width}
       height={height}

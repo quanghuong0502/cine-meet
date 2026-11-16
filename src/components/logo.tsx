@@ -18,7 +18,7 @@ interface LogoProps {
 export function Logo({ size = 48, className, wordmarkClassName }: LogoProps) {
   return (
     <span className={cn("inline-flex items-center gap-2", className)}>
-      <Mascot pose="duo-watching" size={size} decorative />
+      <Mascot pose="duo-watching" size={size} decorative priority />
       {/* leading-none: the text box is as tall as the font, so its centre lines up with the image centre. */}
       <Wordmark className={cn("leading-none", wordmarkClassName)} />
     </span>
