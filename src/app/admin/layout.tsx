@@ -28,7 +28,7 @@ export default async function AdminLayout({
     <div className="min-h-dvh md:grid md:grid-cols-[16rem_1fr]">
       <aside className="sticky top-0 hidden h-dvh flex-col gap-4 border-r p-4 md:flex">
         <span className="flex items-center gap-2 px-3 py-2">
-          <Logo size={36} wordmarkClassName="text-xl" />
+          <Logo size={44} wordmarkClassName="text-xl" />
           <span className="text-xl font-normal text-muted-foreground">· {t("title")}</span>
         </span>
         <AdminNav />

@@ -36,7 +36,10 @@ Dùng cá nhân; không đưa ra công khai khi chưa có ảnh gốc hoặc gi�
 - Ảnh dùng trong code nằm ở `src/images/characters/`, tên `<nhân-vật>-<tư-thế>.png` (tiếng Anh không dấu, viết thường, nối bằng dấu gạch),
   PNG nền trong suốt (RGBA). `<nhân-vật>` là `bubu`, `dudu`, `duo` (cả hai) hoặc không có tiền tố cho đạo cụ (ví dụ `popcorn.png`).
 - Ảnh gốc (có nền, có chữ hoặc watermark) giữ trong `src/images/characters/_source/` (đã `.gitignore`, chỉ ở máy), không đưa lên repo, không import vào code.
-- Thêm ảnh mới: tách nền, đặt tên đúng quy ước, thêm một mục vào `MASCOT_POSES` (kèm `alt` tiếng Việt và `usage`), rồi cập nhật bảng trong file này nếu cần.
+- **Ảnh luôn được cắt sát hình (không còn viền trong suốt thừa)** để căn giữa chính xác với chữ trong mọi tình huống. Sau khi thêm hoặc sửa ảnh,
+  chạy `npm run mascots:trim` (script `scripts/trim-mascots.mjs`, chỉ cắt ảnh trong `src/images/characters/`, không đụng `_source/`).
+  Ảnh tạo thêm bằng `sharp` cũng phải cắt sát trước khi dùng.
+- Thêm ảnh mới: tách nền, cắt sát, đặt tên đúng quy ước, thêm một mục vào `MASCOT_POSES` (kèm `alt` tiếng Việt và `usage`), rồi cập nhật bảng trong file này nếu cần.
 - Claude **tự tạo được** biến thể từ ảnh sẵn có bằng `sharp` (có sẵn trong dự án): lật ngang, đổi kích thước,
   viền sticker, ghép hai nhân vật, ghép với khung hoặc đạo cụ vẽ bằng SVG, tách nền. Tạo xong phải xem thử trên nền dark, light
   và màu thương hiệu (`#C61583`) để chắc không có quầng sáng hay vạch, rồi mới dùng.

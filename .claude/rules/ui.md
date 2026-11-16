@@ -40,6 +40,9 @@ Hướng thị giác tham khảo: app đặt vé/chọn chỗ hiện đại, s�
 **Logo app = ảnh `duo-watching` (Bubu và Dudu) kèm wordmark**, dùng component `Logo` (`src/components/logo.tsx`) ở header và thanh bên.
 Cùng ảnh này, đặt trên nền hồng `#C61583`, là icon khi thêm app vào màn hình chính (`public/icons/*`, `src/app/apple-icon.png`, favicon).
 Không dùng ảnh khác làm logo hay icon; đổi logo thì xuất lại toàn bộ icon PWA.
+**Logo luôn căn giữa với chữ trong mọi tình huống:** ảnh logo và nhân vật được cắt sát hình (`npm run mascots:trim`), `Logo` dùng `inline-flex items-center`
+và chữ `leading-none`, nên tâm dọc của ảnh trùng tâm dọc của chữ (đã đo: lệch dưới 1px ở các cỡ 32 đến 96px); khi xếp chồng ảnh trên chữ thì căn giữa theo chiều ngang.
+Chỗ nào đặt ảnh cạnh chữ cũng dùng `Logo` hoặc `items-center`, không chỉnh lệch bằng `margin` hay `translate`. Khi đổi cỡ hoặc kiểu logo, đo lại độ lệch.
 
 **Tên app: SeatMate.** Luôn hiển thị bằng `<Wordmark />` (`src/components/wordmark.tsx`): "Seat" màu chữ thường, "Mate" màu `primary-text`.
 Không viết tay chữ tên app trong giao diện; dùng hằng `APP_NAME` khi cần tên dạng chữ thuần (tiêu đề trang, manifest, thông báo).

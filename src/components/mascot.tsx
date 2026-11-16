@@ -80,7 +80,7 @@ export function Mascot({
       height={height}
       priority={priority}
       draggable={false}
-      className={cn("select-none object-contain", flip && "-scale-x-100", className)}
+      className={cn("block select-none object-contain", flip && "-scale-x-100", className)}
     />
   );
 }

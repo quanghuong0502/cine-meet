@@ -32,7 +32,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             size={200}
             decorative
             priority
-            className="h-full max-h-[195px] w-auto"
+            className="h-full max-h-[175px] w-auto"
           />
         </div>
         <Wordmark className="text-3xl" />
