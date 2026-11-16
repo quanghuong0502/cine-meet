@@ -20,7 +20,7 @@ export default async function ChangePasswordPage() {
       <Mascot pose="duo-watching" size={144} decorative priority />
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle className="text-xl">Đổi mật khẩu</CardTitle>
+          <CardTitle className="text-2xl">Đổi mật khẩu</CardTitle>
           <CardDescription>
             {user.mustChangePassword
               ? "Đây là lần đăng nhập đầu hoặc mật khẩu vừa được đặt lại. Hãy đặt mật khẩu mới của riêng bạn."

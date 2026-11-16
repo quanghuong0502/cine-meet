@@ -21,11 +21,11 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
     <main className="mx-auto flex min-h-dvh w-full max-w-sm flex-col justify-center gap-8 px-6 py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))]">
       <header className="flex flex-col items-center gap-2">
         <Mascot pose="duo-watching" size={200} decorative priority />
-        <Wordmark className="text-xl" />
+        <Wordmark className="text-3xl" />
       </header>
 
       <div className="flex flex-col gap-1.5">
-        <h1 className="text-3xl font-semibold tracking-tight">Đăng nhập</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Đăng nhập</h1>
         <p className="text-sm text-muted-foreground">
           Đăng nhập để lập kế hoạch xem phim cùng bạn bè.
         </p>

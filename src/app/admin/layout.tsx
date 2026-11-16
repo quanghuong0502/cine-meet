@@ -24,7 +24,7 @@ export default async function AdminLayout({
   return (
     <div className="min-h-dvh md:grid md:grid-cols-[16rem_1fr]">
       <aside className="sticky top-0 hidden h-dvh flex-col gap-4 border-r p-4 md:flex">
-        <span className="px-3 py-2 text-lg"><Wordmark /> <span className="font-normal text-muted-foreground">· Admin</span></span>
+        <span className="px-3 py-2 text-xl"><Wordmark /> <span className="font-normal text-muted-foreground">· Admin</span></span>
         <AdminNav />
         <div className="mt-auto">
           <SignOutButton />
