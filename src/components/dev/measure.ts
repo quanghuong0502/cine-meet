@@ -1,4 +1,4 @@
-// Development tool (see dev-audit-button.tsx and /dev-audit): measures a page against the mobile rules in .claude/rules.
+// Development tool (see dom-recorder.tsx): measures a page against the mobile rules in .claude/rules.
 
 export interface Box {
   tag: string;
@@ -57,7 +57,7 @@ export function measure(route: string, win: Window): RouteReport {
   const dialog = doc.querySelector('[role="dialog"],[role="alertdialog"]');
   const targets = [...doc.querySelectorAll(TARGET_SELECTOR)]
     .filter(visible)
-    .filter((el) => !el.closest("[data-dev-audit]") && (!dialog || dialog.contains(el)));
+    .filter((el) => !el.closest("[data-dev-dom]") && (!dialog || dialog.contains(el)));
   const smallTargets = targets.map(box).filter((b) => b.w < MIN_TARGET || b.h < MIN_TARGET);
 
   const tooClose: RouteReport["tooClose"] = [];

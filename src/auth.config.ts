@@ -34,9 +34,6 @@ export const authConfig = {
 
       if (startsWithSegment(pathname, AUTH_API_PREFIX)) return true;
 
-      // Development tool (see src/app/api/dev/agent/run/route.ts): it checks its own secret token and refuses non-local requests.
-      if (process.env.NODE_ENV !== "production" && pathname === "/api/dev/agent/run") return true;
-
       if (pathname === LOGIN_PATH) {
         return isLoggedIn ? Response.redirect(new URL(POST_LOGIN_PATH, nextUrl)) : true;
       }
