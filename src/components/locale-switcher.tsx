@@ -4,11 +4,11 @@ import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { Button } from "@/components/ui/button";
-import { LOCALE_NAMES, LOCALES, type Locale } from "@/i18n/config";
+import { LOCALE_LABELS, LOCALE_NAMES, LOCALES, type Locale } from "@/i18n/config";
 import { setLocaleAction } from "@/i18n/actions";
 import { cn } from "@/lib/utils";
 
-/** Two-option language toggle. Each language is shown by its own name so it is always readable. */
+/** Two-option language toggle labelled VI and EN. Screen readers announce the full name ("Tiếng Việt", "English"). */
 export function LocaleSwitcher({ className }: { className?: string }) {
   const current = useLocale();
   const t = useTranslations("locale");
@@ -36,16 +36,17 @@ export function LocaleSwitcher({ className }: { className?: string }) {
             key={locale}
             type="button"
             lang={locale}
+            aria-label={LOCALE_NAMES[locale]}
             variant={selected ? "default" : "ghost"}
             aria-pressed={selected}
             disabled={isPending}
             onClick={() => choose(locale)}
             className={cn(
-              "h-11 rounded-full px-4 text-sm font-medium",
+              "h-11 min-w-14 rounded-full px-4 text-sm font-semibold tracking-wide",
               !selected && "text-muted-foreground",
             )}
           >
-            {LOCALE_NAMES[locale]}
+            {LOCALE_LABELS[locale]}
           </Button>
         );
       })}
