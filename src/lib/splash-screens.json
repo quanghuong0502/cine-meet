@@ -1,0 +1,14 @@
+{
+  "background": "#13080d",
+  "devices": [
+    { "width": 375, "height": 667, "ratio": 2, "note": "iPhone SE (2nd, 3rd gen), 8" },
+    { "width": 375, "height": 812, "ratio": 3, "note": "iPhone X, XS, 11 Pro, 12 mini, 13 mini" },
+    { "width": 390, "height": 844, "ratio": 3, "note": "iPhone 12, 12 Pro, 13, 13 Pro, 14" },
+    { "width": 393, "height": 852, "ratio": 3, "note": "iPhone 14 Pro, 15, 15 Pro, 16" },
+    { "width": 402, "height": 874, "ratio": 3, "note": "iPhone 16 Pro" },
+    { "width": 414, "height": 896, "ratio": 2, "note": "iPhone XR, 11" },
+    { "width": 414, "height": 896, "ratio": 3, "note": "iPhone XS Max, 11 Pro Max" },
+    { "width": 428, "height": 926, "ratio": 3, "note": "iPhone 12 Pro Max, 13 Pro Max, 14 Plus" },
+    { "width": 430, "height": 932, "ratio": 3, "note": "iPhone 14 Pro Max, 15 Plus, 15 Pro Max, 16 Plus" }
+  ]
+}

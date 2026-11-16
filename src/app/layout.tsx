@@ -9,6 +9,7 @@ import { NetworkWatcher } from "@/components/network-watcher";
 import { NoZoom } from "@/components/no-zoom";
 import { BootSplash } from "@/components/route-loading";
 import { APP_NAME } from "@/components/wordmark";
+import splashScreens from "@/lib/splash-screens.json";
 import "./globals.css";
 
 const beVietnamPro = Be_Vietnam_Pro({
@@ -29,8 +30,20 @@ export async function generateMetadata(): Promise<Metadata> {
     applicationName: APP_NAME,
     // iOS home-screen app: opaque black status bar (the app is dark), so content starts below it.
     // The apple-touch-icon comes from src/app/apple-icon.png.
-    appleWebApp: { capable: true, title: APP_NAME, statusBarStyle: "black" },
+    // startupImage: the launch screens made by `npm run splash:generate` (iOS ignores the manifest's background colour and
+    // would show a white screen). Each one is matched to a phone by exact size, so a phone not in the list just opens as before.
+    appleWebApp: {
+      capable: true,
+      title: APP_NAME,
+      statusBarStyle: "black",
+      startupImage: splashScreens.devices.map(({ width, height, ratio }) => ({
+        url: `/splash/splash-${width * ratio}x${height * ratio}.png`,
+        media: `(device-width: ${width}px) and (device-height: ${height}px) and (-webkit-device-pixel-ratio: ${ratio}) and (orientation: portrait)`,
+      })),
+    },
     formatDetection: { telephone: false },
+    // Next only writes `mobile-web-app-capable`; iOS's launch screens are documented against the Apple-prefixed name, so both are present.
+    other: { "apple-mobile-web-app-capable": "yes" },
   };
 }
 
@@ -55,7 +68,9 @@ export default async function RootLayout({
 
   return (
     // Dark mode is the default: the `dark` class activates the shadcn dark tokens.
-    <html lang={locale} className={`${beVietnamPro.variable} dark h-full antialiased`}>
+    // The inline background is the app's own (same as theme-color and the manifest): before the stylesheet has loaded the page
+    // would otherwise flash white.
+    <html lang={locale} className={`${beVietnamPro.variable} dark h-full antialiased`} style={{ backgroundColor: splashScreens.background }}>
       <body className="min-h-full bg-background text-foreground">
         <NextIntlClientProvider>
           <NoZoom />
