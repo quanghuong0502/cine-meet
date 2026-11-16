@@ -13,6 +13,7 @@ Viết code đúng quy tắc ngay từ đầu. Thử bản cài trên iPhone 13 
 
 - Có: manifest (`src/app/manifest.ts`: standalone, dọc, màu nền, icon PNG 192, 512 và maskable, là logo app: ảnh `duo-watching` trên nền hồng thương hiệu; xuất lại bằng `sharp` khi đổi logo), `apple-icon.png` (iPhone), favicon PNG,
   `theme-color`, thẻ Apple (`appleWebApp`, thanh trạng thái đen), `viewport-fit=cover`, vùng an toàn và `dvh`.
+- Đã có: nút quay lại trong app (`PageHeader`), báo mất/có mạng và tự làm mới khi quay lại app (`NetworkWatcher`), ẩn phần tử cố định đáy khi bàn phím mở (`KeyboardWatcher`). Checklist đầy đủ ở `mobile-ux.md`.
 - Chưa có (làm ở Sprint 4 cùng Web Push): service worker `public/sw.js`, trang `/offline`, hướng dẫn cài app. `proxy.ts` đã loại `sw.js` và `offline`
   khỏi yêu cầu đăng nhập để trình duyệt đăng ký và tải được khi chưa đăng nhập.
 

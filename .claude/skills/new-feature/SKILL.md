@@ -13,7 +13,7 @@ description: Quy trình làm một tính năng mới của movie app (đọc thi
    Kiểm tra quyền theo role và `userId` từ session.
 4. **API:** route handler mỏng, chỉ xác thực, kiểm tra quyền, gọi service.
 5. **UI:** mobile-first, chỉ dùng shadcn. Tra component bằng shadcn MCP; cần component mới thì cài bằng CLI.
-   Có đủ trạng thái loading, rỗng, lỗi. Văn bản tiếng Việt.
+   Có đủ trạng thái loading, rỗng, lỗi. Văn bản tiếng Việt. Đi qua checklist `.claude/rules/mobile-ux.md` (nút quay lại, bàn phím, mất mạng).
 6. **Dữ liệu mẫu:** cập nhật `scripts/seed.ts` nếu tính năng cần dữ liệu để thử.
 7. **Kiểm tra:** chạy `npm run lint` và `npm run typecheck`; thêm test cho logic nghiệp vụ quan trọng
    (tính điểm ghế, tính giá, máy trạng thái lịch hẹn). Với thay đổi giao diện, chạy `npm run dev` và dùng

@@ -37,12 +37,11 @@ Hướng thị giác tham khảo: app đặt vé/chọn chỗ hiện đại, s�
 - Không viết class màu theo kiểu `dark:` để vá từng chỗ; để token tự đổi theo theme.
 - Poster và heatmap giữ nguyên màu ở cả hai theme (heatmap dùng thang cố định).
 
-**Thanh điều hướng dưới (điện thoại):** component `BottomNav` dùng cho cả khu người dùng (`UserBottomNav`) và khu quản trị (`AdminBottomNav`). Góc trên bo tròn (`rounded-t-3xl`),
-nền `card`, bóng nhẹ, chừa `env(safe-area-inset-bottom)`; mỗi mục cao tối thiểu 56px, biểu tượng 24px, nhãn `text-xs`.
+**Thanh điều hướng dưới (điện thoại):** component `BottomNav` dùng cho cả khu người dùng (`UserBottomNav`) và khu quản trị (`AdminBottomNav`). Là **viên thuốc nổi, kính mờ** (`rounded-full`, nền `card` 55% + `backdrop-blur`), cách mép 12px (`--spacing-nav-gap`) và cách thanh home iPhone (`env(safe-area-inset-bottom)`); mỗi mục cao tối thiểu 56px, biểu tượng 24px, nhãn `text-xs`.
 Mục đang chọn thể hiện bằng **ba dấu hiệu, không chỉ đổi màu chữ**: biểu tượng **tô đặc**, màu nhấn `primary-text`, nhãn đậm (`aria-current="page"`); mục còn lại là biểu tượng viền màu `muted-foreground`.
 **Chỉ hiện các trang cần thiết:** trang chưa có tính năng thì chưa hiện (cờ `enabled` trong `src/lib/nav.ts` và `src/lib/admin-nav.ts`), tối đa 5 mục, ít hơn 2 mục thì ẩn thanh.
 Việc cấu hình gộp thành một trang (ví dụ mọi master data trong trang Danh mục, chia bằng tab) để menu chỉ cần một liên kết. Trang chủ khu vực tự chuyển tới trang đầu tiên đã sẵn sàng.
-Nội dung trang phải chừa chỗ cho thanh (biến `--bottom-nav-h`), nút hành động cố định đặt phía trên thanh.
+Nội dung trang chừa nav + 2 khoảng cách (biến `--bottom-nav-h`), nút hành động cố định đặt phía trên thanh. Header và thanh không cuộn theo trang: chỉ `main` cuộn.
 
 **Menu avatar** (góc trên bên phải) chỉ có: Hồ sơ (người dùng), Cài đặt, Đăng xuất. Mọi thiết lập tài khoản (ngôn ngữ, đổi mật khẩu, thông báo...) là một thẻ trong trang Cài đặt, không đặt thành mục riêng ở menu hay Hồ sơ.
 Admin chỉ có khu quản trị: không có nút "Về ứng dụng" hay liên kết sang trang người dùng.
@@ -116,7 +115,7 @@ nhạt kèm biểu tượng; nút gửi `h-12 rounded-full` toàn chiều rộng
 **Thành phần dùng chung** (đặt trong `src/components/`, dùng lại thay vì tự viết lại ở mỗi màn):
 `PageHeader`, `EmptyState`, `StatTile`, `StatusBadge`, `PricePill`, `MoneyText`, `DateTimeText`, thẻ phim, chip suất chiếu, nhóm avatar.
 
-**Trạng thái:** loading dùng `LoadingState` (Bubu ngái ngủ thở nhẹ, hình đại diện loading của app), có thể kèm skeleton cho phần tiêu đề giữ nguyên hình dạng; rỗng có biểu tượng + nút hành động; lỗi có nút thử lại; nút đang xử lý hiện trạng thái riêng.
+**Trạng thái:** loading dùng `LoadingState` (Bubu ngái ngủ đứng yên, hình đại diện loading của app; lần mở đầu là splash toàn màn hình, sau đó chỉ vùng nội dung), có thể kèm skeleton cho phần tiêu đề giữ nguyên hình dạng; rỗng có biểu tượng + nút hành động; lỗi có nút thử lại; nút đang xử lý hiện trạng thái riêng.
 
 **Chuyển động:** 150 đến 250ms, ease-out, tối đa 400ms; chỉ dùng cho chuyển màn, mở bottom sheet, chọn ghế; tôn trọng `prefers-reduced-motion`; không gây xô lệch bố cục.
 
