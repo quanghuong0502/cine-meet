@@ -1,4 +1,3 @@
-import { getTranslations } from "next-intl/server";
 import { AdminBottomNav } from "@/components/admin/admin-bottom-nav";
 import { AdminNav } from "@/components/admin/admin-nav";
 import { Logo } from "@/components/logo";
@@ -15,15 +14,13 @@ export default async function AdminLayout({
 }) {
   // proxy.ts only sees the JWT; this re-reads role and status from the database.
   const admin = await requireAdmin();
-  const t = await getTranslations("admin");
   const hasBottomNav = ENABLED_ADMIN_NAV_ITEMS.length >= MIN_BOTTOM_NAV_ITEMS;
 
   return (
     <div className="min-h-dvh md:grid md:grid-cols-[16rem_1fr]">
       <aside className="sticky top-0 hidden h-dvh flex-col gap-4 border-r p-4 md:flex">
-        <span className="flex flex-col gap-0.5 px-3 py-2">
+        <span className="px-3 py-2">
           <Logo size={44} wordmarkClassName="text-xl" />
-          <span className="text-xs font-medium text-muted-foreground">{t("title")}</span>
         </span>
         <AdminNav />
         <div className="mt-auto">
@@ -34,10 +31,7 @@ export default async function AdminLayout({
       <div className="flex min-h-dvh min-w-0 flex-col">
         {/* Phones: logo and avatar menu on top, the menu itself is the bottom bar. */}
         <header className="sticky top-0 z-30 flex items-center justify-between gap-2 border-b bg-background/95 px-4 py-1 backdrop-blur md:hidden">
-          <span className="flex items-center gap-2">
-            <Logo size={44} wordmarkClassName="text-xl" />
-            <span className="text-xs font-medium text-muted-foreground">{t("title")}</span>
-          </span>
+          <Logo size={44} wordmarkClassName="text-xl" />
           <UserMenu area="admin" name={admin.name} identity={admin.email ?? admin.username}>
             <SignOutButton />
           </UserMenu>

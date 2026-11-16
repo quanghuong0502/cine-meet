@@ -69,7 +69,6 @@
     "chat": "Chat"
   },
   "admin": {
-    "title": "Quản trị",
     "menuLabel": "Menu quản trị",
     "nav": {
       "overview": "Tổng quan",
