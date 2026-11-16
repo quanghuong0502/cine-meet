@@ -236,6 +236,18 @@
   html[data-keyboard="open"] [data-bottom-fixed] {
     visibility: hidden;
   }
+  /* Feels like an app, not a web page: no "save image" sheet on long press and no text selection on the interface itself
+     (buttons, navigation, header, pictures). Page text and form fields stay selectable. The tap highlight is already off (preflight). */
+  button,
+  [role="button"],
+  nav,
+  header,
+  img,
+  svg {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
   html {
     @apply font-sans;
     /* No rubber-band at the top and bottom of the page: the app shell stays put like a native app. */
