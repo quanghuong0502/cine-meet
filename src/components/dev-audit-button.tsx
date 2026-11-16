@@ -1,9 +1,9 @@
 "use client";
 
 import { LoaderCircle, Ruler } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
-import { measure } from "@/app/dev-audit/measure";
+import { measure, type RouteReport } from "@/app/dev-audit/measure";
 import { Button } from "@/components/ui/button";
 
 /**
@@ -13,12 +13,15 @@ import { Button } from "@/components/ui/button";
  */
 export function DevAuditButton() {
   const [busy, setBusy] = useState(false);
+  // Measured the moment the finger touches down, before the tap can take focus from a field: the keyboard would close first.
+  const snapshot = useRef<RouteReport | null>(null);
 
   async function send() {
     setBusy(true);
     try {
       const route = `${location.pathname}${location.search}`;
-      const report = measure(route, window);
+      const report = snapshot.current ?? measure(route, window);
+      snapshot.current = null;
       const response = await fetch("/api/dev/audit", {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -39,10 +42,14 @@ export function DevAuditButton() {
       data-dev-audit
       type="button"
       size="icon"
+      onPointerDown={() => {
+        snapshot.current = measure(`${location.pathname}${location.search}`, window);
+      }}
       onClick={send}
       disabled={busy}
       aria-label="Send page measurements (dev)"
-      className="fixed top-1/2 right-2 z-[60] rounded-full opacity-80 shadow-lg"
+      // pointer-events-auto: an open sheet or dialog turns off touches on everything outside it.
+      className="pointer-events-auto fixed top-1/2 right-2 z-[60] rounded-full opacity-80 shadow-lg"
     >
       {busy ? <LoaderCircle className="motion-safe:animate-spin" aria-hidden /> : <Ruler aria-hidden />}
     </Button>
