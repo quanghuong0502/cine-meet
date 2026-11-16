@@ -1,0 +1,51 @@
+## Nền tảng
+
+- Đây là **web app responsive** (Next.js), không phải app native. Cài lên màn hình chính được qua PWA.
+- Thiết bị chính là **điện thoại** (Safari iOS, Chrome Android). Thiết kế và kiểm tra ở 390px trước.
+- Desktop vẫn được hỗ trợ: user dùng cùng giao diện mobile, canh giữa với chiều rộng tối đa hợp lý;
+  admin có bố cục rộng hơn (sidebar, bảng) nhưng mọi chức năng admin vẫn phải dùng được trên điện thoại.
+- Tailwind mobile-first: viết class cho mobile trước, mở rộng bằng `md:` và `lg:`.
+
+# Movie App MVP
+
+App lập kế hoạch & quản lý xem phim (sơ đồ ghế, chi tiêu, lịch hẹn nhóm). **Không bán vé.**
+Thiết kế đầy đủ: `docs/movie-app-mvp-design.md`. Trước khi làm một tính năng, đọc đúng mục liên quan
+(ví dụ lịch hẹn → mục 3.4, thông báo → mục 4, chatbot → mục 7) thay vì đọc cả file.
+
+## Stack
+
+Next.js (App Router, `src/`) · TypeScript strict · MongoDB Atlas + Mongoose · Auth.js (Google + Credentials)
+· shadcn/ui + Tailwind · Cloudinary · Web Push (chuẩn W3C + VAPID, thư viện `web-push`) · AI qua `src/ai` (Claude hoặc Gemini, đổi được)
+
+## Lệnh
+
+- `npm run dev` · `npm run lint` · `npm run typecheck` · `npm test` · `npm run seed`
+- Thêm component UI: dùng shadcn MCP/skill, cài bằng `npx shadcn@latest add <tên>`
+
+## Cấu trúc thư mục
+
+- `src/app/(user)/*`, `src/app/admin/*`, `src/app/api/*`: route theo role
+- `src/components/ui`: component shadcn (không sửa tay trừ khi cần); `src/components/*`: component nghiệp vụ
+- `src/models`: Mongoose schema · `src/services`: logic nghiệp vụ · `src/lib`: tiện ích dùng chung
+- `src/ai`: tầng LLM (provider, tool, orchestrator) · `src/notifications`: outbox, Web Push, scheduler
+- `scripts/`: seed, tiện ích chạy tay
+
+## Quy tắc luôn áp dụng
+
+- Mobile-first: thiết kế cho 390px trước. UI tiếng Việt, tiền VND (`Intl.NumberFormat`).
+- Chỉ dùng shadcn/ui + Tailwind cho giao diện. Không thêm thư viện UI khác khi chưa hỏi.
+- `userId` và role luôn lấy từ session ở server. Không bao giờ nhận từ body, query hay từ AI.
+- Không dùng Redis. Job hẹn giờ dùng collection `scheduledNotifications` (xem thiết kế mục 4.3).
+- Không gọi SDK AI trực tiếp; luôn đi qua interface `LLMProvider` trong `src/ai`.
+- Middleware chỉ là lớp đầu: mọi trang/API server dùng `requireUser()` / `requireAdmin()` (`src/lib/auth/guards.ts`), đọc lại status/role từ DB.
+- Chi tiêu của user = `expenses` của chính họ (phần của mình), công nợ ở `expenseShares`; không tính chi tiêu bằng số tiền họ đã ứng (thiết kế 3.4).
+- Worker (Web Push, nhắc lịch) chạy cùng tiến trình web qua `instrumentation.ts`, bật bằng `ENABLE_WORKER=true`; không Agenda, không Redis.
+- Sửa layout phòng chiếu = tạo phiên bản mới, không ghi đè.
+- API key và connection string chỉ ở biến môi trường (`.env.local`), không đưa vào code hay file docs.
+- Trước khi báo hoàn thành: chạy `npm run lint` và `npm run typecheck`, sửa hết lỗi.
+- Việc lớn hoặc đụng nhiều file: nêu kế hoạch ngắn trước, chờ xác nhận rồi mới sửa.
+- Làm xong một đơn vị việc chạy được thì commit theo quy ước ở `.claude/rules/git.md` (không push nếu chưa được yêu cầu).
+
+## Phạm vi MVP
+
+Thứ tự sprint ở mục 8 của file thiết kế. Không làm trước tính năng của sprint sau.
