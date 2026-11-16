@@ -115,7 +115,7 @@ nhạt kèm biểu tượng; nút gửi `h-12 rounded-full` toàn chiều rộng
 **Thành phần dùng chung** (đặt trong `src/components/`, dùng lại thay vì tự viết lại ở mỗi màn):
 `PageHeader`, `EmptyState`, `StatTile`, `StatusBadge`, `PricePill`, `MoneyText`, `DateTimeText`, thẻ phim, chip suất chiếu, nhóm avatar.
 
-**Trạng thái:** loading dùng skeleton đúng hình khối nội dung; rỗng có biểu tượng + nút hành động; lỗi có nút thử lại; nút đang xử lý hiện trạng thái riêng.
+**Trạng thái:** loading dùng `LoadingState` (Bubu ngái ngủ thở nhẹ, hình đại diện loading của app), có thể kèm skeleton cho phần tiêu đề giữ nguyên hình dạng; rỗng có biểu tượng + nút hành động; lỗi có nút thử lại; nút đang xử lý hiện trạng thái riêng.
 
 **Chuyển động:** 150 đến 250ms, ease-out, tối đa 400ms; chỉ dùng cho chuyển màn, mở bottom sheet, chọn ghế; tôn trọng `prefers-reduced-motion`; không gây xô lệch bố cục.
 

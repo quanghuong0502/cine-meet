@@ -53,6 +53,13 @@
   --color-seat-avoid: var(--seat-avoid);
   --color-screen-glow: var(--screen-glow);
 
+  /* Bubu "breathing" for the loading state: slow, small, like someone dozing. Use as `motion-safe:animate-breathe`. */
+  --animate-breathe: breathe 3s ease-in-out infinite;
+  @keyframes breathe {
+    0%, 100% { transform: scale(1) translateY(0); }
+    50% { transform: scale(1.05) translateY(-2px); }
+  }
+
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);

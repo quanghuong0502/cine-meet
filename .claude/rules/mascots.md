@@ -16,12 +16,14 @@ Dùng cá nhân; không đưa ra công khai khi chưa có ảnh gốc hoặc gi�
 
 ## Vai trò
 
-- **Bubu** (gấu trúc ngái ngủ ôm bắp rang): chờ, đang tải, vắng vẻ, không tìm thấy, lỗi nhẹ.
+- **Bubu** (gấu trúc ngái ngủ ôm bắp rang): chờ, **đang tải (hình đại diện loading của cả app)**, vắng vẻ, không tìm thấy, lỗi nhẹ.
 - **Dudu** (gấu nâu vui vẻ ôm bắp rang): chào mừng, thành công, hoàn tất, nhắc nhở thân thiện.
 - Cả hai cùng xuất hiện (`duo-watching`) ở nơi mang tính nhận diện: các màn auth (đăng nhập, đổi mật khẩu), giới thiệu. Không tự ghép hai ảnh đơn.
 
 ## Cách dùng
 
+- **Mọi trạng thái loading của app dùng `LoadingState`** (`src/components/loading-state.tsx`): Bubu `bubu-sleepy` thở nhẹ (`animate-breathe`, tắt khi người dùng giảm chuyển động) kèm chữ "Đang tải...".
+  Dùng cho mọi `loading.tsx` ở cấp route và vùng chờ dữ liệu; nút đang xử lý vẫn dùng spinner nhỏ. Không tự dựng màn loading khác, không dùng nhân vật khác cho loading.
 - Luôn dùng `<Mascot pose="..." />` (`src/components/mascot.tsx`) và `EmptyState` (`src/components/empty-state.tsx`); không viết `<Image>` rời cho nhân vật.
 - Nơi đang dùng: các màn auth (đăng nhập, đổi mật khẩu) dùng `duo-watching`, trang chào mừng (`dudu-happy`), trang đang phát triển,
   loading, 404 và lỗi (`bubu-sleepy`). Màn hình mới có trạng thái rỗng, thành công, lỗi hay loading thì dùng `EmptyState` kèm nhân vật phù hợp.
