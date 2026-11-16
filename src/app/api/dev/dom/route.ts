@@ -20,8 +20,9 @@ export async function POST(request: Request) {
   if (process.env.NODE_ENV === "production") return new NextResponse(null, { status: 404 });
   if (!(await getActiveUser())) return new NextResponse(null, { status: 401 });
 
-  const body = (await request.json()) as { at: string; path: string; userAgent: string; window: unknown; snapshot: string; audit: unknown; changes: string[] };
-  const previous = await readFile(DOM_FILE, "utf8").then((text) => JSON.parse(text) as { history?: Batch[] }, () => ({}) as { history?: Batch[] });
+  const body = (await request.json()) as { at: string; reset?: boolean; path: string; userAgent: string; window: unknown; snapshot: string; audit: unknown; changes: string[] };
+  // `reset`: the app was restarted (or the recorder switched on again), so what is on disk is from an old run.
+  const previous = body.reset ? {} as { history?: Batch[] } : await readFile(DOM_FILE, "utf8").then((text) => JSON.parse(text) as { history?: Batch[] }, () => ({}) as { history?: Batch[] });
 
   const history = [...(previous.history ?? []), { at: body.at, path: body.path, changes: body.changes }].slice(-KEEP_BATCHES);
   await mkdir(join(process.cwd(), ".next"), { recursive: true });

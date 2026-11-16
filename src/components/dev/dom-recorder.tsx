@@ -16,6 +16,8 @@ import { measure } from "./measure";
  */
 
 const STORAGE_KEY = "devDomRecorder";
+// Marks "this app session has already started recording" (sessionStorage is cleared when the app is closed).
+const SESSION_KEY = "devDomRecorderSession";
 /** Wait for the changes to settle before sending, and never send more often than this. */
 const SETTLE_MS = 500;
 const MIN_GAP_MS = 1_500;
@@ -37,8 +39,12 @@ function readOn(): boolean {
     return memoryOn;
   }
 }
+/** True the first time in an app session, and again after the switch was turned on: the old data on the dev server is dropped. */
+let startFresh = false;
+
 function writeOn(value: boolean) {
   memoryOn = value;
+  if (value) startFresh = true;
   try {
     localStorage.setItem(STORAGE_KEY, value ? "on" : "off");
   } catch {
@@ -58,8 +64,19 @@ export function DomRecorder() {
     let lastSent = 0;
     let stopped = false;
 
+    try {
+      if (sessionStorage.getItem(SESSION_KEY) !== "1") {
+        sessionStorage.setItem(SESSION_KEY, "1");
+        startFresh = true;
+      }
+    } catch {
+      // No sessionStorage: only turning the switch on starts fresh.
+    }
+
     async function send(changes: string[]) {
       lastSent = Date.now();
+      const reset = startFresh;
+      startFresh = false;
       setLink("sending");
       try {
         const path = `${location.pathname}${location.search}`;
@@ -68,6 +85,7 @@ export function DomRecorder() {
           headers: { "content-type": "application/json" },
           body: JSON.stringify({
             at: new Date().toISOString(),
+            reset,
             path,
             userAgent: navigator.userAgent,
             window: {
@@ -88,6 +106,8 @@ export function DomRecorder() {
         if (!response.ok) throw new Error(String(response.status));
         if (!stopped) setLink("ok");
       } catch {
+        // Not delivered: the next send still has to clear the old data.
+        if (reset) startFresh = true;
         if (!stopped) setLink("lost");
       }
     }
