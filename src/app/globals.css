@@ -107,6 +107,8 @@
  * outlines >= 3:1; primary button text 5.3:1. Decorative borders (--border) are intentionally subtle.
  */
 :root {
+  /* Where toasts sit on phones: above the floating bottom menu and the fixed "Add" button, never on top of them. */
+  --toast-offset: calc(var(--spacing-nav) + 2 * var(--spacing-nav-gap) + var(--spacing-control) + 1.5rem + env(safe-area-inset-bottom));
   --background: oklch(0.99 0.006 350);
   --foreground: oklch(0.22 0.03 350);
   --card: oklch(1 0 0);
