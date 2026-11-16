@@ -3,15 +3,19 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { LoadingState } from "@/components/loading-state";
 
-// Module state, per page load. `opened`: the app shell has been shown and no full-screen loader is left.
-let opened = false;
-let coveringLoaders = 0;
+// State per page load, kept on `globalThis` (not in a module variable) so that a hot reload in dev, or a second copy
+// of this module in the bundle, cannot reset it to "not opened" in the middle of a session.
+// `opened`: the app shell has been shown and no full-screen loader is left.
+const state = ((globalThis as { __routeLoading?: { opened: boolean; covering: number } }).__routeLoading ??= {
+  opened: false,
+  covering: 0,
+});
 
 function markOpenedWhenIdle() {
   // Deferred: when one full-screen loader hands over to the next (nested routes, React strict mode in dev)
   // the new one mounts in the same tick, so the count is not zero yet.
   setTimeout(() => {
-    if (coveringLoaders === 0) opened = true;
+    if (state.covering === 0) state.opened = true;
   }, 0);
 }
 
@@ -38,13 +42,13 @@ interface RouteLoadingProps {
  */
 export function RouteLoading({ inline = <LoadingState /> }: RouteLoadingProps) {
   // Decided once per mount: it must not switch layout while it is showing.
-  const [coversShell] = useState(() => !opened);
+  const [coversShell] = useState(() => !state.opened);
 
   useEffect(() => {
     if (!coversShell) return;
-    coveringLoaders += 1;
+    state.covering += 1;
     return () => {
-      coveringLoaders -= 1;
+      state.covering -= 1;
       markOpenedWhenIdle();
     };
   }, [coversShell]);
