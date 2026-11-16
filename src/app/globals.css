@@ -259,10 +259,17 @@ html[data-keyboard="open"] [data-app-scroll] {
 }
 
 /* Outside any layer on purpose: it must beat the `h-dvh` utility of the app shell.
-   With the keyboard open the shell is exactly the visible part of the screen (see components/keyboard-watcher.tsx),
-   so the header stays at the top and the content ends where the keyboard begins, instead of the whole app being panned up. */
+   With the keyboard open the shell is pinned to exactly the visible part of the screen (see components/keyboard-watcher.tsx):
+   the header stays at the top and the content ends where the keyboard begins, instead of the whole app being panned up.
+   Fixed, not translated: it must not depend on the page's scroll position, which Safari changes by itself while the keyboard
+   comes up. The page itself is locked so there is nothing left to scroll. */
+html[data-keyboard="open"],
+html[data-keyboard="open"] body {
+  overflow: hidden;
+}
 html[data-keyboard="open"] [data-app-shell] {
+  position: fixed;
+  inset-inline: 0;
+  top: var(--vv-top, 0px);
   height: var(--vv-height, 100dvh);
-  transform: translateY(var(--vv-page-top, 0px));
-  will-change: transform;
 }

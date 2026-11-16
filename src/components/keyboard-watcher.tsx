@@ -17,10 +17,11 @@ const TEXT_INPUT = "input:not([type=checkbox]):not([type=radio]):not([type=butto
  * and are hidden while the keyboard is open (see globals.css). Focus events are used because `visualViewport`
  * is unreliable in iOS standalone mode.
  *
- * It also keeps `--vv-height` and `--vv-page-top` up to date (the part of the screen the keyboard leaves free, and where
- * it starts on the page). Safari does not shrink the page for the keyboard: it pans the view up to the focused field, which
- * pushes the header off the top. While the keyboard is open the app shell (`data-app-shell`) is sized and placed from these
- * two values instead (see globals.css), so it always fills exactly the visible part.
+ * It also keeps `--vv-height` and `--vv-top` up to date (the part of the screen the keyboard leaves free, and where
+ * it starts, as the visual viewport reports it). Safari does not shrink the page for the keyboard: it pans the view up to the focused field, which
+ * pushes the header off the top. While the keyboard is open the app shell (`data-app-shell`) is pinned (position: fixed) to the
+ * visible part using these two values (see globals.css), and the page itself cannot scroll. Not tied to the page's scroll position
+ * on purpose: measured on an iPhone, Safari scrolls the page and reports a pageTop that does not add up, and the two fought each other.
  */
 export function KeyboardWatcher() {
   useEffect(() => {
@@ -55,12 +56,12 @@ export function KeyboardWatcher() {
 
     let frame = 0;
     let heightTimer: ReturnType<typeof setTimeout> | undefined;
-    // Position follows the view on every frame (moving an element is cheap and smooth); the height is set once the keyboard
+    // The top edge follows the view on every frame (cheap); the height is set once the keyboard
     // has stopped moving, because changing it on every frame of the slide-up makes the whole layout recalculate and the app judder.
     const syncPosition = () => {
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
-        if (viewport) root.style.setProperty("--vv-page-top", `${viewport.pageTop}px`);
+        if (viewport) root.style.setProperty("--vv-top", `${viewport.offsetTop}px`);
       });
     };
     const syncHeight = () => {
@@ -86,7 +87,7 @@ export function KeyboardWatcher() {
       viewport?.removeEventListener("resize", syncViewport);
       viewport?.removeEventListener("scroll", syncViewport);
       root.style.removeProperty("--vv-height");
-      root.style.removeProperty("--vv-page-top");
+      root.style.removeProperty("--vv-top");
       document.removeEventListener("focusin", onFocusIn);
       document.removeEventListener("focusout", onFocusOut);
       delete root.dataset.keyboard;
