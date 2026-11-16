@@ -24,8 +24,9 @@ function GoogleButton() {
     <Button
       type="submit"
       variant="outline"
+      size="cta"
       disabled={pending}
-      className="h-control w-full gap-3 rounded-full bg-card text-base font-medium"
+      className="gap-3 bg-card"
     >
       {pending ? (
         <LoaderCircle className="size-5 motion-safe:animate-spin" aria-hidden />
@@ -107,8 +108,8 @@ export function LoginForm({ callbackUrl, initialError }: LoginFormProps) {
 
         <Button
           type="submit"
+          size="cta"
           disabled={isPending}
-          className="h-control w-full rounded-full text-base font-semibold"
         >
           {isPending ? (
             <>

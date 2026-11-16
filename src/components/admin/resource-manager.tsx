@@ -206,7 +206,7 @@ function ResourceForm({ item, fields, saveAction, onDone, onCancel }: ResourceFo
       </div>
 
       <div className="flex flex-col gap-2 px-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-        <Button type="submit" disabled={isPending} className="h-control w-full rounded-full text-base font-semibold">
+        <Button type="submit" size="cta" disabled={isPending}>
           {isPending ? (
             <>
               <LoaderCircle className="motion-safe:animate-spin" aria-hidden />
@@ -216,7 +216,7 @@ function ResourceForm({ item, fields, saveAction, onDone, onCancel }: ResourceFo
             t("save")
           )}
         </Button>
-        <Button type="button" variant="ghost" onClick={onCancel} className="h-target w-full rounded-full text-base">
+        <Button type="button" variant="ghost" size="cta-sm" onClick={onCancel}>
           {t("cancel")}
         </Button>
       </div>
@@ -349,7 +349,7 @@ export function ResourceManager({ items, fields, query, labels, saveAction, remo
       {/* Primary action: fixed above the bottom menu (not inside the flow), so it stays in thumb reach, at the same
           place whether the list is empty, short or long. On wide screens it starts after the sidebar. */}
       <div data-bottom-fixed className="pointer-events-none fixed inset-x-0 bottom-[var(--bottom-nav-h,0px)] z-30 bg-gradient-to-t from-background via-background to-transparent px-4 pt-6 pb-4 md:left-64">
-        <Button type="button" onClick={() => setDialog({ mode: "create" })} className="pointer-events-auto mx-auto flex h-control w-full max-w-sm rounded-full text-base font-semibold">
+        <Button type="button" onClick={() => setDialog({ mode: "create" })} size="cta" className="pointer-events-auto mx-auto flex max-w-sm">
           <Plus aria-hidden />
           {labels.addButton}
         </Button>

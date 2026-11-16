@@ -74,6 +74,13 @@ Không viết tay chữ tên app trong giao diện; dùng hằng `APP_NAME` khi 
 - Mỗi trang có tiêu đề trang thống nhất: nút quay lại tròn, tiêu đề ở giữa hoặc trái, hành động phụ bên phải.
 - Hành động chính của màn hình là nút toàn chiều rộng, cao tối thiểu 48px, bo tròn hết cỡ, đặt ở dưới cùng
   (cố định, chừa safe-area). Mỗi màn hình tối đa một nút chính.
+
+**Nút (đồng bộ giữa mọi màn, không tự viết lại chuỗi class):** chỉ dùng các cỡ có tên của `Button` (`src/components/ui/button.tsx`):
+- `size="cta"`: nút chính duy nhất của form hoặc màn hình (Lưu, Đăng nhập, Thêm), toàn chiều rộng, 48px, bo tròn, chữ semibold. Nút phụ cùng nhóm là `variant="outline"` cùng cỡ (đăng nhập Google).
+- `size="cta-sm"` + `variant="ghost"`: hành động nhẹ nằm ngay dưới nút chính (Hủy), toàn chiều rộng, 44px. Thứ tự luôn là nút chính trên, Hủy dưới.
+- `size="pill"`: nút chính đứng một mình, giữ chiều rộng riêng (Thử lại, Về trang chủ, mở một trang), 48px, `px-8`.
+- Nút biểu tượng: `size="icon"` (44px). **Nút quay lại luôn là `BackButton`** (`src/components/back-button.tsx`): mũi tên tròn ở góc trên bên trái, cùng một chỗ ở mọi màn; `PageHeader` đã gồm nó. Không dùng nút quay lại dạng chữ, không đặt nút "Tiếp" ở góc trên.
+- Hành động nguy hiểm: `variant="destructive"` kèm biểu tượng và chữ nêu hậu quả.
 - Poster là nhân vật chính: tỉ lệ 2:3, bo góc, lớp phủ gradient khi có chữ đè lên.
 
 **Màn hình vừa khít (đăng nhập và các màn nhận diện khác):** cao đúng một màn hình (`h-dvh`), không cuộn và không hiện thanh cuộn.

@@ -21,7 +21,7 @@ export async function SecuritySetting({ hasPassword }: { hasPassword: boolean })
         <CardDescription>{t("description")}</CardDescription>
       </CardHeader>
       <CardContent>
-        <Button asChild variant="outline" className="h-control rounded-full px-6 text-base">
+        <Button asChild variant="outline" size="pill">
           <Link href="/change-password">
             <KeyRound aria-hidden />
             {t("changePassword")}

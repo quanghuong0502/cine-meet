@@ -64,7 +64,7 @@ export function ChangePasswordForm() {
         </p>
       ) : null}
 
-      <Button type="submit" disabled={isPending} className="h-control w-full rounded-full text-base font-semibold">
+      <Button type="submit" size="cta" disabled={isPending}>
         {isPending ? t("submitting") : t("submit")}
       </Button>
     </form>

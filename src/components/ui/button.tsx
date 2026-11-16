@@ -25,6 +25,12 @@ const buttonVariants = cva(
         xs: "h-6 gap-1 rounded-[min(var(--radius-md),10px)] px-2 text-xs in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3",
         sm: "h-target gap-1.5 rounded-[min(var(--radius-md),12px)] px-3 in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3.5",
         lg: "h-control-lg gap-2 px-6 has-data-[icon=inline-end]:pr-4 has-data-[icon=inline-start]:pl-4",
+        // The same few shapes on every screen (docs: .claude/rules/ui.md, "Nút"):
+        // cta = the one main action of a form or screen, full width; cta-sm = the quiet action under it (Cancel);
+        // pill = a main action that sits alone and keeps its own width (retry, back to home, open a page).
+        cta: "h-control w-full gap-2 rounded-full px-4 text-base font-semibold",
+        "cta-sm": "h-target w-full gap-2 rounded-full px-4 text-base",
+        pill: "h-control gap-2 rounded-full px-8 text-base",
         icon: "size-target",
         "icon-xs":
           "size-6 rounded-[min(var(--radius-md),10px)] in-data-[slot=button-group]:rounded-lg [&_svg:not([class*='size-'])]:size-3",

@@ -15,7 +15,7 @@ export default function ErrorPage({ reset }: { error: Error; reset: () => void }
         title={t("title")}
         description={t("description")}
         action={
-          <Button onClick={reset} className="h-control rounded-full px-8 text-base">
+          <Button onClick={reset} size="pill">
             {t("retry")}
           </Button>
         }
