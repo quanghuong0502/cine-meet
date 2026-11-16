@@ -37,6 +37,7 @@ Next.js (App Router, `src/`) · TypeScript strict · MongoDB Atlas + Mongoose ·
 - `userId` và role luôn lấy từ session ở server. Không bao giờ nhận từ body, query hay từ AI.
 - Không dùng Redis. Job hẹn giờ dùng collection `scheduledNotifications` (xem thiết kế mục 4.3).
 - Không gọi SDK AI trực tiếp; luôn đi qua interface `LLMProvider` trong `src/ai`.
+- **Admin chỉ có giao diện admin** (`/admin/*`); không có lối nào sang app người dùng, và admin mở trang của người dùng sẽ bị đưa về khu quản trị. **Mọi thiết lập tài khoản (ngôn ngữ, đổi mật khẩu, thông báo...) nằm trong Cài đặt**; menu avatar chỉ có Hồ sơ (người dùng), Cài đặt và Đăng xuất.
 - Middleware chỉ là lớp đầu: mọi trang/API server dùng `requireUser()` / `requireAdmin()` (`src/lib/auth/guards.ts`), đọc lại status/role từ DB.
 - Chi tiêu của user = `expenses` của chính họ (phần của mình), công nợ ở `expenseShares`; không tính chi tiêu bằng số tiền họ đã ứng (thiết kế 3.4).
 - Worker (Web Push, nhắc lịch) chạy cùng tiến trình web qua `instrumentation.ts`, bật bằng `ENABLE_WORKER=true`; không Agenda, không Redis.

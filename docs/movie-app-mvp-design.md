@@ -412,6 +412,7 @@ aiUsage                  { date, userId, provider, model, inputTokens, outputTok
 - Mọi truy vấn dữ liệu cá nhân (chi tiêu, lịch hẹn, đánh dấu ghế) lọc theo `userId` lấy từ session, không lấy từ client.
 - Lịch hẹn: chỉ người tạo được chốt người và chốt chi tiết; người tham gia chỉ sửa phần của mình (phản hồi, đồ ăn nếu được phép).
 - API key AI và cặp khóa VAPID (Web Push) để trong biến môi trường, không lưu trong database (Zalo cũng vậy khi làm giai đoạn sau).
+- **Admin chỉ dùng khu quản trị:** tài khoản `admin` chỉ có giao diện `/admin/*`, không có liên kết sang app người dùng, và mở trang người dùng sẽ được đưa về khu quản trị (muốn xem app người dùng thì dùng một tài khoản `user`). **Mọi thiết lập tài khoản** (ngôn ngữ, đổi mật khẩu, thông báo) nằm trong trang Cài đặt.
 - **Middleware chỉ là lớp đầu.** Nó chạy ở edge, chỉ đọc được JWT, không truy cập MongoDB. Mọi trang và API server gọi
   `requireUser()` / `requireAdmin()` (`src/lib/auth/guards.ts`) để đọc lại `status` và `role` từ DB, nên khóa hoặc hạ quyền
   có hiệu lực ngay ở request kế tiếp.

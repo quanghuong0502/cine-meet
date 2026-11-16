@@ -48,7 +48,8 @@
         "samePassword": "Mật khẩu mới phải khác mật khẩu hiện tại.",
         "noPassword": "Tài khoản này đăng nhập bằng Google nên không có mật khẩu để đổi.",
         "invalid": "Dữ liệu không hợp lệ."
-      }
+      },
+      "back": "Quay lại"
     }
   },
   "account": {
@@ -56,10 +57,8 @@
     "menuLabel": "Menu tài khoản",
     "fallbackIdentity": "Tài khoản của bạn",
     "profile": "Hồ sơ",
-    "changePassword": "Đổi mật khẩu",
     "signOut": "Đăng xuất",
-    "settings": "Cài đặt",
-    "admin": "Quản trị"
+    "settings": "Cài đặt"
   },
   "nav": {
     "label": "Điều hướng chính",
@@ -71,7 +70,6 @@
   },
   "admin": {
     "title": "Quản trị",
-    "openMenu": "Mở menu quản trị",
     "menuLabel": "Menu quản trị",
     "nav": {
       "overview": "Tổng quan",
@@ -125,7 +123,8 @@
           "title": "Thương hiệu",
           "description": "Các cụm rạp như CGV, BHD, Beta."
         }
-      }
+      },
+      "tabsLabel": "Loại danh mục"
     },
     "brands": {
       "title": "Thương hiệu",
@@ -155,7 +154,15 @@
         }
       }
     },
-    "openApp": "Về ứng dụng"
+    "bottomNav": {
+      "overview": "Tổng quan",
+      "users": "Người dùng",
+      "auditoriums": "Phòng chiếu",
+      "movies": "Phim",
+      "label": "Menu quản trị",
+      "settings": "Cài đặt",
+      "masterData": "Danh mục"
+    }
   },
   "placeholders": {
     "admin": {
@@ -204,8 +211,7 @@
     "loading": "Đang tải...",
     "welcome": {
       "title": "Chào mừng bạn!",
-      "description": "Các tính năng sẽ lần lượt xuất hiện ở đây.",
-      "adminAction": "Vào trang quản trị"
+      "description": "Các tính năng sẽ lần lượt xuất hiện ở đây."
     },
     "notFound": {
       "title": "Không tìm thấy trang",
@@ -221,8 +227,7 @@
   "profile": {
     "title": "Hồ sơ",
     "role": "Vai trò: {role, select, admin {Quản trị viên} other {Người dùng}}",
-    "comingSoon": "Sắp có: chỉnh sửa tên, ảnh đại diện và số điện thoại.",
-    "changePassword": "Đổi mật khẩu"
+    "comingSoon": "Sắp có: chỉnh sửa tên, ảnh đại diện và số điện thoại."
   },
   "mascot": {
     "alt": {
@@ -239,6 +244,11 @@
     "language": {
       "title": "Ngôn ngữ",
       "description": "Dùng cho giao diện và thông báo gửi cho bạn."
+    },
+    "security": {
+      "title": "Bảo mật",
+      "description": "Mật khẩu đăng nhập của bạn.",
+      "changePassword": "Đổi mật khẩu"
     }
   }
 }

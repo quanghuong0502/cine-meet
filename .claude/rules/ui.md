@@ -37,6 +37,16 @@ Hướng thị giác tham khảo: app đặt vé/chọn chỗ hiện đại, s�
 - Không viết class màu theo kiểu `dark:` để vá từng chỗ; để token tự đổi theo theme.
 - Poster và heatmap giữ nguyên màu ở cả hai theme (heatmap dùng thang cố định).
 
+**Thanh điều hướng dưới (điện thoại):** component `BottomNav` dùng cho cả khu người dùng (`UserBottomNav`) và khu quản trị (`AdminBottomNav`). Góc trên bo tròn (`rounded-t-3xl`),
+nền `card`, bóng nhẹ, chừa `env(safe-area-inset-bottom)`; mỗi mục cao tối thiểu 56px, biểu tượng 24px, nhãn `text-xs`.
+Mục đang chọn thể hiện bằng **ba dấu hiệu, không chỉ đổi màu chữ**: biểu tượng **tô đặc**, màu nhấn `primary-text`, nhãn đậm (`aria-current="page"`); mục còn lại là biểu tượng viền màu `muted-foreground`.
+**Chỉ hiện các trang cần thiết:** trang chưa có tính năng thì chưa hiện (cờ `enabled` trong `src/lib/nav.ts` và `src/lib/admin-nav.ts`), tối đa 5 mục, ít hơn 2 mục thì ẩn thanh.
+Việc cấu hình gộp thành một trang (ví dụ mọi master data trong trang Danh mục, chia bằng tab) để menu chỉ cần một liên kết. Trang chủ khu vực tự chuyển tới trang đầu tiên đã sẵn sàng.
+Nội dung trang phải chừa chỗ cho thanh (biến `--bottom-nav-h`), nút hành động cố định đặt phía trên thanh.
+
+**Menu avatar** (góc trên bên phải) chỉ có: Hồ sơ (người dùng), Cài đặt, Đăng xuất. Mọi thiết lập tài khoản (ngôn ngữ, đổi mật khẩu, thông báo...) là một thẻ trong trang Cài đặt, không đặt thành mục riêng ở menu hay Hồ sơ.
+Admin chỉ có khu quản trị: không có nút "Về ứng dụng" hay liên kết sang trang người dùng.
+
 **Logo app = ảnh `duo-watching` (Bubu và Dudu) kèm wordmark**, dùng component `Logo` (`src/components/logo.tsx`) ở header và thanh bên.
 Cùng ảnh này, đặt trên nền hồng `#C61583`, là icon khi thêm app vào màn hình chính (`public/icons/*`, `src/app/apple-icon.png`, favicon).
 Không dùng ảnh khác làm logo hay icon; đổi logo thì xuất lại toàn bộ icon PWA.

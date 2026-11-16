@@ -2,7 +2,7 @@
 
 import { LoaderCircle, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useActionState, useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/empty-state";
@@ -234,6 +234,7 @@ export function ResourceManager({ items, fields, query, labels, saveAction, remo
   const t = useTranslations("admin.common");
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [term, setTerm] = useState(query);
   const [dialog, setDialog] = useState<DialogState>(null);
   const [pendingDelete, setPendingDelete] = useState<ResourceItem | null>(null);
@@ -243,12 +244,14 @@ export function ResourceManager({ items, fields, query, labels, saveAction, remo
   useEffect(() => {
     if (term.trim() === query) return;
     const timer = setTimeout(() => {
-      const params = new URLSearchParams();
+      // Keep the other URL parameters (such as the selected tab) and only change `q`.
+      const params = new URLSearchParams(searchParams.toString());
       if (term.trim()) params.set("q", term.trim());
+      else params.delete("q");
       router.replace(params.size ? `${pathname}?${params}` : pathname);
     }, 300);
     return () => clearTimeout(timer);
-  }, [term, query, pathname, router]);
+  }, [term, query, pathname, router, searchParams]);
 
   const closeDialog = () => setDialog(null);
   const hasSearch = query !== "";
@@ -341,7 +344,7 @@ export function ResourceManager({ items, fields, query, labels, saveAction, remo
       )}
 
       {/* Primary action sits at the bottom, in thumb reach, above the iPhone home bar. */}
-      <div className="sticky bottom-0 -mx-4 -mb-4 mt-auto bg-gradient-to-t from-background via-background to-transparent px-4 pt-6 pb-[max(1rem,env(safe-area-inset-bottom))]">
+      <div className="sticky bottom-[var(--bottom-nav-h,0px)] -mx-4 -mb-4 mt-auto bg-gradient-to-t from-background via-background to-transparent px-4 pt-6 pb-4">
         <Button type="button" onClick={() => setDialog({ mode: "create" })} className="mx-auto flex h-12 w-full max-w-sm rounded-full text-base font-semibold">
           <Plus aria-hidden />
           {labels.addButton}

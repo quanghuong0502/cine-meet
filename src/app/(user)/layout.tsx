@@ -1,4 +1,5 @@
 import { Logo } from "@/components/logo";
+import { redirect } from "next/navigation";
 import { UserMenu } from "@/components/user-menu";
 import { SignOutButton } from "@/components/sign-out-button";
 import { UserBottomNav } from "@/components/user-bottom-nav";
@@ -12,19 +13,21 @@ export default async function UserLayout({
 }) {
   // Reads the account from the database: proxy.ts only sees the JWT, so never rely on it alone.
   const user = await requireUser();
+  // Admins only have the admin area: the user app is for regular accounts.
+  if (user.role === "admin") redirect("/admin");
   const hasBottomNav = ENABLED_NAV_ITEMS.length > 0;
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-2xl flex-col">
       <header className="flex items-center justify-between border-b px-4 py-1">
         <Logo size={48} wordmarkClassName="text-xl" />
-        <UserMenu name={user.name} identity={user.email ?? user.username} isAdmin={user.role === "admin"}>
+        <UserMenu name={user.name} identity={user.email ?? user.username}>
           <SignOutButton />
         </UserMenu>
       </header>
       <main
         className={
-          hasBottomNav ? "flex-1 pb-[calc(4.5rem+env(safe-area-inset-bottom))]" : "flex-1"
+          hasBottomNav ? "flex-1 pb-[calc(3.5rem+env(safe-area-inset-bottom))]" : "flex-1"
         }
       >
         {children}

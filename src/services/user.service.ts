@@ -28,6 +28,8 @@ export interface ActiveUser {
   username?: string;
   image?: string;
   mustChangePassword: boolean;
+  /** False for accounts that only sign in with Google: there is no password to change. */
+  hasPassword: boolean;
 }
 
 export type AuthFailureReason =
@@ -70,7 +72,7 @@ function toSessionUser(doc: UserLike): SessionUser {
   };
 }
 
-function toActiveUser(doc: UserLike): ActiveUser {
+function toActiveUser(doc: UserLike, hasPassword: boolean): ActiveUser {
   return {
     userId: doc._id.toString(),
     role: doc.role,
@@ -79,6 +81,7 @@ function toActiveUser(doc: UserLike): ActiveUser {
     username: doc.username ?? undefined,
     image: doc.avatar ?? undefined,
     mustChangePassword: doc.mustChangePassword === true,
+    hasPassword,
   };
 }
 
@@ -215,9 +218,10 @@ export async function findActiveSessionUserByEmail(
 /** Fresh read for guards: null when the user no longer exists or has been locked. */
 export async function findActiveUserById(id: string): Promise<ActiveUser | null> {
   await connectToDatabase();
-  const user = await User.findById(id).lean().catch(() => null);
+  // The hash is read only to tell whether one exists; it is never returned.
+  const user = await User.findById(id).select("+passwordHash").lean().catch(() => null);
   if (!user || user.status === "locked") return null;
-  return toActiveUser(user);
+  return toActiveUser(user, Boolean(user.passwordHash));
 }
 
 export type ChangePasswordResult =

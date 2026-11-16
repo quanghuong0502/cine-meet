@@ -5,7 +5,7 @@ import { errorState, parseForm, type RemoveResult, type SaveState } from "@/lib/
 import { requireAdmin } from "@/lib/auth/guards";
 import { brandInputSchema, brandService } from "@/services/master-data/brand.service";
 
-const PAGE = "/admin/master-data/brands";
+const PAGE = "/admin/master-data";
 
 /** Create (no `id` field) or update (with `id`). The admin comes from the session, never from the form. */
 export async function saveBrand(_previous: SaveState, formData: FormData): Promise<SaveState> {

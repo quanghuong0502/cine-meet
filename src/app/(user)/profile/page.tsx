@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -33,9 +31,6 @@ export default async function ProfilePage() {
         <CardContent className="flex flex-col gap-3 text-sm text-muted-foreground">
           <p>{t("role", { role: user.role })}</p>
           <p>{t("comingSoon")}</p>
-          <Button asChild variant="outline" className="h-11 w-fit">
-            <Link href="/change-password">{t("changePassword")}</Link>
-          </Button>
         </CardContent>
       </Card>
     </div>

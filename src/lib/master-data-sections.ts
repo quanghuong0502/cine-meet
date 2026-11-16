@@ -1,6 +1,6 @@
 import { Building2, type LucideIcon } from "lucide-react";
 
-/** Keys of `admin.masterData.sections.*` in src/messages/*.json. Add a section when its page exists. */
+/** Tabs of the Catalog page. Keys of `admin.masterData.sections.*` in src/messages/*.json. Add one per master-data type. */
 export type MasterDataSectionKey = "brands";
 
 export interface MasterDataSection {

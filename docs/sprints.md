@@ -83,12 +83,13 @@ Trạng thái: Chưa bắt đầu · Đang làm · Chờ kiểm tra · Xong
 
 **Phạm vi**
 - Khung CRUD dùng chung (danh sách dạng thẻ trên mobile và bảng trên desktop, form, xác nhận xóa, audit log), rồi dựng từng loại bên dưới trên khung này.
+- **Mọi cấu hình master data gom vào một trang Danh mục, mỗi loại là một tab**; menu điện thoại là thanh điều hướng dưới chỉ hiện các trang cần thiết (xem `.claude/rules/ui.md`).
 - CRUD: thương hiệu, chi nhánh (kèm thông tin gửi xe, lat/lng), thể loại, định dạng chiếu, phân loại tuổi,
   loại ghế, ngày lễ, đồ ăn và combo (có `validFrom/validTo`).
 - Bảng giá vé (`validFrom/validTo`) và hàm tính giá theo quy tắc ở thiết kế mục 2.1: độ cụ thể, loại ngày (lễ > ưu đãi > cuối tuần > thường), `priority`, rule tạo sau; có test.
 - Quản lý người dùng: danh sách, tìm kiếm, **tạo tài khoản (mật khẩu tạm)**, khóa/mở khóa (thu hồi phiên), đổi role, reset mật khẩu, không hạ admin cuối cùng.
 - Cài đặt hệ thống: `reminderMinutesBefore`, hạn phản hồi mặc định, thời gian quảng cáo (lưu `systemSettings`).
-- Hồ sơ cơ bản: tên, avatar (Cloudinary), số điện thoại (chuẩn hóa `84xxxxxxxxx`, unique, không bắt buộc), ngôn ngữ giao diện (`users.locale`), sở thích ngồi, đổi mật khẩu, nút đăng xuất.
+- Hồ sơ cơ bản: tên, avatar (Cloudinary), số điện thoại (chuẩn hóa `84xxxxxxxxx`, unique, không bắt buộc), ngôn ngữ giao diện (`users.locale`), sở thích ngồi, nút đăng xuất. Đổi mật khẩu và ngôn ngữ nằm trong trang Cài đặt, không đặt rải rác ở menu hay Hồ sơ.
 - Audit log đơn giản cho thay đổi master data.
 - Quyết định tên tiếng Anh cho master data hiển thị cho người dùng (thể loại, định dạng chiếu, loại ghế): thêm trường tên tiếng Anh tùy chọn, rơi về tiếng Việt khi trống.
 

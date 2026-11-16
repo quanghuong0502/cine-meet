@@ -48,7 +48,8 @@
         "samePassword": "The new password must differ from the current one.",
         "noPassword": "This account signs in with Google, so it has no password to change.",
         "invalid": "Invalid input."
-      }
+      },
+      "back": "Back"
     }
   },
   "account": {
@@ -56,10 +57,8 @@
     "menuLabel": "Account menu",
     "fallbackIdentity": "Your account",
     "profile": "Profile",
-    "changePassword": "Change password",
     "signOut": "Sign out",
-    "settings": "Settings",
-    "admin": "Admin"
+    "settings": "Settings"
   },
   "nav": {
     "label": "Main navigation",
@@ -71,7 +70,6 @@
   },
   "admin": {
     "title": "Admin",
-    "openMenu": "Open admin menu",
     "menuLabel": "Admin menu",
     "nav": {
       "overview": "Overview",
@@ -125,7 +123,8 @@
           "title": "Brands",
           "description": "Cinema chains like CGV, BHD, Beta."
         }
-      }
+      },
+      "tabsLabel": "Catalog types"
     },
     "brands": {
       "title": "Brands",
@@ -155,7 +154,15 @@
         }
       }
     },
-    "openApp": "Back to the app"
+    "bottomNav": {
+      "overview": "Overview",
+      "users": "Users",
+      "auditoriums": "Auditoriums",
+      "movies": "Movies",
+      "label": "Admin menu",
+      "settings": "Settings",
+      "masterData": "Catalog"
+    }
   },
   "placeholders": {
     "admin": {
@@ -204,8 +211,7 @@
     "loading": "Loading...",
     "welcome": {
       "title": "Welcome!",
-      "description": "New features will show up here as they're added.",
-      "adminAction": "Open admin"
+      "description": "New features will show up here as they're added."
     },
     "notFound": {
       "title": "Page not found",
@@ -221,8 +227,7 @@
   "profile": {
     "title": "Profile",
     "role": "Role: {role, select, admin {Admin} other {User}}",
-    "comingSoon": "Coming soon: edit your name, avatar and phone number.",
-    "changePassword": "Change password"
+    "comingSoon": "Coming soon: edit your name, avatar and phone number."
   },
   "mascot": {
     "alt": {
@@ -239,6 +244,11 @@
     "language": {
       "title": "Language",
       "description": "Used for the interface and the notifications sent to you."
+    },
+    "security": {
+      "title": "Security",
+      "description": "Your sign-in password.",
+      "changePassword": "Change password"
     }
   }
 }

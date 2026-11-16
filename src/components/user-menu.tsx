@@ -1,6 +1,6 @@
 "use client";
 
-import { KeyRound, LayoutDashboard, Settings, UserRound } from "lucide-react";
+import { Settings, UserRound } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useState } from "react";
@@ -19,8 +19,8 @@ interface UserMenuProps {
   name: string;
   /** Email or username, shown under the name. */
   identity?: string;
-  /** Admins get a link to the admin area, which is otherwise not reachable from the app. */
-  isAdmin?: boolean;
+  /** Which area the menu sits in. Admins only have the admin area, so their menu has no profile page. */
+  area?: "app" | "admin";
   /** Sign-out form, rendered by the server so it can use a server action. */
   children: React.ReactNode;
 }
@@ -32,7 +32,7 @@ function getInitials(name: string): string {
 }
 
 /** Avatar button in the header; opens a bottom sheet with profile links and sign-out (works by touch, no hover). */
-export function UserMenu({ name, identity, isAdmin = false, children }: UserMenuProps) {
+export function UserMenu({ name, identity, area = "app", children }: UserMenuProps) {
   const t = useTranslations("account");
   const [open, setOpen] = useState(false);
 
@@ -59,37 +59,22 @@ export function UserMenu({ name, identity, isAdmin = false, children }: UserMenu
           aria-label={t("menuLabel")}
           className="flex flex-col gap-1 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))]"
         >
-          {isAdmin ? (
+          {area === "app" ? (
             <DrawerClose asChild>
-              <Button asChild variant="ghost" className="h-11 justify-start gap-2 text-primary-text">
-                <Link href="/admin">
-                  <LayoutDashboard aria-hidden />
-                  {t("admin")}
+              <Button asChild variant="ghost" className="h-11 justify-start gap-2">
+                <Link href="/profile">
+                  <UserRound aria-hidden />
+                  {t("profile")}
                 </Link>
               </Button>
             </DrawerClose>
           ) : null}
+          {/* Everything about the account (language, password...) lives in Settings. */}
           <DrawerClose asChild>
             <Button asChild variant="ghost" className="h-11 justify-start gap-2">
-              <Link href="/profile">
-                <UserRound aria-hidden />
-                {t("profile")}
-              </Link>
-            </Button>
-          </DrawerClose>
-          <DrawerClose asChild>
-            <Button asChild variant="ghost" className="h-11 justify-start gap-2">
-              <Link href="/settings">
+              <Link href={area === "admin" ? "/admin/settings" : "/settings"}>
                 <Settings aria-hidden />
                 {t("settings")}
-              </Link>
-            </Button>
-          </DrawerClose>
-          <DrawerClose asChild>
-            <Button asChild variant="ghost" className="h-11 justify-start gap-2">
-              <Link href="/change-password">
-                <KeyRound aria-hidden />
-                {t("changePassword")}
               </Link>
             </Button>
           </DrawerClose>

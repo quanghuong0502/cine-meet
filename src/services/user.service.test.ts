@@ -155,6 +155,7 @@ describe("findActiveUserById", () => {
     const user = await User.findOne({ username: "an" });
     const id = user?._id.toString() ?? "";
     expect((await service.findActiveUserById(id))?.name).toBe("An");
+    expect((await service.findActiveUserById(id))?.hasPassword).toBe(true);
 
     await User.updateOne({ _id: id }, { status: "locked" });
     expect(await service.findActiveUserById(id)).toBeNull();
