@@ -13,7 +13,7 @@ export function SignOutButton() {
 
   return (
     <form action={handleSignOut}>
-      <Button type="submit" variant="ghost" className="h-11 w-full justify-start gap-2">
+      <Button type="submit" variant="ghost" className="h-target w-full justify-start gap-2">
         <LogOut aria-hidden />
         {t("signOut")}
       </Button>

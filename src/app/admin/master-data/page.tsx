@@ -41,7 +41,7 @@ export default async function MasterDataPage({
                   href={`/admin/master-data?tab=${key}`}
                   aria-current={selected ? "page" : undefined}
                   className={cn(
-                    "flex h-11 items-center gap-2 rounded-full border px-4 text-sm font-medium",
+                    "flex h-target items-center gap-2 rounded-full border px-4 text-sm font-medium",
                     selected
                       ? "border-transparent bg-primary text-primary-foreground"
                       : "bg-card text-muted-foreground",

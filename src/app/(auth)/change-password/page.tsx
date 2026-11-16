@@ -28,7 +28,7 @@ export default async function ChangePasswordPage() {
       {/* Installed PWAs have no browser Back button. Not shown when the change is required: there is nowhere to go until it is done. */}
       {user.mustChangePassword ? null : (
         <div className="w-full max-w-sm">
-          <Button asChild variant="ghost" className="-ml-3 h-11 gap-2 rounded-full">
+          <Button asChild variant="ghost" className="-ml-3 h-target gap-2 rounded-full">
             <Link href={user.role === "admin" ? "/admin/settings" : "/settings"}>
               <ArrowLeft aria-hidden />
               {t("back")}

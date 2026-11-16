@@ -42,7 +42,7 @@ export function UserMenu({ name, identity, area = "app", children }: UserMenuPro
         <Button
           variant="ghost"
           size="icon"
-          className="size-11 rounded-full"
+          className="size-target rounded-full"
           aria-label={t("openMenu")}
         >
           <span className="flex size-9 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
@@ -57,11 +57,11 @@ export function UserMenu({ name, identity, area = "app", children }: UserMenuPro
         </DrawerHeader>
         <nav
           aria-label={t("menuLabel")}
-          className="flex flex-col gap-1 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))]"
+          className="flex flex-col gap-2 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))]"
         >
           {area === "app" ? (
             <DrawerClose asChild>
-              <Button asChild variant="ghost" className="h-11 justify-start gap-2">
+              <Button asChild variant="ghost" className="h-target justify-start gap-2">
                 <Link href="/profile">
                   <UserRound aria-hidden />
                   {t("profile")}
@@ -71,7 +71,7 @@ export function UserMenu({ name, identity, area = "app", children }: UserMenuPro
           ) : null}
           {/* Everything about the account (language, password...) lives in Settings. */}
           <DrawerClose asChild>
-            <Button asChild variant="ghost" className="h-11 justify-start gap-2">
+            <Button asChild variant="ghost" className="h-target justify-start gap-2">
               <Link href={area === "admin" ? "/admin/settings" : "/settings"}>
                 <Settings aria-hidden />
                 {t("settings")}

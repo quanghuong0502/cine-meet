@@ -15,7 +15,7 @@ export function PageHeader({ title, backHref, description }: PageHeaderProps) {
   return (
     <header className="flex items-start gap-2">
       {backHref ? (
-        <Button asChild variant="ghost" size="icon" className="-ml-2 size-11 shrink-0 rounded-full" aria-label={t("back")}>
+        <Button asChild variant="ghost" size="icon" className="-ml-2 size-target shrink-0 rounded-full" aria-label={t("back")}>
           <Link href={backHref}>
             <ArrowLeft aria-hidden />
           </Link>

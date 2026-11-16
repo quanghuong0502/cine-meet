@@ -42,7 +42,7 @@ export function LocaleSwitcher({ className }: { className?: string }) {
             disabled={isPending}
             onClick={() => choose(locale)}
             className={cn(
-              "h-11 min-w-14 rounded-full px-4 text-sm font-semibold tracking-wide",
+              "h-target min-w-14 rounded-full px-4 text-sm font-semibold tracking-wide",
               !selected && "text-muted-foreground",
             )}
           >

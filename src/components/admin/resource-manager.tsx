@@ -88,7 +88,7 @@ function isValidationCode(code: string): code is ValidationCode {
   return VALIDATION_CODES.some((known) => known === code);
 }
 
-const CONTROL_CLASS = "h-12 rounded-xl bg-card px-4 text-base";
+const CONTROL_CLASS = "h-control rounded-xl bg-card px-4 text-base";
 
 function FieldControl({ field, value, invalid }: { field: ResourceField; value: string; invalid: boolean }) {
   const common = { id: field.name, name: field.name, "aria-invalid": invalid || undefined } as const;
@@ -102,7 +102,7 @@ function FieldControl({ field, value, invalid }: { field: ResourceField; value: 
           {...common}
           type="color"
           defaultValue={value || "#c61583"}
-          className="h-12 w-20 cursor-pointer rounded-xl border bg-card p-1"
+          className="h-control w-20 cursor-pointer rounded-xl border bg-card p-1"
         />
       );
     case "switch":
@@ -174,13 +174,13 @@ function ResourceForm({ item, fields, saveAction, onDone, onCancel }: ResourceFo
           const code = fieldErrors[field.name];
           const horizontal = field.kind === "switch";
           return (
-            <div key={field.name} className={horizontal ? "flex items-center justify-between gap-4" : "flex flex-col gap-2"}>
+            <div key={field.name} className={horizontal ? "flex min-h-target items-center justify-between gap-4" : "flex flex-col gap-2"}>
               <div className="flex flex-col gap-0.5">
                 <Label htmlFor={field.name} className="text-muted-foreground">
                   {field.label}
-                  {field.required ? null : <span className="ml-2 text-xs font-normal">· {t("optional")}</span>}
+                  {field.required ? null : <span className="ml-2 text-footnote font-normal">· {t("optional")}</span>}
                 </Label>
-                {field.hint ? <p className="text-xs text-muted-foreground">{field.hint}</p> : null}
+                {field.hint ? <p className="text-footnote text-muted-foreground">{field.hint}</p> : null}
               </div>
               {/* key: remount with the typed value, since uncontrolled inputs ignore a changed defaultValue */}
               <FieldControl
@@ -206,7 +206,7 @@ function ResourceForm({ item, fields, saveAction, onDone, onCancel }: ResourceFo
       </div>
 
       <div className="flex flex-col gap-2 px-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-        <Button type="submit" disabled={isPending} className="h-12 w-full rounded-full text-base font-semibold">
+        <Button type="submit" disabled={isPending} className="h-control w-full rounded-full text-base font-semibold">
           {isPending ? (
             <>
               <LoaderCircle className="motion-safe:animate-spin" aria-hidden />
@@ -216,7 +216,7 @@ function ResourceForm({ item, fields, saveAction, onDone, onCancel }: ResourceFo
             t("save")
           )}
         </Button>
-        <Button type="button" variant="ghost" onClick={onCancel} className="h-11 w-full rounded-full text-base">
+        <Button type="button" variant="ghost" onClick={onCancel} className="h-target w-full rounded-full text-base">
           {t("cancel")}
         </Button>
       </div>
@@ -296,7 +296,7 @@ export function ResourceManager({ items, fields, query, labels, saveAction, remo
                 <button
                   type="button"
                   onClick={() => setDialog({ mode: "edit", item })}
-                  className="flex min-h-16 min-w-0 flex-1 items-center gap-3 rounded-xl p-3 text-left"
+                  className="flex min-h-row min-w-0 flex-1 items-center gap-3 rounded-xl p-3 text-left"
                 >
                   <span
                     aria-hidden
@@ -323,7 +323,7 @@ export function ResourceManager({ items, fields, query, labels, saveAction, remo
                   size="icon"
                   onClick={() => setDialog({ mode: "edit", item })}
                   aria-label={`${t("edit")}: ${item.title}`}
-                  className="size-11 shrink-0 text-muted-foreground"
+                  className="size-target shrink-0 text-muted-foreground"
                 >
                   <Pencil aria-hidden />
                 </Button>
@@ -333,7 +333,7 @@ export function ResourceManager({ items, fields, query, labels, saveAction, remo
                   size="icon"
                   onClick={() => setPendingDelete(item)}
                   aria-label={`${t("delete")}: ${item.title}`}
-                  className="size-11 shrink-0 text-muted-foreground"
+                  className="size-target shrink-0 text-muted-foreground"
                 >
                   <Trash2 aria-hidden />
                 </Button>
@@ -345,7 +345,7 @@ export function ResourceManager({ items, fields, query, labels, saveAction, remo
 
       {/* Primary action sits at the bottom, in thumb reach, above the iPhone home bar. */}
       <div className="sticky bottom-[var(--bottom-nav-h,0px)] -mx-4 -mb-4 mt-auto bg-gradient-to-t from-background via-background to-transparent px-4 pt-6 pb-4">
-        <Button type="button" onClick={() => setDialog({ mode: "create" })} className="mx-auto flex h-12 w-full max-w-sm rounded-full text-base font-semibold">
+        <Button type="button" onClick={() => setDialog({ mode: "create" })} className="mx-auto flex h-control w-full max-w-sm rounded-full text-base font-semibold">
           <Plus aria-hidden />
           {labels.addButton}
         </Button>

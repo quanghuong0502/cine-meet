@@ -52,7 +52,7 @@ export function BottomNav({ label, items, className }: BottomNavProps) {
                 href={item.href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl text-xs",
+                  "flex min-h-nav flex-col items-center justify-center gap-1 rounded-xl text-xs",
                   active ? "font-semibold text-primary-text" : "font-medium text-muted-foreground",
                 )}
               >

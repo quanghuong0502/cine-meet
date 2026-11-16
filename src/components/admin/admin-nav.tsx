@@ -26,7 +26,7 @@ export function AdminNav() {
                 href={href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium",
+                  "flex min-h-target items-center gap-3 rounded-lg px-3 text-sm font-medium",
                   active
                     ? "bg-accent text-accent-foreground"
                     : "text-muted-foreground hover:bg-accent/50",

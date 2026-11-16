@@ -12,7 +12,7 @@ export default async function NotFound() {
         title={t("title")}
         description={t("description")}
         action={
-          <Button asChild className="h-12 rounded-full px-8 text-base">
+          <Button asChild className="h-control rounded-full px-8 text-base">
             <Link href="/">{t("action")}</Link>
           </Button>
         }

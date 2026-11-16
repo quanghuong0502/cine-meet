@@ -87,7 +87,7 @@ cả hai ngôn ngữ, có và không có khung lỗi.
 nhạt kèm biểu tượng; nút gửi `h-12 rounded-full` toàn chiều rộng, đang xử lý thì hiện spinner (`motion-safe:`);
 đăng nhập bằng nhà cung cấp ngoài là nút viền `rounded-full` bên dưới dòng phân cách "hoặc".
 
-**Chữ (thang cỡ cố định, dùng đúng vai trò, không tự chọn cỡ khác):**
+**Chữ (thang cỡ cố định, dùng đúng vai trò, không tự chọn cỡ khác). Giá trị nằm ở một chỗ duy nhất là khối `@theme` trong `globals.css`; chi tiết và nguồn tham khảo ở `.claude/rules/design-tokens.md`:**
 
 | Vai trò | Class | Cỡ / dòng | Độ đậm | Tham chiếu |
 |---|---|---|---|---|
@@ -96,13 +96,14 @@ nhạt kèm biểu tượng; nút gửi `h-12 rounded-full` toàn chiều rộng
 | Wordmark ở header app, tiêu đề trạng thái rỗng, tiêu đề thẻ lớn | `text-xl` | 20 / 28 | semibold | M3 Title Large 22; iOS Title 3 20 |
 | Tiêu đề mục, tên phim/rạp trong danh sách | `text-base` | 16 / 24 | semibold | iOS Headline 17; M3 Title Medium 16 |
 | Nội dung chính, ô nhập, nút chính | `text-base` | 16 / 24 | normal, nút semibold | iOS Body 17; M3 Body Large 16; web mobile tối thiểu 16 |
-| Mô tả phụ, nhãn ô nhập, nút phụ, thông báo lỗi | `text-sm` | 14 / 20 | normal hoặc medium | M3 Body Medium và Label Large 14; iOS Subheadline 15 |
-| Chú thích, nhãn tab dưới, badge | `text-xs` | 12 / 16 | medium | M3 Body Small và Label Medium 12; iOS Caption 12 |
+| Mô tả phụ, nhãn ô nhập, thông báo lỗi | `text-sm` | 15 / 22 | normal hoặc medium | iOS Subheadline 15; M3 Body Medium 14 (nâng lên 15 cho dễ đọc, nhất là dấu tiếng Việt) |
+| Gợi ý dưới ô nhập, ghi chú "Không bắt buộc" | `text-footnote` | 13 / 18 | normal | iOS Footnote 13 |
+| Nhãn tab dưới, badge | `text-xs` | 12 / 16 | medium | M3 Label Medium 12; iOS Caption 12 |
 
 - **Thứ bậc phải đúng chiều:** tên thương hiệu và tiêu đề màn hình không được nhỏ hơn thứ nó dẫn dắt. Ở màn auth, wordmark (30) lớn hơn tiêu đề (24).
   Không để tiêu đề trang vượt wordmark hoặc cùng cỡ với nội dung.
 - **Giới hạn cứng:** không dùng chữ dưới 12px (iOS tối thiểu 11, M3 tối thiểu 11); ô nhập luôn 16px trở lên để Safari iOS không tự phóng to;
-  chữ đọc liền mạch (mô tả dài, đoạn văn) dùng `text-base`, không dùng `text-sm`.
+  chữ đọc liền mạch (mô tả dài, đoạn văn) và hàng menu dùng `text-base`, không dùng `text-sm`.
 - Tối đa hai độ đậm trên một màn hình. Số tiền, giờ, số ghế dùng `tabular-nums`. Tiêu đề lớn dùng `tracking-tight`.
 - Dòng cách: nội dung 1.5, tiêu đề 1.25 đến 1.3 (đã nằm trong cột "Cỡ / dòng" khi dùng class Tailwind mặc định).
 - Dùng đơn vị `rem` (class Tailwind) để tôn trọng cỡ chữ người dùng cài trong hệ điều hành; không đặt `px` cố định.

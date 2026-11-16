@@ -27,7 +27,7 @@ export function ChangePasswordForm() {
           type="password"
           autoComplete="current-password"
           required
-          className="h-12 rounded-xl bg-card px-4 text-base"
+          className="h-control rounded-xl bg-card px-4 text-base"
         />
       </div>
       <div className="flex flex-col gap-2">
@@ -40,9 +40,9 @@ export function ChangePasswordForm() {
           minLength={MIN_PASSWORD_LENGTH}
           aria-describedby="newPasswordHint"
           required
-          className="h-12 rounded-xl bg-card px-4 text-base"
+          className="h-control rounded-xl bg-card px-4 text-base"
         />
-        <p id="newPasswordHint" className="text-xs text-muted-foreground">
+        <p id="newPasswordHint" className="text-footnote text-muted-foreground">
           {t("newHint", { min: MIN_PASSWORD_LENGTH })}
         </p>
       </div>
@@ -54,7 +54,7 @@ export function ChangePasswordForm() {
           type="password"
           autoComplete="new-password"
           required
-          className="h-12 rounded-xl bg-card px-4 text-base"
+          className="h-control rounded-xl bg-card px-4 text-base"
         />
       </div>
 
@@ -64,7 +64,7 @@ export function ChangePasswordForm() {
         </p>
       ) : null}
 
-      <Button type="submit" disabled={isPending} className="h-12 w-full rounded-full text-base font-semibold">
+      <Button type="submit" disabled={isPending} className="h-control w-full rounded-full text-base font-semibold">
         {isPending ? t("submitting") : t("submit")}
       </Button>
     </form>

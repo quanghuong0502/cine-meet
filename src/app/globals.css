@@ -53,6 +53,43 @@
   --color-seat-avoid: var(--seat-avoid);
   --color-screen-glow: var(--screen-glow);
 
+  /*
+   * DESIGN TOKENS (docs: .claude/rules/design-tokens.md). Change a value here and the whole app follows.
+   * Type scale, tuned for phones (iOS: Caption 12, Footnote 13, Subheadline 15, Body 17; Material: Body 16/14/12).
+   * Sizes are in rem so they follow the font size the person set in their phone. Class names are Tailwind's.
+   *   text-xs    12/16  caption: tab labels, badges
+   *   text-footnote 13/18  hints and helper text under fields
+   *   text-sm    15/22  secondary text: field labels, descriptions, errors
+   *   text-base  16/24  body: main text, inputs, buttons, menu rows
+   *   text-xl    20/28  small titles, empty states
+   *   text-2xl   24/32  screen titles
+   *   text-3xl   30/36  display: wordmark on the sign-in screen
+   */
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1rem;
+  --text-footnote: 0.8125rem;
+  --text-footnote--line-height: 1.125rem;
+  --text-sm: 0.9375rem;
+  --text-sm--line-height: 1.375rem;
+  --text-base: 1rem;
+  --text-base--line-height: 1.5rem;
+  --text-xl: 1.25rem;
+  --text-xl--line-height: 1.75rem;
+  --text-2xl: 1.5rem;
+  --text-2xl--line-height: 2rem;
+  --text-3xl: 1.875rem;
+  --text-3xl--line-height: 2.25rem;
+
+  /*
+   * Sizes of things you touch (iOS asks for 44pt, Material for 48dp, WCAG 2.2 AAA for 44px; more than 8px between neighbours).
+   * Use these instead of h-11 / h-12: `h-target`, `size-target`, `min-h-target`, `h-control`, `h-control-lg`, `min-h-row`, `min-h-nav`.
+   */
+  --spacing-target: 2.75rem; /* 44px: smallest thing a finger may be asked to hit (icon buttons, menu rows, small buttons) */
+  --spacing-control: 3rem; /* 48px: default height of inputs and buttons (iOS ~50, Material text field 56 / button target 48) */
+  --spacing-control-lg: 3.5rem; /* 56px: roomy controls */
+  --spacing-row: 4rem; /* 64px: list rows with a title and a subtitle */
+  --spacing-nav: 3.5rem; /* 56px: one tab of the bottom navigation bar (the bar adds the home-bar inset) */
+
   /* Bubu "breathing" for the loading state: slow, small, like someone dozing. Use as `motion-safe:animate-breathe`. */
   --animate-breathe: breathe 3s ease-in-out infinite;
   @keyframes breathe {

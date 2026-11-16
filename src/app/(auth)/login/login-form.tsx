@@ -25,7 +25,7 @@ function GoogleButton() {
       type="submit"
       variant="outline"
       disabled={pending}
-      className="h-12 w-full gap-3 rounded-full bg-card text-base font-medium"
+      className="h-control w-full gap-3 rounded-full bg-card text-base font-medium"
     >
       {pending ? (
         <LoaderCircle className="size-5 motion-safe:animate-spin" aria-hidden />
@@ -64,7 +64,7 @@ export function LoginForm({ callbackUrl, initialError }: LoginFormProps) {
             autoCorrect="off"
             spellCheck={false}
             required
-            className="h-12 rounded-xl bg-card px-4 text-base"
+            className="h-control rounded-xl bg-card px-4 text-base"
           />
         </div>
 
@@ -79,7 +79,7 @@ export function LoginForm({ callbackUrl, initialError }: LoginFormProps) {
               type={showPassword ? "text" : "password"}
               autoComplete="current-password"
               required
-              className="h-12 rounded-xl bg-card pr-12 pl-4 text-base"
+              className="h-control rounded-xl bg-card pr-12 pl-4 text-base"
             />
             <Button
               type="button"
@@ -88,7 +88,7 @@ export function LoginForm({ callbackUrl, initialError }: LoginFormProps) {
               onClick={() => setShowPassword((visible) => !visible)}
               aria-label={showPassword ? t("hidePassword") : t("showPassword")}
               aria-pressed={showPassword}
-              className="absolute top-1/2 right-0.5 size-11 -translate-y-1/2 text-muted-foreground"
+              className="absolute top-1/2 right-0.5 size-target -translate-y-1/2 text-muted-foreground"
             >
               {showPassword ? <EyeOff aria-hidden /> : <Eye aria-hidden />}
             </Button>
@@ -108,7 +108,7 @@ export function LoginForm({ callbackUrl, initialError }: LoginFormProps) {
         <Button
           type="submit"
           disabled={isPending}
-          className="h-12 w-full rounded-full text-base font-semibold"
+          className="h-control w-full rounded-full text-base font-semibold"
         >
           {isPending ? (
             <>
