@@ -42,3 +42,17 @@ và thanh công cụ, giá trị chính xác tùy phiên bản iOS và vị trí
 
 - Chrome DevTools, chế độ thiết bị, kích thước tùy chọn **390×844** và **393×852**, DPR 3, bật cảm ứng; đo thêm 390×660. Chụp cả sáng và tối.
 - Giai đoạn dev local: thử bằng DevTools và điện thoại qua mạng LAN. Thử trên **máy thật** qua HTTPS (cài PWA lên màn hình chính và mở cả trong Safari) làm khi triển khai (Sprint 8).
+
+## Chặn thu phóng (quyết định của chủ dự án)
+
+Trang **không được thu phóng bằng bất kỳ cách nào**: chạm đúp, kéo hai ngón, và cử chỉ riêng của Safari iOS. Ba tầng cùng làm việc, giữ đủ cả ba:
+1. **Viewport** (`src/app/layout.tsx`): `maximumScale: 1`, `userScalable: false` (Chrome Android tôn trọng; Safari iOS bỏ qua).
+2. **CSS** (`globals.css`): `touch-action: pan-x pan-y` trên `html` và `body` (chỉ cho cuộn, chặn phóng và chạm đúp; iOS 13 trở lên).
+3. **Cử chỉ Safari** (`src/components/no-zoom.tsx`): hủy các sự kiện `gesturestart`, `gesturechange`, `gestureend` và `touchmove` nhiều ngón.
+
+Hệ quả cần nhớ:
+- Chữ vẫn **theo cỡ chữ hệ thống** (mọi cỡ tính bằng `rem`), nên người cần chữ to chỉnh trong cài đặt điện thoại; bố cục đã được kiểm tra ở 125% và 150%.
+- Đây là đánh đổi có chủ ý với WCAG 1.4.4 (thay đổi cỡ chữ); không thêm lại `user-scalable=yes` hay bỏ `touch-action` khi chưa hỏi chủ dự án.
+- **Sơ đồ ghế (Sprint 2) tự xử lý cử chỉ phóng của riêng nó** bằng pointer events và `touch-action: none` trên chính phần tử đó; việc chặn thu phóng trang không ảnh hưởng tới nó.
+- Ô nhập luôn từ 16px (đã có trong token) nên iOS cũng không tự phóng khi chạm vào ô nhập.
+- Kiểm tra: giả lập chạm đúp và kéo hai ngón qua CDP (`Input.synthesizeTapGesture`, `Input.synthesizePinchGesture`), mức phóng `visualViewport.scale` phải giữ nguyên 1.

@@ -3,6 +3,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getTranslations } from "next-intl/server";
 import { Be_Vietnam_Pro } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
+import { NoZoom } from "@/components/no-zoom";
 import { APP_NAME } from "@/components/wordmark";
 import "./globals.css";
 
@@ -32,6 +33,9 @@ export async function generateMetadata(): Promise<Metadata> {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  // No zoom by any means (docs: .claude/rules/devices.md). iOS Safari ignores these two, see <NoZoom /> and touch-action in globals.css.
+  maximumScale: 1,
+  userScalable: false,
   viewportFit: "cover",
   colorScheme: "dark",
   // Same colour as the page background so the status bar and Dynamic Island blend in.
@@ -50,6 +54,7 @@ export default async function RootLayout({
     <html lang={locale} className={`${beVietnamPro.variable} dark h-full antialiased`}>
       <body className="min-h-full bg-background text-foreground">
         <NextIntlClientProvider>
+          <NoZoom />
           {children}
           <Toaster theme="dark" />
         </NextIntlClientProvider>
