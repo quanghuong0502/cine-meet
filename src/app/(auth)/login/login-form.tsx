@@ -61,6 +61,7 @@ export function LoginForm({ callbackUrl, initialError }: LoginFormProps) {
             name="identifier"
             type="text"
             autoComplete="username"
+            enterKeyHint="next"
             autoCapitalize="none"
             autoCorrect="off"
             spellCheck={false}
@@ -79,6 +80,7 @@ export function LoginForm({ callbackUrl, initialError }: LoginFormProps) {
               name="password"
               type={showPassword ? "text" : "password"}
               autoComplete="current-password"
+              enterKeyHint="go"
               required
               className="h-control rounded-xl bg-card pr-12 pl-4 text-base"
             />

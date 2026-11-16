@@ -26,6 +26,7 @@ export function ChangePasswordForm() {
           name="currentPassword"
           type="password"
           autoComplete="current-password"
+          enterKeyHint="next"
           required
           className="h-control rounded-xl bg-card px-4 text-base"
         />
@@ -37,6 +38,7 @@ export function ChangePasswordForm() {
           name="newPassword"
           type="password"
           autoComplete="new-password"
+          enterKeyHint="next"
           minLength={MIN_PASSWORD_LENGTH}
           aria-describedby="newPasswordHint"
           required
@@ -53,6 +55,7 @@ export function ChangePasswordForm() {
           name="confirmPassword"
           type="password"
           autoComplete="new-password"
+          enterKeyHint="done"
           required
           className="h-control rounded-xl bg-card px-4 text-base"
         />

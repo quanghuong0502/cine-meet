@@ -90,7 +90,8 @@ function isValidationCode(code: string): code is ValidationCode {
 
 const CONTROL_CLASS = "h-control rounded-xl bg-card px-4 text-base";
 
-function FieldControl({ field, value, invalid }: { field: ResourceField; value: string; invalid: boolean }) {
+/** `last`: the final typing field of the form, whose return key says "Done" instead of "Next". */
+function FieldControl({ field, value, invalid, last }: { field: ResourceField; value: string; invalid: boolean; last: boolean }) {
   const common = { id: field.name, name: field.name, "aria-invalid": invalid || undefined } as const;
 
   switch (field.kind) {
@@ -133,6 +134,9 @@ function FieldControl({ field, value, invalid }: { field: ResourceField; value: 
           max={field.max}
           maxLength={field.maxLength}
           autoCapitalize={field.kind === "url" ? "none" : undefined}
+          autoCorrect={field.kind === "url" ? "off" : undefined}
+          spellCheck={field.kind === "url" ? false : undefined}
+          enterKeyHint={last ? "done" : "next"}
           defaultValue={value}
           className={CONTROL_CLASS}
         />
@@ -171,6 +175,7 @@ function ResourceForm({ item, fields, saveAction, onDone, onCancel }: ResourceFo
 
       <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 pb-2">
         {fields.map((field) => {
+          const lastTypingField = fields.findLast((candidate) => candidate.kind !== "switch" && candidate.kind !== "color" && candidate.kind !== "select" && candidate.kind !== "textarea")?.name;
           const code = fieldErrors[field.name];
           const horizontal = field.kind === "switch";
           return (
@@ -188,6 +193,7 @@ function ResourceForm({ item, fields, saveAction, onDone, onCancel }: ResourceFo
                 field={field}
                 value={typed ? (typed[field.name] ?? "") : (item?.values[field.name] ?? "")}
                 invalid={Boolean(code)}
+                last={field.name === lastTypingField}
               />
               {code ? (
                 <p role="alert" className="text-sm text-destructive">
@@ -273,6 +279,7 @@ export function ResourceManager({ items, fields, query, labels, saveAction, remo
         <Search className="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
         <Input
           type="search"
+          enterKeyHint="search"
           value={term}
           onChange={(event) => setTerm(event.target.value)}
           placeholder={t("searchPlaceholder")}
