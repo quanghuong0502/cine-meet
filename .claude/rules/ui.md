@@ -28,7 +28,8 @@ paths:
 
 ## Nhận diện & chất lượng giao diện
 
-Hướng thị giác tham khảo: app đặt vé/chọn chỗ hiện đại, sạch, thẻ bo góc lớn, một màu nhấn indigo, nút chính toàn chiều rộng.
+Hướng thị giác tham khảo: app đặt vé/chọn chỗ hiện đại, sạch, thẻ bo góc lớn, một màu nhấn hồng-magenta (hue 350), nút chính toàn chiều rộng.
+
 **Phát triển song song light và dark.** Dark là mặc định, light là chế độ ngang hàng, không phải bản làm sau:
 - Mỗi token màu mới phải có giá trị cho cả `:root` (light) và `.dark`, cùng sắc độ (hue) và cùng vai trò.
 - Mỗi màn hình hay component mới phải kiểm tra ở cả hai theme (390px và 1280px) trước khi báo xong.
@@ -38,12 +39,14 @@ Hướng thị giác tham khảo: app đặt vé/chọn chỗ hiện đại, s�
 
 **Màu (token trong `src/app/globals.css`, không hard-code):**
 - Nền ba tầng: `background` < `card` < `elevated` (popover, bottom sheet). Phân tầng bằng độ sáng và viền mảnh, tối đa một mức đổ bóng.
-- Màu nhấn duy nhất là `primary` (indigo), chỉ dùng cho hành động chính, mục đang chọn, liên kết. Không tô màu nhấn lên mảng lớn.
-- Nhãn, chip, giá dạng "viên thuốc": nền `accent`, chữ `accent-foreground`.
+- Màu nhấn duy nhất là `primary` (raspberry `#C61583`, giống nhau ở cả hai theme), chỉ dùng cho hành động chính, mục đang chọn. Không tô màu nhấn lên mảng lớn.
+- Chữ hoặc liên kết màu hồng dùng `text-primary-text`, không dùng `text-primary`: ở dark, `primary` chỉ đạt 3.3:1 trên thẻ nên chỉ hợp cho nút, biểu tượng và nền.
+- Nhãn, chip, giá dạng "viên thuốc": nền `accent` (hồng nhạt ở light, mận đậm ở dark), chữ `accent-foreground`.
 - Chữ phụ dùng `muted-foreground`. Trạng thái dùng `success`, `warning`, `info`, `destructive`; không tự chế màu mới.
 - Đánh dấu ghế dùng token `seat-*`: `seat-favorite` (⭐), `seat-avoid` (🚫), `seat-available`, `seat-reserved`, `seat-selected`.
 - Màu không được là cách duy nhất truyền đạt trạng thái: luôn kèm biểu tượng, nhãn hoặc hình dạng (ghế trống = viền, ghế đã đặt = nền đặc mờ).
-- Heatmap điểm ghế dùng thang tuần tự cố định (xanh lam sẫm → xanh ngọc → vàng), tránh đỏ/xanh lục và tránh trùng `primary`.
+- Heatmap điểm ghế dùng thang tuần tự cố định (xanh lam sẫm → xanh ngọc → vàng), tránh đỏ, hồng và xanh lục để không trùng `primary`/`destructive`.
+- Hồng (`primary`) và đỏ (`destructive`) khá gần nhau: hành động nguy hiểm (xóa, hủy) luôn kèm biểu tượng và chữ, không chỉ dựa vào màu.
 - Cặp màu mới phải đạt tương phản WCAG: chữ thường 4.5:1, chữ lớn và thành phần giao diện 3:1.
 
 **Bố cục & hình khối:**

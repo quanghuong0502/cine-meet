@@ -41,6 +41,7 @@
   --color-card: var(--card);
 
   /* Brand and semantic tokens (docs: .claude/rules/ui.md). Use these instead of raw colors. */
+  --color-primary-text: var(--primary-text);
   --color-elevated: var(--elevated);
   --color-success: var(--success);
   --color-warning: var(--warning);
@@ -62,110 +63,117 @@
 }
 
 /*
- * Light theme. Developed in parallel with dark: same hues and roles, every token defined in both blocks.
- * Contrast checked (WCAG): text on card >= 4.5:1; success/warning/info and form borders >= 3:1;
- * primary button text 4.9:1. Decorative borders (--border) are intentionally subtle.
+ * Light theme. Developed in parallel with dark: same hue family (pink-magenta, hue 350), same roles,
+ * every token defined in both blocks. Brand color "raspberry" #C61583 is identical in both themes.
+ * Contrast checked (WCAG): text on card >= 4.5:1; success/warning/info 4.7:1+; form borders and seat
+ * outlines >= 3:1; primary button text 5.3:1. Decorative borders (--border) are intentionally subtle.
  */
 :root {
-  --background: oklch(0.99 0.004 275);
-  --foreground: oklch(0.2 0.03 275);
+  --background: oklch(0.99 0.006 350);
+  --foreground: oklch(0.22 0.03 350);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.2 0.03 275);
+  --card-foreground: oklch(0.22 0.03 350);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.2 0.03 275);
-  --primary: oklch(0.56 0.21 278);
-  --primary-foreground: oklch(0.99 0.005 275);
-  --secondary: oklch(0.96 0.012 275);
-  --secondary-foreground: oklch(0.25 0.04 275);
-  --muted: oklch(0.96 0.012 275);
-  --muted-foreground: oklch(0.5 0.03 275);
-  --accent: oklch(0.94 0.04 278);
-  --accent-foreground: oklch(0.4 0.14 278);
+  --popover-foreground: oklch(0.22 0.03 350);
+  --primary: oklch(0.55 0.22 350);
+  --primary-foreground: oklch(0.99 0.005 350);
+  /* Pink used as TEXT or link: in light it is the brand color itself (5.3:1 on background). */
+  --primary-text: oklch(0.55 0.22 350);
+  --secondary: oklch(0.96 0.014 350);
+  --secondary-foreground: oklch(0.25 0.04 350);
+  --muted: oklch(0.96 0.014 350);
+  --muted-foreground: oklch(0.5 0.035 350);
+  --accent: oklch(0.95 0.035 350);
+  --accent-foreground: oklch(0.42 0.17 355);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.92 0.012 275);
-  --input: oklch(0.65 0.02 275);
-  --ring: oklch(0.65 0.16 278);
-  --chart-1: oklch(0.66 0.18 278);
-  --chart-2: oklch(0.75 0.12 190);
-  --chart-3: oklch(0.84 0.15 85);
-  --chart-4: oklch(0.72 0.17 350);
-  --chart-5: oklch(0.76 0.12 235);
+  --border: oklch(0.92 0.015 350);
+  --input: oklch(0.65 0.025 350);
+  --ring: oklch(0.68 0.17 355);
+  /* Categorical chart colors: pink, teal, amber, violet, sky. */
+  --chart-1: oklch(0.58 0.2 350);
+  --chart-2: oklch(0.66 0.12 190);
+  --chart-3: oklch(0.8 0.15 85);
+  --chart-4: oklch(0.55 0.18 290);
+  --chart-5: oklch(0.68 0.13 235);
   --radius: 0.875rem;
-  --sidebar: oklch(0.98 0.006 275);
-  --sidebar-foreground: oklch(0.2 0.03 275);
-  --sidebar-primary: oklch(0.56 0.21 278);
-  --sidebar-primary-foreground: oklch(0.99 0.005 275);
-  --sidebar-accent: oklch(0.94 0.04 278);
-  --sidebar-accent-foreground: oklch(0.4 0.14 278);
-  --sidebar-border: oklch(0.92 0.012 275);
-  --sidebar-ring: oklch(0.65 0.16 278);
+  --sidebar: oklch(0.98 0.01 350);
+  --sidebar-foreground: oklch(0.22 0.03 350);
+  --sidebar-primary: oklch(0.55 0.22 350);
+  --sidebar-primary-foreground: oklch(0.99 0.005 350);
+  --sidebar-accent: oklch(0.95 0.035 350);
+  --sidebar-accent-foreground: oklch(0.42 0.17 355);
+  --sidebar-border: oklch(0.92 0.015 350);
+  --sidebar-ring: oklch(0.68 0.17 355);
 
   --elevated: oklch(1 0 0);
   --success: oklch(0.52 0.14 155);
   --warning: oklch(0.56 0.13 65);
-  --info: oklch(0.56 0.21 278);
-  --seat-available: oklch(0.62 0.03 275);
-  --seat-reserved: oklch(0.9 0.01 275);
+  --info: oklch(0.55 0.15 245);
+  --seat-available: oklch(0.62 0.03 350);
+  --seat-reserved: oklch(0.91 0.012 350);
   --seat-selected: var(--primary);
   --seat-favorite: var(--warning);
   --seat-avoid: var(--destructive);
-  --screen-glow: oklch(0.56 0.21 278 / 25%);
+  --screen-glow: oklch(0.55 0.22 350 / 25%);
 }
 
 /*
- * Dark theme (default, always developed together with the light block above). Tinted near-black surfaces with an indigo brand accent.
+ * Dark theme (default, always developed together with the light block above).
+ * Plum-tinted near-black surfaces with the same raspberry brand color.
  * Three surface levels: background < card < elevated (popover, sheets).
- * Contrast checked (WCAG): foreground on card 16:1, muted text 7.8:1, primary button text 4.9:1,
- * indigo text (--info) on card 8.7:1. Reserved seats are intentionally dim; they are told apart
+ * Contrast checked (WCAG): foreground on card 16.5:1, muted text 8.4:1, primary button text 5.3:1,
+ * pink text (--primary-text) on card 8.5:1. The raw --primary is 3.3:1 on cards: use it for buttons,
+ * icons and fills, never for small text. Reserved seats are intentionally dim and are told apart
  * from available seats by shape (filled vs outlined), not only by color.
  */
 .dark {
-  --background: oklch(0.155 0.022 275);
-  --foreground: oklch(0.97 0.008 275);
-  --card: oklch(0.205 0.028 275);
-  --card-foreground: oklch(0.97 0.008 275);
-  --popover: oklch(0.25 0.034 275);
-  --popover-foreground: oklch(0.97 0.008 275);
-  --primary: oklch(0.56 0.21 278);
-  --primary-foreground: oklch(0.99 0.005 275);
-  --secondary: oklch(0.25 0.034 275);
-  --secondary-foreground: oklch(0.97 0.008 275);
-  --muted: oklch(0.25 0.034 275);
-  --muted-foreground: oklch(0.74 0.025 275);
-  /* Soft indigo surface for badges and highlights (the price pill in the reference design). */
-  --accent: oklch(0.31 0.085 278);
-  --accent-foreground: oklch(0.84 0.09 278);
+  --background: oklch(0.155 0.022 350);
+  --foreground: oklch(0.97 0.008 350);
+  --card: oklch(0.205 0.028 350);
+  --card-foreground: oklch(0.97 0.008 350);
+  --popover: oklch(0.25 0.034 350);
+  --popover-foreground: oklch(0.97 0.008 350);
+  --primary: oklch(0.55 0.22 350);
+  --primary-foreground: oklch(0.99 0.005 350);
+  --primary-text: oklch(0.78 0.14 350);
+  --secondary: oklch(0.25 0.034 350);
+  --secondary-foreground: oklch(0.97 0.008 350);
+  --muted: oklch(0.25 0.034 350);
+  --muted-foreground: oklch(0.74 0.025 350);
+  /* Soft pink surface for badges and highlights (the price pill in the reference design). */
+  --accent: oklch(0.31 0.09 350);
+  --accent-foreground: oklch(0.85 0.09 350);
   --destructive: oklch(0.7 0.19 22);
-  --border: oklch(0.55 0.04 275 / 22%);
-  --input: oklch(0.55 0.04 275 / 30%);
-  --ring: oklch(0.68 0.16 278);
-  /* Categorical chart colors: indigo, teal, amber, pink, sky. */
-  --chart-1: oklch(0.66 0.18 278);
+  --border: oklch(0.55 0.04 350 / 22%);
+  --input: oklch(0.55 0.04 350 / 30%);
+  --ring: oklch(0.7 0.17 355);
+  /* Categorical chart colors: pink, teal, amber, violet, sky. */
+  --chart-1: oklch(0.7 0.19 350);
   --chart-2: oklch(0.75 0.12 190);
   --chart-3: oklch(0.84 0.15 85);
-  --chart-4: oklch(0.72 0.17 350);
+  --chart-4: oklch(0.7 0.15 290);
   --chart-5: oklch(0.76 0.12 235);
-  --sidebar: oklch(0.18 0.026 275);
-  --sidebar-foreground: oklch(0.97 0.008 275);
-  --sidebar-primary: oklch(0.56 0.21 278);
-  --sidebar-primary-foreground: oklch(0.99 0.005 275);
-  --sidebar-accent: oklch(0.25 0.034 275);
-  --sidebar-accent-foreground: oklch(0.97 0.008 275);
-  --sidebar-border: oklch(0.55 0.04 275 / 22%);
-  --sidebar-ring: oklch(0.68 0.16 278);
+  --sidebar: oklch(0.18 0.026 350);
+  --sidebar-foreground: oklch(0.97 0.008 350);
+  --sidebar-primary: oklch(0.55 0.22 350);
+  --sidebar-primary-foreground: oklch(0.99 0.005 350);
+  --sidebar-accent: oklch(0.25 0.034 350);
+  --sidebar-accent-foreground: oklch(0.97 0.008 350);
+  --sidebar-border: oklch(0.55 0.04 350 / 22%);
+  --sidebar-ring: oklch(0.7 0.17 355);
 
-  --elevated: oklch(0.25 0.034 275);
+  --elevated: oklch(0.25 0.034 350);
   --success: oklch(0.78 0.16 155);
   --warning: oklch(0.84 0.15 85);
-  --info: oklch(0.78 0.13 278);
+  --info: oklch(0.78 0.12 245);
   /* Seat states: available = visible outline, reserved = dim filled, selected = brand. */
-  --seat-available: oklch(0.55 0.03 275);
-  --seat-reserved: oklch(0.3 0.02 275);
+  --seat-available: oklch(0.55 0.03 350);
+  --seat-reserved: oklch(0.3 0.02 350);
   --seat-selected: var(--primary);
   --seat-favorite: var(--warning);
   --seat-avoid: var(--destructive);
   /* Glow under the curved screen line in the seat map. */
-  --screen-glow: oklch(0.56 0.21 278 / 35%);
+  --screen-glow: oklch(0.55 0.22 350 / 35%);
 }
 
 @layer base {
