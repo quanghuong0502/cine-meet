@@ -47,8 +47,8 @@ export function LoginForm({ callbackUrl, initialError }: LoginFormProps) {
   const errorMessage = state.error ?? initialError;
 
   return (
-    <div className="flex flex-col gap-6">
-      <form action={formAction} className="flex flex-col gap-5">
+    <div className="flex flex-col gap-4">
+      <form action={formAction} className="flex flex-col gap-4">
         <input type="hidden" name="callbackUrl" value={callbackUrl} />
 
         <div className="flex flex-col gap-2">
@@ -108,7 +108,7 @@ export function LoginForm({ callbackUrl, initialError }: LoginFormProps) {
         <Button
           type="submit"
           disabled={isPending}
-          className="h-14 w-full rounded-full text-base font-semibold"
+          className="h-12 w-full rounded-full text-base font-semibold"
         >
           {isPending ? (
             <>
@@ -132,7 +132,7 @@ export function LoginForm({ callbackUrl, initialError }: LoginFormProps) {
         <GoogleButton />
       </form>
 
-      <p className="text-center text-sm text-muted-foreground">
+      <p className="text-center text-xs text-muted-foreground">
         {t.rich("help", {
           highlight: (chunks) => <span className="text-primary-text">{chunks}</span>,
         })}

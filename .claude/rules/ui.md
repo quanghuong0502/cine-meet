@@ -60,9 +60,14 @@ Không viết tay chữ tên app trong giao diện; dùng hằng `APP_NAME` khi 
   (cố định, chừa safe-area). Mỗi màn hình tối đa một nút chính.
 - Poster là nhân vật chính: tỉ lệ 2:3, bo góc, lớp phủ gradient khi có chữ đè lên.
 
+**Màn hình vừa khít (đăng nhập và các màn nhận diện khác):** cao đúng một màn hình (`h-dvh`), không cuộn và không hiện thanh cuộn.
+Phần minh họa (ảnh nhân vật) co theo chỗ còn trống (`flex-1 min-h-0`, ảnh `h-full w-auto` có `max-h`); mô tả phụ có thể ẩn ở màn rất thấp.
+Nếu màn thấp hơn cả phần nội dung bắt buộc thì cho cuộn nhưng ẩn thanh cuộn. Khi sửa màn này phải đo ở 390×844, 375×667, 360×640 và 320×568,
+cả hai ngôn ngữ, có và không có khung lỗi.
+
 **Form (mẫu theo màn đăng nhập):** không bọc trong thẻ; nhãn phía trên ô nhập (`text-muted-foreground`); ô nhập nền `card`,
 `h-12 rounded-xl text-base`; ô mật khẩu có nút hiện/ẩn (vùng chạm 44px, `aria-pressed`); lỗi hiện trong khung `destructive`
-nhạt kèm biểu tượng; nút gửi `h-14 rounded-full` toàn chiều rộng, đang xử lý thì hiện spinner (`motion-safe:`);
+nhạt kèm biểu tượng; nút gửi `h-12 rounded-full` toàn chiều rộng, đang xử lý thì hiện spinner (`motion-safe:`);
 đăng nhập bằng nhà cung cấp ngoài là nút viền `rounded-full` bên dưới dòng phân cách "hoặc".
 
 **Chữ (thang cỡ cố định, dùng đúng vai trò, không tự chọn cỡ khác):**
