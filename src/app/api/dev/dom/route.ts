@@ -20,15 +20,24 @@ export async function POST(request: Request) {
   if (process.env.NODE_ENV === "production") return new NextResponse(null, { status: 404 });
   if (!(await getActiveUser())) return new NextResponse(null, { status: 401 });
 
-  const body = (await request.json()) as { at: string; reset?: boolean; path: string; userAgent: string; window: unknown; snapshot: string; audit: unknown; changes: string[] };
+  const raw = (await request.json()) as { trace?: unknown } & Record<string, unknown>;
+  if (raw.trace) {
+    // A frame-by-frame record of the keyboard opening or closing: kept beside the rest, last few only.
+    const current = await readFile(DOM_FILE, "utf8").then((text) => JSON.parse(text) as { traces?: unknown[] }, () => ({}) as { traces?: unknown[] });
+    await mkdir(join(process.cwd(), ".next"), { recursive: true });
+    await writeFile(DOM_FILE, JSON.stringify({ ...current, traces: [...(current.traces ?? []), raw.trace].slice(-6) }, null, 2));
+    return NextResponse.json({ ok: true });
+  }
+
+  const body = raw as unknown as { at: string; reset?: boolean; path: string; userAgent: string; window: unknown; snapshot: string; audit: unknown; changes: string[] };
   // `reset`: the recorder was switched on again, so what is on disk is from an earlier run.
-  const previous = body.reset ? {} as { history?: Batch[] } : await readFile(DOM_FILE, "utf8").then((text) => JSON.parse(text) as { history?: Batch[] }, () => ({}) as { history?: Batch[] });
+  const previous = body.reset ? ({} as { history?: Batch[]; traces?: unknown[] }) : await readFile(DOM_FILE, "utf8").then((text) => JSON.parse(text) as { history?: Batch[]; traces?: unknown[] }, () => ({}) as { history?: Batch[]; traces?: unknown[] });
 
   const history = [...(previous.history ?? []), { at: body.at, path: body.path, changes: body.changes }].slice(-KEEP_BATCHES);
   await mkdir(join(process.cwd(), ".next"), { recursive: true });
   await writeFile(
     DOM_FILE,
-    JSON.stringify({ at: body.at, path: body.path, userAgent: body.userAgent, window: body.window, audit: body.audit, history, snapshot: body.snapshot }, null, 2),
+    JSON.stringify({ at: body.at, path: body.path, userAgent: body.userAgent, window: body.window, audit: body.audit, history, traces: previous.traces ?? [], snapshot: body.snapshot }, null, 2),
   );
   return NextResponse.json({ ok: true });
 }

@@ -53,6 +53,54 @@ function writeOn(value: boolean) {
   listeners.forEach((listener) => listener());
 }
 
+const TRACE_MS = 1_800;
+
+interface TraceSample {
+  t: number;
+  vvHeight: number;
+  vvOffsetTop: number;
+  vvPageTop: number;
+  innerHeight: number;
+  scrollY: number;
+  shellTop: number | null;
+  shellHeight: number | null;
+  headerTop: number | null;
+  focusTop: number | null;
+}
+
+/** Every animation frame for TRACE_MS: where the visual viewport, the app shell and the header are. This is how a judder is seen. */
+function traceFrames(label: string): Promise<{ label: string; samples: TraceSample[] }> {
+  return new Promise((resolve) => {
+    const samples: TraceSample[] = [];
+    const started = performance.now();
+    const round = (n: number) => Math.round(n * 10) / 10;
+    const tick = () => {
+      const t = performance.now() - started;
+      const shell = document.querySelector("[data-app-shell]");
+      const header = shell?.querySelector("header");
+      const vv = window.visualViewport;
+      const sample: TraceSample = {
+        t: Math.round(t),
+        vvHeight: round(vv?.height ?? innerHeight),
+        vvOffsetTop: round(vv?.offsetTop ?? 0),
+        vvPageTop: round(vv?.pageTop ?? 0),
+        innerHeight,
+        scrollY: round(scrollY),
+        shellTop: shell ? round(shell.getBoundingClientRect().top) : null,
+        shellHeight: shell ? round(shell.getBoundingClientRect().height) : null,
+        headerTop: header ? round(header.getBoundingClientRect().top) : null,
+        focusTop: document.activeElement && document.activeElement !== document.body ? round(document.activeElement.getBoundingClientRect().top) : null,
+      };
+      const last = samples[samples.length - 1];
+      // Keep a frame only when something moved, so a calm second costs almost nothing.
+      if (!last || JSON.stringify({ ...last, t: 0 }) !== JSON.stringify({ ...sample, t: 0 })) samples.push(sample);
+      if (t < TRACE_MS) requestAnimationFrame(tick);
+      else resolve({ label, samples });
+    };
+    requestAnimationFrame(tick);
+  });
+}
+
 export function DomRecorder() {
   const on = useSyncExternalStore(subscribe, readOn, () => false);
   const [link, setLink] = useState<"ok" | "sending" | "lost">("ok");
@@ -123,6 +171,24 @@ export function DomRecorder() {
       pending = [...pending, ...lines].slice(-80);
       schedule();
     });
+    // The keyboard opening or closing: follow it frame by frame (see traceFrames).
+    const sendTrace = async (label: string) => {
+      const trace = await traceFrames(label);
+      await fetch("/api/dev/dom", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ trace: { at: new Date().toISOString(), path: `${location.pathname}${location.search}`, ...trace } }),
+      }).catch(() => undefined);
+    };
+    const onFocusIn = (event: FocusEvent) => {
+      if (event.target instanceof Element && event.target.matches("input,textarea,select")) void sendTrace(`focus ${event.target.tagName.toLowerCase()}`);
+    };
+    const onFocusOut = (event: FocusEvent) => {
+      if (event.target instanceof Element && event.target.matches("input,textarea,select")) void sendTrace("blur");
+    };
+    document.addEventListener("focusin", onFocusIn);
+    document.addEventListener("focusout", onFocusOut);
+
     // Things that change the look without touching the DOM: the window or visual viewport resizing (keyboard, Safari bars,
     // rotation) and the scrolling area moving. Recorded as a line of their own.
     const note = (line: string) => {
@@ -147,6 +213,8 @@ export function DomRecorder() {
     return () => {
       stopped = true;
       observer.disconnect();
+      document.removeEventListener("focusin", onFocusIn);
+      document.removeEventListener("focusout", onFocusOut);
       window.removeEventListener("resize", onResize);
       visualViewport?.removeEventListener("resize", onResize);
       document.removeEventListener("scroll", onScroll, { capture: true });
