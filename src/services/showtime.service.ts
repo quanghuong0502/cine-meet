@@ -1,6 +1,7 @@
 import { isValidObjectId, Types } from "mongoose";
 import { z } from "zod";
 import { connectToDatabase } from "@/lib/db";
+import type { FacetRecord } from "@/lib/showtime/facets";
 import { resolveCsvRows, CSV_MAX_ROWS, type CsvRowError } from "@/lib/showtime/csv";
 import { timeInSlot } from "@/lib/showtime/slots";
 import { overlaps, showtimeEnd, vietnamDayStart, vietnamInstant } from "@/lib/showtime/time";
@@ -241,6 +242,54 @@ async function loadPricing() {
     createdAt: (r as unknown as { createdAt: Date }).createdAt,
   }));
   return { rules: info, holidays: new Set(holidays.map((h) => h.date)) };
+}
+
+/**
+ * One record per showtime a person can still book on a day (the same window and visibility rules as `searchShowtimes`), holding only
+ * what the filters need. The browser narrows the filter choices and counts results from this list, so the sheet reacts without a round trip.
+ */
+export async function listShowtimeFacets(date: string): Promise<FacetRecord[]> {
+  await connectToDatabase();
+  const from = vietnamDayStart(date);
+  if (!from) return [];
+  const start = new Date(Math.max(from.getTime(), Date.now()));
+  const found = await Showtime.find({ startAt: { $gte: start, $lt: new Date(from.getTime() + 24 * 3600_000) } }, "movieId auditoriumId formatId startAt")
+    .limit(1000)
+    .lean();
+  if (found.length === 0) return [];
+
+  const uniq = (values: Types.ObjectId[]) => [...new Set(values.map((v) => v.toString()))];
+  const [movies, rooms, formats, settings] = await Promise.all([
+    Movie.find({ _id: { $in: uniq(found.map((s) => s.movieId)) } }, "genreIds").lean(),
+    Auditorium.find({ _id: { $in: uniq(found.map((s) => s.auditoriumId)) } }, "branchId").lean(),
+    Format.find({ _id: { $in: uniq(found.map((s) => s.formatId)) } }, "active").lean(),
+    getSystemSettings(),
+  ]);
+  const branches = await Branch.find({ _id: { $in: uniq(rooms.map((r) => r.branchId)) } }, "brandId active").lean();
+  const brands = await Brand.find({ _id: { $in: uniq(branches.map((b) => b.brandId)) } }, "active").lean();
+
+  const genresByMovie = new Map(movies.map((m) => [m._id.toString(), (m.genreIds ?? []).map((g) => g.toString())]));
+  const branchByRoom = new Map(rooms.map((r) => [r._id.toString(), r.branchId.toString()]));
+  const formatActive = new Map(formats.map((f) => [f._id.toString(), f.active !== false]));
+  const branchById = new Map(branches.map((b) => [b._id.toString(), b]));
+  const brandActive = new Map(brands.map((b) => [b._id.toString(), b.active !== false]));
+
+  const records: FacetRecord[] = [];
+  for (const s of found) {
+    const branchId = branchByRoom.get(s.auditoriumId.toString());
+    const branch = branchId ? branchById.get(branchId) : undefined;
+    const formatId = s.formatId.toString();
+    // Switched off by an admin: not shown in the list, so not offered as a choice either.
+    if (!branchId || !branch || branch.active === false || brandActive.get(branch.brandId.toString()) === false || formatActive.get(formatId) === false) continue;
+    const time = new Date(s.startAt.getTime() + 7 * 3600_000).toISOString().slice(11, 16);
+    records.push({
+      branch: branchId,
+      format: formatId,
+      genre: genresByMovie.get(s.movieId.toString()) ?? [],
+      slot: settings.timeSlots.filter((slot) => timeInSlot(slot, time)).map((slot) => slot.id),
+    });
+  }
+  return records;
 }
 
 /** Showtimes matching the filters, soonest first, with names joined and the estimated price. Every id is validated; a bad one matches nothing. */

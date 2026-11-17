@@ -7,6 +7,7 @@ import { useState, useTransition } from "react";
 import { Chip } from "@/components/admin/auditorium-editor/chips";
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent, DrawerFooter, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
+import { availableValues, countMatching, type FacetRecord } from "@/lib/showtime/facets";
 import { FILTER_KEYS, type FilterKey, type FilterValues } from "@/lib/showtime/filters";
 
 interface Option {
@@ -18,14 +19,17 @@ interface Props {
   date: string;
   values: FilterValues;
   options: Record<FilterKey, Option[]>;
+  /** The showtimes of the day, as the filters see them: the sheet narrows its choices and counts results from these. */
+  records: FacetRecord[];
 }
 
 /**
  * Filters of the showtime list, in a bottom sheet so they never push the results down the page. Choices change a draft; "Show results"
  * writes them to the URL once (the list follows, and a link keeps the filters). The filters in force show as chips next to the button,
- * and a chip's X drops that filter at once. A group with fewer than two choices is hidden (nothing to choose), unless it is in force.
+ * and a chip's X drops that filter at once. Only choices that still have a showtime that day (given the other choices) are offered, and the
+ * button counts the results; a group with fewer than two choices left is hidden (nothing to choose), unless it is in force.
  */
-export function ShowtimeFilters({ date, values, options }: Props) {
+export function ShowtimeFilters({ date, values, options, records }: Props) {
   const t = useTranslations("showtimes.filters");
   const router = useRouter();
   const pathname = usePathname();
@@ -35,7 +39,10 @@ export function ShowtimeFilters({ date, values, options }: Props) {
   const [draft, setDraft] = useState(values);
 
   const activeKeys = FILTER_KEYS.filter((key) => applied[key]);
-  const groups = FILTER_KEYS.filter((key) => options[key].length >= 2 || draft[key]);
+  const available = availableValues(records, draft);
+  // A choice already made stays visible even when it has no showtime (for example after changing the day), so it can be undone.
+  const offered = (key: FilterKey) => options[key].filter((option) => available[key].has(option.value) || draft[key] === option.value);
+  const groups = FILTER_KEYS.filter((key) => offered(key).length >= 2 || draft[key]);
   const labelOf = (key: FilterKey, value: string) => options[key].find((option) => option.value === value)?.label ?? value;
 
   function apply(next: FilterValues) {
@@ -81,7 +88,7 @@ export function ShowtimeFilters({ date, values, options }: Props) {
                   <Chip selected={!draft[key]} onClick={() => setDraft({ ...draft, [key]: undefined })}>
                     {t("all")}
                   </Chip>
-                  {options[key].map((option) => (
+                  {offered(key).map((option) => (
                     <Chip key={option.value} selected={draft[key] === option.value} onClick={() => setDraft({ ...draft, [key]: option.value })}>
                       {option.label}
                     </Chip>
@@ -99,7 +106,7 @@ export function ShowtimeFilters({ date, values, options }: Props) {
                 setOpen(false);
               }}
             >
-              {t("show")}
+              {t("show", { count: countMatching(records, draft) })}
             </Button>
             <Button type="button" size="cta-sm" variant="ghost" onClick={() => setDraft({})}>
               {t("clear")}

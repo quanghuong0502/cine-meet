@@ -976,7 +976,7 @@
     "filters": {
       "title": "Bộ lọc",
       "titleCount": "Bộ lọc ({count})",
-      "show": "Xem kết quả",
+      "show": "{count, plural, =0 {Không có suất chiếu} other {Xem # suất chiếu}}",
       "remove": "Bỏ lọc {name}",
       "clear": "Xóa lọc",
       "all": "Tất cả",

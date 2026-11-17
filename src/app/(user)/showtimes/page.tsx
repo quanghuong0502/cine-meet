@@ -22,7 +22,7 @@ import { formatService } from "@/services/master-data/format.service";
 import { genreService } from "@/services/master-data/genre.service";
 import { listFilterMovies } from "@/services/movie.service";
 import { getSystemSettings } from "@/services/settings.service";
-import { searchShowtimes } from "@/services/showtime.service";
+import { listShowtimeFacets, searchShowtimes } from "@/services/showtime.service";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("showtimes");
@@ -49,13 +49,14 @@ export default async function ShowtimesPage({ searchParams }: { searchParams: Pr
     if (value) values[key] = value;
   }
 
-  const [movies, branches, brands, genres, formats, settings] = await Promise.all([
+  const [movies, branches, brands, genres, formats, settings, facets] = await Promise.all([
     listFilterMovies(),
     branchService.list({}),
     getBrandOptions(),
     genreService.list({}),
     formatService.list({}),
     getSystemSettings(),
+    listShowtimeFacets(date),
   ]);
   const brandName = new Map(brands.map((b) => [b.id, b.name]));
   const brandActive = new Map(brands.map((b) => [b.id, b.active]));
@@ -118,7 +119,7 @@ export default async function ShowtimesPage({ searchParams }: { searchParams: Pr
         </ul>
       </nav>
 
-      <ShowtimeFilters date={date} values={values} options={options} />
+      <ShowtimeFilters date={date} values={values} options={options} records={facets} />
 
       <h2 className="text-base font-semibold">{formatDayKey(date, locale)}</h2>
       <Suspense key={`${date}|${JSON.stringify(values)}`} fallback={<LoadingState compact />}>

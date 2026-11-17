@@ -976,7 +976,7 @@
     "filters": {
       "title": "Filters",
       "titleCount": "Filters ({count})",
-      "show": "Show results",
+      "show": "{count, plural, =0 {No showtimes} one {Show # showtime} other {Show # showtimes}}",
       "remove": "Remove filter {name}",
       "clear": "Clear",
       "all": "All",
