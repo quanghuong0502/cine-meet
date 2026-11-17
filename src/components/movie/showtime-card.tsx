@@ -15,13 +15,13 @@ export function ShowtimeCard({ row, showMovie = false }: { row: ShowtimeRow; sho
   const t = useTranslations("showtimes");
   const locale = useLocale();
   return (
-    <li className="flex flex-col gap-4 rounded-xl border bg-card p-4">
+    <li className="flex flex-col gap-5 rounded-xl border bg-card p-4">
       <div className="flex min-w-0 items-start gap-4">
         <div className="flex w-16 shrink-0 flex-col gap-0.5">
           <span className="text-xl font-semibold tabular-nums">{formatTime(row.startAt, locale)}</span>
           <span className="text-sm text-muted-foreground tabular-nums">{t("until", { time: formatTime(row.endAt, locale) })}</span>
         </div>
-        <div className="flex min-w-0 flex-1 flex-col gap-2">
+        <div className="flex min-w-0 flex-1 flex-col gap-3">
           {showMovie ? (
             <Link href={`/movies/${row.movie.id}`} className="truncate text-base font-semibold">
               {row.movie.title}
