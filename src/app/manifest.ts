@@ -1,9 +1,12 @@
 import type { MetadataRoute } from "next";
 import { APP_NAME } from "@/components/wordmark";
+import { getBrandTheme } from "@/services/brand-theme-cache";
 
 // PWA manifest (docs: .claude/rules/pwa.md). The colours mirror the dark theme background.
 // Icons are Bubu and Dudu (duo-watching) on the brand pink; the maskable one keeps its art inside the 80% safe zone.
-export default function manifest(): MetadataRoute.Manifest {
+export default async function manifest(): Promise<MetadataRoute.Manifest> {
+  // Same colour as the page background, which follows the brand hue (the icon image itself stays the one exported by the script).
+  const { theme } = await getBrandTheme();
   return {
     id: "/",
     name: APP_NAME,
@@ -15,8 +18,8 @@ export default function manifest(): MetadataRoute.Manifest {
     scope: "/",
     display: "standalone",
     orientation: "portrait",
-    background_color: "#13080d",
-    theme_color: "#13080d",
+    background_color: theme.themeColorHex,
+    theme_color: theme.themeColorHex,
     categories: ["entertainment", "lifestyle"],
     icons: [
       { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },

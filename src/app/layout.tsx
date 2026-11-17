@@ -10,6 +10,7 @@ import { NoZoom } from "@/components/no-zoom";
 import { BootSplash } from "@/components/route-loading";
 import { APP_NAME } from "@/components/wordmark";
 import splashScreens from "@/lib/splash-screens.json";
+import { getBrandTheme } from "@/services/brand-theme-cache";
 import "./globals.css";
 
 const beVietnamPro = Be_Vietnam_Pro({
@@ -47,30 +48,37 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export const viewport: Viewport = {
-  width: "device-width",
-  initialScale: 1,
-  // No zoom by any means (docs: .claude/rules/devices.md). iOS Safari ignores these two, see <NoZoom /> and touch-action in globals.css.
-  maximumScale: 1,
-  userScalable: false,
-  viewportFit: "cover",
-  colorScheme: "dark",
-  // Same colour as the page background so the status bar and Dynamic Island blend in.
-  themeColor: "#13080d",
-};
+export async function generateViewport(): Promise<Viewport> {
+  const { theme } = await getBrandTheme();
+  return {
+    width: "device-width",
+    initialScale: 1,
+    // No zoom by any means (docs: .claude/rules/devices.md). iOS Safari ignores these two, see <NoZoom /> and touch-action in globals.css.
+    maximumScale: 1,
+    userScalable: false,
+    viewportFit: "cover",
+    colorScheme: "dark",
+    // Same colour as the page background (the dark theme's, from the brand hue) so the status bar and Dynamic Island blend in.
+    themeColor: theme.themeColorHex,
+  };
+}
 
 export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const locale = await getLocale();
+  const [locale, brand] = await Promise.all([getLocale(), getBrandTheme()]);
 
   return (
     // Dark mode is the default: the `dark` class activates the shadcn dark tokens.
     // The inline background is the app's own (same as theme-color and the manifest): before the stylesheet has loaded the page
     // would otherwise flash white.
-    <html lang={locale} className={`${beVietnamPro.variable} dark h-full antialiased`} style={{ backgroundColor: splashScreens.background }}>
+    <html lang={locale} className={`${beVietnamPro.variable} dark h-full antialiased`} style={{ backgroundColor: brand.theme.themeColorHex }}>
+      {/* The brand colour variables, set before the first paint (numbers only, built and validated in src/lib/brand-theme.ts). */}
+      <head>
+        <style dangerouslySetInnerHTML={{ __html: brand.css }} />
+      </head>
       <body className="min-h-full bg-background text-foreground">
         <NextIntlClientProvider>
           <NoZoom />
