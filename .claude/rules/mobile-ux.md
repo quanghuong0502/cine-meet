@@ -60,6 +60,7 @@ Căn cứ: [Apple HIG, tab bars](https://developer.apple.com/design/human-interf
 2. Chuyển động 150 đến 250ms, tôn trọng `prefers-reduced-motion`, không gây xô lệch bố cục; không tự chạy animation lặp ở màn loading.
 3. Không thu phóng trang (xem `devices.md`); không kéo giãn ở đầu và cuối trang (`overscroll-behavior: none`).
 4. Tương phản đạt WCAG ở cả light và dark; màu không phải cách duy nhất truyền đạt trạng thái.
+5. **Trang luôn vừa chiều ngang màn hình:** khung cuộn của app (`main[data-app-scroll]` ở khu admin và khu user) có `min-w-0 overflow-x-hidden`, nên không bao giờ cuộn ngang; phần tử con vẫn phải tự vừa (ô chọn cắt chữ bằng `truncate`, chip `max-w-full`, hàng flex có `min-w-0`), vì `overflow-x-hidden` chỉ che chỗ tràn chứ không sửa nó. Khi báo xong một màn, đo `document.querySelector('[data-app-scroll]').scrollWidth` bằng `clientWidth` ở 390 và 393px.
 
 ## Trước khi báo xong một màn hình
 

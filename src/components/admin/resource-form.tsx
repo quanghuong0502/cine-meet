@@ -208,7 +208,7 @@ export function ResourceForm({ itemId, fields, values, backHref, saveAction, del
         const code = fieldErrors[field.name];
         const horizontal = field.kind === "switch";
         return (
-          <div key={field.name} className={horizontal ? "flex min-h-target items-center justify-between gap-4" : "flex flex-col gap-3"}>
+          <div key={field.name} className={horizontal ? "flex min-h-target items-center justify-between gap-4" : "flex min-w-0 flex-col gap-3"}>
             <div className="flex flex-col gap-0.5">
               <Label htmlFor={field.name} className="text-muted-foreground">
                 <span>
