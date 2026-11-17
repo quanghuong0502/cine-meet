@@ -18,12 +18,11 @@ export async function ProfileEditScreen({ backHref }: { backHref: string }) {
 
   const fields: ResourceField[] = [
     { name: "name", kind: "text", label: t("fields.name.label"), required: true, maxLength: 80 },
-    { name: "phone", kind: "tel", label: t("fields.phone.label"), hint: t("fields.phone.hint"), placeholder: t("fields.phone.placeholder"), maxLength: 20 },
+    { name: "phone", kind: "tel", label: t("fields.phone.label"), placeholder: t("fields.phone.placeholder"), maxLength: 20 },
     {
       name: "seatPreference",
       kind: "select",
       label: t("fields.seatPreference.label"),
-      hint: t("fields.seatPreference.hint"),
       placeholder: t("seat.any"),
       options: [{ value: "any", label: t("seat.any") }, ...SEAT_PREFERENCES.map((value) => ({ value, label: t(`seat.${value}`) }))],
     },

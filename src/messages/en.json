@@ -36,7 +36,6 @@
       "description": "Enter your current password and a new one.",
       "currentLabel": "Current password",
       "newLabel": "New password",
-      "newHint": "At least {min} characters",
       "confirmLabel": "Confirm new password",
       "submit": "Change password",
       "submitting": "Saving...",
@@ -87,7 +86,6 @@
       "cancel": "Cancel",
       "searchLabel": "Search",
       "searchPlaceholder": "Search by name",
-      "optional": "Optional",
       "noResultsTitle": "No results",
       "noResultsDescription": "Try a different keyword.",
       "saved": "Saved",
@@ -182,19 +180,16 @@
           "label": "Name"
         },
         "color": {
-          "label": "Brand color",
-          "hint": "Used to tint cards and chips"
+          "label": "Brand color"
         },
         "logoUrl": {
-          "label": "Logo",
-          "hint": "A photo from your device, up to 8 MB"
+          "label": "Logo"
         },
         "websiteUrl": {
           "label": "Website"
         },
         "appUrl": {
-          "label": "App link",
-          "hint": "Opens the cinema's booking app"
+          "label": "App link"
         }
       }
     },
@@ -220,15 +215,13 @@
           "placeholder": "Select a brand"
         },
         "name": {
-          "label": "Branch name",
-          "hint": "Usually the cinema and its area"
+          "label": "Branch name"
         },
         "address": {
           "label": "Address"
         },
         "lat": {
-          "label": "Latitude",
-          "hint": "Enter both latitude and longitude, or leave both empty"
+          "label": "Latitude"
         },
         "lng": {
           "label": "Longitude"
@@ -238,15 +231,15 @@
         },
         "floor": {
           "label": "Floor",
-          "hint": "e.g. Floor 5"
+          "placeholder": "e.g. Floor 5"
         },
         "openingHours": {
           "label": "Opening hours",
-          "hint": "e.g. 08:00 – 23:00"
+          "placeholder": "e.g. 08:00 – 23:00"
         },
         "parkingFee": {
-          "label": "Parking fee",
-          "hint": "In dong, leave empty if unknown"
+          "label": "Parking fee (VND)",
+          "placeholder": "e.g. 5000"
         },
         "parkingLocation": {
           "label": "Parking spot"
@@ -269,8 +262,7 @@
           "label": "Name"
         },
         "nameEn": {
-          "label": "English name",
-          "hint": "Shown when the app is in English"
+          "label": "English name"
         }
       }
     },
@@ -284,7 +276,7 @@
       "fields": {
         "name": {
           "label": "Name",
-          "hint": "e.g. 2D, 3D, IMAX"
+          "placeholder": "e.g. 2D, 3D, IMAX"
         }
       }
     },
@@ -298,18 +290,16 @@
       "fields": {
         "code": {
           "label": "Code",
-          "hint": "e.g. T16"
+          "placeholder": "e.g. T16"
         },
         "description": {
           "label": "Description"
         },
         "descriptionEn": {
-          "label": "English description",
-          "hint": "Shown when the app is in English"
+          "label": "English description"
         },
         "minAge": {
-          "label": "Minimum age",
-          "hint": "In years, 0 for all ages"
+          "label": "Minimum age"
         }
       },
       "minAgeBadge": "Age {age}+"
@@ -326,16 +316,14 @@
           "label": "Name"
         },
         "nameEn": {
-          "label": "English name",
-          "hint": "Shown when the app is in English"
+          "label": "English name"
         },
         "capacity": {
           "label": "Capacity",
           "placeholder": "Select capacity"
         },
         "color": {
-          "label": "Map colour",
-          "hint": "Used to colour seats on the seat map"
+          "label": "Map colour"
         }
       },
       "capacitySingle": "Single seat",
@@ -350,15 +338,13 @@
       "emptyDescription": "Add holidays to price tickets as holiday days.",
       "fields": {
         "date": {
-          "label": "Date",
-          "hint": "Vietnam calendar day"
+          "label": "Date"
         },
         "name": {
           "label": "Name"
         },
         "nameEn": {
-          "label": "English name",
-          "hint": "Shown when the app is in English"
+          "label": "English name"
         }
       }
     },
@@ -378,20 +364,18 @@
           "label": "Name"
         },
         "nameEn": {
-          "label": "English name",
-          "hint": "Shown when the app is in English"
+          "label": "English name"
         },
         "size": {
           "label": "Size",
-          "hint": "e.g. Large, M, 32oz"
+          "placeholder": "e.g. Large, M, 32oz"
         },
         "price": {
-          "label": "Price",
-          "hint": "In dong, e.g. 79000"
+          "label": "Price (VND)",
+          "placeholder": "e.g. 79000"
         },
         "validFrom": {
-          "label": "Valid from",
-          "hint": "Leave empty if always valid"
+          "label": "Valid from"
         },
         "validTo": {
           "label": "Valid until"
@@ -416,15 +400,14 @@
         },
         "description": {
           "label": "What's inside",
-          "hint": "e.g. 1 large popcorn + 2 drinks"
+          "placeholder": "e.g. 1 large popcorn + 2 drinks"
         },
         "price": {
-          "label": "Price",
-          "hint": "In dong, e.g. 79000"
+          "label": "Price (VND)",
+          "placeholder": "e.g. 99000"
         },
         "validFrom": {
-          "label": "Valid from",
-          "hint": "Leave empty if always valid"
+          "label": "Valid from"
         },
         "validTo": {
           "label": "Valid until"
@@ -466,12 +449,11 @@
       "fields": {
         "scope": {
           "label": "Applies to",
-          "hint": "A branch price beats a brand-wide price",
           "placeholder": "Select a brand or branch"
         },
         "price": {
-          "label": "Ticket price",
-          "hint": "In dong, e.g. 95000"
+          "label": "Ticket price (VND)",
+          "placeholder": "e.g. 95000"
         },
         "formatId": {
           "label": "Format"
@@ -480,35 +462,30 @@
           "label": "Seat type"
         },
         "dayType": {
-          "label": "Day type",
-          "hint": "Holiday beats promo, then weekend, then normal"
+          "label": "Day type"
         },
         "weekday": {
           "label": "Promo weekday",
-          "hint": "Only for promo days",
           "placeholder": "Select a day"
         },
         "timeFrom": {
-          "label": "Showtimes starting from",
-          "hint": "Enter both times or leave empty"
+          "label": "Showtimes starting from"
         },
         "timeTo": {
           "label": "Until"
         },
         "validFrom": {
-          "label": "Valid from",
-          "hint": "Leave empty for no limit"
+          "label": "Valid from"
         },
         "validTo": {
           "label": "Valid until"
         },
         "priority": {
-          "label": "Priority",
-          "hint": "Larger wins when two prices tie, default 0"
+          "label": "Priority"
         },
         "note": {
           "label": "Note",
-          "hint": "e.g. Happy Wednesday"
+          "placeholder": "e.g. Happy Wednesday"
         }
       }
     },
@@ -518,7 +495,6 @@
       "createTitle": "Add user",
       "editTitle": "Edit user",
       "resetTitle": "Reset password",
-      "resetDescription": "Set a temporary password for {name}. They must change it at next sign-in.",
       "addButton": "Add user",
       "emptyTitle": "No users yet",
       "emptyDescription": "Create the first account to invite friends.",
@@ -553,22 +529,17 @@
           "label": "Name"
         },
         "username": {
-          "label": "Username",
-          "hint": "Lowercase letters, digits, . _ - (3 to 30). Needs a username or an email"
+          "label": "Username"
         },
         "email": {
-          "label": "Email",
-          "hint": "Lets them sign in with Google"
+          "label": "Email"
         },
         "role": {
           "label": "Role",
-          "hint": "Admins only see the admin area",
           "placeholder": "Select a role"
         },
         "temporaryPassword": {
-          "label": "Temporary password",
-          "hint": "Pre-filled, send it to them. They must change it at first sign-in",
-          "resetHint": "Pre-filled, send it to them. Earlier failed sign-ins are cleared"
+          "label": "Temporary password"
         }
       },
       "lock": "Lock account",
@@ -583,21 +554,18 @@
     },
     "systemSettings": {
       "title": "System settings",
-      "description": "Applies to every user.",
       "cardDescription": "Reminders, invitation deadline, ad time.",
       "open": "Open system settings",
       "fields": {
         "reminderMinutesBefore": {
           "label": "Remind before showtime (minutes)",
-          "hint": "Several times, comma-separated, e.g. 1440, 20 (up to 5)"
+          "placeholder": "e.g. 1440, 20"
         },
         "responseDeadlineHours": {
-          "label": "Invitation deadline (hours)",
-          "hint": "Hours before the showtime that friends must answer, 1 to 168"
+          "label": "Invitation deadline (hours)"
         },
         "adMinutes": {
-          "label": "Ads before the movie (minutes)",
-          "hint": "Added to a showtime's end time, 0 to 60"
+          "label": "Ads before the movie (minutes)"
         }
       }
     }
@@ -685,12 +653,10 @@
       },
       "phone": {
         "label": "Phone number",
-        "hint": "So friends can find you",
         "placeholder": "e.g. 0912 345 678"
       },
       "seatPreference": {
-        "label": "Preferred seats",
-        "hint": "Used for seat suggestions"
+        "label": "Preferred seats"
       }
     }
   },

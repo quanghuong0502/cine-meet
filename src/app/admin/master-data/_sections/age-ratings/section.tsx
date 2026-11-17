@@ -20,9 +20,9 @@ export const ageRatingsSection = createSection({
     minAge: rating.minAge.toString(),
   }),
   fields: ({ t }) => [
-    { name: "code", kind: "text", label: t("fields.code.label"), hint: t("fields.code.hint"), required: true, maxLength: 10 },
+    { name: "code", kind: "text", label: t("fields.code.label"), placeholder: t("fields.code.placeholder"), required: true, maxLength: 10 },
     { name: "description", kind: "text", label: t("fields.description.label"), required: true, maxLength: 120 },
-    { name: "descriptionEn", kind: "text", label: t("fields.descriptionEn.label"), hint: t("fields.descriptionEn.hint"), maxLength: 120 },
-    { name: "minAge", kind: "number", label: t("fields.minAge.label"), hint: t("fields.minAge.hint"), required: true, step: "1", min: 0, max: 21 },
+    { name: "descriptionEn", kind: "text", label: t("fields.descriptionEn.label"), maxLength: 120 },
+    { name: "minAge", kind: "number", label: t("fields.minAge.label"), required: true, step: "1", min: 0, max: 21 },
   ],
 });

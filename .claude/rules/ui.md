@@ -88,10 +88,12 @@ Phần minh họa (ảnh nhân vật) co theo chỗ còn trống (`flex-1 min-h-
 Nếu màn thấp hơn cả phần nội dung bắt buộc thì cho cuộn nhưng ẩn thanh cuộn. Khi sửa màn này phải đo ở 390×844, 375×667, 360×640 và 320×568,
 cả hai ngôn ngữ, có và không có khung lỗi.
 
-**Form (mẫu theo màn đăng nhập):** không bọc trong thẻ; nhãn phía trên ô nhập (`text-muted-foreground`); ô nhập nền `card`,
-`h-12 rounded-xl text-base`; ô mật khẩu có nút hiện/ẩn (vùng chạm 44px, `aria-pressed`); lỗi hiện trong khung `destructive`
-nhạt kèm biểu tượng; nút gửi `h-12 rounded-full` toàn chiều rộng, đang xử lý thì hiện spinner (`motion-safe:`);
-đăng nhập bằng nhà cung cấp ngoài là nút viền `rounded-full` bên dưới dòng phân cách "hoặc".
+**Form (mẫu theo màn đăng nhập), quy tắc của chủ dự án (2026-11-17):**
+- **Không có gợi ý, mô tả hay chú thích dưới nhãn và dưới ô nhập, và không có mô tả dưới tiêu đề màn nhập.** Form chỉ gồm nhãn, ô, lỗi. Thông tin cần để điền đúng thì đưa vào: nhãn (đơn vị, ví dụ "Giá vé (đồng)"), placeholder (ví dụ giá trị, "vd. 95000") hoặc thông báo lỗi sau khi gửi.
+- **Ô bắt buộc: dấu `*` ngay sau nhãn (`RequiredMark`, màu đỏ, ẩn với trình đọc màn hình; ô có `aria-required`). Ô không bắt buộc: không ghi gì** (không có chữ "Không bắt buộc").
+- Khung dùng chung `ResourceForm` đã áp dụng sẵn; form tự dựng (đăng nhập, đổi mật khẩu) dùng `RequiredMark` và không thêm gợi ý.
+- Không bọc trong thẻ; nhãn phía trên ô nhập (`text-muted-foreground`); ô nhập nền `card`, `h-control rounded-xl text-base`; ô mật khẩu có nút hiện/ẩn (vùng chạm 44px, `aria-pressed`); lỗi hiện trong khung `destructive` nhạt kèm biểu tượng; nút gửi `size="cta"`, đang xử lý thì hiện spinner (`motion-safe:`);
+  đăng nhập bằng nhà cung cấp ngoài là nút viền `rounded-full` bên dưới dòng phân cách "hoặc".
 
 **Chữ (thang cỡ cố định, dùng đúng vai trò, không tự chọn cỡ khác). Giá trị nằm ở một chỗ duy nhất là khối `@theme` trong `globals.css`; chi tiết và nguồn tham khảo ở `.claude/rules/design-tokens.md`:**
 
@@ -103,7 +105,7 @@ nhạt kèm biểu tượng; nút gửi `h-12 rounded-full` toàn chiều rộng
 | Tiêu đề mục, tên phim/rạp trong danh sách | `text-base` | 16 / 24 | semibold | iOS Headline 17; M3 Title Medium 16 |
 | Nội dung chính, ô nhập, nút chính | `text-base` | 16 / 24 | normal, nút semibold | iOS Body 17; M3 Body Large 16; web mobile tối thiểu 16 |
 | Mô tả phụ, nhãn ô nhập, thông báo lỗi | `text-sm` | 15 / 22 | normal hoặc medium | iOS Subheadline 15; M3 Body Medium 14 (nâng lên 15 cho dễ đọc, nhất là dấu tiếng Việt) |
-| Gợi ý dưới ô nhập, ghi chú "Không bắt buộc" | `text-footnote` | 13 / 18 | normal | iOS Footnote 13 |
+| Ghi chú nhỏ ngoài form (không dùng làm gợi ý dưới ô nhập) | `text-footnote` | 13 / 18 | normal | iOS Footnote 13 |
 | Nhãn tab dưới, badge | `text-xs` | 12 / 16 | medium | M3 Label Medium 12; iOS Caption 12 |
 
 - **Thứ bậc phải đúng chiều:** tên thương hiệu và tiêu đề màn hình không được nhỏ hơn thứ nó dẫn dắt. Ở màn auth, wordmark (30) lớn hơn tiêu đề (24).

@@ -84,15 +84,14 @@ export const priceRulesSection = createSection({
       ...branches.map((branch) => ({ value: `branch:${branch.id}`, label: `${brandNames.get(branch.brandId) ?? ""} · ${branch.name}` })),
     ];
     return [
-      { name: "scope", kind: "select", label: t("fields.scope.label"), hint: t("fields.scope.hint"), required: true, options: scopeOptions, placeholder: t("fields.scope.placeholder") },
-      { name: "price", kind: "number", label: t("fields.price.label"), hint: t("fields.price.hint"), required: true, step: "1", min: 0 },
+      { name: "scope", kind: "select", label: t("fields.scope.label"), required: true, options: scopeOptions, placeholder: t("fields.scope.placeholder") },
+      { name: "price", kind: "number", label: t("fields.price.label"), placeholder: t("fields.price.placeholder"), required: true, step: "1", min: 0 },
       { name: "formatId", kind: "select", label: t("fields.formatId.label"), options: formatOptions, placeholder: t("any.format") },
       { name: "seatTypeId", kind: "select", label: t("fields.seatTypeId.label"), options: seatTypeOptions, placeholder: t("any.seatType") },
       {
         name: "dayType",
         kind: "select",
         label: t("fields.dayType.label"),
-        hint: t("fields.dayType.hint"),
         placeholder: t("any.dayType"),
         options: [
           { value: "any", label: t("any.dayType") },
@@ -106,16 +105,15 @@ export const priceRulesSection = createSection({
         name: "weekday",
         kind: "select",
         label: t("fields.weekday.label"),
-        hint: t("fields.weekday.hint"),
         placeholder: t("fields.weekday.placeholder"),
         options: WEEKDAYS.map((day) => ({ value: String(day), label: t(`weekday.${day}`) })),
       },
-      { name: "timeFrom", kind: "time", label: t("fields.timeFrom.label"), hint: t("fields.timeFrom.hint") },
+      { name: "timeFrom", kind: "time", label: t("fields.timeFrom.label"), },
       { name: "timeTo", kind: "time", label: t("fields.timeTo.label") },
-      { name: "validFrom", kind: "date", label: t("fields.validFrom.label"), hint: t("fields.validFrom.hint") },
+      { name: "validFrom", kind: "date", label: t("fields.validFrom.label"), },
       { name: "validTo", kind: "date", label: t("fields.validTo.label") },
-      { name: "priority", kind: "number", label: t("fields.priority.label"), hint: t("fields.priority.hint"), step: "1", min: 0, max: 100 },
-      { name: "note", kind: "text", label: t("fields.note.label"), hint: t("fields.note.hint"), maxLength: 80 },
+      { name: "priority", kind: "number", label: t("fields.priority.label"), step: "1", min: 0, max: 100 },
+      { name: "note", kind: "text", label: t("fields.note.label"), placeholder: t("fields.note.placeholder"), maxLength: 80 },
     ];
   },
 });

@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { RequiredMark } from "@/components/required-mark";
 import { Label } from "@/components/ui/label";
 import { MIN_PASSWORD_LENGTH } from "@/lib/user-constants";
 import { changePasswordAction, type ChangePasswordState } from "./actions";
@@ -20,7 +21,7 @@ export function ChangePasswordForm() {
   return (
     <form action={formAction} className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
-        <Label htmlFor="currentPassword">{t("currentLabel")}</Label>
+        <Label htmlFor="currentPassword"><span>{t("currentLabel")}<RequiredMark /></span></Label>
         <Input
           id="currentPassword"
           name="currentPassword"
@@ -32,7 +33,7 @@ export function ChangePasswordForm() {
         />
       </div>
       <div className="flex flex-col gap-2">
-        <Label htmlFor="newPassword">{t("newLabel")}</Label>
+        <Label htmlFor="newPassword"><span>{t("newLabel")}<RequiredMark /></span></Label>
         <Input
           id="newPassword"
           name="newPassword"
@@ -40,16 +41,12 @@ export function ChangePasswordForm() {
           autoComplete="new-password"
           enterKeyHint="next"
           minLength={MIN_PASSWORD_LENGTH}
-          aria-describedby="newPasswordHint"
           required
           className="h-control rounded-xl bg-card px-4 text-base"
         />
-        <p id="newPasswordHint" className="text-footnote text-muted-foreground">
-          {t("newHint", { min: MIN_PASSWORD_LENGTH })}
-        </p>
       </div>
       <div className="flex flex-col gap-2">
-        <Label htmlFor="confirmPassword">{t("confirmLabel")}</Label>
+        <Label htmlFor="confirmPassword"><span>{t("confirmLabel")}<RequiredMark /></span></Label>
         <Input
           id="confirmPassword"
           name="confirmPassword"

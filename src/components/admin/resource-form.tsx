@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { DeleteRecordButton } from "@/components/admin/delete-record-button";
 import { ImageUpload } from "@/components/image-upload";
+import { RequiredMark } from "@/components/required-mark";
 import { useActionState, useEffect } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -32,7 +33,7 @@ const CONTROL_CLASS = "h-control rounded-xl bg-card px-4 text-base";
 /** `last`: the final typing field of the form, whose return key says "Done" instead of "Next". */
 function FieldControl({ field, value, invalid, last }: { field: ResourceField; value: string; invalid: boolean; last: boolean }) {
   const isPlain = field.plain || field.kind === "url" || field.kind === "email";
-  const common = { id: field.name, name: field.name, "aria-invalid": invalid || undefined } as const;
+  const common = { id: field.name, name: field.name, "aria-invalid": invalid || undefined, "aria-required": field.required || undefined } as const;
 
   switch (field.kind) {
     case "textarea":
@@ -64,7 +65,7 @@ function FieldControl({ field, value, invalid, last }: { field: ResourceField; v
     case "select":
       return (
         <Select name={field.name} defaultValue={value || undefined}>
-          <SelectTrigger id={field.name} aria-invalid={invalid || undefined} className={`${CONTROL_CLASS} w-full`}>
+          <SelectTrigger id={field.name} aria-invalid={invalid || undefined} aria-required={field.required || undefined} className={`${CONTROL_CLASS} w-full`}>
             <SelectValue placeholder={field.placeholder} />
           </SelectTrigger>
           <SelectContent>
@@ -159,10 +160,11 @@ export function ResourceForm({ itemId, fields, values, backHref, saveAction, del
           <div key={field.name} className={horizontal ? "flex min-h-target items-center justify-between gap-4" : "flex flex-col gap-2"}>
             <div className="flex flex-col gap-0.5">
               <Label htmlFor={field.name} className="text-muted-foreground">
-                {field.label}
-                {field.required ? null : <span className="ml-2 text-footnote font-normal">· {t("optional")}</span>}
+                <span>
+                  {field.label}
+                  {field.required ? <RequiredMark /> : null}
+                </span>
               </Label>
-              {field.hint ? <p className="text-footnote text-muted-foreground">{field.hint}</p> : null}
             </div>
             {/* key: remount with the typed value, since uncontrolled inputs ignore a changed defaultValue */}
             <FieldControl

@@ -12,6 +12,6 @@ export const genresSection = createSection({
   values: (genre) => ({ name: genre.name, nameEn: genre.nameEn ?? "" }),
   fields: ({ t }) => [
     { name: "name", kind: "text", label: t("fields.name.label"), required: true, maxLength: 40 },
-    { name: "nameEn", kind: "text", label: t("fields.nameEn.label"), hint: t("fields.nameEn.hint"), maxLength: 40 },
+    { name: "nameEn", kind: "text", label: t("fields.nameEn.label"), maxLength: 40 },
   ],
 });

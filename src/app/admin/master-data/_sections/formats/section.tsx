@@ -11,6 +11,6 @@ export const formatsSection = createSection({
   item: (format) => ({ title: format.name }),
   values: (format) => ({ name: format.name }),
   fields: ({ t }) => [
-    { name: "name", kind: "text", label: t("fields.name.label"), hint: t("fields.name.hint"), required: true, maxLength: 30 },
+    { name: "name", kind: "text", label: t("fields.name.label"), placeholder: t("fields.name.placeholder"), required: true, maxLength: 30 },
   ],
 });

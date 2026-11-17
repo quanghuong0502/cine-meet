@@ -7,6 +7,7 @@ import { useFormStatus } from "react-dom";
 import { GoogleIcon } from "@/components/google-icon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { RequiredMark } from "@/components/required-mark";
 import { Label } from "@/components/ui/label";
 import { loginWithGoogle, loginWithPassword, type LoginState } from "./actions";
 
@@ -54,7 +55,10 @@ export function LoginForm({ callbackUrl, initialError }: LoginFormProps) {
 
         <div className="flex flex-col gap-2">
           <Label htmlFor="identifier" className="text-muted-foreground">
-            {t("identifierLabel")}
+            <span>
+              {t("identifierLabel")}
+              <RequiredMark />
+            </span>
           </Label>
           <Input
             id="identifier"
@@ -72,7 +76,10 @@ export function LoginForm({ callbackUrl, initialError }: LoginFormProps) {
 
         <div className="flex flex-col gap-2">
           <Label htmlFor="password" className="text-muted-foreground">
-            {t("passwordLabel")}
+            <span>
+              {t("passwordLabel")}
+              <RequiredMark />
+            </span>
           </Label>
           <div className="relative">
             <Input

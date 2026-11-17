@@ -35,10 +35,10 @@ export const brandsSection: SectionDefinition = {
 
     const fields: ResourceField[] = [
       { name: "name", kind: "text", label: t("fields.name.label"), required: true, maxLength: 60 },
-      { name: "color", kind: "color", label: t("fields.color.label"), hint: t("fields.color.hint") },
-      { name: "logoUrl", kind: "image", label: t("fields.logoUrl.label"), hint: t("fields.logoUrl.hint"), uploadTicket: getBrandLogoUploadTicket },
+      { name: "color", kind: "color", label: t("fields.color.label"), },
+      { name: "logoUrl", kind: "image", label: t("fields.logoUrl.label"), uploadTicket: getBrandLogoUploadTicket },
       { name: "websiteUrl", kind: "url", label: t("fields.websiteUrl.label"), maxLength: 300 },
-      { name: "appUrl", kind: "url", label: t("fields.appUrl.label"), hint: t("fields.appUrl.hint"), maxLength: 300 },
+      { name: "appUrl", kind: "url", label: t("fields.appUrl.label"), maxLength: 300 },
     ];
 
     return {

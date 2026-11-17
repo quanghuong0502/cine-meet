@@ -22,8 +22,8 @@ Mỗi chuỗi phải tự đủ nghĩa khi tách khỏi màn hình (đọc bằn
 |---|---|---|---|
 | Tiêu đề màn hình | Danh từ hoặc cụm ngắn nêu đối tượng; tối đa khoảng 28 ký tự; không dấu chấm | "Chọn ghế", "Lịch hẹn của tôi" | "Màn hình chọn ghế cho suất chiếu" |
 | Nút | Động từ + đối tượng; tối đa khoảng 20 ký tự; nút nguy hiểm nêu hậu quả | "Chốt người tham gia", "Hủy lịch hẹn" | "OK", "Gửi", "Tiếp tục" |
-| Nhãn ô nhập | Danh từ ngắn đặt phía trên ô; không dấu hai chấm hay dấu chấm; không dùng placeholder thay nhãn | "Số điện thoại" | "Nhập số điện thoại của bạn:" |
-| Gợi ý (hint, helper) | Một câu, cho biết định dạng, giới hạn hoặc lý do; không lặp lại nhãn; tối đa khoảng 80 ký tự | "Ít nhất 8 ký tự", "Dùng để bạn bè tìm thấy bạn" | "Vui lòng nhập mật khẩu" |
+| Nhãn ô nhập | Danh từ ngắn đặt phía trên ô; không dấu hai chấm hay dấu chấm; không dùng placeholder thay nhãn; **ô bắt buộc có dấu `*` sau nhãn, ô không bắt buộc không ghi gì** | "Số điện thoại" | "Nhập số điện thoại của bạn:" |
+| Gợi ý, mô tả dưới ô nhập (hint, helper) | **Không dùng trong form.** Cần chỉ cách điền thì đưa vào nhãn (đơn vị: "Giá vé (đồng)"), vào placeholder (ví dụ giá trị) hoặc vào thông báo lỗi sau khi gửi | "Giá vé (đồng)", placeholder "vd. 95000" | dòng chữ nhỏ dưới ô: "Đơn vị đồng, vd. 95000" |
 | Placeholder | Ví dụ giá trị, không phải chỉ dẫn | "vd. 0912 345 678" | "Nhập số điện thoại" |
 | Lỗi | Nói chuyện gì xảy ra + cách sửa; không mã lỗi; riêng đăng nhập không tiết lộ tài khoản có tồn tại hay không | "Mật khẩu hiện tại không đúng. Thử lại hoặc nhờ quản trị viên đặt lại." | "Lỗi 401" |
 | Trạng thái rỗng | Vì sao trống + việc làm tiếp theo | "Chưa có lịch hẹn. Mời bạn bè đi xem phim." | "Không có dữ liệu" |

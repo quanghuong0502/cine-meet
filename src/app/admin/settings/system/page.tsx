@@ -17,14 +17,14 @@ export default async function SystemSettingsPage() {
   const [t, settings] = await Promise.all([getTranslations("admin.systemSettings"), getSystemSettings()]);
 
   const fields: ResourceField[] = [
-    { name: "reminderMinutesBefore", kind: "text", plain: true, label: t("fields.reminderMinutesBefore.label"), hint: t("fields.reminderMinutesBefore.hint"), required: true, maxLength: 60 },
-    { name: "responseDeadlineHours", kind: "number", label: t("fields.responseDeadlineHours.label"), hint: t("fields.responseDeadlineHours.hint"), required: true, step: "1", min: 1, max: 168 },
-    { name: "adMinutes", kind: "number", label: t("fields.adMinutes.label"), hint: t("fields.adMinutes.hint"), required: true, step: "1", min: 0, max: 60 },
+    { name: "reminderMinutesBefore", kind: "text", plain: true, label: t("fields.reminderMinutesBefore.label"), placeholder: t("fields.reminderMinutesBefore.placeholder"), required: true, maxLength: 60 },
+    { name: "responseDeadlineHours", kind: "number", label: t("fields.responseDeadlineHours.label"), required: true, step: "1", min: 1, max: 168 },
+    { name: "adMinutes", kind: "number", label: t("fields.adMinutes.label"), required: true, step: "1", min: 0, max: 60 },
   ];
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-4 p-4">
-      <PageHeader title={t("title")} description={t("description")} backHref="/admin/settings" />
+      <PageHeader title={t("title")} backHref="/admin/settings" />
       <ResourceForm
         itemId={null}
         fields={fields}

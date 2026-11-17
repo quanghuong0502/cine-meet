@@ -22,7 +22,7 @@ export const seatTypesSection = createSection({
   }),
   fields: ({ t }) => [
     { name: "name", kind: "text", label: t("fields.name.label"), required: true, maxLength: 40 },
-    { name: "nameEn", kind: "text", label: t("fields.nameEn.label"), hint: t("fields.nameEn.hint"), maxLength: 40 },
+    { name: "nameEn", kind: "text", label: t("fields.nameEn.label"), maxLength: 40 },
     {
       name: "capacity",
       kind: "select",
@@ -34,6 +34,6 @@ export const seatTypesSection = createSection({
         { value: "2", label: t("capacityCouple") },
       ],
     },
-    { name: "color", kind: "color", label: t("fields.color.label"), hint: t("fields.color.hint") },
+    { name: "color", kind: "color", label: t("fields.color.label"), },
   ],
 });

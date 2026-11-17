@@ -26,10 +26,10 @@ export const fnbItemsSection = createSection({
   fields: ({ t, brandOptions }) => [
     { name: "brandId", kind: "select", label: t("fields.brandId.label"), required: true, options: brandOptions, placeholder: t("fields.brandId.placeholder") },
     { name: "name", kind: "text", label: t("fields.name.label"), required: true, maxLength: 80 },
-    { name: "nameEn", kind: "text", label: t("fields.nameEn.label"), hint: t("fields.nameEn.hint"), maxLength: 80 },
-    { name: "size", kind: "text", label: t("fields.size.label"), hint: t("fields.size.hint"), maxLength: 30 },
-    { name: "price", kind: "number", label: t("fields.price.label"), hint: t("fields.price.hint"), required: true, step: "1", min: 0 },
-    { name: "validFrom", kind: "date", label: t("fields.validFrom.label"), hint: t("fields.validFrom.hint") },
+    { name: "nameEn", kind: "text", label: t("fields.nameEn.label"), maxLength: 80 },
+    { name: "size", kind: "text", label: t("fields.size.label"), placeholder: t("fields.size.placeholder"), maxLength: 30 },
+    { name: "price", kind: "number", label: t("fields.price.label"), placeholder: t("fields.price.placeholder"), required: true, step: "1", min: 0 },
+    { name: "validFrom", kind: "date", label: t("fields.validFrom.label"), },
     { name: "validTo", kind: "date", label: t("fields.validTo.label") },
   ],
 });

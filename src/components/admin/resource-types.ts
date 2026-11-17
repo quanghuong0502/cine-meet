@@ -8,8 +8,8 @@ export type ResourceFieldKind = "text" | "textarea" | "url" | "color" | "number"
 export interface ResourceField {
   name: string;
   kind: ResourceFieldKind;
+  /** Short label. A required field gets a "*"; there is no hint or description under a field (put a unit in the label, an example in `placeholder`). */
   label: string;
-  hint?: string;
   required?: boolean;
   options?: { value: string; label: string }[];
   /** Shown in a select that has no value yet. */

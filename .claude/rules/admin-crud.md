@@ -25,7 +25,7 @@ Mọi loại master data (thương hiệu, chi nhánh, thể loại...) dùng c�
    Danh sách gắn `?back=<url danh sách hiện tại>` (tab và tìm kiếm); sau khi lưu hay xóa, form `router.replace(back)` rồi `router.refresh()`; server action cũng `revalidatePath`.
    `back` chỉ nhận đường dẫn bắt đầu bằng `/admin/master-data` (`src/lib/admin/back-href.ts`). Tham khảo `_sections/brands/section.tsx`. Không tạo route riêng cho từng loại ngoài hai route động trên.
 5. **Đăng ký tab:** thêm vào `src/lib/master-data-sections.ts` (kèm `slug` cho URL và biểu tượng), vào `SECTIONS` ở `_sections/index.ts` và khóa `admin.masterData.sections.<ten>` ở cả `vi.json` và `en.json`.
-6. **Chuỗi:** khóa `admin.<ten>.*` ở cả hai ngôn ngữ; lỗi dùng chung nằm ở `admin.common.errors.*` và `admin.validation.*`. Lỗi từ server luôn là mã, không phải câu.
+6. **Chuỗi:** khóa `admin.<ten>.*` ở cả hai ngôn ngữ (trường chỉ có `label` và `placeholder`; **không có hint**, đơn vị đưa vào nhãn); lỗi dùng chung nằm ở `admin.common.errors.*` và `admin.validation.*`. Lỗi từ server luôn là mã, không phải câu.
 7. **Test:** thêm test dịch vụ (tạo, trùng tên, sửa, xóa, tìm kiếm, `in_use`) như `brand.service.test.ts`.
 
 Lưu ý đã gặp:

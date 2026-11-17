@@ -36,7 +36,6 @@
       "description": "Nhập mật khẩu hiện tại và mật khẩu mới.",
       "currentLabel": "Mật khẩu hiện tại",
       "newLabel": "Mật khẩu mới",
-      "newHint": "Ít nhất {min} ký tự",
       "confirmLabel": "Nhập lại mật khẩu mới",
       "submit": "Đổi mật khẩu",
       "submitting": "Đang lưu...",
@@ -87,7 +86,6 @@
       "cancel": "Hủy",
       "searchLabel": "Tìm kiếm",
       "searchPlaceholder": "Tìm theo tên",
-      "optional": "Không bắt buộc",
       "noResultsTitle": "Không có kết quả",
       "noResultsDescription": "Thử một từ khóa khác.",
       "saved": "Đã lưu",
@@ -182,19 +180,16 @@
           "label": "Tên"
         },
         "color": {
-          "label": "Màu thương hiệu",
-          "hint": "Dùng để tô màu thẻ và nhãn"
+          "label": "Màu thương hiệu"
         },
         "logoUrl": {
-          "label": "Logo",
-          "hint": "Ảnh từ thiết bị, tối đa 8 MB"
+          "label": "Logo"
         },
         "websiteUrl": {
           "label": "Website"
         },
         "appUrl": {
-          "label": "Liên kết app",
-          "hint": "Mở app đặt vé của rạp"
+          "label": "Liên kết app"
         }
       }
     },
@@ -220,15 +215,13 @@
           "placeholder": "Chọn thương hiệu"
         },
         "name": {
-          "label": "Tên chi nhánh",
-          "hint": "Thường gồm tên rạp và khu vực"
+          "label": "Tên chi nhánh"
         },
         "address": {
           "label": "Địa chỉ"
         },
         "lat": {
-          "label": "Vĩ độ",
-          "hint": "Nhập cả vĩ độ và kinh độ, hoặc để trống cả hai"
+          "label": "Vĩ độ"
         },
         "lng": {
           "label": "Kinh độ"
@@ -238,15 +231,15 @@
         },
         "floor": {
           "label": "Tầng",
-          "hint": "vd. Tầng 5"
+          "placeholder": "vd. Tầng 5"
         },
         "openingHours": {
           "label": "Giờ mở cửa",
-          "hint": "vd. 08:00 – 23:00"
+          "placeholder": "vd. 08:00 – 23:00"
         },
         "parkingFee": {
-          "label": "Phí gửi xe",
-          "hint": "Đơn vị đồng, để trống nếu chưa rõ"
+          "label": "Phí gửi xe (đồng)",
+          "placeholder": "vd. 5000"
         },
         "parkingLocation": {
           "label": "Nơi gửi xe"
@@ -269,8 +262,7 @@
           "label": "Tên"
         },
         "nameEn": {
-          "label": "Tên tiếng Anh",
-          "hint": "Hiện khi dùng tiếng Anh"
+          "label": "Tên tiếng Anh"
         }
       }
     },
@@ -284,7 +276,7 @@
       "fields": {
         "name": {
           "label": "Tên",
-          "hint": "vd. 2D, 3D, IMAX"
+          "placeholder": "vd. 2D, 3D, IMAX"
         }
       }
     },
@@ -298,18 +290,16 @@
       "fields": {
         "code": {
           "label": "Mã",
-          "hint": "vd. T16"
+          "placeholder": "vd. T16"
         },
         "description": {
           "label": "Mô tả"
         },
         "descriptionEn": {
-          "label": "Mô tả tiếng Anh",
-          "hint": "Hiện khi dùng tiếng Anh"
+          "label": "Mô tả tiếng Anh"
         },
         "minAge": {
-          "label": "Tuổi tối thiểu",
-          "hint": "Số tuổi, 0 nếu mọi lứa tuổi"
+          "label": "Tuổi tối thiểu"
         }
       },
       "minAgeBadge": "Từ {age} tuổi"
@@ -326,16 +316,14 @@
           "label": "Tên"
         },
         "nameEn": {
-          "label": "Tên tiếng Anh",
-          "hint": "Hiện khi dùng tiếng Anh"
+          "label": "Tên tiếng Anh"
         },
         "capacity": {
           "label": "Sức chứa",
           "placeholder": "Chọn sức chứa"
         },
         "color": {
-          "label": "Màu trên sơ đồ",
-          "hint": "Dùng để tô ghế trên sơ đồ"
+          "label": "Màu trên sơ đồ"
         }
       },
       "capacitySingle": "Ghế đơn",
@@ -350,15 +338,13 @@
       "emptyDescription": "Thêm ngày lễ để tính giá vé ngày lễ.",
       "fields": {
         "date": {
-          "label": "Ngày",
-          "hint": "Theo lịch Việt Nam"
+          "label": "Ngày"
         },
         "name": {
           "label": "Tên"
         },
         "nameEn": {
-          "label": "Tên tiếng Anh",
-          "hint": "Hiện khi dùng tiếng Anh"
+          "label": "Tên tiếng Anh"
         }
       }
     },
@@ -378,20 +364,18 @@
           "label": "Tên"
         },
         "nameEn": {
-          "label": "Tên tiếng Anh",
-          "hint": "Hiện khi dùng tiếng Anh"
+          "label": "Tên tiếng Anh"
         },
         "size": {
           "label": "Cỡ",
-          "hint": "vd. Lớn, M, 32oz"
+          "placeholder": "vd. Lớn, M, 32oz"
         },
         "price": {
-          "label": "Giá",
-          "hint": "Đơn vị đồng, vd. 79000"
+          "label": "Giá (đồng)",
+          "placeholder": "vd. 79000"
         },
         "validFrom": {
-          "label": "Áp dụng từ",
-          "hint": "Để trống nếu luôn áp dụng"
+          "label": "Áp dụng từ"
         },
         "validTo": {
           "label": "Áp dụng đến"
@@ -416,15 +400,14 @@
         },
         "description": {
           "label": "Gồm những gì",
-          "hint": "vd. 1 bắp lớn + 2 nước"
+          "placeholder": "vd. 1 bắp lớn + 2 nước"
         },
         "price": {
-          "label": "Giá",
-          "hint": "Đơn vị đồng, vd. 79000"
+          "label": "Giá (đồng)",
+          "placeholder": "vd. 99000"
         },
         "validFrom": {
-          "label": "Áp dụng từ",
-          "hint": "Để trống nếu luôn áp dụng"
+          "label": "Áp dụng từ"
         },
         "validTo": {
           "label": "Áp dụng đến"
@@ -466,12 +449,11 @@
       "fields": {
         "scope": {
           "label": "Áp dụng cho",
-          "hint": "Chi nhánh được ưu tiên hơn cả thương hiệu",
           "placeholder": "Chọn thương hiệu hoặc chi nhánh"
         },
         "price": {
-          "label": "Giá vé",
-          "hint": "Đơn vị đồng, vd. 95000"
+          "label": "Giá vé (đồng)",
+          "placeholder": "vd. 95000"
         },
         "formatId": {
           "label": "Định dạng"
@@ -480,35 +462,30 @@
           "label": "Loại ghế"
         },
         "dayType": {
-          "label": "Loại ngày",
-          "hint": "Ngày lễ ưu tiên hơn ưu đãi, rồi cuối tuần, rồi ngày thường"
+          "label": "Loại ngày"
         },
         "weekday": {
           "label": "Thứ ưu đãi",
-          "hint": "Chỉ cần khi chọn ngày ưu đãi",
           "placeholder": "Chọn thứ"
         },
         "timeFrom": {
-          "label": "Suất bắt đầu từ",
-          "hint": "Nhập cả hai giờ hoặc để trống"
+          "label": "Suất bắt đầu từ"
         },
         "timeTo": {
           "label": "Đến trước"
         },
         "validFrom": {
-          "label": "Áp dụng từ",
-          "hint": "Để trống nếu không giới hạn"
+          "label": "Áp dụng từ"
         },
         "validTo": {
           "label": "Áp dụng đến"
         },
         "priority": {
-          "label": "Độ ưu tiên",
-          "hint": "Số lớn thắng khi hai giá ngang nhau, mặc định 0"
+          "label": "Độ ưu tiên"
         },
         "note": {
           "label": "Ghi chú",
-          "hint": "vd. Thứ tư vui vẻ"
+          "placeholder": "vd. Thứ tư vui vẻ"
         }
       }
     },
@@ -518,7 +495,6 @@
       "createTitle": "Thêm người dùng",
       "editTitle": "Sửa người dùng",
       "resetTitle": "Đặt lại mật khẩu",
-      "resetDescription": "Đặt mật khẩu tạm cho {name}. Họ phải đổi mật khẩu ở lần đăng nhập sau.",
       "addButton": "Thêm người dùng",
       "emptyTitle": "Chưa có người dùng",
       "emptyDescription": "Tạo tài khoản đầu tiên để mời bạn bè dùng app.",
@@ -553,22 +529,17 @@
           "label": "Tên"
         },
         "username": {
-          "label": "Tên đăng nhập",
-          "hint": "Chữ thường, số, . _ - (3 đến 30 ký tự). Cần ít nhất tên đăng nhập hoặc email"
+          "label": "Tên đăng nhập"
         },
         "email": {
-          "label": "Email",
-          "hint": "Dùng để đăng nhập bằng Google"
+          "label": "Email"
         },
         "role": {
           "label": "Vai trò",
-          "hint": "Quản trị viên chỉ thấy khu quản trị",
           "placeholder": "Chọn vai trò"
         },
         "temporaryPassword": {
-          "label": "Mật khẩu tạm",
-          "hint": "Đã tạo sẵn, hãy gửi cho họ. Họ phải đổi ở lần đăng nhập đầu",
-          "resetHint": "Đã tạo sẵn, hãy gửi cho họ. Các lần đăng nhập sai trước đó được xóa"
+          "label": "Mật khẩu tạm"
         }
       },
       "lock": "Khóa tài khoản",
@@ -583,21 +554,18 @@
     },
     "systemSettings": {
       "title": "Cài đặt hệ thống",
-      "description": "Áp dụng cho mọi người dùng.",
       "cardDescription": "Nhắc lịch, hạn phản hồi lời mời, thời gian quảng cáo.",
       "open": "Mở cài đặt hệ thống",
       "fields": {
         "reminderMinutesBefore": {
           "label": "Nhắc trước giờ chiếu (phút)",
-          "hint": "Nhiều mốc cách nhau dấu phẩy, vd. 1440, 20 (tối đa 5)"
+          "placeholder": "vd. 1440, 20"
         },
         "responseDeadlineHours": {
-          "label": "Hạn phản hồi lời mời (giờ)",
-          "hint": "Số giờ trước giờ chiếu bạn bè cần trả lời, 1 đến 168"
+          "label": "Hạn phản hồi lời mời (giờ)"
         },
         "adMinutes": {
-          "label": "Quảng cáo trước phim (phút)",
-          "hint": "Cộng vào giờ kết thúc suất chiếu, 0 đến 60"
+          "label": "Quảng cáo trước phim (phút)"
         }
       }
     }
@@ -685,12 +653,10 @@
       },
       "phone": {
         "label": "Số điện thoại",
-        "hint": "Để bạn bè tìm thấy bạn",
         "placeholder": "vd. 0912 345 678"
       },
       "seatPreference": {
-        "label": "Chỗ ngồi hay chọn",
-        "hint": "Dùng để gợi ý ghế"
+        "label": "Chỗ ngồi hay chọn"
       }
     }
   },

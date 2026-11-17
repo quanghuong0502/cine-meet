@@ -9,7 +9,6 @@ export async function userFields(mode: "create" | "edit"): Promise<ResourceField
     name: "role",
     kind: "select",
     label: t("fields.role.label"),
-    hint: t("fields.role.hint"),
     required: true,
     placeholder: t("fields.role.placeholder"),
     options: [
@@ -20,15 +19,14 @@ export async function userFields(mode: "create" | "edit"): Promise<ResourceField
   if (mode === "edit") return [name, role];
   return [
     name,
-    { name: "username", kind: "text", plain: true, label: t("fields.username.label"), hint: t("fields.username.hint"), maxLength: 30 },
-    { name: "email", kind: "email", label: t("fields.email.label"), hint: t("fields.email.hint"), maxLength: 120 },
+    { name: "username", kind: "text", plain: true, label: t("fields.username.label"), maxLength: 30 },
+    { name: "email", kind: "email", label: t("fields.email.label"), maxLength: 120 },
     role,
     {
       name: "temporaryPassword",
       kind: "text",
       plain: true,
       label: t("fields.temporaryPassword.label"),
-      hint: t("fields.temporaryPassword.hint"),
       required: true,
       maxLength: 100,
     },
@@ -43,7 +41,6 @@ export async function resetPasswordFields(): Promise<ResourceField[]> {
       kind: "text",
       plain: true,
       label: t("fields.temporaryPassword.label"),
-      hint: t("fields.temporaryPassword.resetHint"),
       required: true,
       maxLength: 100,
     },
