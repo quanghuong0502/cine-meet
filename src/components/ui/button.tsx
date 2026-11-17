@@ -10,7 +10,7 @@ const buttonVariants = cva(
       variant: {
         // Looks like `destructive` (a see-through tint of the colour, the colour as text, no edge) in the brand colour, a little denser than it.
         default:
-          "bg-primary/40 text-primary-text hover:bg-primary/50 focus-visible:border-primary/40 focus-visible:ring-primary/20 dark:bg-primary/50 dark:hover:bg-primary/60 dark:focus-visible:ring-primary/40",
+          "bg-primary/50 text-primary-text hover:bg-primary/60 focus-visible:border-primary/40 focus-visible:ring-primary/20 dark:bg-primary/60 dark:hover:bg-primary/70 dark:focus-visible:ring-primary/40",
         outline:
           "border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
         secondary:
