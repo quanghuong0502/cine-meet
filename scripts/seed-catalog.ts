@@ -1,6 +1,6 @@
 /**
  * Fills the Catalog with SAMPLE master data so the app can be tried right away: brands, genres, formats, age ratings,
- * seat types, fixed-date holidays, one sample branch per brand, sample food and ticket prices.
+ * seat types, fixed-date holidays, one sample branch per brand, sample food and ticket prices, and sample auditoriums.
  * Everything that is invented (branches, addresses, prices) says "(mẫu)" in its name or note: edit or delete it in
  * Admin > Danh mục before real use. Safe to run repeatedly: a record that already exists (by name) is left untouched.
  * Refuses to run when NODE_ENV=production unless SEED_ALLOW_PRODUCTION=1.
@@ -19,7 +19,68 @@ import { Format } from "@/models/format";
 import { Genre } from "@/models/genre";
 import { Holiday } from "@/models/holiday";
 import { PriceRule } from "@/models/price-rule";
+import { Auditorium } from "@/models/auditorium";
 import { SeatType } from "@/models/seat-type";
+import { User } from "@/models/user";
+import { defaultLayoutConfig } from "@/lib/seat-layout/config";
+import { createAuditorium } from "@/services/auditorium.service";
+import type { LayoutConfig } from "@/lib/seat-layout/types";
+
+/** Sample rooms (layout configs) for the sample branch of the first brands. */
+function sampleRooms(types: { standard: string; vip: string; couple: string }): { brand: string; name: string; config: LayoutConfig }[] {
+  const base = defaultLayoutConfig(types.standard);
+  return [
+    {
+      brand: "CGV",
+      name: "Phòng 1",
+      config: {
+        ...base,
+        rows: 10,
+        cols: 16,
+        screen: { positionPct: 55, widthPct: 85, distance: "medium" },
+        stadiumFromRow: 3,
+        aisles: { verticalAfterCols: [3, 13], horizontalAfterRows: [4] },
+        entrances: [{ side: "right", position: "back" }],
+        overrides: [
+          { row: "A", cols: [1], type: "none" },
+          { row: "E", cols: [4, 5, 6, 7, 8, 9, 10, 11, 12, 13], type: types.vip },
+          { row: "F", cols: [4, 5, 6, 7, 8, 9, 10, 11, 12, 13], type: types.vip },
+          { row: "G", cols: [4, 5, 6, 7, 8, 9, 10, 11, 12, 13], type: types.vip },
+          { row: "J", cols: [4, 5, 6, 7, 8, 9, 10, 11, 12, 13], type: types.couple },
+          { row: "C", cols: [8], flags: ["broken"] },
+        ],
+      },
+    },
+    {
+      brand: "CGV",
+      name: "Phòng 2",
+      config: {
+        ...base,
+        rows: 6,
+        cols: 10,
+        stadiumFromRow: 2,
+        aisles: { verticalAfterCols: [5], horizontalAfterRows: [] },
+        entrances: [{ side: "left", position: "back" }],
+        overrides: [{ row: "F", cols: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], type: types.couple }],
+      },
+    },
+    {
+      brand: "BHD Star",
+      name: "Phòng 1",
+      config: {
+        ...base,
+        rows: 8,
+        cols: 12,
+        screen: { positionPct: 40, widthPct: 70, distance: "far" },
+        stadiumFromRow: 3,
+        aisles: { verticalAfterCols: [4, 8], horizontalAfterRows: [3] },
+        colNumbering: "right_to_left",
+        entrances: [{ side: "center", position: "back" }],
+        overrides: [{ row: "H", cols: [1, 2, 3, 4], type: types.couple }],
+      },
+    },
+  ];
+}
 
 const ENV_FILE = ".env.local";
 const SAMPLE = "(mẫu)";
@@ -197,6 +258,25 @@ async function seedCatalog(): Promise<void> {
       if (await PriceRule.exists({ brandId, note: rule.note })) continue;
       await PriceRule.create({ brandId, formatId: twoD?._id, seatTypeId: standard?._id, priority: 0, ...rule });
       added.priceRules = (added.priceRules ?? 0) + 1;
+    }
+  }
+
+  // Sample auditoriums (a room that exists by name in its branch is left alone).
+  const vip = await SeatType.findOne(byName("VIP")).collation(collation).lean();
+  const couple = await SeatType.findOne(byName("Ghế đôi")).collation(collation).lean();
+  if (standard && vip && couple) {
+    const admin = await User.findOne({ role: "admin" }).lean();
+    const actorId = (admin?._id ?? new mongoose.Types.ObjectId()).toString();
+    const rooms = sampleRooms({ standard: standard._id.toString(), vip: vip._id.toString(), couple: couple._id.toString() });
+    for (const room of rooms) {
+      const brandDoc = await Brand.findOne(byName(room.brand)).collation(collation).lean();
+      const branch = brandDoc ? await Branch.findOne({ brandId: brandDoc._id, name: `${brandDoc.name} ${SAMPLE}` }).collation(collation).lean() : null;
+      if (!branch) continue;
+      const name = `${room.name} ${SAMPLE}`;
+      if (await Auditorium.exists({ branchId: branch._id, name }).collation(collation)) continue;
+      const result = await createAuditorium({ branchId: branch._id.toString(), name, config: room.config }, actorId);
+      if (result.ok) added.auditoriums = (added.auditoriums ?? 0) + 1;
+      else console.warn(`Không tạo được ${name} (${branch.name}): ${result.error}`);
     }
   }
 
