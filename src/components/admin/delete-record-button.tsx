@@ -43,8 +43,8 @@ export function DeleteRecordButton({ id, name, backHref, removeAction }: DeleteR
       setOpen(false);
       if (result.ok) {
         toast.success(t("deleted"));
+        // The delete action ran revalidatePath, so the list opens fresh (no router.refresh()).
         router.replace(backHref);
-        router.refresh();
       } else {
         toast.error(t(`errors.${result.error}`));
       }

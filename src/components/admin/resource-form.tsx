@@ -130,8 +130,8 @@ export function ResourceForm({ itemId, fields, values, backHref, saveAction, del
     if (state.status !== "success") return;
     // The toast lives in the root layout, so it survives the move back to the list.
     toast.success(t("saved"));
+    // No router.refresh(): the save action already ran revalidatePath, which clears the client's cached pages, so the list opens fresh.
     router.replace(backHref);
-    router.refresh();
   }, [state, t, router, backHref]);
 
   // A long form can hide the field that failed: scroll to the first one (no focus, so the keyboard does not pop up).

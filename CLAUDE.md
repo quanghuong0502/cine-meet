@@ -51,6 +51,7 @@ Next.js (App Router, `src/`) · TypeScript strict · MongoDB Atlas + Mongoose ·
 - **Form:** không hiện gợi ý, mô tả hay chú thích dưới ô; ô bắt buộc có dấu `*` sau nhãn, ô không bắt buộc không ghi gì (chi tiết ở `.claude/rules/ui.md`, mục Form). Đơn vị đưa vào nhãn, ví dụ đưa vào placeholder.
 - **Quy tắc UI/UX iOS có nguồn (Apple HIG):** trước khi thiết kế hoặc đổi bố cục nút, form, hộp thoại xác nhận, đọc `.claude/rules/ios-ui-guidelines.md` (nguồn nào là chính thức, nguồn nào chỉ là blog, và các chỗ ứng dụng đang lệch). Không nêu tỉ lệ hay kích thước nếu không có căn cứ; phán đoán thì nói rõ là phán đoán.
 - Hai nhân vật Bubu & Dudu: dùng `Mascot`/`EmptyState`, được chủ động đặt và tạo biến thể ảnh theo `.claude/rules/mascots.md`. Màn hình nào cần tư thế chưa có thì báo người dùng ngay lúc nêu kế hoạch sprint để họ chuẩn bị ảnh.
+- **Cache và loading:** trước khi thêm cache hay đổi cách chuyển màn, đọc `.claude/rules/caching.md` (cái gì được cache, cái gì cấm, cách expire tag, không `router.refresh()` thừa sau server action).
 - Làm xong một đơn vị việc chạy được thì commit theo quy ước ở `.claude/rules/git.md` (không push nếu chưa được yêu cầu).
 
 ## Phạm vi MVP
