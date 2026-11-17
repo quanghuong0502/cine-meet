@@ -27,12 +27,14 @@ export function KeyboardWatcher() {
     let timer: ReturnType<typeof setTimeout> | undefined;
 
     const viewport = window.visualViewport;
-    let frame = 0;
+    let heightTimer: ReturnType<typeof setTimeout> | undefined;
+    // `--vv-height` caps the sheet's max-height, so changing it re-lays-out the sheet. Set on every resize event it would do
+    // that on each frame of iOS's keyboard animation; wait until the height has stopped changing (the animation is over).
     const syncHeight = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
+      clearTimeout(heightTimer);
+      heightTimer = setTimeout(() => {
         if (viewport && root.dataset.keyboard === "open") root.style.setProperty("--vv-height", `${viewport.height}px`);
-      });
+      }, 120);
     };
     viewport?.addEventListener("resize", syncHeight);
 
@@ -42,22 +44,21 @@ export function KeyboardWatcher() {
       root.dataset.keyboard = "open";
       syncHeight();
     };
-    const onFocusOut = () => {
-      // Moving from one field to the next fires focusout then focusin: wait a beat so the menu does not flicker.
+    const onFocusOut = (event: FocusEvent) => {
+      // Moving straight to another field (relatedTarget) keeps the keyboard up: nothing to do, so the menu does not flicker.
+      if (event.relatedTarget instanceof Element && event.relatedTarget.matches(TEXT_INPUT)) return;
+      // Otherwise close at once: the menu comes back with the keyboard going down instead of a beat later.
       clearTimeout(timer);
-      timer = setTimeout(() => {
-        if (!(document.activeElement instanceof Element) || !document.activeElement.matches(TEXT_INPUT)) {
-          delete root.dataset.keyboard;
-          root.style.removeProperty("--vv-height");
-        }
-      }, 100);
+      clearTimeout(heightTimer);
+      delete root.dataset.keyboard;
+      root.style.removeProperty("--vv-height");
     };
 
     document.addEventListener("focusin", onFocusIn);
     document.addEventListener("focusout", onFocusOut);
     return () => {
       clearTimeout(timer);
-      cancelAnimationFrame(frame);
+      clearTimeout(heightTimer);
       viewport?.removeEventListener("resize", syncHeight);
       document.removeEventListener("focusin", onFocusIn);
       document.removeEventListener("focusout", onFocusOut);
