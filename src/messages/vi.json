@@ -307,6 +307,9 @@
         },
         "minAge": {
           "label": "Tuổi tối thiểu"
+        },
+        "color": {
+          "label": "Màu thẻ"
         }
       },
       "minAgeBadge": "Từ {age} tuổi"

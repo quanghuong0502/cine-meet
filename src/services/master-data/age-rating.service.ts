@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { optionalText, requiredInt, requiredText } from "@/lib/validation/fields";
+import { optionalColor, optionalText, requiredInt, requiredText } from "@/lib/validation/fields";
 import { AgeRating } from "@/models/age-rating";
 import { Movie } from "@/models/movie";
 import { createMasterDataService } from "./crud";
@@ -9,6 +9,7 @@ export const ageRatingInputSchema = z.object({
   description: requiredText(120),
   descriptionEn: optionalText(120),
   minAge: requiredInt(0, 21),
+  color: optionalColor,
 });
 
 export const ageRatingService = createMasterDataService({
@@ -16,6 +17,6 @@ export const ageRatingService = createMasterDataService({
   model: AgeRating,
   searchFields: ["code", "description"],
   sort: { minAge: 1, code: 1 },
-  editableFields: ["code", "description", "descriptionEn", "minAge"],
+  editableFields: ["code", "description", "descriptionEn", "minAge", "color"],
   dependents: () => [{ model: Movie, field: "ageRatingId" }],
 });

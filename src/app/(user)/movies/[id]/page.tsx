@@ -3,6 +3,7 @@ import { getLocale, getTranslations } from "next-intl/server";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { EmptyState } from "@/components/empty-state";
+import { AgeRatingBadge } from "@/components/movie/age-rating-badge";
 import { MovieShowtimes } from "@/components/movie/movie-showtimes";
 import { TrailerEmbed } from "@/components/movie/trailer-embed";
 import { PageHeader } from "@/components/page-header";
@@ -65,11 +66,7 @@ export default async function MovieDetailPage({ params }: Props) {
             <Badge variant={movie.status === "showing" ? "default" : "secondary"} className="h-auto py-0.5 text-xs font-medium">
               {t(`status.${movie.status}`)}
             </Badge>
-            {rating ? (
-              <Badge variant="outline" className="h-auto py-0.5 text-xs font-medium">
-                {rating.code}
-              </Badge>
-            ) : null}
+            {rating ? <AgeRatingBadge rating={rating} /> : null}
           </div>
           <p className="text-sm">{t("duration", { minutes: movie.durationMin })}</p>
           <p className="text-sm text-muted-foreground">{t("releaseOn", { date: formatDay(movie.releaseDate, locale) })}</p>

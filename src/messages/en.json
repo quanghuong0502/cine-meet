@@ -307,6 +307,9 @@
         },
         "minAge": {
           "label": "Minimum age"
+        },
+        "color": {
+          "label": "Tag colour"
         }
       },
       "minAgeBadge": "Age {age}+"

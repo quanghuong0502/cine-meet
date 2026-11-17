@@ -7,6 +7,8 @@ const ageRatingSchema = new Schema(
     description: { type: String, required: true, trim: true },
     descriptionEn: { type: String, trim: true },
     minAge: { type: Number, required: true, min: 0, max: 21 },
+    /** Tag colour (#rrggbb); empty means the default for the code (`src/lib/age-rating-color.ts`). */
+    color: { type: String, trim: true },
   },
   { timestamps: true },
 );

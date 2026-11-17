@@ -10,6 +10,7 @@
 import { existsSync } from "node:fs";
 import mongoose from "mongoose";
 import { connectToDatabase } from "@/lib/db";
+import { defaultRatingColor } from "@/lib/age-rating-color";
 import { AgeRating } from "@/models/age-rating";
 import { Branch } from "@/models/branch";
 import { Brand } from "@/models/brand";
@@ -182,7 +183,7 @@ async function seedCatalog(): Promise<void> {
   }
   for (const rating of AGE_RATINGS) {
     if (!(await AgeRating.exists({ code: rating.code }).collation(collation))) {
-      await AgeRating.create(rating);
+      await AgeRating.create({ ...rating, color: defaultRatingColor(rating.code, rating.minAge) });
       added.ageRatings = (added.ageRatings ?? 0) + 1;
     }
   }

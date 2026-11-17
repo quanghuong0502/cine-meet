@@ -3,9 +3,9 @@ import { getLocale, getTranslations } from "next-intl/server";
 import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
-import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/empty-state";
 import { LoadingState } from "@/components/loading-state";
+import { AgeRatingBadge } from "@/components/movie/age-rating-badge";
 import { ShowtimeCard } from "@/components/movie/showtime-card";
 import { ShowtimeFilters } from "@/components/movie/showtime-filters";
 import { PageHeader } from "@/components/page-header";
@@ -71,7 +71,7 @@ export default async function ShowtimesPage({ searchParams }: { searchParams: Pr
     slot: settings.timeSlots.map((slot) => ({ value: slot.id, label: `${slotName(slot, locale)} (${slotRange(slot)})` })),
   };
   const nowShowing = movies;
-  const ratingCode = new Map(ratings.map((r) => [r._id.toString(), r.code]));
+  const ratingById = new Map(ratings.map((r) => [r._id.toString(), r]));
   const days = datesBetween(today, new Date(Date.parse(`${today}T00:00:00Z`) + DAYS_AHEAD * 86_400_000).toISOString().slice(0, 10));
   const query = (day: string) => `/showtimes?${new URLSearchParams({ date: day, ...Object.fromEntries(Object.entries(values)) })}`;
   const dayLabel = new Intl.DateTimeFormat(en ? "en-GB" : "vi-VN", { timeZone: "UTC", weekday: "short" });
@@ -88,10 +88,8 @@ export default async function ShowtimesPage({ searchParams }: { searchParams: Pr
               <li key={movie._id.toString()} className="w-[calc((100%-1.5rem)/3)] shrink-0">
                 <Link href={`/movies/${movie._id.toString()}`} className="flex flex-col gap-1.5">
                   <span className="relative block aspect-[2/3] overflow-hidden rounded-lg border bg-muted">
-                    {movie.ageRatingId && ratingCode.get(movie.ageRatingId.toString()) ? (
-                      <Badge variant="secondary" className="absolute top-1.5 left-1.5 z-10 h-auto bg-background/80 py-0.5 text-xs font-semibold backdrop-blur">
-                        {ratingCode.get(movie.ageRatingId.toString())}
-                      </Badge>
+                    {movie.ageRatingId && ratingById.get(movie.ageRatingId.toString()) ? (
+                      <AgeRatingBadge rating={ratingById.get(movie.ageRatingId.toString())!} className="absolute top-1.5 left-1.5 z-10" />
                     ) : null}
                     {movie.posterUrl ? <Image src={movie.posterUrl} alt="" fill sizes="128px" unoptimized className="object-cover" /> : null}
                   </span>
