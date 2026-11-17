@@ -40,10 +40,10 @@ Muốn chỉnh cỡ chữ hay kích thước cho cả app thì sửa đúng ở 
 | `h-control-lg` | 56px | điều khiển rộng rãi |
 | `min-h-area` | 112px | chiều cao tối thiểu của ô nhiều dòng (textarea): cao hơn ô một dòng để gõ thoải mái |
 | `min-h-row` | 64px | hàng danh sách có tiêu đề và dòng phụ |
-| `min-h-nav` | 56px | một tab của thanh điều hướng dưới (thanh tự cộng vùng an toàn) |
+| `min-h-nav` | 68px | chiều cao viên thuốc điều hướng dưới (mỗi tab lấp đầy); viên thuốc cách hai bên 16px, cách đáy `--nav-bottom` (8px, hoặc trên iPhone có thanh home là vùng an toàn trừ 20px) |
 | `size-avatar` | 40px | hình tròn avatar trong nút menu tài khoản (vùng chạm vẫn 44px) |
 | `gap-field` (`--spacing-field`) | 24px | khoảng cách giữa hai trường (block) của mọi form; form mới luôn dùng class này, không viết `gap-4`/`gap-6` rời |
-| `--spacing-nav-gap` | 12px | khoảng cách quanh viên thuốc điều hướng nổi; nội dung chừa nav + 2 khoảng này |
+| `--spacing-nav-gap` | 12px | khoảng giữ phía trên viên thuốc điều hướng nổi; nội dung chừa `--nav-clearance` = nav + gap + `--nav-bottom` |
 
 Các giá trị mặc định của shadcn (nút cao 32px, ô nhập cao 32px) đã được đổi sang token (`button.tsx`, `input.tsx`), nên nút hoặc ô nhập thêm mới không cần ghi đè kích thước.
 

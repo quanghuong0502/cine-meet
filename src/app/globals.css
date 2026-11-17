@@ -90,9 +90,9 @@
   --spacing-control-lg: 3.5rem; /* 56px: roomy controls */
   --spacing-row: 4rem; /* 64px: list rows with a title and a subtitle */
   --spacing-avatar: 2.5rem; /* 40px: the round avatar picture inside its 44px touch target */
-  --spacing-nav: 3.5rem; /* 56px: one tab of the floating bottom navigation pill */
+  --spacing-nav: 4.25rem; /* 68px: height of the floating bottom navigation pill (every tab fills it) */
   --spacing-field: 1.5rem; /* 24px: gap between two fields (blocks) of a form, in every form of the app */
-  --spacing-nav-gap: 0.75rem; /* 12px: space around the floating pill (the bar adds the home-bar inset); content clears it by nav + 2 gaps */
+  --spacing-nav-gap: 0.75rem; /* 12px: space kept above the floating pill; content clears the pill by `--nav-clearance` */
 
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
@@ -121,8 +121,14 @@
   /* Text on the main button, and the brand colour used as text on the light theme: chosen by the admin's colour for contrast. */
   --brand-fg: oklch(0.99 0.005 var(--brand-h));
   --brand-ink: oklch(var(--brand-l) var(--brand-c) var(--brand-h));
+  /*
+   * The floating bottom menu sits low: 8px above the screen edge, or on an iPhone with a home bar 20px less than the bar's inset (the
+   * pill reaches down into the home-bar zone, the way the iOS tab bar does). Content and fixed buttons clear it by `--nav-clearance`.
+   */
+  --nav-bottom: max(0.5rem, calc(env(safe-area-inset-bottom) - 1.25rem));
+  --nav-clearance: calc(var(--spacing-nav) + var(--spacing-nav-gap) + var(--nav-bottom));
   /* Where toasts sit on phones: above the floating bottom menu and the fixed "Add" button, never on top of them. */
-  --toast-offset: calc(var(--spacing-nav) + 2 * var(--spacing-nav-gap) + var(--spacing-control) + 1.5rem + env(safe-area-inset-bottom));
+  --toast-offset: calc(var(--nav-clearance) + var(--spacing-control) + 1.5rem);
   --background: oklch(0.99 0.006 var(--brand-h));
   --foreground: oklch(0.22 0.03 var(--brand-h));
   --card: oklch(1 0 0);

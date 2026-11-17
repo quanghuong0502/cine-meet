@@ -25,7 +25,7 @@ export default async function UserLayout({
         data-app-scroll
         className={
           hasBottomNav
-            ? "flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto overscroll-contain pb-[calc(var(--spacing-nav)+2*var(--spacing-nav-gap)+env(safe-area-inset-bottom))]"
+            ? "flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto overscroll-contain pb-[var(--nav-clearance)]"
             : "flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto overscroll-contain"
         }
       >

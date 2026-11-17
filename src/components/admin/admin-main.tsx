@@ -16,7 +16,7 @@ export function AdminMain({ hasBottomNav, children }: { hasBottomNav: boolean; c
       data-app-scroll
       className={cn(
         "flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto overscroll-contain",
-        showsBar && "pb-[var(--bottom-nav-h)] [--bottom-nav-h:calc(var(--spacing-nav)+2*var(--spacing-nav-gap)+env(safe-area-inset-bottom))] md:[--bottom-nav-h:0px]",
+        showsBar && "pb-[var(--bottom-nav-h)] [--bottom-nav-h:var(--nav-clearance)] md:[--bottom-nav-h:0px]",
       )}
     >
       {children}

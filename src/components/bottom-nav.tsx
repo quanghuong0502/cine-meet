@@ -24,8 +24,8 @@ function isActive(pathname: string, item: BottomNavItem): boolean {
 }
 
 /**
- * Bottom navigation for phones: a floating pill of frosted glass that sits above the content with a gap
- * around it (and above the iPhone home bar), so the page scrolls visibly behind it.
+ * Bottom navigation for phones: a floating pill of frosted glass, 68px tall and 16px in from the sides, low on the screen (`--nav-bottom`),
+ * so the page scrolls visibly behind it.
  * The selected tab shows its state three ways, not just by colour: a filled icon, the accent colour and a bolder label.
  */
 export function BottomNav({ label, items, className }: BottomNavProps) {
@@ -37,7 +37,7 @@ export function BottomNav({ label, items, className }: BottomNavProps) {
       aria-label={label}
       data-bottom-fixed
       className={cn(
-        "pointer-events-none fixed inset-x-0 bottom-0 z-40 px-3 pb-[calc(var(--spacing-nav-gap)+env(safe-area-inset-bottom))]",
+        "pointer-events-none fixed inset-x-0 bottom-0 z-40 px-4 pb-[var(--nav-bottom)]",
         className,
       )}
     >
