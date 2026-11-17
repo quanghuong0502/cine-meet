@@ -998,8 +998,6 @@
     "director": "Director",
     "cast": "Cast",
     "language": "Language",
-    "formats": "Formats",
-    "releaseDate": "Release date",
     "showtimes": "Showtimes",
     "noShowtimes": {
       "title": "No showtimes yet",
@@ -1009,7 +1007,10 @@
       "play": "Play trailer of {title}",
       "playerTitle": "Trailer of {title}",
       "openYoutube": "Watch on YouTube"
-    }
+    },
+    "title": "Movie",
+    "releaseOn": "Opens {date}",
+    "noMatch": "No matching showtimes. Try another day or fewer filters."
   },
   "cinemas": {
     "title": "Cinemas",

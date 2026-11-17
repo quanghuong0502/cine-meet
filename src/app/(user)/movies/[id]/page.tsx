@@ -3,12 +3,11 @@ import { getLocale, getTranslations } from "next-intl/server";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { EmptyState } from "@/components/empty-state";
-import { ShowtimeCard } from "@/components/movie/showtime-card";
+import { MovieShowtimes } from "@/components/movie/movie-showtimes";
 import { TrailerEmbed } from "@/components/movie/trailer-embed";
 import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
 import { requireUser } from "@/lib/auth/guards";
-import { formatDayKey, vietnamDayKey } from "@/lib/datetime";
 import { formatDay } from "@/app/admin/master-data/_sections/create-section";
 import { ageRatingService } from "@/services/master-data/age-rating.service";
 import { formatService } from "@/services/master-data/format.service";
@@ -45,29 +44,22 @@ export default async function MovieDetailPage({ params }: Props) {
   const formatNames = (movie.formatIds ?? []).map((fid) => formatById.get(fid.toString())?.name).filter(Boolean);
   const rating = ratings.find((r) => r._id.toString() === movie.ageRatingId?.toString());
 
-  const days = new Map<string, typeof showtimes>();
-  for (const row of showtimes) {
-    const key = vietnamDayKey(row.startAt);
-    days.set(key, [...(days.get(key) ?? []), row]);
-  }
-
   const facts: [string, string | undefined][] = [
     [t("director"), movie.director ?? undefined],
     [t("cast"), movie.cast ?? undefined],
     [t("language"), movie.language ?? undefined],
-    [t("formats"), formatNames.join(", ") || undefined],
-    [t("releaseDate"), formatDay(movie.releaseDate, locale)],
   ];
 
   return (
     <div className="flex flex-1 flex-col gap-6 p-4">
-      <PageHeader title={movie.title} backHref="/showtimes" />
+      <PageHeader title={t("title")} backHref="/showtimes" />
 
       <section className="flex gap-4">
         <div className="relative aspect-[2/3] w-28 shrink-0 overflow-hidden rounded-xl border bg-muted">
           {movie.posterUrl ? <Image src={movie.posterUrl} alt={t("posterAlt", { title: movie.title })} fill sizes="112px" unoptimized className="object-cover" priority /> : null}
         </div>
         <div className="flex min-w-0 flex-1 flex-col gap-2">
+          <h1 className="text-xl font-semibold tracking-tight">{movie.title}</h1>
           {movie.originalTitle ? <p className="text-sm text-muted-foreground">{movie.originalTitle}</p> : null}
           <div className="flex flex-wrap gap-2">
             <Badge variant={movie.status === "showing" ? "default" : "secondary"} className="h-auto py-0.5 text-xs font-medium">
@@ -79,8 +71,17 @@ export default async function MovieDetailPage({ params }: Props) {
               </Badge>
             ) : null}
           </div>
-          <p className="text-sm">{t("duration", { minutes: movie.durationMin })}</p>
-          {genreNames.length > 0 ? <p className="text-sm text-muted-foreground">{genreNames.join(", ")}</p> : null}
+          <p className="text-sm">{[t("duration", { minutes: movie.durationMin }), ...genreNames].filter(Boolean).join(" · ")}</p>
+          <p className="text-sm text-muted-foreground">{t("releaseOn", { date: formatDay(movie.releaseDate, locale) })}</p>
+          {formatNames.length > 0 ? (
+            <p className="flex flex-wrap gap-1.5">
+              {formatNames.map((name) => (
+                <Badge key={name} variant="secondary" className="h-auto py-0.5 text-xs font-medium">
+                  {name}
+                </Badge>
+              ))}
+            </p>
+          ) : null}
         </div>
       </section>
 
@@ -101,19 +102,10 @@ export default async function MovieDetailPage({ params }: Props) {
 
       <section className="flex flex-col gap-3">
         <h2 className="text-xl font-semibold">{t("showtimes")}</h2>
-        {days.size === 0 ? (
+        {showtimes.length === 0 ? (
           <EmptyState mascot="bubu-sleepy" title={t("noShowtimes.title")} description={t("noShowtimes.description")} />
         ) : (
-          [...days.entries()].map(([day, rows]) => (
-            <div key={day} className="flex flex-col gap-2">
-              <h3 className="text-sm font-semibold text-muted-foreground">{formatDayKey(day, locale)}</h3>
-              <ul className="flex flex-col gap-2">
-                {rows.map((row) => (
-                  <ShowtimeCard key={row.id} row={row} />
-                ))}
-              </ul>
-            </div>
-          ))
+          <MovieShowtimes rows={showtimes} />
         )}
       </section>
     </div>

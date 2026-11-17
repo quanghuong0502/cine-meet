@@ -998,8 +998,6 @@
     "director": "Đạo diễn",
     "cast": "Diễn viên",
     "language": "Ngôn ngữ",
-    "formats": "Định dạng",
-    "releaseDate": "Khởi chiếu",
     "showtimes": "Suất chiếu",
     "noShowtimes": {
       "title": "Chưa có suất chiếu",
@@ -1009,7 +1007,10 @@
       "play": "Phát trailer {title}",
       "playerTitle": "Trailer {title}",
       "openYoutube": "Xem trên YouTube"
-    }
+    },
+    "title": "Chi tiết phim",
+    "releaseOn": "Khởi chiếu {date}",
+    "noMatch": "Không có suất phù hợp. Thử đổi ngày hoặc bỏ bớt bộ lọc."
   },
   "cinemas": {
     "title": "Rạp",
