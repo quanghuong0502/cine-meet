@@ -1,16 +1,15 @@
 "use client";
 
-import { usePathname } from "next/navigation";
-import { isFocusedAdminRoute } from "@/lib/admin-nav";
 import { cn } from "@/lib/utils";
+import { useShowsAdminBar } from "@/lib/use-shows-admin-bar";
 
 /**
  * The scrolling area of the admin shell. `--bottom-nav-h` is the room the floating bottom bar takes on phones
  * (content and the fixed "Add" button keep clear of it); on an entry screen the bar is hidden, so no room is kept.
  */
 export function AdminMain({ hasBottomNav, children }: { hasBottomNav: boolean; children: React.ReactNode }) {
-  const pathname = usePathname();
-  const showsBar = hasBottomNav && !isFocusedAdminRoute(pathname);
+  const barAllowed = useShowsAdminBar();
+  const showsBar = hasBottomNav && barAllowed;
 
   return (
     <main

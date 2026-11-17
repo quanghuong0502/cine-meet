@@ -47,3 +47,8 @@ export const MAX_BOTTOM_NAV_ITEMS = 5;
 export function isFocusedAdminRoute(pathname: string): boolean {
   return /^\/admin\/(master-data|users)\/.+/.test(pathname) || pathname.startsWith("/admin/settings/") || pathname.startsWith("/admin/profile/");
 }
+
+/** The bottom bar shows on every page except entry screens, and also while an entry screen is still loading (`holding`). */
+export function showsAdminBar(pathname: string, holding: boolean): boolean {
+  return !isFocusedAdminRoute(pathname) || holding;
+}

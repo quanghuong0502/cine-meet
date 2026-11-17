@@ -11,6 +11,7 @@ Bản Next là 16.4 (đọc `node_modules/next/dist/docs/` trước khi dùng AP
 | Dedupe trong một request | `React.cache` quanh `findActiveUserById` (`src/lib/auth/guards.ts`, `loadActiveUser`); `src/i18n/request.ts` lấy ngôn ngữ từ cùng lần đọc | Chỉ sống trong một lần render, không qua request, nên khóa tài khoản và đổi role có hiệu lực ngay lần sau. Ngoài lần render (server action) không cache, nên action luôn đọc mới |
 | Cache dữ liệu dùng chung | `getBrandOptions` (`src/services/master-data/brand-options.ts`): `unstable_cache`, tag `master-data:brand-options`, 5 phút | `saveEntity`/`removeEntity` gọi `updateTag` sau mọi thay đổi master data |
 | Giữ khung khi chuyển | Danh mục: `MasterDataTabs` + `<Suspense key={tab}>` quanh danh sách; menu: `useOptimisticPath` tô sáng mục vừa bấm | Tiêu đề và tab không biến mất; loader chỉ ở vùng danh sách |
+| Màn con (thêm/sửa) | `master-data/[section]/loading.tsx` dùng `EntryLoading`: vẽ lại khung trang Danh mục bằng thành phần thật (tiêu đề, `MasterDataTabs`), chỉ vùng nội dung là loader; `entry-loading-store` giữ menu dưới trong lúc chờ (`useShowsAdminBar`) | Bấm một mục không làm tiêu đề, tab, menu nhấp nháy. Màn con mới nên làm tương tự, không dùng khung giả (skeleton) của màn cha |
 | Loader hiện trễ | `RouteLoading` hiện sau 150ms (`motion-safe`) | Trang tới trong 150ms không chớp loader (`mobile-ux.md` mục 4) |
 
 ## Quy tắc

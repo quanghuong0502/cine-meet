@@ -1,14 +1,13 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { usePathname } from "next/navigation";
 import { BottomNav } from "@/components/bottom-nav";
 import {
   ENABLED_ADMIN_NAV_ITEMS,
-  isFocusedAdminRoute,
   MAX_BOTTOM_NAV_ITEMS,
   MIN_BOTTOM_NAV_ITEMS,
 } from "@/lib/admin-nav";
+import { useShowsAdminBar } from "@/lib/use-shows-admin-bar";
 
 /**
  * The admin menu on phones: only the pages that are ready (see `src/lib/admin-nav.ts`), five at most.
@@ -16,9 +15,9 @@ import {
  */
 export function AdminBottomNav() {
   const t = useTranslations("admin.bottomNav");
-  const pathname = usePathname();
+  const showsBar = useShowsAdminBar();
   const items = ENABLED_ADMIN_NAV_ITEMS.slice(0, MAX_BOTTOM_NAV_ITEMS);
-  if (items.length < MIN_BOTTOM_NAV_ITEMS || isFocusedAdminRoute(pathname)) return null;
+  if (items.length < MIN_BOTTOM_NAV_ITEMS || !showsBar) return null;
 
   return (
     <BottomNav
