@@ -53,7 +53,7 @@ export function LoginForm({ callbackUrl, initialError }: LoginFormProps) {
       <form action={formAction} className="flex flex-col gap-4">
         <input type="hidden" name="callbackUrl" value={callbackUrl} />
 
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-3">
           <Label htmlFor="identifier" className="text-muted-foreground">
             <span>
               {t("identifierLabel")}
@@ -74,7 +74,7 @@ export function LoginForm({ callbackUrl, initialError }: LoginFormProps) {
           />
         </div>
 
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-3">
           <Label htmlFor="password" className="text-muted-foreground">
             <span>
               {t("passwordLabel")}

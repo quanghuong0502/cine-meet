@@ -157,7 +157,7 @@ export function ResourceForm({ itemId, fields, values, backHref, saveAction, del
         const code = fieldErrors[field.name];
         const horizontal = field.kind === "switch";
         return (
-          <div key={field.name} className={horizontal ? "flex min-h-target items-center justify-between gap-4" : "flex flex-col gap-2"}>
+          <div key={field.name} className={horizontal ? "flex min-h-target items-center justify-between gap-4" : "flex flex-col gap-3"}>
             <div className="flex flex-col gap-0.5">
               <Label htmlFor={field.name} className="text-muted-foreground">
                 <span>
@@ -175,7 +175,7 @@ export function ResourceForm({ itemId, fields, values, backHref, saveAction, del
               last={field.name === lastTypingField}
             />
             {code ? (
-              <p role="alert" className="text-sm text-destructive">
+              <p role="alert" className="-mt-1 text-sm text-destructive">
                 {tv(isValidationCode(code) ? code : "invalid")}
               </p>
             ) : null}

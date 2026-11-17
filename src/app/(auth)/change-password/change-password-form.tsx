@@ -20,7 +20,7 @@ export function ChangePasswordForm() {
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-3">
         <Label htmlFor="currentPassword"><span>{t("currentLabel")}<RequiredMark /></span></Label>
         <Input
           id="currentPassword"
@@ -32,7 +32,7 @@ export function ChangePasswordForm() {
           className="h-control rounded-xl bg-card px-4 text-base"
         />
       </div>
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-3">
         <Label htmlFor="newPassword"><span>{t("newLabel")}<RequiredMark /></span></Label>
         <Input
           id="newPassword"
@@ -45,7 +45,7 @@ export function ChangePasswordForm() {
           className="h-control rounded-xl bg-card px-4 text-base"
         />
       </div>
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-3">
         <Label htmlFor="confirmPassword"><span>{t("confirmLabel")}<RequiredMark /></span></Label>
         <Input
           id="confirmPassword"

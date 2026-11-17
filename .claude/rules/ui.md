@@ -92,6 +92,7 @@ cả hai ngôn ngữ, có và không có khung lỗi.
 - **Không có gợi ý, mô tả hay chú thích dưới nhãn và dưới ô nhập, và không có mô tả dưới tiêu đề màn nhập.** Form chỉ gồm nhãn, ô, lỗi. Thông tin cần để điền đúng thì đưa vào: nhãn (đơn vị, ví dụ "Giá vé (đồng)"), placeholder (ví dụ giá trị, "vd. 95000") hoặc thông báo lỗi sau khi gửi.
 - **Ô bắt buộc: dấu `*` ngay sau nhãn (`RequiredMark`, màu đỏ, ẩn với trình đọc màn hình; ô có `aria-required`). Ô không bắt buộc: không ghi gì** (không có chữ "Không bắt buộc").
 - Khung dùng chung `ResourceForm` đã áp dụng sẵn; form tự dựng (đăng nhập, đổi mật khẩu) dùng `RequiredMark` và không thêm gợi ý.
+- Khoảng cách nhãn tới ô nhập **12px** (`gap-3`), giữa hai trường 16px (`gap-4`): nhãn luôn gần ô của nó hơn trường phía trên; thông báo lỗi sát dưới ô (8px).
 - Không bọc trong thẻ; nhãn phía trên ô nhập (`text-muted-foreground`); ô nhập nền `card`, `h-control rounded-xl text-base`; ô mật khẩu có nút hiện/ẩn (vùng chạm 44px, `aria-pressed`); lỗi hiện trong khung `destructive` nhạt kèm biểu tượng; nút gửi `size="cta"`, đang xử lý thì hiện spinner (`motion-safe:`);
   đăng nhập bằng nhà cung cấp ngoài là nút viền `rounded-full` bên dưới dòng phân cách "hoặc".
 
