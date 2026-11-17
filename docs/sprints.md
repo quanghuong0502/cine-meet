@@ -21,6 +21,7 @@ Nguồn chi tiết: `docs/movie-app-mvp-design.md` (số mục ghi ở từng sp
 - [ ] Tính năng chia thành các commit nhỏ, mỗi commit chạy được.
 - [ ] Mọi chuỗi giao diện đi qua i18n, có đủ `vi` và `en`; test kiểm tra hai bộ khóa khớp nhau. Chữ theo `.claude/rules/copy.md`.
 - [ ] Thời gian lưu UTC, hiển thị và tính ngày/tuần/tháng theo `Asia/Ho_Chi_Minh`; số điện thoại lưu dạng `84xxxxxxxxx`.
+- [ ] **Cache và loading** theo `.claude/rules/caching.md`: dữ liệu cá nhân không cache qua request; dữ liệu dùng chung có tag và được `updateTag` khi ghi; không `router.refresh()` thừa sau server action; mỗi màn mới có skeleton đúng vùng chờ (không thay cả trang) và menu/tab sáng ngay khi bấm; đo chuyển tab bằng bản production (`npm run build && npm start`), không bằng `npm run dev`.
 - [ ] Có trang 404/500 thân thiện; mỗi API dữ liệu cá nhân có test thử truy cập dữ liệu của người khác (phải bị từ chối).
 
 ## Tổng quan
