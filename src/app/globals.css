@@ -273,3 +273,14 @@
 html[data-keyboard="open"] [data-slot="drawer-content"] {
   max-height: calc(var(--vv-height, 100dvh) - 1rem);
 }
+
+/* A sheet with the keyboard up: lock the page behind it so iOS has nothing to scroll to bring the field into view.
+   Otherwise iOS scrolls the whole page (header and background included) up together with the sheet. Only the sheet's own
+   form body scrolls (it is `overflow-y-auto`). Set only while the keyboard is open, so nothing changes otherwise. */
+html[data-keyboard="open"]:has([data-slot="drawer-content"]),
+html[data-keyboard="open"]:has([data-slot="drawer-content"]) body {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  overflow: hidden;
+}
