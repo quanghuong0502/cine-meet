@@ -329,19 +329,17 @@ html[data-keyboard="open"]:has([data-slot="drawer-content"]) body {
 }
 
 /*
- * A row that scrolls sideways inside a page (chips, days, posters). It runs edge to edge (cancels the page's 16px side padding)
- * and keeps 16px at BOTH ends: the start as padding, the end as the margin of the last item, because Safari drops the end
- * padding of a scrolling row, which left the last chip touching the right edge.
+ * A row that scrolls sideways inside a page (chips, days, posters). It stays INSIDE the page's 16px side padding: the same
+ * 16px on the left and on the right whatever the scroll position, chips are cut at that edge instead of running to the screen
+ * edge. At the start the first chip sits on the left edge of the box, at the end the last one sits on the right edge.
  */
 @utility scroll-strip {
-  margin-inline: -1rem;
-  padding-inline-start: 1rem;
   overflow-x: auto;
   scrollbar-width: none;
+  /* Room for a focus ring, which the scroll box would otherwise cut off. */
+  padding-block: 0.25rem;
+  margin-block: -0.25rem;
   &::-webkit-scrollbar {
     display: none;
-  }
-  & > :last-child {
-    margin-inline-end: 1rem;
   }
 }

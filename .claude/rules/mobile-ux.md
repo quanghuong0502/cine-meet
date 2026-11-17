@@ -64,7 +64,7 @@ Căn cứ: [Apple HIG, tab bars](https://developer.apple.com/design/human-interf
 
 ## 6. Hàng cuộn ngang trong trang (chip, dải ngày, poster)
 
-Dùng class `scroll-strip` (`globals.css`) cho hàng cuộn ngang, không tự viết `-mx-4 overflow-x-auto px-4`: Safari bỏ phần đệm cuối của hàng cuộn nên phần tử cuối dính mép phải. `scroll-strip` chạy sát hai mép màn hình, chừa **16px ở cả đầu và cuối** (đầu bằng padding, cuối bằng margin của phần tử cuối) và ẩn thanh cuộn. Đặt nó trực tiếp lên phần tử cuộn (không bọc thêm `-mx-4`).
+Dùng class `scroll-strip` (`globals.css`) cho hàng cuộn ngang, đặt trực tiếp lên phần tử cuộn bên trong khung `p-4` của trang. **Hàng nằm trong lề 16px của trang, không chạy tràn sát mép màn hình:** lề trái và lề phải luôn bằng nhau (16px) dù hàng đang ở vị trí cuộn nào, chip bị cắt ở mép lề thay vì trượt ra mép màn hình (chủ dự án yêu cầu, 2026-11-17). Không tự viết `-mx-4 overflow-x-auto px-4` (cách này làm chip tràn ra mép và Safari bỏ đệm cuối).
 
 ## Trước khi báo xong một màn hình
 
