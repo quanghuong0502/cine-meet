@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type RefObject } from "react";
 
 export const MIN_SCALE = 1;
 export const MAX_SCALE = 6;
@@ -52,16 +52,44 @@ export function pinchView(
   return clampView({ s, x: mid.x - anchor.x * s, y: mid.y - anchor.y * s }, width, height);
 }
 
+/** The map's own coordinates: the SVG viewBox of the whole map at 1x. */
+export interface Box {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+/**
+ * The SVG viewBox to show for a `view`. The view is in container pixels (as the gestures work), the viewBox in map units.
+ * At 1x the map is fitted into the container ("meet"), possibly with empty bands; the viewBox returned has the container's own
+ * proportions, so the browser draws it with no extra fitting and a point under a finger stays under it.
+ */
+export function viewBoxFor(view: View, base: Box, width: number, height: number): Box {
+  const k = Math.min(width / base.w, height / base.h); // map units to container pixels at 1x
+  const ox = (width - base.w * k) / 2;
+  const oy = (height - base.h * k) / 2;
+  return {
+    x: base.x + (-view.x / view.s - ox) / k,
+    y: base.y + (-view.y / view.s - oy) / k,
+    w: width / view.s / k,
+    h: height / view.s / k,
+  };
+}
+
 interface Options {
   onTap?: (target: EventTarget | null) => void;
 }
 
 /**
- * Pinch-zoom, drag and tap for a map that fills `containerRef`; the content is `contentRef`.
- * The transform is written straight to the DOM during a gesture (no React render per frame);
+ * Pinch-zoom, drag and tap for an SVG map that fills `containerRef`.
+ * Zooming changes the SVG's `viewBox` (not a CSS transform): the browser redraws the vectors at the new size, so the map is
+ * always sharp and there is no scaled bitmap or composited layer whose stale pieces could show through (the earlier transform
+ * version left a ghost of the 1x map under the zoomed one).
+ * The viewBox is written straight to the DOM during a gesture (no React render per frame);
  * only `scale` (coarse, for hiding/showing labels and disabling buttons) goes through state.
  */
-export function usePanZoom(containerRef: RefObject<HTMLElement | null>, contentRef: RefObject<HTMLElement | null>, options: Options) {
+export function usePanZoom(containerRef: RefObject<HTMLElement | null>, svgRef: RefObject<SVGSVGElement | null>, base: Box, options: Options) {
   const view = useRef<View>({ s: 1, x: 0, y: 0 });
   const pointers = useRef(new Map<number, { x: number; y: number }>());
   const gesture = useRef<{
@@ -81,17 +109,38 @@ export function usePanZoom(containerRef: RefObject<HTMLElement | null>, contentR
     onTap.current = options.onTap;
   });
 
+  const baseRef = useRef(base);
+
+  /** Writes the viewBox for a view (no state, no React render). */
+  const write = useCallback(
+    (v: View) => {
+      const box = containerRef.current?.getBoundingClientRect();
+      const svg = svgRef.current;
+      if (!box || !svg || box.width === 0 || box.height === 0) return;
+      const b = viewBoxFor(v, baseRef.current, box.width, box.height);
+      svg.setAttribute("viewBox", `${b.x} ${b.y} ${b.w} ${b.h}`);
+    },
+    [containerRef, svgRef],
+  );
+
   const apply = useCallback(
     (next: View) => {
       const box = containerRef.current?.getBoundingClientRect();
       const v = box ? clampView(next, box.width, box.height) : next;
       view.current = v;
-      const el = contentRef.current;
-      if (el) el.style.transform = `translate(${v.x}px, ${v.y}px) scale(${v.s})`;
+      write(v);
       setScale(Math.round(v.s * 20) / 20);
     },
-    [containerRef, contentRef],
+    [containerRef, write],
   );
+
+  // The map's own size changed (rows, columns or doors edited): React has just set the new base viewBox, so put the current
+  // zoom back on top of it. Also covers the first paint.
+  const { x: bx, y: by, w: bw, h: bh } = base;
+  useLayoutEffect(() => {
+    baseRef.current = { x: bx, y: by, w: bw, h: bh };
+    write(view.current);
+  }, [bx, by, bw, bh, write]);
 
   /** Zoom by `factor` keeping the point (px, py), relative to the container, still. */
   const zoomAt = useCallback(
@@ -136,16 +185,9 @@ export function usePanZoom(containerRef: RefObject<HTMLElement | null>, contentR
     return { dist: Math.hypot(a.x - b.x, a.y - b.y), mid: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 } };
   };
 
-  /** Gesture over: let the browser repaint the map crisp at the final zoom (a promoted layer stays a blurry bitmap of the old size). */
-  const settle = () => {
-    if (contentRef.current) contentRef.current.style.willChange = "";
-  };
-
   const handlers = {
     onPointerDown(e: React.PointerEvent) {
       if (e.pointerType === "touch" && e.clientX < EDGE_GUARD) return;
-      // Promote the map to its own layer while fingers are down (smooth), and drop it afterwards (see `settle`).
-      if (contentRef.current) contentRef.current.style.willChange = "transform";
       const p = local(e);
       pointers.current.set(e.pointerId, p);
       if (pointers.current.size === 1) {
@@ -194,7 +236,6 @@ export function usePanZoom(containerRef: RefObject<HTMLElement | null>, contentR
       if (pointers.current.size === 0) {
         if (!g.moved && !g.pinched) onTap.current?.(g.downTarget);
         gesture.current = null;
-        settle();
       } else if (pointers.current.size === 1) {
         // One finger of a pinch lifted: the other carries on as a drag from where it is NOW, not from where it was
         // before the pinch (else the map jumps by the distance it travelled meanwhile).
@@ -205,7 +246,6 @@ export function usePanZoom(containerRef: RefObject<HTMLElement | null>, contentR
       pointers.current.delete(e.pointerId);
       if (pointers.current.size === 0) {
         gesture.current = null;
-        settle();
       } else if (gesture.current && pointers.current.size === 1) gesture.current.last = [...pointers.current.values()][0];
     },
   };

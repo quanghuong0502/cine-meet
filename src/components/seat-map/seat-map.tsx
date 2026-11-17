@@ -235,11 +235,15 @@ export function SeatMap({
 }: SeatMapProps) {
   const t = useTranslations("seatMap");
   const containerRef = useRef<HTMLDivElement>(null);
-  const contentRef = useRef<HTMLDivElement>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
   const seatsByCode = useMemo(() => new Map(seats.map((s) => [s.code, s])), [seats]);
   const emptyByCode = useMemo(() => new Map((emptyCells ?? []).map((c) => [c.code, c])), [emptyCells]);
 
-  const { scale, handlers, zoomIn, zoomOut, reset } = usePanZoom(containerRef, contentRef, {
+  const pad = useMemo(() => mapPadding(geometry), [geometry]);
+  const viewW = geometry.width + pad.left + pad.right;
+  const viewH = geometry.height + pad.top + pad.bottom;
+
+  const { scale, handlers, zoomIn, zoomOut, reset } = usePanZoom(containerRef, svgRef, { x: -pad.left, y: -pad.top, w: viewW, h: viewH }, {
     onTap: (target) => {
       const el = target instanceof Element ? target : null;
       const seatCode = el?.closest("[data-seat]")?.getAttribute("data-seat");
@@ -259,9 +263,6 @@ export function SeatMap({
     },
   });
 
-  const pad = useMemo(() => mapPadding(geometry), [geometry]);
-  const viewW = geometry.width + pad.left + pad.right;
-  const viewH = geometry.height + pad.top + pad.bottom;
 
   // Stable between renders: the layer below is memoized and must not redraw every seat at each zoom step.
   const seatAria = useCallback(
@@ -287,32 +288,31 @@ export function SeatMap({
         style={{ touchAction: "none", aspectRatio: `${viewW} / ${viewH}`, maxHeight }}
         className="relative w-full overflow-hidden rounded-xl border bg-card select-none"
       >
-        <div ref={contentRef} className="size-full origin-top-left">
-          <svg
-            viewBox={`${-pad.left} ${-pad.top} ${viewW} ${viewH}`}
-            className="size-full"
-            role="group"
-            aria-label={t("label")}
-            preserveAspectRatio="xMidYMid meet"
-          >
-            <MapLayer
-              geometry={geometry}
-              seats={seats}
-              seatTypes={seatTypes}
-              showHeatmap={showHeatmap}
-              selectedCodes={selectedCodes}
-              emptyCells={emptyCells}
-              labels={scale >= LABELS_FROM_SCALE}
-              interactive={!!onSeatTap || !!onEmptyTap}
-              rowLabelsTappable={!!onRowTap}
-              colLabelsTappable={!!onColTap}
-              screenLabel={t("screen")}
-              seatAria={seatAria}
-              doorLabel={t("doorLabel")}
-              doorText={t("door")}
-            />
-          </svg>
-        </div>
+        <svg
+          ref={svgRef}
+          viewBox={`${-pad.left} ${-pad.top} ${viewW} ${viewH}`}
+          className="size-full"
+          role="group"
+          aria-label={t("label")}
+          preserveAspectRatio="xMidYMid meet"
+        >
+          <MapLayer
+            geometry={geometry}
+            seats={seats}
+            seatTypes={seatTypes}
+            showHeatmap={showHeatmap}
+            selectedCodes={selectedCodes}
+            emptyCells={emptyCells}
+            labels={scale >= LABELS_FROM_SCALE}
+            interactive={!!onSeatTap || !!onEmptyTap}
+            rowLabelsTappable={!!onRowTap}
+            colLabelsTappable={!!onColTap}
+            screenLabel={t("screen")}
+            seatAria={seatAria}
+            doorLabel={t("doorLabel")}
+            doorText={t("door")}
+          />
+        </svg>
 
         <div className="absolute right-2 bottom-2 flex gap-2" data-no-pan>
           <Button type="button" variant="secondary" size="icon" aria-label={t("zoomOut")} disabled={scale <= MIN_SCALE} onClick={zoomOut} onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()}>
