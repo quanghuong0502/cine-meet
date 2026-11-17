@@ -59,7 +59,7 @@ export function DeleteRecordButton({ id, name, backHref, removeAction }: DeleteR
         size="cta"
         onClick={() => setOpen(true)}
         aria-label={`${t("delete")}: ${name}`}
-        className="pointer-events-auto w-auto shrink-0 px-5"
+        className="pointer-events-auto min-w-0 flex-1"
       >
         <Trash2 aria-hidden />
         {t("delete")}
