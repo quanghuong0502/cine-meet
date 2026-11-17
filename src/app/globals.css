@@ -238,6 +238,21 @@
     @apply bg-background text-foreground;
   }
   /*
+   * Safari on iPhone gives date and time inputs a native width of their own that ignores `width: 100%`, so they poke out of the
+   * form beside the other fields. Dropping the native look lets them follow the width of their container like any text input
+   * (the picker still opens on tap).
+   */
+  input[type="date"],
+  input[type="time"],
+  input[type="datetime-local"] {
+    -webkit-appearance: none;
+    appearance: none;
+    display: block;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+  /*
    * No pinch zoom and no double-tap zoom, only scrolling (pan). Works on Chrome/Android and Safari/iOS 13+.
    * A child that needs its own gestures (the seat map) sets `touch-action: none` on itself.
    */
