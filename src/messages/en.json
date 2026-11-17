@@ -152,6 +152,10 @@
         "fnbCombos": {
           "title": "Combos",
           "description": "Popcorn and drink combos by brand."
+        },
+        "priceRules": {
+          "title": "Ticket prices",
+          "description": "Prices by brand, branch, day and time."
         }
       },
       "tabsLabel": "Catalog types",
@@ -422,6 +426,86 @@
         }
       },
       "validity": "Valid {from} – {to}"
+    },
+    "priceRules": {
+      "title": "Ticket prices",
+      "createTitle": "Add ticket price",
+      "editTitle": "Edit ticket price",
+      "addButton": "Add ticket price",
+      "emptyTitle": "No ticket prices yet",
+      "emptyDescription": "Add a price for a brand or branch. A showtime that matches no rule has no price yet.",
+      "scopeBrandName": "All of {name}",
+      "allShowtimes": "All showtimes",
+      "validity": "Valid {from} – {to}",
+      "any": {
+        "format": "Any format",
+        "seatType": "Any seat type",
+        "dayType": "Any day"
+      },
+      "dayType": {
+        "normal": "Normal day",
+        "weekend": "Weekend",
+        "holiday": "Holiday",
+        "promo": "Promo day",
+        "promoOn": "Promo {day}"
+      },
+      "weekday": {
+        "0": "Sunday",
+        "1": "Monday",
+        "2": "Tuesday",
+        "3": "Wednesday",
+        "4": "Thursday",
+        "5": "Friday",
+        "6": "Saturday"
+      },
+      "fields": {
+        "scope": {
+          "label": "Applies to",
+          "hint": "A branch price beats a brand-wide price",
+          "placeholder": "Select a brand or branch"
+        },
+        "price": {
+          "label": "Ticket price",
+          "hint": "In dong, e.g. 95000"
+        },
+        "formatId": {
+          "label": "Format"
+        },
+        "seatTypeId": {
+          "label": "Seat type"
+        },
+        "dayType": {
+          "label": "Day type",
+          "hint": "Holiday beats promo, then weekend, then normal"
+        },
+        "weekday": {
+          "label": "Promo weekday",
+          "hint": "Only for promo days",
+          "placeholder": "Select a day"
+        },
+        "timeFrom": {
+          "label": "Showtimes starting from",
+          "hint": "Enter both times or leave empty"
+        },
+        "timeTo": {
+          "label": "Until"
+        },
+        "validFrom": {
+          "label": "Valid from",
+          "hint": "Leave empty for no limit"
+        },
+        "validTo": {
+          "label": "Valid until"
+        },
+        "priority": {
+          "label": "Priority",
+          "hint": "Larger wins when two prices tie, default 0"
+        },
+        "note": {
+          "label": "Note",
+          "hint": "e.g. Happy Wednesday"
+        }
+      }
     }
   },
   "placeholders": {

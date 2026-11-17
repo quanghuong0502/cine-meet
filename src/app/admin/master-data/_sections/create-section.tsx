@@ -20,7 +20,7 @@ export interface SectionContext {
   brandNames: Map<string, string>;
 }
 
-interface SectionConfig<Doc extends { _id: { toString(): string } }> {
+interface SectionConfig<Doc extends { _id: { toString(): string } }, Extra extends object> {
   key: MasterDataSectionKey;
   service: {
     list(options: { q?: string }): Promise<Doc[]>;
@@ -30,8 +30,10 @@ interface SectionConfig<Doc extends { _id: { toString(): string } }> {
   removeAction: (id: string) => Promise<RemoveResult>;
   /** The section can only hold records once a brand exists (branches, food and drinks). */
   needsBrand?: boolean;
-  fields: (context: SectionContext) => ResourceField[];
-  item: (doc: Doc, context: SectionContext) => Omit<ResourceItem, "id">;
+  /** More data the fields and cards need (other lists as select options and names), loaded once per request. */
+  loadExtra?: (context: SectionContext) => Promise<Extra>;
+  fields: (context: SectionContext & Extra) => ResourceField[];
+  item: (doc: Doc, context: SectionContext & Extra) => Omit<ResourceItem, "id">;
   /** Starting form values by field name, all strings. */
   values: (doc: Doc) => Record<string, string>;
   name: (doc: Doc) => string;
@@ -62,7 +64,7 @@ export function formatValidity(from: string | null | undefined, to: string | nul
   });
 }
 
-async function buildContext(key: MasterDataSectionKey, needsBrand: boolean): Promise<SectionContext> {
+async function buildBaseContext(key: MasterDataSectionKey, needsBrand: boolean): Promise<SectionContext> {
   const t = (await getTranslations(`admin.${key}` as "admin.brands")) as unknown as SectionT;
   const locale = await getLocale();
   const brands = needsBrand ? await brandService.list({}) : [];
@@ -78,13 +80,19 @@ async function buildContext(key: MasterDataSectionKey, needsBrand: boolean): Pro
  * Builds the list tab and the entry screen of one master-data type from a small description of it, so a new type
  * only states its fields and how a record looks as a card. Strings come from `admin.<key>.*` in the message files.
  */
-export function createSection<Doc extends { _id: { toString(): string } }>(config: SectionConfig<Doc>): SectionDefinition {
+export function createSection<Doc extends { _id: { toString(): string } }, Extra extends object = object>(
+  config: SectionConfig<Doc, Extra>,
+): SectionDefinition {
   const { key } = config;
+  async function buildContext(): Promise<SectionContext & Extra> {
+    const base = await buildBaseContext(key, config.needsBrand ?? false);
+    return { ...base, ...(config.loadExtra ? await config.loadExtra(base) : ({} as Extra)) };
+  }
   const slug = MASTER_DATA_SECTIONS.find((section) => section.key === key)?.slug ?? key;
 
   return {
     async List({ q }) {
-      const context = await buildContext(key, config.needsBrand ?? false);
+      const context = await buildContext();
       const { t } = context;
 
       if (config.needsBrand && context.brandOptions.length === 0) {
@@ -116,7 +124,7 @@ export function createSection<Doc extends { _id: { toString(): string } }>(confi
     },
 
     async loadForm(id) {
-      const context = await buildContext(key, config.needsBrand ?? false);
+      const context = await buildContext();
       if (config.needsBrand && context.brandOptions.length === 0) return null;
       const doc = id ? await config.service.getById(id) : null;
       if (id && !doc) return null;

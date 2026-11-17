@@ -7,6 +7,7 @@ import { fnbItemsSection } from "./fnb-items/section";
 import { formatsSection } from "./formats/section";
 import { genresSection } from "./genres/section";
 import { holidaysSection } from "./holidays/section";
+import { priceRulesSection } from "./price-rules/section";
 import { seatTypesSection } from "./seat-types/section";
 import type { SectionDefinition } from "./types";
 
@@ -21,4 +22,5 @@ export const SECTIONS: Record<MasterDataSectionKey, SectionDefinition> = {
   holidays: holidaysSection,
   fnbItems: fnbItemsSection,
   fnbCombos: fnbCombosSection,
+  priceRules: priceRulesSection,
 };

@@ -73,7 +73,7 @@ function FieldControl({ field, value, invalid, last }: { field: ResourceField; v
       return (
         <Input
           {...common}
-          type={field.kind === "url" ? "url" : field.kind === "number" ? "number" : field.kind === "date" ? "date" : "text"}
+          type={field.kind === "url" ? "url" : field.kind === "number" ? "number" : field.kind === "date" ? "date" : field.kind === "time" ? "time" : "text"}
           inputMode={field.kind === "number" ? (field.step === "1" ? "numeric" : "decimal") : undefined}
           step={field.step}
           min={field.min}

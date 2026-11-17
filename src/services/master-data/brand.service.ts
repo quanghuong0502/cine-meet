@@ -4,6 +4,7 @@ import { Branch } from "@/models/branch";
 import { Brand } from "@/models/brand";
 import { FnbCombo } from "@/models/fnb-combo";
 import { FnbItem } from "@/models/fnb-item";
+import { PriceRule } from "@/models/price-rule";
 import { createMasterDataService } from "./crud";
 
 export const brandInputSchema = z.object({
@@ -27,5 +28,6 @@ export const brandService = createMasterDataService({
     { model: Branch, field: "brandId" },
     { model: FnbItem, field: "brandId" },
     { model: FnbCombo, field: "brandId" },
+    { model: PriceRule, field: "brandId" },
   ],
 });

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { objectIdField, optionalInt, optionalText, optionalUrl, requiredText } from "@/lib/validation/fields";
 import { Branch } from "@/models/branch";
+import { PriceRule } from "@/models/price-rule";
 import { createMasterDataService } from "./crud";
 
 const coordinate = (min: number, max: number) =>
@@ -41,6 +42,6 @@ export const branchService = createMasterDataService({
     "brandId", "name", "address", "lat", "lng", "mapsUrl", "floor", "openingHours",
     "parkingFee", "parkingLocation", "parkingEntrance",
   ],
-  // Auditoriums will point at a branch: added with Sprint 2.
-  dependents: () => [],
+  // Auditoriums will point at a branch too (Sprint 2).
+  dependents: () => [{ model: PriceRule, field: "branchId" }],
 });

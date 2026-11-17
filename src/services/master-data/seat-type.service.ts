@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { optionalColor, optionalText, requiredText } from "@/lib/validation/fields";
+import { PriceRule } from "@/models/price-rule";
 import { SeatType } from "@/models/seat-type";
 import { createMasterDataService } from "./crud";
 
@@ -19,6 +20,6 @@ export const seatTypeService = createMasterDataService({
   searchFields: ["name", "nameEn"],
   sort: { capacity: 1, name: 1 },
   editableFields: ["name", "nameEn", "capacity", "color"],
-  // Seat maps and price rules will point at seat types: added with Sprint 2.
-  dependents: () => [],
+  // Seat maps will point at seat types too (Sprint 2).
+  dependents: () => [{ model: PriceRule, field: "seatTypeId" }],
 });

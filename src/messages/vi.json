@@ -152,6 +152,10 @@
         "fnbCombos": {
           "title": "Combo",
           "description": "Combo bắp nước theo thương hiệu."
+        },
+        "priceRules": {
+          "title": "Giá vé",
+          "description": "Giá vé theo thương hiệu, chi nhánh, ngày và giờ."
         }
       },
       "tabsLabel": "Loại danh mục",
@@ -422,6 +426,86 @@
         }
       },
       "validity": "Áp dụng {from} – {to}"
+    },
+    "priceRules": {
+      "title": "Giá vé",
+      "createTitle": "Thêm giá vé",
+      "editTitle": "Sửa giá vé",
+      "addButton": "Thêm giá vé",
+      "emptyTitle": "Chưa có giá vé",
+      "emptyDescription": "Thêm giá vé cho một thương hiệu hoặc chi nhánh. Suất nào không khớp quy tắc nào sẽ chưa có giá.",
+      "scopeBrandName": "Cả thương hiệu {name}",
+      "allShowtimes": "Mọi suất",
+      "validity": "Áp dụng {from} – {to}",
+      "any": {
+        "format": "Mọi định dạng",
+        "seatType": "Mọi loại ghế",
+        "dayType": "Mọi ngày"
+      },
+      "dayType": {
+        "normal": "Ngày thường",
+        "weekend": "Cuối tuần",
+        "holiday": "Ngày lễ",
+        "promo": "Ngày ưu đãi",
+        "promoOn": "Ưu đãi {day}"
+      },
+      "weekday": {
+        "0": "Chủ nhật",
+        "1": "Thứ hai",
+        "2": "Thứ ba",
+        "3": "Thứ tư",
+        "4": "Thứ năm",
+        "5": "Thứ sáu",
+        "6": "Thứ bảy"
+      },
+      "fields": {
+        "scope": {
+          "label": "Áp dụng cho",
+          "hint": "Chi nhánh được ưu tiên hơn cả thương hiệu",
+          "placeholder": "Chọn thương hiệu hoặc chi nhánh"
+        },
+        "price": {
+          "label": "Giá vé",
+          "hint": "Đơn vị đồng, vd. 95000"
+        },
+        "formatId": {
+          "label": "Định dạng"
+        },
+        "seatTypeId": {
+          "label": "Loại ghế"
+        },
+        "dayType": {
+          "label": "Loại ngày",
+          "hint": "Ngày lễ ưu tiên hơn ưu đãi, rồi cuối tuần, rồi ngày thường"
+        },
+        "weekday": {
+          "label": "Thứ ưu đãi",
+          "hint": "Chỉ cần khi chọn ngày ưu đãi",
+          "placeholder": "Chọn thứ"
+        },
+        "timeFrom": {
+          "label": "Suất bắt đầu từ",
+          "hint": "Nhập cả hai giờ hoặc để trống"
+        },
+        "timeTo": {
+          "label": "Đến trước"
+        },
+        "validFrom": {
+          "label": "Áp dụng từ",
+          "hint": "Để trống nếu không giới hạn"
+        },
+        "validTo": {
+          "label": "Áp dụng đến"
+        },
+        "priority": {
+          "label": "Độ ưu tiên",
+          "hint": "Số lớn thắng khi hai giá ngang nhau, mặc định 0"
+        },
+        "note": {
+          "label": "Ghi chú",
+          "hint": "vd. Thứ tư vui vẻ"
+        }
+      }
     }
   },
   "placeholders": {

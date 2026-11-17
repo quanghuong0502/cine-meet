@@ -117,7 +117,7 @@ export function ResourceManager({ items, section, query, labels, removeAction }:
                   />
                   <span className="flex min-w-0 flex-1 flex-col gap-1">
                     <span className="truncate text-base font-semibold">{item.title}</span>
-                    {item.subtitle ? <span className="truncate text-sm text-muted-foreground">{item.subtitle}</span> : null}
+                    {item.subtitle ? <span className="line-clamp-2 break-words text-sm text-muted-foreground">{item.subtitle}</span> : null}
                     {item.meta?.length ? (
                       <span className="flex flex-wrap gap-1">
                         {item.meta.map((entry) => (

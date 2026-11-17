@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { requiredText } from "@/lib/validation/fields";
 import { Format } from "@/models/format";
+import { PriceRule } from "@/models/price-rule";
 import { createMasterDataService } from "./crud";
 
 export const formatInputSchema = z.object({
@@ -13,6 +14,6 @@ export const formatService = createMasterDataService({
   searchFields: ["name"],
   sort: { name: 1 },
   editableFields: ["name"],
-  // Showtimes and price rules will point at formats: added with Sprint 3.
-  dependents: () => [],
+  // Showtimes will point at formats too (Sprint 3).
+  dependents: () => [{ model: PriceRule, field: "formatId" }],
 });
