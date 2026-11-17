@@ -2,7 +2,7 @@
 
 import { RotateCcw, ZoomIn, ZoomOut } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { memo, useMemo, useRef } from "react";
+import { memo, useCallback, useMemo, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import type { LayoutGeometry, LayoutSeat } from "@/lib/seat-layout/types";
 import { cn } from "@/lib/utils";
@@ -266,23 +266,28 @@ export function SeatMap({
   const viewW = geometry.width + pad.left + pad.right;
   const viewH = geometry.height + pad.top + pad.bottom;
 
-  const seatAria = (seat: LayoutSeat, typeName: string) =>
-    [
-      t("seat", { code: seat.code, type: typeName }),
-      t("score", { score: seat.score }),
-      seat.flags.includes("broken") ? t("broken") : null,
-      seat.flags.includes("obstructed") ? t("obstructed") : null,
-    ]
-      .filter(Boolean)
-      .join(", ");
+  // Stable between renders: the layer below is memoized and must not redraw every seat at each zoom step.
+  const seatAria = useCallback(
+    (seat: LayoutSeat, typeName: string) =>
+      [
+        t("seat", { code: seat.code, type: typeName }),
+        t("score", { score: seat.score }),
+        seat.flags.includes("broken") ? t("broken") : null,
+        seat.flags.includes("obstructed") ? t("obstructed") : null,
+      ]
+        .filter(Boolean)
+        .join(", "),
+    [t],
+  );
 
   return (
     <div className={cn("flex flex-col gap-2", className)}>
       <div
         ref={containerRef}
         {...handlers}
-        // At 1x a vertical drag must still scroll the page; zoomed in, the map takes every gesture.
-        style={{ touchAction: scale > 1 ? "none" : "pan-y", aspectRatio: `${viewW} / ${viewH}`, maxHeight }}
+        // The map takes every touch gesture, always: if the browser may scroll at 1x it grabs the pinch (pointercancel) as soon
+        // as the fingers drift vertically and the map jumps. The page scrolls from outside the map (devices.md, rule 6).
+        style={{ touchAction: "none", aspectRatio: `${viewW} / ${viewH}`, maxHeight }}
         className="relative w-full overflow-hidden rounded-xl border bg-card select-none"
       >
         <div ref={contentRef} className="size-full origin-top-left will-change-transform">

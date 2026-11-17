@@ -10,10 +10,46 @@ const BUTTON_STEP = 1.5;
 /** A touch this close to the screen's left edge is left to iOS's swipe-back gesture (devices.md). */
 const EDGE_GUARD = 20;
 
-interface View {
+export interface View {
   s: number;
   x: number;
   y: number;
+}
+
+/** Scale within limits, and the content (which is as big as the frame, times `s`) kept covering the frame. */
+export function clampView(view: View, width: number, height: number): View {
+  const s = Math.min(MAX_SCALE, Math.max(MIN_SCALE, view.s));
+  if (s === MIN_SCALE) return { s, x: 0, y: 0 };
+  return {
+    s,
+    x: Math.min(0, Math.max(width - width * s, view.x)),
+    y: Math.min(0, Math.max(height - height * s, view.y)),
+  };
+}
+
+/** Zoom to `scale` so the content point that is under (px, py) stays under it. */
+export function zoomAround(view: View, scale: number, px: number, py: number, width: number, height: number): View {
+  const s = Math.min(MAX_SCALE, Math.max(MIN_SCALE, scale));
+  const cx = (px - view.x) / view.s;
+  const cy = (py - view.y) / view.s;
+  return clampView({ s, x: px - cx * s, y: py - cy * s }, width, height);
+}
+
+/**
+ * The view while two fingers pinch: `anchor` is the content point that was under the fingers' midpoint when the pinch started;
+ * it stays under the midpoint as the fingers move, so the map zooms where the fingers are and follows them when they travel.
+ */
+export function pinchView(
+  startScale: number,
+  anchor: { x: number; y: number },
+  startDist: number,
+  dist: number,
+  mid: { x: number; y: number },
+  width: number,
+  height: number,
+): View {
+  const s = Math.min(MAX_SCALE, Math.max(MIN_SCALE, startScale * (dist / Math.max(startDist, 1))));
+  return clampView({ s, x: mid.x - anchor.x * s, y: mid.y - anchor.y * s }, width, height);
 }
 
 interface Options {
@@ -48,21 +84,11 @@ export function usePanZoom(containerRef: RefObject<HTMLElement | null>, contentR
   const apply = useCallback(
     (next: View) => {
       const box = containerRef.current?.getBoundingClientRect();
-      const s = Math.min(MAX_SCALE, Math.max(MIN_SCALE, next.s));
-      let { x, y } = next;
-      if (box) {
-        // Keep the content covering the container.
-        x = Math.min(0, Math.max(box.width - box.width * s, x));
-        y = Math.min(0, Math.max(box.height - box.height * s, y));
-      }
-      if (s === 1) {
-        x = 0;
-        y = 0;
-      }
-      view.current = { s, x, y };
+      const v = box ? clampView(next, box.width, box.height) : next;
+      view.current = v;
       const el = contentRef.current;
-      if (el) el.style.transform = `translate(${x}px, ${y}px) scale(${s})`;
-      setScale(Math.round(s * 20) / 20);
+      if (el) el.style.transform = `translate(${v.x}px, ${v.y}px) scale(${v.s})`;
+      setScale(Math.round(v.s * 20) / 20);
     },
     [containerRef, contentRef],
   );
@@ -70,13 +96,11 @@ export function usePanZoom(containerRef: RefObject<HTMLElement | null>, contentR
   /** Zoom by `factor` keeping the point (px, py), relative to the container, still. */
   const zoomAt = useCallback(
     (factor: number, px: number, py: number) => {
-      const { s, x, y } = view.current;
-      const ns = Math.min(MAX_SCALE, Math.max(MIN_SCALE, s * factor));
-      const cx = (px - x) / s;
-      const cy = (py - y) / s;
-      apply({ s: ns, x: px - cx * ns, y: py - cy * ns });
+      const box = containerRef.current?.getBoundingClientRect();
+      if (!box) return;
+      apply(zoomAround(view.current, view.current.s * factor, px, py, box.width, box.height));
     },
-    [apply],
+    [apply, containerRef],
   );
 
   const center = useCallback(() => {
@@ -146,8 +170,8 @@ export function usePanZoom(containerRef: RefObject<HTMLElement | null>, contentR
 
       if (pointers.current.size >= 2) {
         const { dist, mid } = distanceAndMid();
-        const s = Math.min(MAX_SCALE, Math.max(MIN_SCALE, g.startScale * (dist / g.startDist)));
-        apply({ s, x: mid.x - g.anchor.x * s, y: mid.y - g.anchor.y * s });
+        const box = containerRef.current?.getBoundingClientRect();
+        if (box) apply(pinchView(g.startScale, g.anchor, g.startDist, dist, mid, box.width, box.height));
         return;
       }
       if (!g.moved && Math.hypot(p.x - g.downAt.x, p.y - g.downAt.y) > TAP_SLOP) g.moved = true;
@@ -163,11 +187,16 @@ export function usePanZoom(containerRef: RefObject<HTMLElement | null>, contentR
       if (pointers.current.size === 0) {
         if (!g.moved && !g.pinched) onTap.current?.(g.downTarget);
         gesture.current = null;
+      } else if (pointers.current.size === 1) {
+        // One finger of a pinch lifted: the other carries on as a drag from where it is NOW, not from where it was
+        // before the pinch (else the map jumps by the distance it travelled meanwhile).
+        g.last = [...pointers.current.values()][0];
       }
     },
     onPointerCancel(e: React.PointerEvent) {
       pointers.current.delete(e.pointerId);
       if (pointers.current.size === 0) gesture.current = null;
+      else if (gesture.current && pointers.current.size === 1) gesture.current.last = [...pointers.current.values()][0];
     },
   };
 
