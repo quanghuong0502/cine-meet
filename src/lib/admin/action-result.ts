@@ -38,6 +38,8 @@ export const VALIDATION_CODES = [
   "too_long",
   "invalid_url",
   "invalid_color",
+  "too_gray",
+  "too_dark",
   "invalid_number",
   "out_of_range",
   "invalid_date",

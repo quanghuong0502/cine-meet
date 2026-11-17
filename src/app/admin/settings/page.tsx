@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { EmptyState } from "@/components/empty-state";
+import { AppearanceSettingsCard } from "@/components/admin/appearance-settings-card";
 import { SystemSettingsCard } from "@/components/admin/system-settings-card";
 import { PageHeader } from "@/components/page-header";
 import { LanguageSetting } from "@/components/language-setting";
@@ -21,6 +22,7 @@ export default async function AdminSettingsPage() {
       <PageHeader title={t("title")} backHref="/admin/profile" />
       <LanguageSetting />
       <SystemSettingsCard />
+      <AppearanceSettingsCard />
       <SecuritySetting hasPassword={admin.hasPassword} />
       <EmptyState
         title={states("comingSoon")}

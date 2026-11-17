@@ -109,6 +109,8 @@
       "too_long": "Quá dài",
       "invalid_url": "Đường dẫn không hợp lệ, cần bắt đầu bằng https://",
       "invalid_color": "Màu không hợp lệ",
+      "too_gray": "Màu quá xám, hãy chọn màu có sắc rõ hơn",
+      "too_dark": "Màu quá tối, nút sẽ khó thấy trên nền tối",
       "invalid_number": "Số không hợp lệ",
       "out_of_range": "Giá trị ngoài phạm vi cho phép",
       "invalid_date": "Ngày không hợp lệ",
@@ -548,6 +550,25 @@
       "lockedToast": "Đã khóa tài khoản",
       "unlocked": "Đã mở khóa tài khoản",
       "resetPassword": "Đặt lại mật khẩu"
+    },
+    "appearance": {
+      "title": "Màu thương hiệu",
+      "cardDescription": "Màu chủ đạo của toàn bộ ứng dụng.",
+      "open": "Đổi màu thương hiệu",
+      "fields": {
+        "color": {
+          "label": "Màu thương hiệu"
+        }
+      },
+      "pickColor": "Chọn màu",
+      "useDefault": "Dùng màu mặc định",
+      "preview": {
+        "label": "Xem trước",
+        "heading": "Chọn ghế",
+        "seats": "Còn 3 ghế",
+        "link": "Xem chi tiết",
+        "button": "Chốt người tham gia"
+      }
     },
     "systemSettings": {
       "title": "Cài đặt hệ thống",

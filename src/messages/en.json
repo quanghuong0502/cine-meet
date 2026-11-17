@@ -109,6 +109,8 @@
       "too_long": "Too long",
       "invalid_url": "Invalid link, it must start with https://",
       "invalid_color": "Invalid color",
+      "too_gray": "This color is too grey, pick one with a clearer tint",
+      "too_dark": "This color is too dark, the button would be hard to see on the dark background",
       "invalid_number": "Invalid number",
       "out_of_range": "Value is out of the allowed range",
       "invalid_date": "Invalid date",
@@ -548,6 +550,25 @@
       "lockedToast": "Account locked",
       "unlocked": "Account unlocked",
       "resetPassword": "Reset password"
+    },
+    "appearance": {
+      "title": "Brand color",
+      "cardDescription": "The main color of the whole app.",
+      "open": "Change brand color",
+      "fields": {
+        "color": {
+          "label": "Brand color"
+        }
+      },
+      "pickColor": "Pick a color",
+      "useDefault": "Use the default color",
+      "preview": {
+        "label": "Preview",
+        "heading": "Choose seats",
+        "seats": "3 seats left",
+        "link": "See details",
+        "button": "Lock in attendees"
+      }
     },
     "systemSettings": {
       "title": "System settings",

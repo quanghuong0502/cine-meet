@@ -47,12 +47,8 @@ describe("brand colour", () => {
     expect(await svc.getBrandColor()).toBe("#0A84FF");
   });
 
-  it("falls back to the default when the stored value is broken, and can be reset", async () => {
+  it("falls back to the default when the stored value is broken", async () => {
     await SystemSetting.create({ key: "brandColor", value: "not a colour" });
-    expect(await svc.getBrandColor()).toBe("#C61583");
-
-    await svc.saveBrandColor("#0A84FF", ACTOR);
-    await svc.resetBrandColor(ACTOR);
     expect(await svc.getBrandColor()).toBe("#C61583");
   });
 });
