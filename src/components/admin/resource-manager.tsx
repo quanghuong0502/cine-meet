@@ -173,7 +173,7 @@ export function ResourceManager({ items, basePath, query, labels, removeAction, 
 
       {/* Primary action: fixed above the bottom menu (not inside the flow), so it stays in thumb reach, at the same
           place whether the list is empty, short or long. On wide screens it starts after the sidebar. */}
-      <div data-bottom-fixed className="pointer-events-none fixed inset-x-0 bottom-[var(--bottom-nav-h,0px)] z-30 px-4 pb-2 md:left-64">
+      <div data-bottom-fixed className="pointer-events-none fixed inset-x-0 bottom-[var(--bottom-nav-h,0px)] z-30 px-4 md:left-64">
         <Button asChild size="cta" className="pointer-events-auto mx-auto flex max-w-sm">
           <Link href={withBack(`${base}/new`)}>
             <Plus aria-hidden />

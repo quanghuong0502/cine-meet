@@ -30,7 +30,7 @@ export default async function AdminShowtimesPage() {
       )}
 
       <div aria-hidden className="h-[calc(var(--spacing-control)+2.5rem)] shrink-0" />
-      <div data-bottom-fixed className="pointer-events-none fixed inset-x-0 bottom-[var(--bottom-nav-h,0px)] z-30 px-4 pb-2 md:left-64">
+      <div data-bottom-fixed className="pointer-events-none fixed inset-x-0 bottom-[var(--bottom-nav-h,0px)] z-30 px-4 md:left-64">
         <div className="mx-auto flex max-w-md gap-2">
           <Button asChild size="cta" className="pointer-events-auto min-w-0 flex-1">
             <Link href="/admin/movies/showtimes/bulk?back=/admin/movies/showtimes">
