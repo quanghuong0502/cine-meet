@@ -98,7 +98,7 @@ export default async function MovieDetailPage({ params }: Props) {
         {facts
           .filter((fact): fact is [string, string] => Boolean(fact[1]))
           .map(([label, value]) => (
-            <div key={label} className="flex flex-col gap-0.5">
+            <div key={label} className="flex flex-col gap-1.5">
               <dt className="text-muted-foreground">{label}</dt>
               <dd className="text-base whitespace-pre-line">{value}</dd>
             </div>
