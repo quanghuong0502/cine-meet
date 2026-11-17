@@ -8,8 +8,8 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        // Glass, like the destructive button: a tint of the brand colour with a thin edge, so what scrolls behind a floating button still shows through.
-        default: "border-primary/40 bg-primary/20 text-primary-text backdrop-blur-sm hover:bg-primary/30",
+        // The brand colour and white text as before, but see-through (like the destructive button), so what scrolls behind a floating button still shows.
+        default: "bg-primary/75 text-primary-foreground backdrop-blur-sm hover:bg-primary/65",
         outline:
           "border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
         secondary:
