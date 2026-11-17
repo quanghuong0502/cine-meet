@@ -20,6 +20,7 @@ export default async function SystemSettingsPage() {
     { name: "reminderMinutesBefore", kind: "text", plain: true, label: t("fields.reminderMinutesBefore.label"), placeholder: t("fields.reminderMinutesBefore.placeholder"), required: true, maxLength: 60 },
     { name: "responseDeadlineHours", kind: "number", label: t("fields.responseDeadlineHours.label"), required: true, step: "1", min: 1, max: 168 },
     { name: "adMinutes", kind: "number", label: t("fields.adMinutes.label"), required: true, step: "1", min: 0, max: 60 },
+    { name: "timeSlots", kind: "timeSlots", label: t("fields.timeSlots.label") },
     { name: "movieUpcomingDays", kind: "number", label: t("fields.movieUpcomingDays.label"), required: true, step: "1", min: 0, max: 365 },
   ];
 
@@ -34,6 +35,7 @@ export default async function SystemSettingsPage() {
           responseDeadlineHours: String(settings.responseDeadlineHours),
           adMinutes: String(settings.adMinutes),
           movieUpcomingDays: String(settings.movieUpcomingDays),
+          timeSlots: JSON.stringify(settings.timeSlots),
         }}
         backHref="/admin/settings"
         saveAction={saveSystemSettings}

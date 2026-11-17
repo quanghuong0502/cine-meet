@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { parseCsv, resolveCsvRows, type CsvLookups } from "./csv";
-import { overlaps, showtimeEnd, timeSlotOf, vietnamInstant } from "./time";
+import { datesBetween, overlaps, showtimeEnd, vietnamInstant } from "./time";
 
 const lookups: CsvLookups = {
   movies: [{ id: "m1", title: "Mai", originalTitle: "Mai (2024)", durationMin: 130 }],
@@ -73,7 +73,8 @@ describe("time helpers", () => {
     expect(overlaps(a, { start: new Date("2026-01-01T12:00Z"), end: new Date("2026-01-01T14:00Z") })).toBe(false);
     expect(overlaps(a, { start: new Date("2026-01-01T11:59Z"), end: new Date("2026-01-01T14:00Z") })).toBe(true);
   });
-  it("time slots", () => {
-    expect([timeSlotOf("09:00"), timeSlotOf("12:00"), timeSlotOf("19:30"), timeSlotOf("23:10")]).toEqual(["morning", "afternoon", "evening", "late"]);
+  it("lists every day of a range, inclusive", () => {
+    expect(datesBetween("2026-11-29", "2026-12-02")).toEqual(["2026-11-29", "2026-11-30", "2026-12-01", "2026-12-02"]);
+    expect(datesBetween("2026-12-02", "2026-11-29")).toEqual([]);
   });
 });

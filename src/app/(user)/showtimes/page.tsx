@@ -12,7 +12,8 @@ import { requireUser } from "@/lib/auth/guards";
 import { formatDayKey } from "@/lib/datetime";
 import { vietnamToday } from "@/lib/movie/status";
 import { FILTER_KEYS, type FilterValues } from "@/lib/showtime/filters";
-import { TIME_SLOTS, datesBetween, type TimeSlot } from "@/lib/showtime/time";
+import { slotName, slotRange } from "@/lib/showtime/slots";
+import { datesBetween } from "@/lib/showtime/time";
 import { cn } from "@/lib/utils";
 import { isCalendarDate } from "@/lib/validation/fields";
 import { branchService } from "@/services/master-data/branch.service";
@@ -20,6 +21,7 @@ import { getBrandOptions } from "@/services/master-data/brand-options";
 import { formatService } from "@/services/master-data/format.service";
 import { genreService } from "@/services/master-data/genre.service";
 import { listFilterMovies } from "@/services/movie.service";
+import { getSystemSettings } from "@/services/settings.service";
 import { searchShowtimes } from "@/services/showtime.service";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -47,12 +49,13 @@ export default async function ShowtimesPage({ searchParams }: { searchParams: Pr
     if (value) values[key] = value;
   }
 
-  const [movies, branches, brands, genres, formats] = await Promise.all([
+  const [movies, branches, brands, genres, formats, settings] = await Promise.all([
     listFilterMovies(),
     branchService.list({}),
     getBrandOptions(),
     genreService.list({}),
     formatService.list({}),
+    getSystemSettings(),
   ]);
   const brandName = new Map(brands.map((b) => [b.id, b.name]));
   const brandActive = new Map(brands.map((b) => [b.id, b.active]));
@@ -62,7 +65,7 @@ export default async function ShowtimesPage({ searchParams }: { searchParams: Pr
     branch: branches.filter((b) => b.active !== false && brandActive.get(b.brandId.toString()) !== false).map((b) => ({ value: b._id.toString(), label: [brandName.get(b.brandId.toString()), b.name].filter(Boolean).join(" · ") })),
     genre: genres.filter((g) => g.active !== false).map((g) => ({ value: g._id.toString(), label: en && g.nameEn ? g.nameEn : g.name })),
     format: formats.filter((f) => f.active !== false).map((f) => ({ value: f._id.toString(), label: f.name })),
-    slot: TIME_SLOTS.map((slot) => ({ value: slot, label: t(`slots.${slot}`) })),
+    slot: settings.timeSlots.map((slot) => ({ value: slot.id, label: `${slotName(slot, locale)} (${slotRange(slot)})` })),
   };
   const nowShowing = movies;
   const days = datesBetween(today, new Date(Date.parse(`${today}T00:00:00Z`) + DAYS_AHEAD * 86_400_000).toISOString().slice(0, 10));
@@ -128,8 +131,7 @@ export default async function ShowtimesPage({ searchParams }: { searchParams: Pr
 
 async function Results({ date, values }: { date: string; values: FilterValues }) {
   const t = await getTranslations("showtimes");
-  const slot = TIME_SLOTS.find((s) => s === values.slot) as TimeSlot | undefined;
-  const rows = await searchShowtimes({ date, movieId: values.movie, branchId: values.branch, genreId: values.genre, formatId: values.format, slot });
+  const rows = await searchShowtimes({ date, movieId: values.movie, branchId: values.branch, genreId: values.genre, formatId: values.format, slot: values.slot });
   if (rows.length === 0) {
     return <EmptyState mascot="bubu-sleepy" title={t("emptyTitle")} description={t("emptyDescription")} />;
   }

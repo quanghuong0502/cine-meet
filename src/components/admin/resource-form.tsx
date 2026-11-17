@@ -8,6 +8,7 @@ import { ComboItemsField } from "@/components/admin/combo-items-field";
 import { DeleteRecordButton } from "@/components/admin/delete-record-button";
 import { Chip } from "@/components/admin/auditorium-editor/chips";
 import { ImageUpload } from "@/components/image-upload";
+import { TimeSlotsField } from "@/components/admin/time-slots-field";
 import { RequiredMark } from "@/components/required-mark";
 import { useActionState, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -105,6 +106,8 @@ function FieldControl({ field, value, invalid, last, onSelect, selected, sibling
           )}
         />
       );
+    case "timeSlots":
+      return <TimeSlotsField name={field.name} initial={value} invalid={invalid} />;
     case "multiSelect":
       return <MultiSelectField name={field.name} label={field.label} options={field.options ?? []} initial={value} />;
     case "switch":
@@ -196,7 +199,7 @@ export function ResourceForm({ itemId, fields, values, backHref, saveAction, del
   // After a failed save, start from what the user typed; otherwise from the saved record.
   const typed = state.status === "error" ? state.values : undefined;
   const formError = state.status === "error" && state.error !== "validation" ? state.error : null;
-  const lastTypingField = fields.findLast((field) => !["switch", "color", "select", "textarea", "multiSelect", "image"].includes(field.kind))?.name;
+  const lastTypingField = fields.findLast((field) => !["switch", "color", "select", "textarea", "multiSelect", "image", "timeSlots"].includes(field.kind))?.name;
 
   // noValidate on the form: the server validates and returns translated messages, so the browser must not show its own.
   return (

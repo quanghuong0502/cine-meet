@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { connectToDatabase } from "@/lib/db";
+import { DEFAULT_TIME_SLOTS, timeSlotsFieldSchema, timeSlotsSchema, type TimeSlot } from "@/lib/showtime/slots";
 import { requiredInt } from "@/lib/validation/fields";
 import { SystemSetting } from "@/models/system-setting";
 import { recordAudit } from "@/services/audit.service";
@@ -13,6 +14,8 @@ export interface SystemSettings {
   adMinutes: number;
   /** The movie filter also offers movies that start within this many days (movies already showing are always offered). */
   movieUpcomingDays: number;
+  /** Windows of the day (by start time) offered in the showtime filter. */
+  timeSlots: TimeSlot[];
 }
 
 export const SETTING_DEFAULTS: SystemSettings = {
@@ -20,6 +23,7 @@ export const SETTING_DEFAULTS: SystemSettings = {
   responseDeadlineHours: 24,
   adMinutes: 15,
   movieUpcomingDays: 30,
+  timeSlots: DEFAULT_TIME_SLOTS,
 };
 
 export const MAX_REMINDERS = 5;
@@ -51,6 +55,7 @@ export const systemSettingsInputSchema = z.object({
   responseDeadlineHours: requiredInt(1, 168),
   adMinutes: requiredInt(0, 60),
   movieUpcomingDays: requiredInt(0, 365),
+  timeSlots: timeSlotsFieldSchema,
 });
 
 export type SystemSettingsInput = z.infer<typeof systemSettingsInputSchema>;
@@ -61,6 +66,7 @@ const storedSchemas: { [K in keyof SystemSettings]: z.ZodType<SystemSettings[K]>
   responseDeadlineHours: z.number().int().min(1).max(168),
   adMinutes: z.number().int().min(0).max(60),
   movieUpcomingDays: z.number().int().min(0).max(365),
+  timeSlots: timeSlotsSchema,
 };
 
 export async function getSystemSettings(): Promise<SystemSettings> {

@@ -2,9 +2,8 @@ import { isValidObjectId, Types } from "mongoose";
 import { z } from "zod";
 import { connectToDatabase } from "@/lib/db";
 import { resolveCsvRows, CSV_MAX_ROWS, type CsvRowError } from "@/lib/showtime/csv";
-import {
-  overlaps, showtimeEnd, TIME_SLOT_RANGES, vietnamDayStart, vietnamInstant, type TimeSlot,
-} from "@/lib/showtime/time";
+import { timeInSlot } from "@/lib/showtime/slots";
+import { overlaps, showtimeEnd, vietnamDayStart, vietnamInstant } from "@/lib/showtime/time";
 import { isCalendarDate, objectIdField } from "@/lib/validation/fields";
 import { Auditorium } from "@/models/auditorium";
 import { AuditoriumLayout } from "@/models/auditorium-layout";
@@ -216,7 +215,8 @@ export interface ShowtimeFilters {
   branchId?: string;
   genreId?: string;
   formatId?: string;
-  slot?: TimeSlot;
+  /** Id of a time slot from the system settings; an id that no longer exists filters nothing. */
+  slot?: string;
   /** The admin view: also shows what started in the last hours, and showtimes hidden from users by an off switch. */
   admin?: boolean;
   limit?: number;
@@ -272,13 +272,10 @@ export async function searchShowtimes(filters: ShowtimeFilters = {}): Promise<Sh
     query.auditoriumId = { $in: rooms.map((r) => r._id) };
   }
 
-  const found = await Showtime.find(query).sort({ startAt: 1 }).limit((filters.limit ?? 300) * (filters.slot ? 4 : 1)).lean();
-  const inSlot = filters.slot
-    ? found.filter((s) => {
-        const time = new Date(s.startAt.getTime() + 7 * 3600_000).toISOString().slice(11, 16);
-        const [from, to] = TIME_SLOT_RANGES[filters.slot as TimeSlot];
-        return time >= from && time < to;
-      })
+  const slot = filters.slot ? (await getSystemSettings()).timeSlots.find((candidate) => candidate.id === filters.slot) : undefined;
+  const found = await Showtime.find(query).sort({ startAt: 1 }).limit((filters.limit ?? 300) * (slot ? 4 : 1)).lean();
+  const inSlot = slot
+    ? found.filter((s) => timeInSlot(slot, new Date(s.startAt.getTime() + 7 * 3600_000).toISOString().slice(11, 16)))
     : found;
   const rows = inSlot.slice(0, filters.limit ?? 300);
   if (rows.length === 0) return [];

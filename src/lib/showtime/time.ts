@@ -13,21 +13,6 @@ export function vietnamDayStart(date: string): Date | null {
   return vietnamInstant(date, "00:00");
 }
 
-export const TIME_SLOTS = ["morning", "afternoon", "evening", "late"] as const;
-export type TimeSlot = (typeof TIME_SLOTS)[number];
-
-/** Start time windows in Vietnam time, as [from, to) in "HH:mm". */
-export const TIME_SLOT_RANGES: Record<TimeSlot, [string, string]> = {
-  morning: ["00:00", "12:00"],
-  afternoon: ["12:00", "17:00"],
-  evening: ["17:00", "22:00"],
-  late: ["22:00", "24:00"],
-};
-
-export function timeSlotOf(time: string): TimeSlot {
-  return TIME_SLOTS.find((slot) => time >= TIME_SLOT_RANGES[slot][0] && time < TIME_SLOT_RANGES[slot][1]) ?? "late";
-}
-
 /** End of a showtime: start, then the movie, then the ads shown before it. */
 export function showtimeEnd(start: Date, durationMin: number, adMinutes: number): Date {
   return new Date(start.getTime() + (durationMin + adMinutes) * 60_000);

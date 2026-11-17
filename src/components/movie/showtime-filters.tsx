@@ -59,7 +59,7 @@ export function ShowtimeFilters({ date, values, options }: Props) {
       </div>
 
       <div className={cn("flex flex-col gap-4", !open && "hidden")}>
-        {FILTER_KEYS.map((key) => (
+        {FILTER_KEYS.filter((key) => options[key].length > 0).map((key) => (
           <div key={key} role="group" aria-label={t(`labels.${key}`)} className="flex flex-col gap-2">
             <span className="text-sm text-muted-foreground">{t(`labels.${key}`)}</span>
             <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">

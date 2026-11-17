@@ -138,3 +138,17 @@ describe("switched-off master data", () => {
     expect(await svc.searchShowtimes({ date: "2099-12-01" })).toHaveLength(1);
   });
 });
+
+describe("time slots from the settings", () => {
+  it("filters by the admin's own slots; an id that no longer exists filters nothing", async () => {
+    await svc.createShowtimesBulk(bulk({ dates: ["2099-12-01"], times: ["09:30", "13:00", "20:00"] }), ACTOR);
+    await models.SystemSetting.create({
+      key: "timeSlots",
+      value: [{ id: "lunch", name: "Trưa", from: "11:00", to: "14:00" }, { id: "night", name: "Đêm", from: "19:00", to: "00:00" }],
+    });
+    const starts = async (slot: string) => (await svc.searchShowtimes({ date: "2099-12-01", slot })).map((r) => r.startAt.slice(11, 16));
+    expect(await starts("lunch")).toEqual(["06:00"]); // 13:00 Vietnam
+    expect(await starts("night")).toEqual(["13:00"]); // 20:00 Vietnam
+    expect(await starts("gone")).toHaveLength(3);
+  });
+});

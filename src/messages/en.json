@@ -612,7 +612,20 @@
         },
         "movieUpcomingDays": {
           "label": "Upcoming movies in the filter (days ahead)"
+        },
+        "timeSlots": {
+          "label": "Showtime slots (filter)"
         }
+      },
+      "slots": {
+        "empty": "No slots: the time filter is hidden.",
+        "slotNumber": "Slot {number}",
+        "name": "Name",
+        "nameEn": "English name",
+        "from": "From",
+        "to": "To",
+        "add": "Add slot",
+        "remove": "Remove slot"
       }
     },
     "auditoriums": {
@@ -960,12 +973,6 @@
     "createPlanSoon": "Create plan (coming soon)",
     "emptyTitle": "No showtimes",
     "emptyDescription": "Try another day or remove some filters.",
-    "slots": {
-      "morning": "Morning (before 12:00)",
-      "afternoon": "Afternoon (12:00 to 17:00)",
-      "evening": "Evening (17:00 to 22:00)",
-      "late": "Late (after 22:00)"
-    },
     "filters": {
       "title": "Filters",
       "titleCount": "Filters ({count})",

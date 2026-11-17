@@ -612,7 +612,20 @@
         },
         "movieUpcomingDays": {
           "label": "Phim sắp chiếu hiện trong bộ lọc (ngày tới)"
+        },
+        "timeSlots": {
+          "label": "Khung giờ chiếu (bộ lọc)"
         }
+      },
+      "slots": {
+        "empty": "Chưa có khung giờ: bộ lọc Khung giờ sẽ ẩn.",
+        "slotNumber": "Khung giờ {number}",
+        "name": "Tên",
+        "nameEn": "Tên tiếng Anh",
+        "from": "Từ",
+        "to": "Đến",
+        "add": "Thêm khung giờ",
+        "remove": "Xóa khung giờ"
       }
     },
     "auditoriums": {
@@ -960,12 +973,6 @@
     "createPlanSoon": "Tạo lịch hẹn (sắp có)",
     "emptyTitle": "Không có suất chiếu",
     "emptyDescription": "Thử chọn ngày khác hoặc bỏ bớt bộ lọc.",
-    "slots": {
-      "morning": "Sáng (trước 12h)",
-      "afternoon": "Chiều (12h đến 17h)",
-      "evening": "Tối (17h đến 22h)",
-      "late": "Khuya (sau 22h)"
-    },
     "filters": {
       "title": "Bộ lọc",
       "titleCount": "Bộ lọc ({count})",
