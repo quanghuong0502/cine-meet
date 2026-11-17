@@ -81,10 +81,10 @@ export default async function ShowtimesPage({ searchParams }: { searchParams: Pr
           <h2 className="text-sm text-muted-foreground">{t("movies")}</h2>
           <ul className="scroll-strip flex gap-3 pb-1">
             {nowShowing.map((movie) => (
-              <li key={movie._id.toString()} className="w-24 shrink-0">
+              <li key={movie._id.toString()} className="w-[calc((100%-1.5rem)/3)] shrink-0">
                 <Link href={`/movies/${movie._id.toString()}`} className="flex flex-col gap-1.5">
                   <span className="relative block aspect-[2/3] overflow-hidden rounded-lg border bg-muted">
-                    {movie.posterUrl ? <Image src={movie.posterUrl} alt="" fill sizes="96px" unoptimized className="object-cover" /> : null}
+                    {movie.posterUrl ? <Image src={movie.posterUrl} alt="" fill sizes="128px" unoptimized className="object-cover" /> : null}
                   </span>
                   <span className="line-clamp-2 text-sm leading-snug">{movie.title}</span>
                 </Link>
