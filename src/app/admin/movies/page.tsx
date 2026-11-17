@@ -15,6 +15,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function AdminMoviesPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const t = await getTranslations("admin.movies");
+  const tm = await getTranslations("movie");
   const locale = await getLocale();
   const { q = "" } = await searchParams;
   const [movies, genres] = await Promise.all([listMovies({ q }), genreService.list({})]);
@@ -34,7 +35,7 @@ export default async function AdminMoviesPage({ searchParams }: { searchParams: 
           title: movie.title,
           imageUrl: movie.posterUrl ?? undefined,
           subtitle: (movie.genreIds ?? []).map((id) => genreName.get(id.toString())).filter(Boolean).join(", ") || undefined,
-          meta: [t(`status.${movie.status}`), t("duration", { minutes: movie.durationMin }), formatDay(movie.releaseDate, locale, "short")],
+          meta: [tm(`status.${movie.status}`), tm("duration", { minutes: movie.durationMin }), formatDay(movie.releaseDate, locale, "short")],
         }))}
         removeAction={removeMovie}
       />

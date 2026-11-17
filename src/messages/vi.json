@@ -733,12 +733,6 @@
       "searchLabel": "Tìm phim",
       "createTitle": "Thêm phim",
       "editTitle": "Sửa phim",
-      "duration": "{minutes} phút",
-      "status": {
-        "upcoming": "Sắp chiếu",
-        "showing": "Đang chiếu",
-        "ended": "Đã ngừng chiếu"
-      },
       "fields": {
         "title": "Tên phim",
         "originalTitle": "Tên gốc",

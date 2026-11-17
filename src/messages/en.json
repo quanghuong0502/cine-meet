@@ -733,12 +733,6 @@
       "searchLabel": "Search movies",
       "createTitle": "Add movie",
       "editTitle": "Edit movie",
-      "duration": "{minutes} min",
-      "status": {
-        "upcoming": "Upcoming",
-        "showing": "Now showing",
-        "ended": "Ended"
-      },
       "fields": {
         "title": "Title",
         "originalTitle": "Original title",
