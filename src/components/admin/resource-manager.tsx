@@ -365,10 +365,11 @@ export function ResourceManager({ items, fields, query, labels, saveAction, remo
         </Button>
       </div>
 
-      {/* The sheet (vaul's default repositionInputs) shrinks to the part of the screen the keyboard leaves free: title on top,
-          Save at the bottom, and only the form body in between scrolls. With it off, Safari instead pans the whole page and the
-          top of the sheet (title, first fields) ends up above the screen, out of reach. */}
-      <Drawer open={dialog !== null} onOpenChange={(open) => (open ? undefined : closeDialog())}>
+      {/* repositionInputs off, and the sheet's height capped by `--vv-height` instead (globals.css): measured on an iPhone (iOS 26,
+          installed app), vaul lifts the sheet by the keyboard height (`bottom`) about 15ms before iOS itself shrinks the page and
+          scrolls it by the same amount, so the sheet is moved twice and ends up above the screen. Left alone, iOS puts the sheet's
+          bottom just above the keyboard; the cap keeps its top on screen, and only the form body scrolls. */}
+      <Drawer open={dialog !== null} onOpenChange={(open) => (open ? undefined : closeDialog())} repositionInputs={false}>
         <DrawerContent className="max-h-[92dvh]">
           <DrawerHeader className="text-left">
             <DrawerTitle>{dialog?.mode === "edit" ? labels.editTitle : labels.createTitle}</DrawerTitle>
