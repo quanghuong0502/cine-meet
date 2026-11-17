@@ -9,6 +9,7 @@ paths:
 Checklist cho **mọi màn hình và component** (mới và cũ). Bổ sung cho `devices.md` (khổ máy, vùng an toàn), `design-tokens.md` (kích thước), `pwa.md` (chạy khi đã cài) và `ui.md` (hình thức).
 Người dùng chỉ test trên PWA điện thoại, nên mọi quyết định lấy iPhone ở chế độ standalone làm chuẩn, không phải desktop.
 Kỹ thuật và giới hạn riêng của iOS PWA (splash, thông báo đẩy, chuyển trang, rung, những thứ iOS không cho làm) nằm ở mục "Kỹ thuật tối ưu cho iOS" trong `pwa.md`: đọc trước mỗi sprint có giao diện hoặc thông báo.
+Quy tắc có nguồn chính thức của Apple về nút, hộp thoại xác nhận, form và bố cục nằm ở `ios-ui-guidelines.md`; file đó ưu tiên hơn các phán đoán không nguồn ở đây.
 Căn cứ: [Apple HIG, tab bars](https://developer.apple.com/design/human-interface-guidelines/tab-bars.md), báo cáo WebKit về PWA iOS
 ([218983](https://bugs.webkit.org/show_bug.cgi?id=218983)), và tổng hợp UX mobile thứ cấp (NN/g qua Toptal, Parachute); chỗ nào chưa đối chiếu nguồn gốc thì ghi rõ bên dưới.
 
