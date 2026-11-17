@@ -85,7 +85,7 @@ Trạng thái: Chưa bắt đầu · Đang làm · Chờ kiểm tra · Xong
 **Phạm vi**
 - Khung CRUD dùng chung (danh sách dạng thẻ, **form là màn nhập riêng, không dùng bottom sheet**: lưu xong quay về đúng danh sách gốc rồi làm mới; xác nhận xóa, audit log), rồi dựng từng loại bên dưới trên khung này.
 - **Mọi cấu hình master data gom vào một trang Danh mục, mỗi loại là một tab**; menu điện thoại là thanh điều hướng dưới chỉ hiện các trang cần thiết (xem `.claude/rules/ui.md`).
-- CRUD: thương hiệu, chi nhánh (kèm thông tin gửi xe, lat/lng), thể loại, định dạng chiếu, phân loại tuổi,
+- CRUD: thương hiệu, chi nhánh (kèm thông tin gửi xe, một link Google Maps, ảnh chi nhánh), thể loại, định dạng chiếu, phân loại tuổi,
   loại ghế, ngày lễ, đồ ăn và combo (có `validFrom/validTo`).
 - Bảng giá vé (`validFrom/validTo`) và hàm tính giá theo quy tắc ở thiết kế mục 2.1: độ cụ thể, loại ngày (lễ > ưu đãi > cuối tuần > thường), `priority`, rule tạo sau; có test.
 - Quản lý người dùng: danh sách, tìm kiếm, **tạo tài khoản (mật khẩu tạm)**, khóa/mở khóa (thu hồi phiên), đổi role, reset mật khẩu, không hạ admin cuối cùng.
@@ -326,8 +326,9 @@ Mỗi sprint xong thêm 3 đến 6 dòng: đã làm gì, còn dở gì, quyết 
 - Xong: khung CRUD master data (form là màn riêng, quay về đúng tab và tìm kiếm); 9 loại trong trang Danh mục: thương hiệu, chi nhánh, thể loại, định dạng, độ tuổi, loại ghế, ngày lễ, đồ ăn, combo, cộng bảng giá vé;
   hàm tính giá thuần `resolveTicketPrice` (17 test); quản lý người dùng (tạo bằng mật khẩu tạm, khóa/mở, đổi vai trò, đặt lại mật khẩu, không hạ hay khóa admin cuối, không tự khóa mình);
   cài đặt hệ thống (mốc nhắc, hạn phản hồi, quảng cáo); hồ sơ (ảnh Cloudinary, số điện thoại, sở thích ngồi); `npm run seed:catalog` nạp dữ liệu mẫu (tên có "(mẫu)").
-- Quyết định: ngày lưu dạng `YYYY-MM-DD` giờ Việt Nam; combo mô tả bằng chữ; `priceRules` phẳng (`brandId` hoặc `branchId`), ngày ưu đãi gắn một thứ trong tuần (`weekday`), khung giờ tính theo giờ BẮT ĐẦU suất, rule loại ngày "thường" là nền cho cả ngày lễ và cuối tuần;
+- Quyết định: ngày lưu dạng `YYYY-MM-DD` giờ Việt Nam; combo gồm các món (cùng thương hiệu, có số lượng) và chiết khấu (đồng hoặc %), **giá không lưu mà tính** từ giá món hiện tại (`src/services/pricing/combo-price.ts`); chi nhánh dùng một link Google Maps (không lưu lat/lng) và có ảnh; `priceRules` phẳng (`brandId` hoặc `branchId`), ngày ưu đãi gắn một thứ trong tuần (`weekday`), khung giờ tính theo giờ BẮT ĐẦU suất, rule loại ngày "thường" là nền cho cả ngày lễ và cuối tuần;
   hạn phản hồi là số giờ trước giờ chiếu; "thu hồi phiên" nhờ guard đọc lại DB mỗi request (không cần số phiên bản); ảnh tải thẳng lên Cloudinary bằng chữ ký dùng một lần, cắt vuông 256px, mỗi người một ảnh ghi đè.
+- Làm thêm trong sprint: **màu thương hiệu cấu hình được** (Cài đặt admin > Màu thương hiệu, mọi token tính từ `--brand-h/c/l`, có nút đặt lại; icon và splash PWA vẫn là ảnh tĩnh); **chiến lược cache và giảm loading** (`.claude/rules/caching.md`: `staleTimes`, dedupe người dùng theo request, cache danh sách thương hiệu có tag, giữ khung tiêu đề/tab/menu khi chuyển màn, bỏ `router.refresh()` thừa); `PageHeader` màn con dạng thanh điều hướng dính đầu màn; token `gap-field`.
 - Còn dở: tiêu chí "dùng thử trên điện thoại" cần chủ dự án kiểm tra; tải ảnh Cloudinary thật chưa thử (cần khóa trong `.env.local`); chưa thử trên iPhone thật (bàn phím, thanh Lưu cố định).
 - File chính: `src/services/master-data/`, `src/services/pricing/ticket-price.ts`, `src/services/admin-user.service.ts`, `src/services/settings.service.ts`, `src/services/profile.service.ts`,
   `src/app/admin/master-data/_sections/` (mỗi loại một thư mục, dựng bằng `createSection`), `src/components/admin/resource-*.tsx`, `src/lib/cloudinary.ts`, `scripts/seed-catalog.ts`, `.claude/rules/admin-crud.md`.
