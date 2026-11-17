@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 interface LoadingStateProps {
   /** Fills a whole screen instead of just the area it is placed in. */
   fullScreen?: boolean;
-  /** Smaller picture, for loading inside part of a page. */
+  /** Smaller picture, for loading inside part of a page (still centred in the space left under the title and tabs). */
   compact?: boolean;
   className?: string;
 }
@@ -22,7 +22,7 @@ export function LoadingState({ fullScreen = false, compact = false, className }:
       aria-live="polite"
       className={cn(
         "flex flex-col items-center justify-center gap-3",
-        fullScreen ? "min-h-dvh" : compact ? "min-h-48" : "min-h-48 flex-1",
+        fullScreen ? "min-h-dvh" : "min-h-48 flex-1",
         className,
       )}
     >
