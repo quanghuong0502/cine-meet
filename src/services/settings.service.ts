@@ -11,12 +11,15 @@ export interface SystemSettings {
   responseDeadlineHours: number;
   /** Minutes of ads before the movie, added to the end time of a showtime. */
   adMinutes: number;
+  /** The movie filter also offers movies that start within this many days (movies already showing are always offered). */
+  movieUpcomingDays: number;
 }
 
 export const SETTING_DEFAULTS: SystemSettings = {
   reminderMinutesBefore: [20],
   responseDeadlineHours: 24,
   adMinutes: 15,
+  movieUpcomingDays: 30,
 };
 
 export const MAX_REMINDERS = 5;
@@ -47,6 +50,7 @@ export const systemSettingsInputSchema = z.object({
     .pipe(reminderList),
   responseDeadlineHours: requiredInt(1, 168),
   adMinutes: requiredInt(0, 60),
+  movieUpcomingDays: requiredInt(0, 365),
 });
 
 export type SystemSettingsInput = z.infer<typeof systemSettingsInputSchema>;
@@ -56,6 +60,7 @@ const storedSchemas: { [K in keyof SystemSettings]: z.ZodType<SystemSettings[K]>
   reminderMinutesBefore: reminderList,
   responseDeadlineHours: z.number().int().min(1).max(168),
   adMinutes: z.number().int().min(0).max(60),
+  movieUpcomingDays: z.number().int().min(0).max(365),
 };
 
 export async function getSystemSettings(): Promise<SystemSettings> {

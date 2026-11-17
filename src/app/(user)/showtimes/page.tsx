@@ -19,7 +19,7 @@ import { branchService } from "@/services/master-data/branch.service";
 import { getBrandOptions } from "@/services/master-data/brand-options";
 import { formatService } from "@/services/master-data/format.service";
 import { genreService } from "@/services/master-data/genre.service";
-import { listMovies } from "@/services/movie.service";
+import { listFilterMovies } from "@/services/movie.service";
 import { searchShowtimes } from "@/services/showtime.service";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -48,7 +48,7 @@ export default async function ShowtimesPage({ searchParams }: { searchParams: Pr
   }
 
   const [movies, branches, brands, genres, formats] = await Promise.all([
-    listMovies({}),
+    listFilterMovies(),
     branchService.list({}),
     getBrandOptions(),
     genreService.list({}),
@@ -58,13 +58,13 @@ export default async function ShowtimesPage({ searchParams }: { searchParams: Pr
   const brandActive = new Map(brands.map((b) => [b.id, b.active]));
   const en = locale === "en";
   const options = {
-    movie: movies.filter((m) => m.status !== "ended").map((m) => ({ value: m._id.toString(), label: m.title })),
+    movie: movies.map((m) => ({ value: m._id.toString(), label: m.title })),
     branch: branches.filter((b) => b.active !== false && brandActive.get(b.brandId.toString()) !== false).map((b) => ({ value: b._id.toString(), label: [brandName.get(b.brandId.toString()), b.name].filter(Boolean).join(" · ") })),
     genre: genres.filter((g) => g.active !== false).map((g) => ({ value: g._id.toString(), label: en && g.nameEn ? g.nameEn : g.name })),
     format: formats.filter((f) => f.active !== false).map((f) => ({ value: f._id.toString(), label: f.name })),
     slot: TIME_SLOTS.map((slot) => ({ value: slot, label: t(`slots.${slot}`) })),
   };
-  const nowShowing = movies.filter((m) => m.status !== "ended");
+  const nowShowing = movies;
   const days = datesBetween(today, new Date(Date.parse(`${today}T00:00:00Z`) + DAYS_AHEAD * 86_400_000).toISOString().slice(0, 10));
   const query = (day: string) => `/showtimes?${new URLSearchParams({ date: day, ...Object.fromEntries(Object.entries(values)) })}`;
   const dayLabel = new Intl.DateTimeFormat(en ? "en-GB" : "vi-VN", { timeZone: "UTC", weekday: "short" });

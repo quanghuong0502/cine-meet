@@ -597,7 +597,7 @@
     },
     "systemSettings": {
       "title": "Cài đặt hệ thống",
-      "cardDescription": "Nhắc lịch, hạn phản hồi lời mời, thời gian quảng cáo.",
+      "cardDescription": "Nhắc lịch, hạn phản hồi, quảng cáo, lọc phim và khung giờ chiếu.",
       "open": "Mở cài đặt hệ thống",
       "fields": {
         "reminderMinutesBefore": {
@@ -609,6 +609,9 @@
         },
         "adMinutes": {
           "label": "Quảng cáo trước phim (phút)"
+        },
+        "movieUpcomingDays": {
+          "label": "Phim sắp chiếu hiện trong bộ lọc (ngày tới)"
         }
       }
     },

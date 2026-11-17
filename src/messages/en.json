@@ -597,7 +597,7 @@
     },
     "systemSettings": {
       "title": "System settings",
-      "cardDescription": "Reminders, invitation deadline, ad time.",
+      "cardDescription": "Reminders, response deadline, ads, movie filter and showtime slots.",
       "open": "Open system settings",
       "fields": {
         "reminderMinutesBefore": {
@@ -609,6 +609,9 @@
         },
         "adMinutes": {
           "label": "Ads before the movie (minutes)"
+        },
+        "movieUpcomingDays": {
+          "label": "Upcoming movies in the filter (days ahead)"
         }
       }
     },

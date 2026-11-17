@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { movieStatus, vietnamToday } from "./status";
+import { addDays, isOfferedInFilter, movieStatus, vietnamToday } from "./status";
 import { parseYoutubeId } from "./youtube";
 
 describe("parseYoutubeId", () => {
@@ -34,5 +34,21 @@ describe("movieStatus", () => {
   });
   it("uses Vietnam time for today", () => {
     expect(vietnamToday(new Date("2026-11-17T18:00:00Z"))).toBe("2026-11-18");
+  });
+});
+
+describe("isOfferedInFilter", () => {
+  const today = "2026-11-17";
+  it("offers showing movies, and upcoming ones only inside the window", () => {
+    expect(isOfferedInFilter({ releaseDate: "2026-10-01", endDate: "2026-12-01" }, today, 30)).toBe(true);
+    expect(isOfferedInFilter({ releaseDate: "2026-12-17" }, today, 30)).toBe(true); // exactly 30 days out
+    expect(isOfferedInFilter({ releaseDate: "2026-12-18" }, today, 30)).toBe(false);
+    expect(isOfferedInFilter({ releaseDate: "2026-11-18" }, today, 0)).toBe(false);
+  });
+  it("never offers ended movies", () => {
+    expect(isOfferedInFilter({ releaseDate: "2026-09-01", endDate: "2026-11-16" }, today, 365)).toBe(false);
+  });
+  it("adds days across month ends", () => {
+    expect(addDays("2026-12-25", 10)).toBe("2027-01-04");
   });
 });

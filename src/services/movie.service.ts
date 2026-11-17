@@ -1,7 +1,7 @@
 import { isValidObjectId } from "mongoose";
 import { z } from "zod";
 import { connectToDatabase } from "@/lib/db";
-import { movieStatus, vietnamToday, type MovieStatus } from "@/lib/movie/status";
+import { isOfferedInFilter, movieStatus, vietnamToday, type MovieStatus } from "@/lib/movie/status";
 import { parseYoutubeId } from "@/lib/movie/youtube";
 import {
   idList, objectIdField, optionalText, optionalUrl, requiredDate, requiredInt, requiredText,
@@ -9,6 +9,7 @@ import {
 import { Movie, type MovieDoc } from "@/models/movie";
 import { Showtime } from "@/models/showtime";
 import { createMasterDataService, type WithId } from "@/services/master-data/crud";
+import { getSystemSettings } from "@/services/settings.service";
 
 /** The admin pastes any YouTube link; only the 11-character id is stored. */
 const trailerLink = z
@@ -72,6 +73,13 @@ export async function listMovies(options: { q?: string; status?: MovieStatus } =
   return movies
     .filter((movie) => !options.status || movie.status === options.status)
     .sort((a, b) => rank[a.status] - rank[b.status]);
+}
+
+/** Movies for the user's filter and poster strip: showing now, plus coming soon inside the window the admin set in the system settings. */
+export async function listFilterMovies(): Promise<MovieWithStatus[]> {
+  const [movies, settings] = await Promise.all([listMovies({}), getSystemSettings()]);
+  const today = vietnamToday();
+  return movies.filter((movie) => isOfferedInFilter(movie, today, settings.movieUpcomingDays));
 }
 
 export async function getMovie(id: string): Promise<MovieWithStatus | null> {

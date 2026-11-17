@@ -30,7 +30,7 @@ const codes = (input: Record<string, string>) => {
   const result = parse(input);
   return result.success ? {} : Object.fromEntries(result.error.issues.map((i) => [String(i.path[0]), i.message]));
 };
-const base = { reminderMinutesBefore: "1440, 20", responseDeadlineHours: "24", adMinutes: "15" };
+const base = { reminderMinutesBefore: "1440, 20", responseDeadlineHours: "24", adMinutes: "15", movieUpcomingDays: "30" };
 
 describe("settings input", () => {
   it("reads the reminders as a list, largest first, without repeats", () => {
@@ -50,6 +50,14 @@ describe("settings input", () => {
     expect(codes({ ...base })).toEqual({});
   });
 
+  it("checks the days a movie may be announced ahead", () => {
+    expect(codes({ ...base, movieUpcomingDays: "0" })).toEqual({});
+    expect(codes({ ...base, movieUpcomingDays: "365" })).toEqual({});
+    expect(codes({ ...base, movieUpcomingDays: "366" })).toEqual({ movieUpcomingDays: "out_of_range" });
+    expect(codes({ ...base, movieUpcomingDays: "-1" })).toEqual({ movieUpcomingDays: "out_of_range" });
+    expect(codes({ ...base, movieUpcomingDays: "abc" })).toEqual({ movieUpcomingDays: "invalid_number" });
+  });
+
   it("accepts zero ad minutes", () => {
     expect(codes({ ...base, adMinutes: "0" })).toEqual({});
   });
@@ -64,7 +72,7 @@ describe("settings storage", () => {
     const parsed = parse({ ...base, adMinutes: "20" });
     if (!parsed.success) throw new Error("setup failed");
     const saved = await svc.updateSystemSettings(parsed.data, ACTOR);
-    expect(saved).toEqual({ reminderMinutesBefore: [1440, 20], responseDeadlineHours: 24, adMinutes: 20 });
+    expect(saved).toEqual({ reminderMinutesBefore: [1440, 20], responseDeadlineHours: 24, adMinutes: 20, movieUpcomingDays: 30 });
     expect(await svc.getSystemSettings()).toEqual(saved);
     // reminders and ads differ from the defaults; the 24 hours is the default and unchanged.
     expect(await AuditLog.countDocuments({ entity: "systemSetting" })).toBe(2);
