@@ -1016,6 +1016,8 @@
       "seek": "Tua trailer",
       "mute": "Tắt tiếng",
       "unmute": "Bật tiếng",
+      "showControls": "Hiện điều khiển",
+      "hideControls": "Ẩn điều khiển",
       "fullscreen": "Toàn màn hình",
       "exitFullscreen": "Thu nhỏ",
       "openYoutube": "Xem trên YouTube"

@@ -1016,6 +1016,8 @@
       "seek": "Seek in trailer",
       "mute": "Mute",
       "unmute": "Unmute",
+      "showControls": "Show controls",
+      "hideControls": "Hide controls",
       "fullscreen": "Full screen",
       "exitFullscreen": "Exit full screen",
       "openYoutube": "Watch on YouTube"

@@ -76,6 +76,9 @@ function Player({ videoId, title }: { videoId: string; title: string }) {
   // Real full screen where the browser has it; otherwise the player expands over the screen (`player-stage`).
   const [nativeFullscreen, setNativeFullscreen] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  // In full screen the bar hides while the video plays (like YouTube); a tap on the video brings it back.
+  const [barVisible, setBarVisible] = useState(true);
+  const hideTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const [time, setTime] = useState({ current: 0, duration: 0 });
   const [origin] = useState(() => (typeof window === "undefined" ? undefined : window.location.origin));
 
@@ -96,6 +99,7 @@ function Player({ videoId, title }: { videoId: string; title: string }) {
               if (data === YT_STATE.playing) {
                 setStarted(true);
                 setPlaying(true);
+                setBarVisible(true);
               } else if (data === YT_STATE.paused || data === YT_STATE.ended) setPlaying(false);
             },
           },
@@ -130,7 +134,23 @@ function Player({ videoId, title }: { videoId: string; title: string }) {
   }, []);
 
   const fullscreen = nativeFullscreen || expanded;
+  const showBar = !fullscreen || !playing || barVisible;
+
+  function showBarForAWhile() {
+    clearTimeout(hideTimer.current);
+    setBarVisible(true);
+    if (fullscreen && playing) hideTimer.current = setTimeout(() => setBarVisible(false), 3000);
+  }
+
+  // Going full screen or starting to play starts the countdown (the bar itself is shown again by the events that cause it, below);
+  // leaving full screen or pausing keeps the bar up whatever `barVisible` says.
+  useEffect(() => {
+    if (fullscreen && playing) hideTimer.current = setTimeout(() => setBarVisible(false), 3000);
+    return () => clearTimeout(hideTimer.current);
+  }, [fullscreen, playing]);
+
   function toggleFullscreen() {
+    setBarVisible(true);
     const element = stage.current;
     if (nativeFullscreen) {
       void document.exitFullscreen().catch(() => undefined);
@@ -177,8 +197,26 @@ function Player({ videoId, title }: { videoId: string; title: string }) {
       />
       {started && !apiFailed ? (
         <>
-          <button type="button" onClick={toggle} aria-label={playing ? t("pause") : t("resume")} className="absolute inset-0 outline-none" />
-          <div className="absolute inset-x-0 bottom-0 flex items-center gap-1 bg-gradient-to-t from-black/80 to-transparent px-1 pt-6">
+          <button
+            type="button"
+            onClick={() => {
+              // Inline a tap plays or pauses; in full screen it shows or hides the bar, like YouTube (the bar has the play button).
+              if (!fullscreen) toggle();
+              else if (barVisible) {
+                clearTimeout(hideTimer.current);
+                setBarVisible(false);
+              } else showBarForAWhile();
+            }}
+            aria-label={fullscreen ? (barVisible ? t("hideControls") : t("showControls")) : playing ? t("pause") : t("resume")}
+            className="absolute inset-0 outline-none"
+          />
+          <div
+            onPointerDownCapture={showBarForAWhile}
+            className={cn(
+              "absolute inset-x-0 bottom-0 flex items-center gap-1 bg-gradient-to-t from-black/80 to-transparent px-1 pt-6 transition-opacity duration-200 motion-reduce:transition-none",
+              !showBar && "pointer-events-none opacity-0",
+            )}
+          >
             <Button type="button" variant="ghost" size="icon" onClick={toggle} aria-label={playing ? t("pause") : t("resume")} className="shrink-0 rounded-full text-white hover:bg-white/15 hover:text-white">
               {playing ? <Pause aria-hidden className="size-6 fill-current" /> : <Play aria-hidden className="size-6 fill-current" />}
             </Button>
