@@ -131,8 +131,8 @@ export function ResourceManager({ items, basePath, query, labels, removeAction, 
           <p className="text-sm text-muted-foreground">{t("itemCount", { count: items.length })}</p>
           <ul className="grid gap-3 md:grid-cols-2">
             {items.map((item) => (
-              <li key={item.id} className="flex min-w-0 items-center gap-2 rounded-xl border bg-card pr-2">
-                <Link href={withBack(`${base}/${item.id}`)} className="flex min-h-row min-w-0 flex-1 items-center gap-3 rounded-xl p-3 text-left">
+              <li key={item.id} className="flex min-w-0 items-center rounded-xl border bg-card pr-2">
+                <Link href={withBack(`${base}/${item.id}`)} className="flex min-h-row min-w-0 flex-1 items-center gap-3 rounded-xl py-3 pr-0 pl-3 text-left">
                   <Marker item={item} />
                   <span className="flex min-w-0 flex-1 flex-col gap-1">
                     <span className="truncate text-base font-semibold">{item.title}</span>
