@@ -21,6 +21,8 @@ interface Props {
   options: Record<FilterKey, Option[]>;
   /** The showtimes of the day, as the filters see them: the sheet narrows its choices and counts results from these. */
   records: FacetRecord[];
+  /** The day in words ("Thứ Tư, 18 tháng 11"), small and muted at the left of the filter button: the day strip above only has the date number. */
+  caption: string;
 }
 
 /**
@@ -29,7 +31,7 @@ interface Props {
  * and a chip's X drops that filter at once. Only choices that still have a showtime that day (given the other choices) are offered, and the
  * button counts the results; a group with fewer than two choices left is hidden (nothing to choose), unless it is in force.
  */
-export function ShowtimeFilters({ date, values, options, records }: Props) {
+export function ShowtimeFilters({ date, values, options, records, caption }: Props) {
   const t = useTranslations("showtimes.filters");
   const router = useRouter();
   const pathname = usePathname();
@@ -57,23 +59,32 @@ export function ShowtimeFilters({ date, values, options, records }: Props) {
     setOpen(next);
   }
 
-  if (groups.length === 0 && activeKeys.length === 0) return null;
+  const canFilter = groups.length > 0 || activeKeys.length > 0;
 
   return (
-    <section aria-label={t("title")} className="scroll-strip flex items-center gap-2">
-      <Chip selected={activeKeys.length > 0} onClick={() => onOpenChange(true)} aria-haspopup="dialog">
-        <SlidersHorizontal className="size-4" aria-hidden />
-        {activeKeys.length > 0 ? t("titleCount", { count: activeKeys.length }) : t("title")}
-      </Chip>
-      {activeKeys.map((key) => {
-        const name = labelOf(key, applied[key] as string);
-        return (
-          <Chip key={key} selected={false} onClick={() => apply({ ...applied, [key]: undefined })} aria-label={t("remove", { name })}>
-            {name}
-            <X className="size-4" aria-hidden />
+    <section aria-label={t("title")} className="flex flex-col gap-2">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="min-w-0 text-sm text-muted-foreground">{caption}</h2>
+        {canFilter ? (
+          <Chip selected={activeKeys.length > 0} onClick={() => onOpenChange(true)} aria-haspopup="dialog" className="shrink-0">
+            <SlidersHorizontal className="size-4" aria-hidden />
+            {activeKeys.length > 0 ? t("titleCount", { count: activeKeys.length }) : t("title")}
           </Chip>
-        );
-      })}
+        ) : null}
+      </div>
+      {activeKeys.length > 0 ? (
+        <div className="scroll-strip flex items-center gap-2">
+          {activeKeys.map((key) => {
+            const name = labelOf(key, applied[key] as string);
+            return (
+              <Chip key={key} selected={false} onClick={() => apply({ ...applied, [key]: undefined })} aria-label={t("remove", { name })}>
+                {name}
+                <X className="size-4" aria-hidden />
+              </Chip>
+            );
+          })}
+        </div>
+      ) : null}
 
       <Drawer open={open} onOpenChange={onOpenChange}>
         <DrawerContent aria-describedby={undefined}>

@@ -81,8 +81,7 @@ export default async function ShowtimesPage({ searchParams }: { searchParams: Pr
       <PageHeader title={t("title")} />
 
       {nowShowing.length > 0 ? (
-        <section aria-label={t("movies")} className="flex flex-col gap-2">
-          <h2 className="text-sm text-muted-foreground">{t("movies")}</h2>
+        <section aria-label={t("movies")}>
           <ul className="scroll-strip flex gap-3 pb-1">
             {nowShowing.map((movie) => (
               <li key={movie._id.toString()} className="w-[calc((100%-1.5rem)/3)] shrink-0">
@@ -126,9 +125,7 @@ export default async function ShowtimesPage({ searchParams }: { searchParams: Pr
         </ul>
       </nav>
 
-      <ShowtimeFilters date={date} values={values} options={options} records={facets} />
-
-      <h2 className="text-base font-semibold">{formatDayKey(date, locale)}</h2>
+      <ShowtimeFilters date={date} values={values} options={options} records={facets} caption={formatDayKey(date, locale)} />
       <Suspense key={`${date}|${JSON.stringify(values)}`} fallback={<LoadingState compact />}>
         <Results date={date} values={values} />
       </Suspense>
