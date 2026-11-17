@@ -62,6 +62,25 @@ const HOLIDAYS = [
   { date: "2026-09-02", name: "Quốc khánh", nameEn: "National Day" },
 ];
 
+// Sample food and drinks (the same set for every brand). A combo names its items as "name|size".
+const SAMPLE_ITEMS = [
+  { name: "Bắp ngọt", nameEn: "Sweet popcorn", size: "Vừa", price: 49000 },
+  { name: "Bắp ngọt", nameEn: "Sweet popcorn", size: "Lớn", price: 59000 },
+  { name: "Bắp phô mai", nameEn: "Cheese popcorn", size: "Lớn", price: 69000 },
+  { name: "Bắp caramel", nameEn: "Caramel popcorn", size: "Lớn", price: 69000 },
+  { name: "Nước ngọt", nameEn: "Soft drink", size: "Vừa", price: 35000 },
+  { name: "Nước ngọt", nameEn: "Soft drink", size: "Lớn", price: 45000 },
+  { name: "Trà đào", nameEn: "Peach tea", size: "Vừa", price: 45000 },
+  { name: "Nước suối", nameEn: "Bottled water", size: undefined, price: 25000 },
+  { name: "Xúc xích nướng", nameEn: "Grilled sausage", size: undefined, price: 39000 },
+] as const;
+
+const SAMPLE_COMBOS = [
+  { name: "Combo 1", items: [["Bắp ngọt|Lớn", 1], ["Nước ngọt|Vừa", 2]], discountType: "percent", discountValue: 10 },
+  { name: "Combo đôi", items: [["Bắp phô mai|Lớn", 1], ["Nước ngọt|Lớn", 2]], discountType: "amount", discountValue: 20000 },
+  { name: "Combo gia đình", items: [["Bắp ngọt|Lớn", 2], ["Nước ngọt|Vừa", 4], ["Xúc xích nướng|", 2]], discountType: "percent", discountValue: 15 },
+] as const;
+
 async function insertIfMissing<T>(label: string, model: { exists(filter: Record<string, unknown>): PromiseLike<unknown>; create(doc: T): PromiseLike<unknown> }, filter: Record<string, unknown>, doc: T, counter: Record<string, number>) {
   if (await model.exists(filter)) return;
   await model.create(doc);
@@ -132,31 +151,39 @@ async function seedCatalog(): Promise<void> {
       added.branches = (added.branches ?? 0) + 1;
     }
 
-    const itemName = `Bắp ngọt ${SAMPLE}`;
-    if (!(await FnbItem.exists({ brandId, name: itemName, size: "Lớn" }).collation(collation))) {
-      await FnbItem.create({ brandId, name: itemName, nameEn: `Sweet popcorn ${SAMPLE}`, size: "Lớn", price: 59000 });
-      added.fnbItems = (added.fnbItems ?? 0) + 1;
-    }
-    const drinkName = `Nước ngọt ${SAMPLE}`;
-    if (!(await FnbItem.exists({ brandId, name: drinkName, size: "Vừa" }).collation(collation))) {
-      await FnbItem.create({ brandId, name: drinkName, nameEn: `Soft drink ${SAMPLE}`, size: "Vừa", price: 35000 });
-      added.fnbItems = (added.fnbItems ?? 0) + 1;
-    }
-    // A combo = items with a quantity each, minus a discount (1 popcorn + 2 drinks, 10% off).
-    const comboName = `Combo 1 ${SAMPLE}`;
-    if (!(await FnbCombo.exists({ brandId, name: comboName }).collation(collation))) {
-      const popcorn = await FnbItem.findOne({ brandId, name: itemName, size: "Lớn" }).collation(collation).lean();
-      const drink = await FnbItem.findOne({ brandId, name: drinkName, size: "Vừa" }).collation(collation).lean();
-      if (popcorn && drink) {
-        await FnbCombo.create({
-          brandId,
-          name: comboName,
-          items: [{ itemId: popcorn._id, quantity: 1 }, { itemId: drink._id, quantity: 2 }],
-          discountType: "percent",
-          discountValue: 10,
-        });
-        added.fnbCombos = (added.fnbCombos ?? 0) + 1;
+    // Several items per brand, so a combo has something to pick from.
+    const itemIds = new Map<string, mongoose.Types.ObjectId>();
+    for (const sample of SAMPLE_ITEMS) {
+      const name = `${sample.name} ${SAMPLE}`;
+      const filter = { brandId, name, ...(sample.size ? { size: sample.size } : {}) };
+      let item = await FnbItem.findOne(filter).collation(collation).lean();
+      if (!item) {
+        item = (await FnbItem.create({ brandId, name, nameEn: `${sample.nameEn} ${SAMPLE}`, size: sample.size, price: sample.price })).toObject();
+        added.fnbItems = (added.fnbItems ?? 0) + 1;
       }
+      itemIds.set(`${sample.name}|${sample.size ?? ""}`, item._id);
+    }
+
+    // A combo = items with a quantity each, minus a discount (in dong or percent).
+    for (const sample of SAMPLE_COMBOS) {
+      const name = `${sample.name} ${SAMPLE}`;
+      const items = sample.items.flatMap(([key, quantity]) => {
+        const itemId = itemIds.get(key);
+        return itemId ? [{ itemId, quantity }] : [];
+      });
+      const existing = await FnbCombo.findOne({ brandId, name }).collation(collation).lean();
+      if (existing) {
+        // A sample combo made before combos had items (free text and a typed price): give it items, leave the rest.
+        if (existing.items?.length) continue;
+        await FnbCombo.updateOne(
+          { _id: existing._id },
+          { $set: { items, discountType: sample.discountType, discountValue: sample.discountValue }, $unset: { description: 1, price: 1 } },
+        );
+        added.fnbCombosUpdated = (added.fnbCombosUpdated ?? 0) + 1;
+        continue;
+      }
+      await FnbCombo.create({ brandId, name, items, discountType: sample.discountType, discountValue: sample.discountValue });
+      added.fnbCombos = (added.fnbCombos ?? 0) + 1;
     }
 
     // Sample ticket prices, one set per brand: normal, weekend, holiday and a Wednesday promotion (2D, standard seat).
