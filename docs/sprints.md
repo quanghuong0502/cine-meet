@@ -30,7 +30,7 @@ Nguồn chi tiết: `docs/movie-app-mvp-design.md` (số mục ghi ở từng sp
 |---|---|---|---|
 | 0 | Khung nền: scaffold, auth, layout, theme, i18n (vi, en) | — | Xong |
 | 1 | Master data, quản lý người dùng, cài đặt hệ thống, hồ sơ cơ bản | 0 | Xong |
-| 2 | Editor phòng chiếu, sơ đồ ghế, điểm ghế, versioning | 1 | Chưa bắt đầu |
+| 2 | Editor phòng chiếu, sơ đồ ghế, điểm ghế, versioning | 1 | Chờ kiểm tra |
 | 3 | Phim (trailer), suất chiếu, trang rạp & lịch chiếu cho user, đánh dấu ghế cá nhân | 2 | Chưa bắt đầu |
 | 4 | Lịch hẹn giai đoạn 1 (mời, vote, chốt người), bạn bè, thông báo in-app, worker, Web Push | 3 | Chưa bắt đầu |
 | 5A | Lịch hẹn giai đoạn 2: chọn suất, xếp ghế, đồ ăn, chi phí, công nợ, xác nhận | 4 | Chưa bắt đầu |
@@ -122,9 +122,9 @@ Trạng thái: Chưa bắt đầu · Đang làm · Chờ kiểm tra · Xong
 **Ngoài phạm vi:** đánh dấu ghế của user, xếp ghế theo lịch hẹn, điểm cộng đồng.
 
 **Tiêu chí hoàn thành**
-- [ ] Tạo một phòng mới, kéo thanh trượt màn hình thì sơ đồ và heatmap đổi theo.
-- [ ] Sửa phòng tạo ra version mới, version cũ vẫn xem được.
-- [ ] Test điểm ghế: ghế gần tâm lý tưởng điểm cao hơn ghế lệch; ghế hỏng bị phạt.
+- [ ] Tạo một phòng mới, kéo thanh trượt màn hình thì sơ đồ và heatmap đổi theo. (Đã có test hàm; **chờ chủ dự án thử trên điện thoại**.)
+- [ ] Sửa phòng tạo ra version mới, version cũ vẫn xem được. (Đã có test service; **chờ thử trên giao diện**: Phiên bản, xem bản cũ, Sửa từ bản này.)
+- [x] Test điểm ghế: ghế gần tâm lý tưởng điểm cao hơn ghế lệch; ghế hỏng bị phạt (`src/lib/seat-layout/generate.test.ts`).
 - [ ] Dùng được trên điện thoại (cấu hình và xem sơ đồ).
 
 ---
@@ -332,6 +332,17 @@ Mỗi sprint xong thêm 3 đến 6 dòng: đã làm gì, còn dở gì, quyết 
 - Còn dở: tiêu chí "dùng thử trên điện thoại" cần chủ dự án kiểm tra; tải ảnh Cloudinary thật chưa thử (cần khóa trong `.env.local`); chưa thử trên iPhone thật (bàn phím, thanh Lưu cố định).
 - File chính: `src/services/master-data/`, `src/services/pricing/ticket-price.ts`, `src/services/admin-user.service.ts`, `src/services/settings.service.ts`, `src/services/profile.service.ts`,
   `src/app/admin/master-data/_sections/` (mỗi loại một thư mục, dựng bằng `createSection`), `src/components/admin/resource-*.tsx`, `src/lib/cloudinary.ts`, `scripts/seed-catalog.ts`, `.claude/rules/admin-crud.md`.
+
+### Sprint 2 (2026-11-17)
+- Xong (code, test, build): model `Auditorium` và `AuditoriumLayout` (version bất biến); hàm thuần sinh lưới ghế và tính điểm (`src/lib/seat-layout/`, `src/services/seat-score.ts`, có test); `auditorium.service.ts`
+  (lưu layout đổi thì tạo version mới trong transaction, giữ nguyên thì chỉ đổi tên; điểm ghế và `summary` tính lúc lưu); component `SeatMap` dùng chung (SVG, pinch-zoom, chạm ghế, heatmap);
+  màn admin `/admin/auditoriums` (danh sách, thêm, sửa với ba tab Thông số, Ghế, Phiên bản; xem bản cũ chỉ đọc; sửa từ bản cũ); ba phòng mẫu trong `npm run seed:catalog`.
+- Quyết định: hệ số điểm ghế (`SCORE_WEIGHTS`) là **phán đoán, không có nguồn**, gom một chỗ để chỉnh; tâm ngang lý tưởng = tâm màn hình, chiều sâu lý tưởng 65% tính từ màn hình, chỉnh theo độ rộng màn hình và khoảng cách;
+  ghế đôi là một ghế chiếm hai ô liền nhau (không ghép qua lối đi hay ô trống); lối đi ngang tính theo thứ tự nhãn hàng, bậc thang tính từ hàng gần màn hình; heatmap tính theo điểm thấp nhất và cao nhất của chính layout đó
+  (thang xanh lam sẫm, xanh ngọc, vàng theo `ui.md`); ghi đè ghế lưu theo ô và gộp về dạng ngắn nhất; loại ghế đang được layout dùng thì không xóa được; chọn ô trên điện thoại bằng chạm (có chạm nhãn hàng/cột để chọn cả hàng/cột), chưa làm kéo vùng chọn.
+- Còn dở: **chưa thử trên trình duyệt hay điện thoại** (cần đăng nhập admin và chạy `npm run seed:catalog`); chưa đo ở cỡ chữ 125% và 150%; chưa hỗ trợ ghế giường nằm riêng trong heatmap; xóa phòng chưa chặn khi có suất chiếu (Sprint 3 thêm).
+  Cử chỉ pinch và kéo chỉ kiểm tra bằng đọc code, phải thử trên iPhone (vùng chạm slider, `touch-action`, mép trái).
+- File chính: `src/lib/seat-layout/`, `src/services/auditorium.service.ts`, `src/services/seat-score.ts`, `src/components/seat-map/`, `src/components/admin/auditorium-editor/`, `src/app/admin/auditoriums/`.
 
 <!-- Ví dụ:
 ### Sprint 2 (2026-12-01)
