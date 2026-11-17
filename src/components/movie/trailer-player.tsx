@@ -206,8 +206,11 @@ function Player({ videoId, title }: { videoId: string; title: string }) {
           sandbox="allow-scripts allow-same-origin allow-presentation"
           referrerPolicy="strict-origin-when-cross-origin"
           onLoad={() => setLoaded(true)}
-          style={{ colorScheme: "dark" }}
-          className={`absolute inset-0 size-full border-0 bg-black transition-opacity duration-300 motion-reduce:transition-none ${loaded ? "opacity-100" : "opacity-0"}`}
+          // On a phone held sideways the player inside pads its picture by the notch side's safe area (measured: 138px = 59pt on an
+          // iPhone 14 Pro), so the picture slid off-centre and lost a strip. The iframe is made that much wider on each side and the box
+          // clips the extra, which puts the picture back in the middle. Both insets are 0 upright, so nothing changes there.
+          style={{ colorScheme: "dark", left: "calc(env(safe-area-inset-left) * -1)", right: "calc(env(safe-area-inset-right) * -1)" }}
+          className={`absolute inset-y-0 border-0 bg-black transition-opacity duration-300 motion-reduce:transition-none ${loaded ? "opacity-100" : "opacity-0"}`}
         />
         {started && !apiFailed ? (
           <>
