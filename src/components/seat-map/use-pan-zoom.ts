@@ -136,9 +136,16 @@ export function usePanZoom(containerRef: RefObject<HTMLElement | null>, contentR
     return { dist: Math.hypot(a.x - b.x, a.y - b.y), mid: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 } };
   };
 
+  /** Gesture over: let the browser repaint the map crisp at the final zoom (a promoted layer stays a blurry bitmap of the old size). */
+  const settle = () => {
+    if (contentRef.current) contentRef.current.style.willChange = "";
+  };
+
   const handlers = {
     onPointerDown(e: React.PointerEvent) {
       if (e.pointerType === "touch" && e.clientX < EDGE_GUARD) return;
+      // Promote the map to its own layer while fingers are down (smooth), and drop it afterwards (see `settle`).
+      if (contentRef.current) contentRef.current.style.willChange = "transform";
       const p = local(e);
       pointers.current.set(e.pointerId, p);
       if (pointers.current.size === 1) {
@@ -187,6 +194,7 @@ export function usePanZoom(containerRef: RefObject<HTMLElement | null>, contentR
       if (pointers.current.size === 0) {
         if (!g.moved && !g.pinched) onTap.current?.(g.downTarget);
         gesture.current = null;
+        settle();
       } else if (pointers.current.size === 1) {
         // One finger of a pinch lifted: the other carries on as a drag from where it is NOW, not from where it was
         // before the pinch (else the map jumps by the distance it travelled meanwhile).
@@ -195,8 +203,10 @@ export function usePanZoom(containerRef: RefObject<HTMLElement | null>, contentR
     },
     onPointerCancel(e: React.PointerEvent) {
       pointers.current.delete(e.pointerId);
-      if (pointers.current.size === 0) gesture.current = null;
-      else if (gesture.current && pointers.current.size === 1) gesture.current.last = [...pointers.current.values()][0];
+      if (pointers.current.size === 0) {
+        gesture.current = null;
+        settle();
+      } else if (gesture.current && pointers.current.size === 1) gesture.current.last = [...pointers.current.values()][0];
     },
   };
 

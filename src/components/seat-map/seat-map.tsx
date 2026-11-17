@@ -290,7 +290,7 @@ export function SeatMap({
         style={{ touchAction: "none", aspectRatio: `${viewW} / ${viewH}`, maxHeight }}
         className="relative w-full overflow-hidden rounded-xl border bg-card select-none"
       >
-        <div ref={contentRef} className="size-full origin-top-left will-change-transform">
+        <div ref={contentRef} className="size-full origin-top-left">
           <svg
             viewBox={`${-pad.left} ${-pad.top} ${viewW} ${viewH}`}
             className="size-full"
