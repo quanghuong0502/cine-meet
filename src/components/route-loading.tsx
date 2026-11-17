@@ -133,5 +133,6 @@ export function RouteLoading({ inline = <LoadingState /> }: RouteLoadingProps) {
     };
   }, [underSplash]);
 
-  return underSplash ? null : inline;
+  // Shown after a short delay: a page that arrives within ~150 ms never flashes a loader.
+  return underSplash ? null : <div className="flex flex-1 flex-col motion-safe:animate-in motion-safe:fade-in motion-safe:duration-200 motion-safe:delay-150 motion-safe:fill-mode-backwards">{inline}</div>;
 }

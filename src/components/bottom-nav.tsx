@@ -2,8 +2,8 @@
 
 import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { useOptimisticPath } from "@/lib/use-optimistic-path";
 
 export interface BottomNavItem {
   href: string;
@@ -29,7 +29,7 @@ function isActive(pathname: string, item: BottomNavItem): boolean {
  * The selected tab shows its state three ways, not just by colour: a filled icon, the accent colour and a bolder label.
  */
 export function BottomNav({ label, items, className }: BottomNavProps) {
-  const pathname = usePathname();
+  const { current, markPending } = useOptimisticPath();
   if (items.length === 0) return null;
 
   return (
@@ -46,12 +46,13 @@ export function BottomNav({ label, items, className }: BottomNavProps) {
         style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}
       >
         {items.map((item) => {
-          const active = isActive(pathname, item);
+          const active = isActive(current, item);
           const Icon = item.icon;
           return (
             <li key={item.href}>
               <Link
                 href={item.href}
+                onClick={() => markPending(item.href)}
                 aria-current={active ? "page" : undefined}
                 className={cn(
                   "flex min-h-nav flex-col items-center justify-center gap-1 rounded-full text-xs",

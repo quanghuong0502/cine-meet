@@ -2,9 +2,9 @@
 
 import { useTranslations } from "next-intl";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { ENABLED_ADMIN_NAV_ITEMS } from "@/lib/admin-nav";
 import { cn } from "@/lib/utils";
+import { useOptimisticPath } from "@/lib/use-optimistic-path";
 
 function isActive(pathname: string, href: string, exact?: boolean): boolean {
   return exact ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
@@ -13,17 +13,18 @@ function isActive(pathname: string, href: string, exact?: boolean): boolean {
 /** Sidebar menu for wide screens. Phones use `AdminBottomNav`. */
 export function AdminNav() {
   const t = useTranslations("admin");
-  const pathname = usePathname();
+  const { current, markPending } = useOptimisticPath();
 
   return (
     <nav aria-label={t("menuLabel")}>
       <ul className="flex flex-col gap-1">
         {ENABLED_ADMIN_NAV_ITEMS.map(({ href, key, icon: Icon, exact }) => {
-          const active = isActive(pathname, href, exact);
+          const active = isActive(current, href, exact);
           return (
             <li key={href}>
               <Link
                 href={href}
+                onClick={() => markPending(href)}
                 aria-current={active ? "page" : undefined}
                 className={cn(
                   "flex min-h-target items-center gap-3 rounded-lg px-3 text-sm font-medium",

@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
-import Link from "next/link";
-import { ActiveTabStrip } from "@/components/admin/active-tab-strip";
+import { Suspense } from "react";
+import { MasterDataTabs } from "@/components/admin/master-data-tabs";
+import { LoadingState } from "@/components/loading-state";
 import { PageHeader } from "@/components/page-header";
-import { MASTER_DATA_SECTIONS } from "@/lib/master-data-sections";
-import { cn } from "@/lib/utils";
+import { MASTER_DATA_SECTIONS, type MasterDataSectionKey } from "@/lib/master-data-sections";
 import { SECTIONS } from "./_sections";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -26,38 +26,20 @@ export default async function MasterDataPage({
   const active = MASTER_DATA_SECTIONS.find((section) => section.key === tab) ?? MASTER_DATA_SECTIONS[0];
   if (!active) return null;
   const { List } = SECTIONS[active.key];
+  const labels = Object.fromEntries(
+    MASTER_DATA_SECTIONS.map(({ key }) => [key, t(`sections.${key}.title`)]),
+  ) as Record<MasterDataSectionKey, string>;
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-4 p-4">
       <PageHeader title={t("title")} description={t("description")} />
 
-      {/* Tabs scroll sideways inside their own strip when there are more than fit. */}
-      <nav aria-label={t("tabsLabel")} className="-mx-4">
-        <ActiveTabStrip className="relative flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {MASTER_DATA_SECTIONS.map(({ key, icon: Icon }) => {
-            const selected = key === active.key;
-            return (
-              <li key={key} className="shrink-0">
-                <Link
-                  href={`/admin/master-data?tab=${key}`}
-                  aria-current={selected ? "page" : undefined}
-                  className={cn(
-                    "flex h-target items-center gap-2 rounded-full border px-4 text-sm font-medium",
-                    selected
-                      ? "border-transparent bg-primary text-primary-foreground"
-                      : "bg-card text-muted-foreground",
-                  )}
-                >
-                  <Icon className="size-4" aria-hidden />
-                  {t(`sections.${key}.title`)}
-                </Link>
-              </li>
-            );
-          })}
-        </ActiveTabStrip>
-      </nav>
+      <MasterDataTabs label={t("tabsLabel")} labels={labels} activeKey={active.key} />
 
-      <List key={active.key} q={q} />
+      {/* The list streams in by itself: the title and tabs above stay on screen while it loads. */}
+      <Suspense key={active.key} fallback={<LoadingState compact />}>
+        <List q={q} />
+      </Suspense>
     </div>
   );
 }
