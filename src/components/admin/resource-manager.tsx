@@ -137,6 +137,8 @@ function FieldControl({ field, value, invalid, last }: { field: ResourceField; v
           autoCorrect={field.kind === "url" ? "off" : undefined}
           spellCheck={field.kind === "url" ? false : undefined}
           enterKeyHint={last ? "done" : "next"}
+          // Off: otherwise iOS guesses a contact field and offers "AutoFill Contact" above the keyboard.
+          autoComplete="off"
           defaultValue={value}
           className={CONTROL_CLASS}
         />
@@ -222,7 +224,8 @@ function ResourceForm({ item, fields, saveAction, onDone, onCancel }: ResourceFo
             t("save")
           )}
         </Button>
-        <Button type="button" variant="ghost" size="cta-sm" onClick={onCancel}>
+        {/* Hidden while typing (globals.css): with the keyboard up there is room for Save only, and the keyboard's own Done closes it. */}
+        <Button type="button" variant="ghost" size="cta-sm" onClick={onCancel} data-hide-on-keyboard>
           {t("cancel")}
         </Button>
       </div>
@@ -362,9 +365,10 @@ export function ResourceManager({ items, fields, query, labels, saveAction, remo
         </Button>
       </div>
 
-      {/* repositionInputs off: the sheet stays where it is and the keyboard simply covers its lower part, instead of the sheet
-          being resized and lifted to sit above the keyboard. The form body scrolls, so a field can be brought into view. */}
-      <Drawer open={dialog !== null} onOpenChange={(open) => (open ? undefined : closeDialog())} repositionInputs={false}>
+      {/* The sheet (vaul's default repositionInputs) shrinks to the part of the screen the keyboard leaves free: title on top,
+          Save at the bottom, and only the form body in between scrolls. With it off, Safari instead pans the whole page and the
+          top of the sheet (title, first fields) ends up above the screen, out of reach. */}
+      <Drawer open={dialog !== null} onOpenChange={(open) => (open ? undefined : closeDialog())}>
         <DrawerContent className="max-h-[92dvh]">
           <DrawerHeader className="text-left">
             <DrawerTitle>{dialog?.mode === "edit" ? labels.editTitle : labels.createTitle}</DrawerTitle>

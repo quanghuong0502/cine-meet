@@ -248,6 +248,10 @@
     -webkit-user-select: none;
     user-select: none;
   }
+  /* Things that give way while the keyboard is up (components/keyboard-watcher.tsx), e.g. the Cancel button of a form sheet. */
+  html[data-keyboard="open"] [data-hide-on-keyboard] {
+    display: none;
+  }
   html {
     @apply font-sans;
     /* No rubber-band at the top and bottom of the page: the app shell stays put like a native app. */
