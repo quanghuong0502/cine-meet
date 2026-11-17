@@ -25,12 +25,15 @@ import type { ResourceItem, ResourceLabels } from "./resource-types";
 
 interface ResourceManagerProps {
   items: ResourceItem[];
-  /** Key of the master-data type; its entry screens live at /admin/master-data/<section>/new and /<id>. */
-  section: string;
+  /** Where the entry screens live: <basePath>/new and <basePath>/<id> (for example /admin/master-data/brands). */
+  basePath: string;
   /** Current search term from the URL. */
   query: string;
   labels: ResourceLabels;
-  removeAction: (id: string) => Promise<RemoveResult>;
+  /** Without it the cards have no delete button (people are locked, not deleted). */
+  removeAction?: (id: string) => Promise<RemoveResult>;
+  /** The search box's placeholder and label, when it does not search by name. */
+  searchLabels?: { placeholder: string; label: string };
 }
 
 const CONTROL_CLASS = "h-control rounded-xl bg-card px-4 text-base";
@@ -39,7 +42,7 @@ const CONTROL_CLASS = "h-control rounded-xl bg-card px-4 text-base";
  * Admin list for one master-data type: search, cards, delete with confirmation. Opening a card or "Add" goes to a
  * separate entry screen (a normal page) and remembers this list (tab and search) so Save can return here.
  */
-export function ResourceManager({ items, section, query, labels, removeAction }: ResourceManagerProps) {
+export function ResourceManager({ items, basePath, query, labels, removeAction, searchLabels }: ResourceManagerProps) {
   const t = useTranslations("admin.common");
   const router = useRouter();
   const pathname = usePathname();
@@ -63,13 +66,13 @@ export function ResourceManager({ items, section, query, labels, removeAction }:
 
   // This exact list, tab and search included: the entry screen sends the person back to it.
   const here = searchParams.size ? `${pathname}?${searchParams.toString()}` : pathname;
-  const base = `/admin/master-data/${section}`;
+  const base = basePath;
   const withBack = (href: string) => `${href}?back=${encodeURIComponent(here)}`;
   const hasSearch = query !== "";
 
   function confirmDelete() {
     const target = pendingDelete;
-    if (!target) return;
+    if (!target || !removeAction) return;
     startDeleting(async () => {
       const result = await removeAction(target.id);
       setPendingDelete(null);
@@ -91,8 +94,8 @@ export function ResourceManager({ items, section, query, labels, removeAction }:
           enterKeyHint="search"
           value={term}
           onChange={(event) => setTerm(event.target.value)}
-          placeholder={t("searchPlaceholder")}
-          aria-label={t("searchLabel")}
+          placeholder={searchLabels?.placeholder ?? t("searchPlaceholder")}
+          aria-label={searchLabels?.label ?? t("searchLabel")}
           className={`${CONTROL_CLASS} pl-11`}
         />
       </div>
@@ -112,9 +115,11 @@ export function ResourceManager({ items, section, query, labels, removeAction }:
                 <Link href={withBack(`${base}/${item.id}`)} className="flex min-h-row min-w-0 flex-1 items-center gap-3 rounded-xl p-3 text-left">
                   <span
                     aria-hidden
-                    className="size-10 shrink-0 rounded-full border bg-muted"
+                    className="flex size-10 shrink-0 items-center justify-center rounded-full border bg-muted text-sm font-semibold"
                     style={item.color ? { backgroundColor: item.color } : undefined}
-                  />
+                  >
+                    {item.avatarText}
+                  </span>
                   <span className="flex min-w-0 flex-1 flex-col gap-1">
                     <span className="truncate text-base font-semibold">{item.title}</span>
                     {item.subtitle ? <span className="line-clamp-2 break-words text-sm text-muted-foreground">{item.subtitle}</span> : null}
@@ -130,6 +135,7 @@ export function ResourceManager({ items, section, query, labels, removeAction }:
                   </span>
                   <ChevronRight className="size-5 shrink-0 text-muted-foreground" aria-hidden />
                 </Link>
+                {removeAction ? (
                 <Button
                   type="button"
                   variant="ghost"
@@ -140,6 +146,7 @@ export function ResourceManager({ items, section, query, labels, removeAction }:
                 >
                   <Trash2 aria-hidden />
                 </Button>
+                ) : null}
               </li>
             ))}
           </ul>

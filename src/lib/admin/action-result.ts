@@ -4,7 +4,15 @@ import { z } from "zod";
  * Result shapes shared by admin server actions and their forms. Errors are CODES, never sentences:
  * the interface translates them (`admin.common.errors.*`, `admin.validation.*`).
  */
-export type SaveError = "validation" | "duplicate" | "in_use" | "not_found" | "unknown";
+export type SaveError =
+  | "validation"
+  | "duplicate"
+  | "in_use"
+  | "not_found"
+  | "last_admin"
+  | "self"
+  | "no_password"
+  | "unknown";
 
 export type SaveState =
   | { status: "idle" }
@@ -33,6 +41,7 @@ export const VALIDATION_CODES = [
   "invalid_number",
   "out_of_range",
   "invalid_date",
+  "too_short",
   "invalid",
 ] as const;
 export type ValidationCode = (typeof VALIDATION_CODES)[number];

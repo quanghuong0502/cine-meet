@@ -114,7 +114,7 @@ export function createSection<Doc extends { _id: { toString(): string } }, Extra
       const docs = await config.service.list({ q });
       return (
         <ResourceManager
-          section={slug}
+          basePath={`/admin/master-data/${slug}`}
           query={q}
           labels={{ addButton: t("addButton"), emptyTitle: t("emptyTitle"), emptyDescription: t("emptyDescription") }}
           items={docs.map((doc) => ({ id: doc._id.toString(), ...config.item(doc, context) }))}

@@ -1,6 +1,6 @@
 /** Shapes shared by the master-data list, the entry screen and the server pages that feed them. */
 
-export type ResourceFieldKind = "text" | "textarea" | "url" | "color" | "number" | "select" | "switch" | "date" | "time";
+export type ResourceFieldKind = "text" | "textarea" | "url" | "color" | "number" | "select" | "switch" | "date" | "time" | "email";
 
 /** One form field. All text is already translated by the server page, so the form holds no entity wording. */
 export interface ResourceField {
@@ -17,6 +17,8 @@ export interface ResourceField {
   min?: number;
   max?: number;
   maxLength?: number;
+  /** An identifier or code: no auto-capitalisation, auto-correct or spell-check. */
+  plain?: boolean;
 }
 
 /** One card in a master-data list. */
@@ -25,6 +27,8 @@ export interface ResourceItem {
   title: string;
   subtitle?: string;
   meta?: string[];
+  /** Letters shown inside the round marker (initials of a person). */
+  avatarText?: string;
   /** Colour dot, as #rrggbb. */
   color?: string;
 }

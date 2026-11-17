@@ -38,6 +38,7 @@ const CONTROL_CLASS = "h-control rounded-xl bg-card px-4 text-base";
 
 /** `last`: the final typing field of the form, whose return key says "Done" instead of "Next". */
 function FieldControl({ field, value, invalid, last }: { field: ResourceField; value: string; invalid: boolean; last: boolean }) {
+  const isPlain = field.plain || field.kind === "url" || field.kind === "email";
   const common = { id: field.name, name: field.name, "aria-invalid": invalid || undefined } as const;
 
   switch (field.kind) {
@@ -73,15 +74,15 @@ function FieldControl({ field, value, invalid, last }: { field: ResourceField; v
       return (
         <Input
           {...common}
-          type={field.kind === "url" ? "url" : field.kind === "number" ? "number" : field.kind === "date" ? "date" : field.kind === "time" ? "time" : "text"}
-          inputMode={field.kind === "number" ? (field.step === "1" ? "numeric" : "decimal") : undefined}
+          type={field.kind === "url" ? "url" : field.kind === "email" ? "email" : field.kind === "number" ? "number" : field.kind === "date" ? "date" : field.kind === "time" ? "time" : "text"}
+          inputMode={field.kind === "email" ? "email" : field.kind === "number" ? (field.step === "1" ? "numeric" : "decimal") : undefined}
           step={field.step}
           min={field.min}
           max={field.max}
           maxLength={field.maxLength}
-          autoCapitalize={field.kind === "url" ? "none" : undefined}
-          autoCorrect={field.kind === "url" ? "off" : undefined}
-          spellCheck={field.kind === "url" ? false : undefined}
+          autoCapitalize={isPlain ? "none" : undefined}
+          autoCorrect={isPlain ? "off" : undefined}
+          spellCheck={isPlain ? false : undefined}
           enterKeyHint={last ? "done" : "next"}
           // Off: otherwise iOS guesses a contact field and offers "AutoFill Contact" above the keyboard.
           autoComplete="off"

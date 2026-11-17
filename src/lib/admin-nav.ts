@@ -27,7 +27,7 @@ export interface AdminNavItem {
  */
 export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
   { href: "/admin", key: "overview", icon: LayoutDashboard, enabled: false, exact: true }, // later: dashboard
-  { href: "/admin/users", key: "users", icon: Users, enabled: false }, // Sprint 1, step 4
+  { href: "/admin/users", key: "users", icon: Users, enabled: true },
   { href: "/admin/master-data", key: "masterData", icon: Database, enabled: true },
   { href: "/admin/auditoriums", key: "auditoriums", icon: Projector, enabled: false }, // Sprint 2
   { href: "/admin/movies", key: "movies", icon: Clapperboard, enabled: false }, // Sprint 3
@@ -45,5 +45,5 @@ export const MAX_BOTTOM_NAV_ITEMS = 5;
  * the Save button takes its place and the person is working on one thing. Their parent list is the page just above them.
  */
 export function isFocusedAdminRoute(pathname: string): boolean {
-  return /^\/admin\/master-data\/.+/.test(pathname);
+  return /^\/admin\/(master-data|users)\/.+/.test(pathname);
 }

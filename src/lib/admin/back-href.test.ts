@@ -9,10 +9,16 @@ describe("resolveBackHref", () => {
     expect(resolveBackHref("/admin/master-data", FALLBACK)).toBe("/admin/master-data");
   });
 
+  it("keeps the user list too", () => {
+    expect(resolveBackHref("/admin/users?q=lan", "/admin/users")).toBe("/admin/users?q=lan");
+    expect(resolveBackHref("/admin/users", "/admin/users")).toBe("/admin/users");
+  });
+
   it("falls back when nothing or something else is given", () => {
     expect(resolveBackHref(undefined, FALLBACK)).toBe(FALLBACK);
     expect(resolveBackHref("", FALLBACK)).toBe(FALLBACK);
-    expect(resolveBackHref("/admin/users", FALLBACK)).toBe(FALLBACK);
+    expect(resolveBackHref("/admin/settings", FALLBACK)).toBe(FALLBACK);
+    expect(resolveBackHref("/admin/users-evil", FALLBACK)).toBe(FALLBACK);
     expect(resolveBackHref("https://evil.example/admin/master-data", FALLBACK)).toBe(FALLBACK);
     expect(resolveBackHref("//evil.example", FALLBACK)).toBe(FALLBACK);
     expect(resolveBackHref("/admin/master-data\\evil", FALLBACK)).toBe(FALLBACK);

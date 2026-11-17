@@ -100,7 +100,10 @@
         "duplicate": "Đã có mục trùng.",
         "in_use": "Đang được dùng ở nơi khác nên chưa xóa được.",
         "not_found": "Mục này không còn tồn tại. Hãy tải lại trang.",
-        "unknown": "Không lưu được. Hãy thử lại."
+        "unknown": "Không lưu được. Hãy thử lại.",
+        "last_admin": "Phải còn ít nhất một quản trị viên đang hoạt động.",
+        "self": "Bạn không thể tự thực hiện thao tác này với tài khoản của mình.",
+        "no_password": "Tài khoản này không dùng mật khẩu (chỉ đăng nhập bằng Google)."
       }
     },
     "validation": {
@@ -111,7 +114,8 @@
       "invalid_number": "Số không hợp lệ",
       "out_of_range": "Giá trị ngoài phạm vi cho phép",
       "invalid_date": "Ngày không hợp lệ",
-      "invalid": "Giá trị không hợp lệ"
+      "invalid": "Giá trị không hợp lệ",
+      "too_short": "Quá ngắn, cần ít nhất 8 ký tự"
     },
     "masterData": {
       "title": "Danh mục",
@@ -506,6 +510,75 @@
           "hint": "vd. Thứ tư vui vẻ"
         }
       }
+    },
+    "users": {
+      "title": "Người dùng",
+      "description": "Tạo tài khoản, khóa và phân quyền.",
+      "createTitle": "Thêm người dùng",
+      "editTitle": "Sửa người dùng",
+      "resetTitle": "Đặt lại mật khẩu",
+      "resetDescription": "Đặt mật khẩu tạm cho {name}. Họ phải đổi mật khẩu ở lần đăng nhập sau.",
+      "addButton": "Thêm người dùng",
+      "emptyTitle": "Chưa có người dùng",
+      "emptyDescription": "Tạo tài khoản đầu tiên để mời bạn bè dùng app.",
+      "searchPlaceholder": "Tìm tên, email, số điện thoại",
+      "searchLabel": "Tìm người dùng",
+      "roles": {
+        "admin": "Quản trị viên",
+        "user": "Người dùng"
+      },
+      "statuses": {
+        "active": "Đang hoạt động",
+        "locked": "Đã khóa"
+      },
+      "providers": {
+        "google": "Google",
+        "credentials": "Mật khẩu"
+      },
+      "badges": {
+        "locked": "Đã khóa",
+        "mustChange": "Chờ đổi mật khẩu"
+      },
+      "info": {
+        "username": "Tên đăng nhập",
+        "email": "Email",
+        "phone": "Số điện thoại",
+        "signIn": "Đăng nhập bằng",
+        "status": "Trạng thái",
+        "created": "Ngày tạo"
+      },
+      "fields": {
+        "name": {
+          "label": "Tên"
+        },
+        "username": {
+          "label": "Tên đăng nhập",
+          "hint": "Chữ thường, số, . _ - (3 đến 30 ký tự). Cần ít nhất tên đăng nhập hoặc email"
+        },
+        "email": {
+          "label": "Email",
+          "hint": "Dùng để đăng nhập bằng Google"
+        },
+        "role": {
+          "label": "Vai trò",
+          "hint": "Quản trị viên chỉ thấy khu quản trị",
+          "placeholder": "Chọn vai trò"
+        },
+        "temporaryPassword": {
+          "label": "Mật khẩu tạm",
+          "hint": "Đã tạo sẵn, hãy gửi cho họ. Họ phải đổi ở lần đăng nhập đầu",
+          "resetHint": "Đã tạo sẵn, hãy gửi cho họ. Các lần đăng nhập sai trước đó được xóa"
+        }
+      },
+      "lock": "Khóa tài khoản",
+      "unlock": "Mở khóa tài khoản",
+      "lockTitle": "Khóa {name}?",
+      "lockDescription": "Họ bị đăng xuất ở thao tác kế tiếp và không đăng nhập lại được cho tới khi bạn mở khóa.",
+      "unlockTitle": "Mở khóa {name}?",
+      "unlockDescription": "Họ đăng nhập lại được bình thường.",
+      "lockedToast": "Đã khóa tài khoản",
+      "unlocked": "Đã mở khóa tài khoản",
+      "resetPassword": "Đặt lại mật khẩu"
     }
   },
   "placeholders": {
@@ -513,10 +586,6 @@
       "overview": {
         "title": "Tổng quan quản trị",
         "description": "Sắp có: số liệu tổng quan hệ thống."
-      },
-      "users": {
-        "title": "Người dùng",
-        "description": "Sắp có: danh sách, khóa/mở khóa và đổi vai trò."
       },
       "auditoriums": {
         "title": "Phòng chiếu",

@@ -100,7 +100,10 @@
         "duplicate": "This already exists.",
         "in_use": "It's used elsewhere, so it can't be deleted yet.",
         "not_found": "This item no longer exists. Reload the page.",
-        "unknown": "Couldn't save. Try again."
+        "unknown": "Couldn't save. Try again.",
+        "last_admin": "At least one active admin must remain.",
+        "self": "You can't do this to your own account.",
+        "no_password": "This account has no password (Google sign-in only)."
       }
     },
     "validation": {
@@ -111,7 +114,8 @@
       "invalid_number": "Invalid number",
       "out_of_range": "Value is out of the allowed range",
       "invalid_date": "Invalid date",
-      "invalid": "Invalid value"
+      "invalid": "Invalid value",
+      "too_short": "Too short, at least 8 characters"
     },
     "masterData": {
       "title": "Catalog",
@@ -506,6 +510,75 @@
           "hint": "e.g. Happy Wednesday"
         }
       }
+    },
+    "users": {
+      "title": "Users",
+      "description": "Create accounts, lock them and set roles.",
+      "createTitle": "Add user",
+      "editTitle": "Edit user",
+      "resetTitle": "Reset password",
+      "resetDescription": "Set a temporary password for {name}. They must change it at next sign-in.",
+      "addButton": "Add user",
+      "emptyTitle": "No users yet",
+      "emptyDescription": "Create the first account to invite friends.",
+      "searchPlaceholder": "Search name, email, phone",
+      "searchLabel": "Search users",
+      "roles": {
+        "admin": "Admin",
+        "user": "User"
+      },
+      "statuses": {
+        "active": "Active",
+        "locked": "Locked"
+      },
+      "providers": {
+        "google": "Google",
+        "credentials": "Password"
+      },
+      "badges": {
+        "locked": "Locked",
+        "mustChange": "Must change password"
+      },
+      "info": {
+        "username": "Username",
+        "email": "Email",
+        "phone": "Phone",
+        "signIn": "Signs in with",
+        "status": "Status",
+        "created": "Created"
+      },
+      "fields": {
+        "name": {
+          "label": "Name"
+        },
+        "username": {
+          "label": "Username",
+          "hint": "Lowercase letters, digits, . _ - (3 to 30). Needs a username or an email"
+        },
+        "email": {
+          "label": "Email",
+          "hint": "Lets them sign in with Google"
+        },
+        "role": {
+          "label": "Role",
+          "hint": "Admins only see the admin area",
+          "placeholder": "Select a role"
+        },
+        "temporaryPassword": {
+          "label": "Temporary password",
+          "hint": "Pre-filled, send it to them. They must change it at first sign-in",
+          "resetHint": "Pre-filled, send it to them. Earlier failed sign-ins are cleared"
+        }
+      },
+      "lock": "Lock account",
+      "unlock": "Unlock account",
+      "lockTitle": "Lock {name}?",
+      "lockDescription": "They are signed out on their next action and can't sign in until you unlock.",
+      "unlockTitle": "Unlock {name}?",
+      "unlockDescription": "They can sign in again.",
+      "lockedToast": "Account locked",
+      "unlocked": "Account unlocked",
+      "resetPassword": "Reset password"
     }
   },
   "placeholders": {
@@ -513,10 +586,6 @@
       "overview": {
         "title": "Admin overview",
         "description": "Coming soon: system overview numbers."
-      },
-      "users": {
-        "title": "Users",
-        "description": "Coming soon: user list, lock/unlock and role changes."
       },
       "auditoriums": {
         "title": "Auditoriums",

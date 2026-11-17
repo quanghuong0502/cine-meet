@@ -12,7 +12,7 @@ export const brandsSection: SectionDefinition = {
     const brands = await brandService.list({ q });
     return (
       <ResourceManager
-        section="brands"
+        basePath="/admin/master-data/brands"
         query={q}
         labels={{ addButton: t("addButton"), emptyTitle: t("emptyTitle"), emptyDescription: t("emptyDescription") }}
         items={brands.map((brand) => ({
