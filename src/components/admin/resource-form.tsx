@@ -1,20 +1,12 @@
 "use client";
 
-import { LoaderCircle, Trash2 } from "lucide-react";
+import { ImageIcon, LoaderCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useActionState, useEffect, useState, useTransition } from "react";
+import { ImageUpload } from "@/components/image-upload";
+import { useActionState, useEffect } from "react";
 import { toast } from "sonner";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,7 +16,6 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   IDLE_STATE,
   VALIDATION_CODES,
-  type RemoveResult,
   type SaveState,
   type ValidationCode,
 } from "@/lib/admin/action-result";
@@ -51,6 +42,19 @@ function FieldControl({ field, value, invalid, last }: { field: ResourceField; v
           type="color"
           defaultValue={value || "#c61583"}
           className="h-control w-20 cursor-pointer rounded-xl border bg-card p-1"
+        />
+      );
+    case "image":
+      return (
+        <ImageUpload
+          name={field.name}
+          initialUrl={value || undefined}
+          getTicket={field.uploadTicket ?? (async () => ({ ok: false, error: "not_configured" }))}
+          preview={(url) => (
+            <span aria-hidden className="flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-xl border bg-card">
+              {url ? <Image src={url} alt="" width={80} height={80} unoptimized className="size-full object-contain p-1" /> : <ImageIcon className="size-6 text-muted-foreground" />}
+            </span>
+          )}
         />
       );
     case "switch":
@@ -100,12 +104,9 @@ interface ResourceFormProps {
   fields: ResourceField[];
   /** Starting values by field name (strings; a checked switch is "on"). Empty when creating. */
   values: Record<string, string>;
-  /** The list this screen came from: where Save and Delete return to. */
+  /** The list this screen came from: where Save returns to. */
   backHref: string;
-  /** Name shown in the delete confirmation. */
-  itemName?: string;
   saveAction: (previous: SaveState, formData: FormData) => Promise<SaveState>;
-  removeAction?: (id: string) => Promise<RemoveResult>;
   /** Extra content at the top of the form (for example the avatar picker); it is inside the form, so hidden inputs it holds are saved. */
   lead?: React.ReactNode;
 }
@@ -114,13 +115,11 @@ interface ResourceFormProps {
  * The entry screen of a master-data record: a normal page (own URL, back button), not a sheet. Save is the one fixed
  * action at the bottom; once saved, the person goes back to the list they came from, which is refreshed to show the change.
  */
-export function ResourceForm({ itemId, fields, values, backHref, itemName, saveAction, removeAction, lead }: ResourceFormProps) {
+export function ResourceForm({ itemId, fields, values, backHref, saveAction, lead }: ResourceFormProps) {
   const t = useTranslations("admin.common");
   const tv = useTranslations("admin.validation");
   const router = useRouter();
   const [state, formAction, isPending] = useActionState(saveAction, IDLE_STATE);
-  const [confirmingDelete, setConfirmingDelete] = useState(false);
-  const [isDeleting, startDeleting] = useTransition();
 
   useEffect(() => {
     if (state.status !== "success") return;
@@ -136,21 +135,6 @@ export function ResourceForm({ itemId, fields, values, backHref, itemName, saveA
     const target = document.querySelector<HTMLElement>('form [aria-invalid="true"]');
     target?.scrollIntoView({ block: "center", behavior: "smooth" });
   }, [state]);
-
-  function confirmDelete() {
-    if (!itemId || !removeAction) return;
-    startDeleting(async () => {
-      const result = await removeAction(itemId);
-      setConfirmingDelete(false);
-      if (result.ok) {
-        toast.success(t("deleted"));
-        router.replace(backHref);
-        router.refresh();
-      } else {
-        toast.error(t(`errors.${result.error}`));
-      }
-    });
-  }
 
   const fieldErrors = state.status === "error" ? (state.fieldErrors ?? {}) : {};
   // After a failed save, start from what the user typed; otherwise from the saved record.
@@ -199,19 +183,12 @@ export function ResourceForm({ itemId, fields, values, backHref, itemName, saveA
         </p>
       ) : null}
 
-      {/* Deleting is its own quiet action, away from Save, and always asks first. */}
-      {itemId && removeAction ? (
-        <Button type="button" variant="destructive" size="cta-sm" className="mt-4" onClick={() => setConfirmingDelete(true)}>
-          <Trash2 aria-hidden />
-          {t("delete")}
-        </Button>
-      ) : null}
-
       {/* Room for the fixed Save button, so the last field can scroll clear of it. */}
       <div aria-hidden className="h-[calc(var(--spacing-control)+2.5rem)] shrink-0" />
 
-      {/* Fixed to the bottom, in thumb reach. It steps aside while the keyboard is open (data-bottom-fixed) and the keyboard's Done closes it. */}
-      <div data-bottom-fixed className="pointer-events-none fixed inset-x-0 bottom-0 z-30 bg-gradient-to-t from-background via-background to-transparent px-4 pt-6 pb-[max(1rem,env(safe-area-inset-bottom))] md:left-64">
+      {/* Fixed to the bottom, in thumb reach. It stays while the keyboard is open: on the installed app the keyboard shrinks the page, so
+          the bar rides just above it and Save is always reachable while typing (unlike the menu and the list's Add button, which hide). */}
+      <div data-save-bar className="pointer-events-none fixed inset-x-0 bottom-0 z-30 bg-gradient-to-t from-background via-background to-transparent px-4 pt-6 pb-[max(1rem,env(safe-area-inset-bottom))] md:left-64">
         <Button type="submit" size="cta" disabled={isPending} className="pointer-events-auto mx-auto flex max-w-sm">
           {isPending ? (
             <>
@@ -224,28 +201,6 @@ export function ResourceForm({ itemId, fields, values, backHref, itemName, saveA
         </Button>
       </div>
 
-      <AlertDialog open={confirmingDelete} onOpenChange={setConfirmingDelete}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t("deleteTitle", { name: itemName ?? "" })}</AlertDialogTitle>
-            <AlertDialogDescription>{t("deleteDescription")}</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>{t("cancel")}</AlertDialogCancel>
-            <AlertDialogAction
-              disabled={isDeleting}
-              className="border border-destructive/40 bg-destructive/10 text-destructive hover:bg-destructive/20"
-              onClick={(event) => {
-                event.preventDefault();
-                confirmDelete();
-              }}
-            >
-              {isDeleting ? <LoaderCircle className="motion-safe:animate-spin" aria-hidden /> : <Trash2 aria-hidden />}
-              {isDeleting ? t("saving") : t("delete")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </form>
   );
 }

@@ -1,4 +1,4 @@
-import { createHash } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 
 /** Avatars are cropped to a 256px square around the face when they are uploaded, so only a small image is ever stored. */
 const AVATAR_TRANSFORMATION = "c_fill,g_face,w_256,h_256";
@@ -26,23 +26,23 @@ export function signParams(params: Record<string, string | number>, apiSecret: s
   return createHash("sha1").update(toSign + apiSecret).digest("hex");
 }
 
-export interface AvatarUploadTicket {
+export interface UploadTicket {
   uploadUrl: string;
   /** Form fields to send with the file, straight from the browser to Cloudinary (the secret never leaves the server). */
   fields: Record<string, string>;
 }
 
-/**
- * A signed ticket to upload one avatar for `userId`. The image always lands at avatars/<userId> and replaces the old one,
- * so there is never more than one stored per person.
- */
-export function createAvatarUploadTicket(userId: string, config: CloudinaryConfig, nowMs: number = Date.now()): AvatarUploadTicket {
-  const signed = {
-    invalidate: "true",
-    overwrite: "true",
-    public_id: `avatars/${userId}`,
+/** A signed one-time ticket for one upload: where the image lands (`publicId`), how it is resized on arrival, and whether it replaces an old one. */
+export function createUploadTicket(
+  options: { publicId: string; transformation: string; overwrite: boolean },
+  config: CloudinaryConfig,
+  nowMs: number = Date.now(),
+): UploadTicket {
+  const signed: Record<string, string | number> = {
+    public_id: options.publicId,
     timestamp: Math.floor(nowMs / 1000),
-    transformation: AVATAR_TRANSFORMATION,
+    transformation: options.transformation,
+    ...(options.overwrite ? { invalidate: "true", overwrite: "true" } : {}),
   };
   return {
     uploadUrl: `https://api.cloudinary.com/v1_1/${config.cloudName}/image/upload`,
@@ -52,6 +52,20 @@ export function createAvatarUploadTicket(userId: string, config: CloudinaryConfi
       signature: signParams(signed, config.apiSecret),
     },
   };
+}
+
+/**
+ * A signed ticket to upload one avatar for `userId`. The image always lands at avatars/<userId> and replaces the old one,
+ * so there is never more than one stored per person.
+ */
+export function createAvatarUploadTicket(userId: string, config: CloudinaryConfig, nowMs: number = Date.now()): UploadTicket {
+  return createUploadTicket({ publicId: `avatars/${userId}`, transformation: AVATAR_TRANSFORMATION, overwrite: true }, config, nowMs);
+}
+
+/** A ticket for a brand logo: kept whole (no crop) and at most 512px, under its own new name each time. */
+export function createBrandLogoUploadTicket(config: CloudinaryConfig, nowMs: number = Date.now()): UploadTicket {
+  const unique = `${nowMs.toString(36)}${randomBytes(4).toString("hex")}`;
+  return createUploadTicket({ publicId: `brands/${unique}`, transformation: "c_limit,w_512,h_512", overwrite: false }, config, nowMs);
 }
 
 /** Only this person's own avatar on our Cloudinary account is accepted as a profile picture (the form cannot point it elsewhere). */

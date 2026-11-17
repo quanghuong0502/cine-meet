@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
+import Image from "next/image";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/empty-state";
 import {
@@ -34,6 +35,25 @@ interface ResourceManagerProps {
   removeAction?: (id: string) => Promise<RemoveResult>;
   /** The search box's placeholder and label, when it does not search by name. */
   searchLabels?: { placeholder: string; label: string };
+}
+
+/** The round marker of a card: the logo when there is one (and it loads), else the colour, with initials if given. */
+function Marker({ item }: { item: ResourceItem }) {
+  const [failed, setFailed] = useState(false);
+  const showImage = item.imageUrl && !failed;
+  return (
+    <span
+      aria-hidden
+      className={`flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full border text-sm font-semibold ${showImage ? "bg-white" : "bg-muted"}`}
+      style={!showImage && item.color ? { backgroundColor: item.color } : undefined}
+    >
+      {showImage ? (
+        <Image src={item.imageUrl as string} alt="" width={40} height={40} unoptimized onError={() => setFailed(true)} className="size-full object-contain p-1" />
+      ) : (
+        item.avatarText
+      )}
+    </span>
+  );
 }
 
 const CONTROL_CLASS = "h-control rounded-xl bg-card px-4 text-base";
@@ -113,13 +133,7 @@ export function ResourceManager({ items, basePath, query, labels, removeAction, 
             {items.map((item) => (
               <li key={item.id} className="flex min-w-0 items-center gap-2 rounded-xl border bg-card pr-2">
                 <Link href={withBack(`${base}/${item.id}`)} className="flex min-h-row min-w-0 flex-1 items-center gap-3 rounded-xl p-3 text-left">
-                  <span
-                    aria-hidden
-                    className="flex size-10 shrink-0 items-center justify-center rounded-full border bg-muted text-sm font-semibold"
-                    style={item.color ? { backgroundColor: item.color } : undefined}
-                  >
-                    {item.avatarText}
-                  </span>
+                  <Marker item={item} />
                   <span className="flex min-w-0 flex-1 flex-col gap-1">
                     <span className="truncate text-base font-semibold">{item.title}</span>
                     {item.subtitle ? <span className="line-clamp-2 break-words text-sm text-muted-foreground">{item.subtitle}</span> : null}

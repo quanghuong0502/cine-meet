@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
-import { cloudinaryConfig, createAvatarUploadTicket, isOwnAvatarUrl, signParams } from "./cloudinary";
+import { cloudinaryConfig, createAvatarUploadTicket, createBrandLogoUploadTicket, isOwnAvatarUrl, signParams } from "./cloudinary";
 
 const CONFIG = { cloudName: "demo", apiKey: "key123", apiSecret: "s3cret" };
 const USER = "6afbb4609e156d9ab456f6d3";
@@ -22,6 +22,20 @@ describe("createAvatarUploadTicket", () => {
     expect(JSON.stringify(ticket)).not.toContain("s3cret");
 
     const { api_key: _key, signature, ...signed } = ticket.fields;
+    void _key;
+    expect(signature).toBe(signParams(signed, "s3cret"));
+  });
+});
+
+describe("createBrandLogoUploadTicket", () => {
+  it("lands under brands/ with a new name each time, keeps the whole image and does not overwrite", () => {
+    const a = createBrandLogoUploadTicket(CONFIG, 1_700_000_000_000);
+    const b = createBrandLogoUploadTicket(CONFIG, 1_700_000_000_000);
+    expect(a.fields.public_id).toMatch(/^brands\/[0-9a-z]+$/);
+    expect(a.fields.public_id).not.toBe(b.fields.public_id);
+    expect(a.fields.transformation).toBe("c_limit,w_512,h_512");
+    expect(a.fields).not.toHaveProperty("overwrite");
+    const { api_key: _key, signature, ...signed } = a.fields;
     void _key;
     expect(signature).toBe(signParams(signed, "s3cret"));
   });

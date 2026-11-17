@@ -248,6 +248,10 @@
     -webkit-user-select: none;
     user-select: none;
   }
+  /* The form's Save bar stays above the keyboard; the home-indicator gap is not needed while the keyboard is up. */
+  html[data-keyboard="open"] [data-save-bar] {
+    padding-bottom: 1rem;
+  }
   /* Things that give way while the keyboard is up (components/keyboard-watcher.tsx), e.g. the Cancel button of a form sheet. */
   html[data-keyboard="open"] [data-hide-on-keyboard] {
     display: none;

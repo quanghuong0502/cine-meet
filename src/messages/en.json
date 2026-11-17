@@ -187,7 +187,7 @@
         },
         "logoUrl": {
           "label": "Logo",
-          "hint": "Link to the logo image"
+          "hint": "A photo from your device, up to 8 MB"
         },
         "websiteUrl": {
           "label": "Website"
@@ -692,19 +692,6 @@
         "label": "Preferred seats",
         "hint": "Used for seat suggestions"
       }
-    },
-    "avatar": {
-      "choose": "Choose photo",
-      "change": "Change photo",
-      "remove": "Remove photo",
-      "uploading": "Uploading...",
-      "errors": {
-        "notImage": "Please choose an image file.",
-        "tooBig": "The photo is over 8 MB. Choose a smaller one.",
-        "failed": "Couldn't upload the photo. Try another.",
-        "network": "Connection lost while uploading. Try again.",
-        "not_configured": "Cloudinary isn't set up yet, so photos can't be uploaded."
-      }
     }
   },
   "mascot": {
@@ -727,6 +714,19 @@
       "title": "Security",
       "description": "Your sign-in password.",
       "changePassword": "Change password"
+    }
+  },
+  "imageUpload": {
+    "choose": "Choose photo",
+    "change": "Change photo",
+    "remove": "Remove photo",
+    "uploading": "Uploading...",
+    "errors": {
+      "notImage": "Please choose an image file.",
+      "tooBig": "The photo is over 8 MB. Choose a smaller one.",
+      "failed": "Couldn't upload the photo. Try another.",
+      "network": "Connection lost while uploading. Try again.",
+      "not_configured": "Cloudinary isn't set up yet, so photos can't be uploaded."
     }
   }
 }

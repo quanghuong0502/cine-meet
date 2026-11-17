@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { DeleteRecordButton } from "@/components/admin/delete-record-button";
 import { ResourceForm } from "@/components/admin/resource-form";
 import { PageHeader } from "@/components/page-header";
 import { resolveBackHref } from "@/lib/admin/back-href";
@@ -16,15 +17,17 @@ export async function SectionFormScreen({ section, id, back }: { section: string
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-4 p-4">
-      <PageHeader title={form.title} backHref={backHref} />
+      <PageHeader
+        title={form.title}
+        backHref={backHref}
+        action={id ? <DeleteRecordButton id={id} name={form.itemName ?? form.title} backHref={backHref} removeAction={form.removeAction} /> : undefined}
+      />
       <ResourceForm
         itemId={id}
         fields={form.fields}
         values={form.values}
         backHref={backHref}
-        itemName={form.itemName}
         saveAction={form.saveAction}
-        removeAction={id ? form.removeAction : undefined}
       />
     </div>
   );
