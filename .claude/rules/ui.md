@@ -15,7 +15,7 @@ paths:
 - Dark mode là mặc định; màu và bo góc đi qua CSS variables của shadcn, không hard-code màu trong component.
 - Form dài chia thành nhiều bước. Mọi trạng thái cần có: loading, rỗng, lỗi.
 - Sơ đồ ghế là SVG tự viết trong `src/components/seat-map/`, hỗ trợ pinch-zoom và chạm từng ghế.
-  Heatmap dùng thang màu cố định, không phụ thuộc theme.
+  Heatmap dùng một dải theo màu chủ đạo (`heat-color.ts`): tông tối, `--primary`, tông nhạt của màu thương hiệu, nên tự đổi theo màu admin chọn.
 - Văn bản hiển thị đi qua i18n (`vi`, `en`) và theo quy tắc viết chữ ở `.claude/rules/copy.md`; ngày giờ theo múi giờ Asia/Ho_Chi_Minh.
 
 - Không phụ thuộc hover: mọi tương tác phải dùng được bằng chạm.
@@ -35,7 +35,7 @@ Hướng thị giác tham khảo: app đặt vé/chọn chỗ hiện đại, s�
 - Mỗi màn hình hay component mới phải kiểm tra ở cả hai theme (390px và 1280px) trước khi báo xong.
 - Cặp màu mới phải đạt tương phản WCAG ở cả hai theme.
 - Không viết class màu theo kiểu `dark:` để vá từng chỗ; để token tự đổi theo theme.
-- Poster và heatmap giữ nguyên màu ở cả hai theme (heatmap dùng thang cố định).
+- Poster giữ nguyên màu ở cả hai theme. Heatmap theo màu thương hiệu (cùng một sắc độ ở cả hai theme).
 
 **Thanh điều hướng dưới (điện thoại):** component `BottomNav` dùng cho cả khu người dùng (`UserBottomNav`) và khu quản trị (`AdminBottomNav`). Là **viên thuốc nổi, kính mờ** (`rounded-full`, nền `card` 55% + `backdrop-blur`), cách mép 12px (`--spacing-nav-gap`) và cách thanh home iPhone (`env(safe-area-inset-bottom)`); mỗi mục cao tối thiểu 56px, biểu tượng 24px, nhãn `text-xs`.
 Mục đang chọn thể hiện bằng **ba dấu hiệu, không chỉ đổi màu chữ**: biểu tượng **tô đặc**, màu nhấn `primary-text`, nhãn đậm (`aria-current="page"`); mục còn lại là biểu tượng viền màu `muted-foreground`.
@@ -66,7 +66,7 @@ Không viết tay chữ tên app trong giao diện; dùng hằng `APP_NAME` khi 
 - Chữ phụ dùng `muted-foreground`. Trạng thái dùng `success`, `warning`, `info`, `destructive`; không tự chế màu mới.
 - Đánh dấu ghế dùng token `seat-*`: `seat-favorite` (⭐), `seat-avoid` (🚫), `seat-available`, `seat-reserved`, `seat-selected`.
 - Màu không được là cách duy nhất truyền đạt trạng thái: luôn kèm biểu tượng, nhãn hoặc hình dạng (ghế trống = viền, ghế đã đặt = nền đặc mờ).
-- Heatmap điểm ghế dùng thang tuần tự cố định (xanh lam sẫm → xanh ngọc → vàng), tránh đỏ, hồng và xanh lục để không trùng `primary`/`destructive`.
+- Heatmap điểm ghế dùng màu chủ đạo của app (chủ dự án chọn, 2026-11-17): dải một sắc độ `--brand-h` đi qua ba mốc: tông tối (thấp), `--primary` (giữa), tông rất nhạt (cao), để độ sáng đi một quãng dài và các mức kề nhau vẫn phân biệt được. Đầu nhạt dùng chữ tối. Màu không phải cách duy nhất: có chú thích thấp/cao dưới sơ đồ. Ghế đang chọn dùng viền `foreground`, không dùng `primary`, để không lẫn với điểm cao.
 - Hồng (`primary`) và đỏ (`destructive`) khá gần nhau: hành động nguy hiểm (xóa, hủy) luôn kèm biểu tượng và chữ, không chỉ dựa vào màu.
 - Cặp màu mới phải đạt tương phản WCAG: chữ thường 4.5:1, chữ lớn và thành phần giao diện 3:1.
 

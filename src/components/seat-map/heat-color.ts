@@ -1,21 +1,30 @@
 /**
- * Heatmap scale: dark blue, teal, yellow (design rule in ui.md: no red, pink or pure green, which clash with
- * `destructive` and `primary`). Fixed colours, the same in light and dark. It is relative to the best and worst seat of THIS
- * layout, because most scores sit in a narrow band and an absolute 0-100 scale would look flat.
+ * Heatmap scale in the app's brand colour, one hue so it follows the colour the admin picks in Settings. Three stops, so the
+ * lightness travels a long way and neighbouring scores stay tellable apart: a dark shade (low), the brand colour itself
+ * `--primary` (middle), a pale tint (high). Relative to the best and worst seat of THIS layout, because most scores sit in a
+ * narrow band and an absolute 0-100 scale would look flat.
+ * The pale end needs dark text; `heatTextColor` picks the text colour for a level.
  */
-const STOPS: [number, number, number][] = [
-  [27, 42, 107], // low
-  [31, 138, 158],
-  [242, 211, 56], // high
-];
+const LOW = "oklch(0.34 0.08 var(--brand-h))";
+const HIGH = "oklch(0.94 0.07 var(--brand-h))";
+/** From this level on the fill is light enough that white text would not read. */
+const DARK_TEXT_FROM = 0.62;
+
+/** Where a score sits between the worst (0) and best (1) normal seat of the layout. */
+export function heatLevel(score: number, min: number, max: number): number {
+  return Math.min(1, Math.max(0, max > min ? (score - min) / (max - min) : 1));
+}
 
 export function heatColor(score: number, min: number, max: number): string {
-  const t = Math.min(1, Math.max(0, max > min ? (score - min) / (max - min) : 1));
-  const scaled = t * (STOPS.length - 1);
-  const i = Math.min(STOPS.length - 2, Math.floor(scaled));
-  const f = scaled - i;
-  const rgb = STOPS[i].map((from, c) => Math.round(from + (STOPS[i + 1][c] - from) * f));
-  return `rgb(${rgb[0]} ${rgb[1]} ${rgb[2]})`;
+  const t = heatLevel(score, min, max);
+  return t <= 0.5
+    ? `color-mix(in oklch, ${LOW}, var(--primary) ${Math.round(t * 200)}%)`
+    : `color-mix(in oklch, var(--primary), ${HIGH} ${Math.round((t - 0.5) * 200)}%)`;
+}
+
+/** White on the dark and middle part of the scale, near-black on the pale end. */
+export function heatTextColor(score: number, min: number, max: number): string {
+  return heatLevel(score, min, max) >= DARK_TEXT_FROM ? "oklch(0.2 0.03 var(--brand-h))" : "#fff";
 }
 
 /**

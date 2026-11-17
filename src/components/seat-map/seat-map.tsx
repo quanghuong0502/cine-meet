@@ -6,7 +6,7 @@ import { memo, useCallback, useMemo, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import type { LayoutGeometry, LayoutSeat } from "@/lib/seat-layout/types";
 import { cn } from "@/lib/utils";
-import { heatColor, heatRange } from "./heat-color";
+import { heatColor, heatRange, heatTextColor } from "./heat-color";
 import { MAX_SCALE, MIN_SCALE, usePanZoom } from "./use-pan-zoom";
 
 export interface SeatMapSeatType {
@@ -53,7 +53,7 @@ function mapPadding(geometry: LayoutGeometry) {
   };
 }
 const SEAT = 0.84;
-/** Zoom level from which seat numbers (or scores) are drawn inside the seats. */
+/** Zoom level from which the seat code (row and number, e.g. F12) is drawn inside the seats. */
 const LABELS_FROM_SCALE = 1.8;
 const DEFAULT_COLOR = "var(--muted-foreground)";
 
@@ -204,8 +204,8 @@ const MapLayer = memo(function MapLayer({
               <rect x={seat.x - w / 2 - 0.05} y={seat.y - SEAT / 2 - 0.05} width={w + 0.1} height={SEAT + 0.1} rx={0.25} fill="none" stroke="var(--foreground)" strokeWidth={0.12} pointerEvents="none" />
             ) : null}
             {labels && !broken ? (
-              <text x={seat.x} y={seat.y + 0.12} textAnchor="middle" fontSize={0.34} fontWeight={600} fill="#fff" pointerEvents="none" style={{ textShadow: "0 0 2px rgba(0,0,0,0.6)" }}>
-                {showHeatmap ? seat.score : seat.col}
+              <text x={seat.x} y={seat.y + 0.12} textAnchor="middle" fontSize={seat.code.length > 3 ? 0.28 : 0.34} fontWeight={600} fill={showHeatmap ? heatTextColor(seat.score, min, max) : "#fff"} pointerEvents="none" style={showHeatmap ? undefined : { textShadow: "0 0 2px rgba(0,0,0,0.6)" }}>
+                {seat.code}
               </text>
             ) : null}
           </g>
@@ -332,7 +332,7 @@ export function SeatMap({
           <span>{t("heatLow")}</span>
           <div
             className="h-2 flex-1 rounded-full"
-            style={{ background: `linear-gradient(to right, ${heatColor(0, 0, 1)}, ${heatColor(0.5, 0, 1)}, ${heatColor(1, 0, 1)})` }}
+            style={{ background: `linear-gradient(in oklch to right, ${[0, 0.25, 0.5, 0.75, 1].map((t) => heatColor(t, 0, 1)).join(", ")})` }}
             aria-hidden
           />
           <span>{t("heatHigh")}</span>

@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import vi from "@/messages/vi.json";
 import { defaultLayoutConfig } from "@/lib/seat-layout/config";
 import { buildLayout } from "@/services/seat-layout-build";
-import { heatColor, heatRange } from "./heat-color";
+import { heatColor, heatLevel, heatRange, heatTextColor } from "./heat-color";
 import { SeatMap } from "./seat-map";
 
 const TYPES = [
@@ -87,11 +87,36 @@ describe("SeatMap entrances", () => {
 });
 
 describe("heatColor", () => {
-  it("runs from dark blue to yellow and copes with equal scores", () => {
-    expect(heatColor(0, 0, 10)).toBe("rgb(27 42 107)");
-    expect(heatColor(10, 0, 10)).toBe("rgb(242 211 56)");
-    expect(heatColor(5, 5, 5)).toBe("rgb(242 211 56)");
-    expect(heatColor(0, 0, 10)).not.toBe(heatColor(5, 0, 10));
+  it("runs dark shade, brand colour, pale tint across the scale and copes with equal scores", () => {
+    expect(heatColor(0, 0, 10)).toBe("color-mix(in oklch, oklch(0.34 0.08 var(--brand-h)), var(--primary) 0%)");
+    expect(heatColor(5, 0, 10)).toBe("color-mix(in oklch, oklch(0.34 0.08 var(--brand-h)), var(--primary) 100%)");
+    expect(heatColor(10, 0, 10)).toBe("color-mix(in oklch, var(--primary), oklch(0.94 0.07 var(--brand-h)) 100%)");
+    expect(heatColor(7.5, 0, 10)).toContain("oklch(0.94 0.07 var(--brand-h)) 50%)");
+    expect(heatColor(5, 5, 5)).toBe(heatColor(10, 0, 10));
+    // Scores outside the range stay on the scale.
+    expect(heatColor(-5, 0, 10)).toBe(heatColor(0, 0, 10));
+    expect(heatColor(99, 0, 10)).toBe(heatColor(10, 0, 10));
+  });
+
+  it("follows the brand: it names the brand hue and the primary token, no fixed colour", () => {
+    for (const score of [0, 3, 8, 10]) {
+      const colour = heatColor(score, 0, 10);
+      expect(colour).toContain("var(--brand-h)");
+      expect(colour).toContain("var(--primary)");
+      expect(colour).not.toMatch(/rgb|hsl|#/);
+    }
+  });
+
+  it("gives every step its own colour, so neighbouring scores can be told apart", () => {
+    const colours = new Set(Array.from({ length: 11 }, (_, i) => heatColor(i, 0, 10)));
+    expect(colours.size).toBe(11);
+  });
+
+  it("uses white text on the dark and middle part and dark text on the pale end", () => {
+    expect(heatTextColor(0, 0, 10)).toBe("#fff");
+    expect(heatTextColor(5, 0, 10)).toBe("#fff");
+    expect(heatTextColor(10, 0, 10)).not.toBe("#fff");
+    expect(heatLevel(6.2, 0, 10)).toBeCloseTo(0.62);
   });
 });
 
