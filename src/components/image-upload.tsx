@@ -55,7 +55,7 @@ export function ImageUpload({ name, initialUrl, getTicket, preview }: ImageUploa
   }
 
   return (
-    <div className="flex items-center gap-4">
+    <div className="flex items-end gap-4">
       <input type="hidden" name={name} value={url} />
       {preview(url)}
       <div className="flex min-w-0 flex-wrap gap-2">
