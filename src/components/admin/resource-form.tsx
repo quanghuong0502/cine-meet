@@ -4,6 +4,7 @@ import { ImageIcon, LoaderCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { DeleteRecordButton } from "@/components/admin/delete-record-button";
 import { ImageUpload } from "@/components/image-upload";
 import { useActionState, useEffect } from "react";
 import { toast } from "sonner";
@@ -16,6 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   IDLE_STATE,
   VALIDATION_CODES,
+  type RemoveResult,
   type SaveState,
   type ValidationCode,
 } from "@/lib/admin/action-result";
@@ -104,9 +106,11 @@ interface ResourceFormProps {
   fields: ResourceField[];
   /** Starting values by field name (strings; a checked switch is "on"). Empty when creating. */
   values: Record<string, string>;
-  /** The list this screen came from: where Save returns to. */
+  /** The list this screen came from: where Save and Delete return to. */
   backHref: string;
   saveAction: (previous: SaveState, formData: FormData) => Promise<SaveState>;
+  /** Edit screens: the record that Delete (beside Save) removes. Omit when creating. */
+  deleteItem?: { id: string; name: string; removeAction: (id: string) => Promise<RemoveResult> };
   /** Extra content at the top of the form (for example the avatar picker); it is inside the form, so hidden inputs it holds are saved. */
   lead?: React.ReactNode;
 }
@@ -115,7 +119,7 @@ interface ResourceFormProps {
  * The entry screen of a master-data record: a normal page (own URL, back button), not a sheet. Save is the one fixed
  * action at the bottom; once saved, the person goes back to the list they came from, which is refreshed to show the change.
  */
-export function ResourceForm({ itemId, fields, values, backHref, saveAction, lead }: ResourceFormProps) {
+export function ResourceForm({ itemId, fields, values, backHref, saveAction, deleteItem, lead }: ResourceFormProps) {
   const t = useTranslations("admin.common");
   const tv = useTranslations("admin.validation");
   const router = useRouter();
@@ -189,18 +193,20 @@ export function ResourceForm({ itemId, fields, values, backHref, saveAction, lea
       {/* Fixed to the bottom, in thumb reach. It stays while the keyboard is open: on the installed app the keyboard shrinks the page, so
           the bar rides just above it and Save is always reachable while typing (unlike the menu and the list's Add button, which hide). */}
       <div data-save-bar className="pointer-events-none fixed inset-x-0 bottom-0 z-30 bg-gradient-to-t from-background via-background to-transparent px-4 pt-6 pb-[max(1rem,env(safe-area-inset-bottom))] md:left-64">
-        <Button type="submit" size="cta" disabled={isPending} className="pointer-events-auto mx-auto flex max-w-sm">
-          {isPending ? (
-            <>
-              <LoaderCircle className="motion-safe:animate-spin" aria-hidden />
-              {t("saving")}
-            </>
-          ) : (
-            t("save")
-          )}
-        </Button>
+        <div className="mx-auto flex max-w-sm items-center gap-2">
+          {deleteItem ? <DeleteRecordButton id={deleteItem.id} name={deleteItem.name} backHref={backHref} removeAction={deleteItem.removeAction} /> : null}
+          <Button type="submit" size="cta" disabled={isPending} className="pointer-events-auto min-w-0 flex-1">
+            {isPending ? (
+              <>
+                <LoaderCircle className="motion-safe:animate-spin" aria-hidden />
+                {t("saving")}
+              </>
+            ) : (
+              t("save")
+            )}
+          </Button>
+        </div>
       </div>
-
     </form>
   );
 }

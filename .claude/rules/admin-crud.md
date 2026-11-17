@@ -21,7 +21,7 @@ Mọi loại master data (thương hiệu, chi nhánh, thể loại...) dùng c�
    - `List({ q })`: component server dịch sẵn mọi chữ rồi đưa vào `ResourceManager` (danh sách thẻ, tìm kiếm trong URL `?q=`, xác nhận xóa, nút thêm ghim ở cuối màn hình).
    - `loadForm(id | null)`: trả `SectionFormData` (tiêu đề, danh sách trường, giá trị ban đầu, `saveAction`, `removeAction`), hoặc `null` khi không có bản ghi (404).
    **Form không dùng bottom sheet.** Thêm và sửa là màn nhập riêng `/admin/master-data/<ten>/new` và `/admin/master-data/<ten>/<id>` (dựng bằng `ResourceForm`, nút Lưu cố định ở đáy và vẫn hiện khi gõ, thanh menu ẩn).
-   Nút **Xóa** nằm ở header của màn sửa (`DeleteRecordButton`, hỏi xác nhận), không cạnh nút Lưu. Trường ảnh (`kind: "image"`, ví dụ logo) tải thẳng lên Cloudinary qua `ImageUpload` và một server action ký vé (`uploadTicket`, xem `src/actions/uploads.ts`).
+   Nút **Xóa** (đỏ, kèm chữ; `DeleteRecordButton`, hỏi xác nhận) nằm cùng hàng với nút Lưu trong thanh dưới của màn sửa. Trường ảnh (`kind: "image"`, ví dụ logo) tải thẳng lên Cloudinary qua `ImageUpload` và một server action ký vé (`uploadTicket`, xem `src/actions/uploads.ts`).
    Danh sách gắn `?back=<url danh sách hiện tại>` (tab và tìm kiếm); sau khi lưu hay xóa, form `router.replace(back)` rồi `router.refresh()`; server action cũng `revalidatePath`.
    `back` chỉ nhận đường dẫn bắt đầu bằng `/admin/master-data` (`src/lib/admin/back-href.ts`). Tham khảo `_sections/brands/section.tsx`. Không tạo route riêng cho từng loại ngoài hai route động trên.
 5. **Đăng ký tab:** thêm vào `src/lib/master-data-sections.ts` (kèm `slug` cho URL và biểu tượng), vào `SECTIONS` ở `_sections/index.ts` và khóa `admin.masterData.sections.<ten>` ở cả `vi.json` và `en.json`.

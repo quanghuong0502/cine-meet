@@ -33,7 +33,7 @@ Căn cứ: [Apple HIG, tab bars](https://developer.apple.com/design/human-interf
 ## 3. Bố cục cố định và bàn phím (PWA iOS)
 
 1. **Header và thanh dưới không bao giờ cuộn theo trang:** khung app cao đúng một màn hình (`h-dvh`), chỉ vùng `main` (có `data-app-scroll`) cuộn.
-2. **Thanh Lưu của màn nhập (`data-save-bar`) KHÔNG ẩn khi bàn phím mở**: trên app đã cài bàn phím co cả trang (đã đo iPhone 14 Pro, iOS 26), nên thanh nằm ngay trên bàn phím và người dùng luôn bấm được Lưu khi đang gõ (chủ dự án báo lỗi khi nó bị ẩn). **Hành động Xóa của màn nhập đặt ở góc trên phải của header**, không cạnh nút Lưu.
+2. **Thanh Lưu của màn nhập (`data-save-bar`) KHÔNG ẩn khi bàn phím mở**: trên app đã cài bàn phím co cả trang (đã đo iPhone 14 Pro, iOS 26), nên thanh nằm ngay trên bàn phím và người dùng luôn bấm được Lưu khi đang gõ (chủ dự án báo lỗi khi nó bị ẩn). **Nút Xóa (đỏ, biểu tượng thùng rác kèm chữ) nằm cùng hàng với Lưu trong thanh này** (chủ dự án chọn vậy), luôn hỏi xác nhận trước khi xóa.
    **Phần tử cố định ở đáy còn lại (menu, nút Thêm của danh sách) có `data-bottom-fixed`:** chúng ẩn khi bàn phím mở (`KeyboardWatcher`), vì trên app đã cài bàn phím che đáy trang thay vì thu nhỏ trang,
    và chúng sẽ nổi lơ lửng giữa màn hình. Nút hành động chính cố định đặt phía trên menu bằng `--bottom-nav-h`, và danh sách có đệm cuối để mục cuối không bị che.
    **Ngoài việc ẩn này, không can thiệp vào bố cục khi bàn phím mở** (không đổi chiều cao hay vị trí khung app, không khóa cuộn): đã thử và đo trên iPhone, Safari tự cuộn trang tới ô đang gõ và vẽ trước một khung hình rồi mới báo cho trang,

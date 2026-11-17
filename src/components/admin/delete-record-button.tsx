@@ -28,8 +28,8 @@ interface DeleteRecordButtonProps {
 }
 
 /**
- * Delete for an entry screen. It sits in the page header, far from Save at the bottom, so a thumb going for Save
- * never lands on it; it always asks first and says it cannot be undone.
+ * Delete for an entry screen: the red "Delete" button beside Save in the bottom bar. It always asks first and says it
+ * cannot be undone.
  */
 export function DeleteRecordButton({ id, name, backHref, removeAction }: DeleteRecordButtonProps) {
   const t = useTranslations("admin.common");
@@ -55,13 +55,14 @@ export function DeleteRecordButton({ id, name, backHref, removeAction }: DeleteR
     <>
       <Button
         type="button"
-        variant="ghost"
-        size="icon"
+        variant="destructive"
+        size="cta"
         onClick={() => setOpen(true)}
         aria-label={`${t("delete")}: ${name}`}
-        className="size-target shrink-0 text-destructive hover:text-destructive"
+        className="pointer-events-auto w-auto shrink-0 px-5"
       >
         <Trash2 aria-hidden />
+        {t("delete")}
       </Button>
       <AlertDialog open={open} onOpenChange={setOpen}>
         <AlertDialogContent>
