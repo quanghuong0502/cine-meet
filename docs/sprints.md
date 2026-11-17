@@ -28,7 +28,7 @@ Nguồn chi tiết: `docs/movie-app-mvp-design.md` (số mục ghi ở từng sp
 | Sprint | Nội dung chính | Phụ thuộc | Trạng thái |
 |---|---|---|---|
 | 0 | Khung nền: scaffold, auth, layout, theme, i18n (vi, en) | — | Xong |
-| 1 | Master data, quản lý người dùng, cài đặt hệ thống, hồ sơ cơ bản | 0 | Đang làm |
+| 1 | Master data, quản lý người dùng, cài đặt hệ thống, hồ sơ cơ bản | 0 | Chờ kiểm tra |
 | 2 | Editor phòng chiếu, sơ đồ ghế, điểm ghế, versioning | 1 | Chưa bắt đầu |
 | 3 | Phim (trailer), suất chiếu, trang rạp & lịch chiếu cho user, đánh dấu ghế cá nhân | 2 | Chưa bắt đầu |
 | 4 | Lịch hẹn giai đoạn 1 (mời, vote, chốt người), bạn bè, thông báo in-app, worker, Web Push | 3 | Chưa bắt đầu |
@@ -82,7 +82,7 @@ Trạng thái: Chưa bắt đầu · Đang làm · Chờ kiểm tra · Xong
 **Tham chiếu:** thiết kế mục 2.1, 2.5, 2.7, 3.5 (phần hồ sơ cơ bản), 6.1.
 
 **Phạm vi**
-- Khung CRUD dùng chung (danh sách dạng thẻ trên mobile và bảng trên desktop, form, xác nhận xóa, audit log), rồi dựng từng loại bên dưới trên khung này.
+- Khung CRUD dùng chung (danh sách dạng thẻ, **form là màn nhập riêng, không dùng bottom sheet**: lưu xong quay về đúng danh sách gốc rồi làm mới; xác nhận xóa, audit log), rồi dựng từng loại bên dưới trên khung này.
 - **Mọi cấu hình master data gom vào một trang Danh mục, mỗi loại là một tab**; menu điện thoại là thanh điều hướng dưới chỉ hiện các trang cần thiết (xem `.claude/rules/ui.md`).
 - CRUD: thương hiệu, chi nhánh (kèm thông tin gửi xe, lat/lng), thể loại, định dạng chiếu, phân loại tuổi,
   loại ghế, ngày lễ, đồ ăn và combo (có `validFrom/validTo`).
@@ -97,10 +97,10 @@ Trạng thái: Chưa bắt đầu · Đang làm · Chờ kiểm tra · Xong
 
 **Tiêu chí hoàn thành**
 - [ ] Admin tạo được đủ master data và dùng thử trên điện thoại.
-- [ ] Test cho hàm tính giá: ngày thường, cuối tuần, lễ, ưu đãi, chi nhánh thắng thương hiệu, rule hết hiệu lực, `priority` phá hòa, `priceOverride`.
-- [ ] Khóa một user thì phiên của họ bị vô hiệu ở request kế tiếp và họ không đăng nhập lại được.
-- [ ] Không thể hạ quyền admin cuối cùng.
-- [ ] Admin tạo user mới và reset mật khẩu; user đăng nhập lần đầu bị buộc đổi mật khẩu.
+- [x] Test cho hàm tính giá: ngày thường, cuối tuần, lễ, ưu đãi, chi nhánh thắng thương hiệu, rule hết hiệu lực, `priority` phá hòa, `priceOverride`.
+- [x] Khóa một user thì phiên của họ bị vô hiệu ở request kế tiếp và họ không đăng nhập lại được.
+- [x] Không thể hạ quyền admin cuối cùng.
+- [x] Admin tạo user mới và reset mật khẩu; user đăng nhập lần đầu bị buộc đổi mật khẩu.
 
 ---
 
@@ -320,6 +320,16 @@ Mỗi sprint xong thêm 3 đến 6 dòng: đã làm gì, còn dở gì, quyết 
 - Quyết định: tên app SeatMate; logo là ảnh `duo-watching`; màu nhấn hồng-magenta `#C61583`; không có đăng ký công khai; Web Push thay Zalo trong MVP; dev trên local trước.
 - Còn dở (hoãn sang Sprint 8): staging HTTPS, thử máy thật, cài PWA, service worker và trang offline làm ở Sprint 4.
 - File chính: `src/auth.ts`, `src/lib/auth/guards.ts`, `src/services/user.service.ts`, `src/i18n/`, `src/messages/`, `.claude/rules/`.
+
+### Sprint 1 (2026-11-17)
+- Xong: khung CRUD master data (form là màn riêng, quay về đúng tab và tìm kiếm); 9 loại trong trang Danh mục: thương hiệu, chi nhánh, thể loại, định dạng, độ tuổi, loại ghế, ngày lễ, đồ ăn, combo, cộng bảng giá vé;
+  hàm tính giá thuần `resolveTicketPrice` (17 test); quản lý người dùng (tạo bằng mật khẩu tạm, khóa/mở, đổi vai trò, đặt lại mật khẩu, không hạ hay khóa admin cuối, không tự khóa mình);
+  cài đặt hệ thống (mốc nhắc, hạn phản hồi, quảng cáo); hồ sơ (ảnh Cloudinary, số điện thoại, sở thích ngồi); `npm run seed:catalog` nạp dữ liệu mẫu (tên có "(mẫu)").
+- Quyết định: ngày lưu dạng `YYYY-MM-DD` giờ Việt Nam; combo mô tả bằng chữ; `priceRules` phẳng (`brandId` hoặc `branchId`), ngày ưu đãi gắn một thứ trong tuần (`weekday`), khung giờ tính theo giờ BẮT ĐẦU suất, rule loại ngày "thường" là nền cho cả ngày lễ và cuối tuần;
+  hạn phản hồi là số giờ trước giờ chiếu; "thu hồi phiên" nhờ guard đọc lại DB mỗi request (không cần số phiên bản); ảnh tải thẳng lên Cloudinary bằng chữ ký dùng một lần, cắt vuông 256px, mỗi người một ảnh ghi đè.
+- Còn dở: tiêu chí "dùng thử trên điện thoại" cần chủ dự án kiểm tra; tải ảnh Cloudinary thật chưa thử (cần khóa trong `.env.local`); chưa thử trên iPhone thật (bàn phím, thanh Lưu cố định).
+- File chính: `src/services/master-data/`, `src/services/pricing/ticket-price.ts`, `src/services/admin-user.service.ts`, `src/services/settings.service.ts`, `src/services/profile.service.ts`,
+  `src/app/admin/master-data/_sections/` (mỗi loại một thư mục, dựng bằng `createSection`), `src/components/admin/resource-*.tsx`, `src/lib/cloudinary.ts`, `scripts/seed-catalog.ts`, `.claude/rules/admin-crud.md`.
 
 <!-- Ví dụ:
 ### Sprint 2 (2026-12-01)
