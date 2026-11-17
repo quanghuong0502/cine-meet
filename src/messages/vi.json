@@ -1011,6 +1011,7 @@
       "watch": "Xem trailer",
       "play": "Xem trailer {title}",
       "playerTitle": "Trailer {title}",
+      "close": "Đóng trailer",
       "openYoutube": "Xem trên YouTube"
     },
     "releaseOn": "Khởi chiếu {date}",
