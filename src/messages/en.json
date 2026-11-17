@@ -561,7 +561,11 @@
         }
       },
       "pickColor": "Pick a color",
-      "useDefault": "Use the default color",
+      "reset": "Reset to default colors",
+      "resetTitle": "Reset to the default color?",
+      "resetDescription": "Everyone will see the default colors straight away. You can pick another color afterwards.",
+      "resetConfirm": "Reset",
+      "resetDone": "Default colors restored",
       "preview": {
         "label": "Preview",
         "heading": "Choose seats",

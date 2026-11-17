@@ -5,7 +5,7 @@ import { ResourceForm } from "@/components/admin/resource-form";
 import { PageHeader } from "@/components/page-header";
 import { requireAdmin } from "@/lib/auth/guards";
 import { getBrandColor } from "@/services/brand-color.service";
-import { saveBrandColorAction } from "./actions";
+import { resetBrandColorAction, saveBrandColorAction } from "./actions";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("admin.appearance");
@@ -26,7 +26,7 @@ export default async function AppearanceSettingsPage() {
         values={{}}
         backHref="/admin/settings"
         saveAction={saveBrandColorAction}
-        lead={<BrandColorPicker initialHex={hex} label={t("fields.color.label")} />}
+        lead={<BrandColorPicker initialHex={hex} label={t("fields.color.label")} resetAction={resetBrandColorAction} />}
       />
     </div>
   );

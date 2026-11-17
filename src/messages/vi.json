@@ -561,7 +561,11 @@
         }
       },
       "pickColor": "Chọn màu",
-      "useDefault": "Dùng màu mặc định",
+      "reset": "Đặt lại màu mặc định",
+      "resetTitle": "Đặt lại về màu mặc định?",
+      "resetDescription": "Mọi người dùng sẽ thấy bộ màu mặc định ngay. Bạn vẫn chọn lại được màu khác sau đó.",
+      "resetConfirm": "Đặt lại",
+      "resetDone": "Đã đặt lại màu mặc định",
       "preview": {
         "label": "Xem trước",
         "heading": "Chọn ghế",

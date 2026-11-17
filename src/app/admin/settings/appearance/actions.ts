@@ -3,7 +3,7 @@
 import { revalidatePath, updateTag } from "next/cache";
 import { errorState, type SaveState } from "@/lib/admin/action-result";
 import { requireAdmin } from "@/lib/auth/guards";
-import { saveBrandColor } from "@/services/brand-color.service";
+import { resetBrandColor, saveBrandColor } from "@/services/brand-color.service";
 import { BRAND_THEME_TAG } from "@/services/brand-theme-cache";
 
 /** The admin comes from the session, never from the form. The colour is checked again here (readable, visible), not only in the picker. */
@@ -17,4 +17,13 @@ export async function saveBrandColorAction(_previous: SaveState, formData: FormD
   updateTag(BRAND_THEME_TAG);
   revalidatePath("/", "layout");
   return { status: "success" };
+}
+
+/** Back to the default colour for everyone, at once. */
+export async function resetBrandColorAction(): Promise<{ ok: true }> {
+  const admin = await requireAdmin();
+  await resetBrandColor(admin.userId);
+  updateTag(BRAND_THEME_TAG);
+  revalidatePath("/", "layout");
+  return { ok: true };
 }

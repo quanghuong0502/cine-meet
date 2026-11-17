@@ -40,3 +40,17 @@ export async function saveBrandColor(hex: string, actorId: string): Promise<Save
   });
   return { ok: true, hex: next };
 }
+
+/** Back to the default colour: removes the stored value (audited). Nothing to do when none is stored. */
+export async function resetBrandColor(actorId: string): Promise<void> {
+  await connectToDatabase();
+  const row = await SystemSetting.findOneAndDelete({ key: KEY }).lean();
+  if (!row) return;
+  await recordAudit({
+    actorId,
+    action: "delete",
+    entity: "systemSetting",
+    entityId: row._id.toString(),
+    before: { key: KEY, value: row.value },
+  });
+}

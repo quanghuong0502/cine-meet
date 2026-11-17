@@ -1,7 +1,19 @@
 "use client";
 
+import { LoaderCircle, RotateCcw } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState, type CSSProperties } from "react";
+import { useState, useTransition, type CSSProperties } from "react";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DEFAULT_BRAND_HEX, defaultBrandTheme, deriveBrandTheme, parseHex } from "@/lib/brand-theme";
@@ -12,10 +24,39 @@ import { DEFAULT_BRAND_HEX, defaultBrandTheme, deriveBrandTheme, parseHex } from
  * carries the brand variables itself: the stylesheet's dark block recomputes every colour there from them, so it shows the exact
  * result without touching the page around it.
  */
-export function BrandColorPicker({ initialHex, label }: { initialHex: string; label: string }) {
+export function BrandColorPicker({
+  initialHex,
+  label,
+  resetAction,
+}: {
+  initialHex: string;
+  label: string;
+  /** Removes the saved colour for everyone (server action). */
+  resetAction: () => Promise<{ ok: true }>;
+}) {
   const t = useTranslations("admin.appearance");
   const tv = useTranslations("admin.validation");
+  const tc = useTranslations("admin.common");
   const [hex, setHex] = useState(initialHex.toUpperCase());
+  // What is saved right now: the reset button has nothing to do when both it and the box already show the default.
+  const [savedHex, setSavedHex] = useState(initialHex.toUpperCase());
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [isResetting, startResetting] = useTransition();
+
+  function reset() {
+    startResetting(async () => {
+      try {
+        await resetAction();
+        setHex(DEFAULT_BRAND_HEX);
+        setSavedHex(DEFAULT_BRAND_HEX);
+        setConfirmOpen(false);
+        toast.success(t("resetDone"));
+      } catch {
+        setConfirmOpen(false);
+        toast.error(tc("errors.unknown"));
+      }
+    });
+  }
 
   const derived = deriveBrandTheme(hex);
   const theme = derived.ok ? derived.theme : defaultBrandTheme();
@@ -63,11 +104,38 @@ export function BrandColorPicker({ initialHex, label }: { initialHex: string; la
             {tv(derived.error)}
           </p>
         ) : null}
-        {hex !== DEFAULT_BRAND_HEX ? (
-          <Button type="button" variant="ghost" size="cta-sm" className="w-auto self-start px-4 text-muted-foreground" onClick={() => setHex(DEFAULT_BRAND_HEX)}>
-            {t("useDefault")}
-          </Button>
-        ) : null}
+        <Button
+          type="button"
+          variant="outline"
+          size="cta-sm"
+          className="w-auto self-start px-4"
+          disabled={hex === DEFAULT_BRAND_HEX && savedHex === DEFAULT_BRAND_HEX}
+          onClick={() => setConfirmOpen(true)}
+        >
+          <RotateCcw aria-hidden />
+          {t("reset")}
+        </Button>
+        <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{t("resetTitle")}</AlertDialogTitle>
+              <AlertDialogDescription>{t("resetDescription")}</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isResetting}>{tc("cancel")}</AlertDialogCancel>
+              <AlertDialogAction
+                disabled={isResetting}
+                onClick={(event) => {
+                  event.preventDefault();
+                  reset();
+                }}
+              >
+                {isResetting ? <LoaderCircle className="motion-safe:animate-spin" aria-hidden /> : <RotateCcw aria-hidden />}
+                {t("resetConfirm")}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
 
       <div className="flex flex-col gap-3" aria-hidden>

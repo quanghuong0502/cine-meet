@@ -51,4 +51,14 @@ describe("brand colour", () => {
     await SystemSetting.create({ key: "brandColor", value: "not a colour" });
     expect(await svc.getBrandColor()).toBe("#C61583");
   });
+
+  it("goes back to the default on reset, audited, and is harmless when nothing is stored", async () => {
+    await svc.resetBrandColor(ACTOR);
+    expect(await AuditLog.countDocuments({})).toBe(0);
+
+    await svc.saveBrandColor("#0A84FF", ACTOR);
+    await svc.resetBrandColor(ACTOR);
+    expect(await svc.getBrandColor()).toBe("#C61583");
+    expect(await AuditLog.countDocuments({ action: "delete" })).toBe(1);
+  });
 });
