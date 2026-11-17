@@ -39,3 +39,11 @@ export const ENABLED_ADMIN_NAV_ITEMS = ADMIN_NAV_ITEMS.filter((item) => item.ena
 /** The bottom bar is only worth showing with at least two destinations. */
 export const MIN_BOTTOM_NAV_ITEMS = 2;
 export const MAX_BOTTOM_NAV_ITEMS = 5;
+
+/**
+ * Entry screens (a master-data record, later user and room forms) hide the bottom bar, as iOS does for a pushed screen:
+ * the Save button takes its place and the person is working on one thing. Their parent list is the page just above them.
+ */
+export function isFocusedAdminRoute(pathname: string): boolean {
+  return /^\/admin\/master-data\/.+/.test(pathname);
+}

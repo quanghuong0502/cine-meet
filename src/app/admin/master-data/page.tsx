@@ -4,7 +4,7 @@ import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
 import { MASTER_DATA_SECTIONS } from "@/lib/master-data-sections";
 import { cn } from "@/lib/utils";
-import { SECTION_COMPONENTS } from "./_sections";
+import { SECTIONS } from "./_sections";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("admin.masterData");
@@ -24,7 +24,7 @@ export default async function MasterDataPage({
   const { tab, q = "" } = await searchParams;
   const active = MASTER_DATA_SECTIONS.find((section) => section.key === tab) ?? MASTER_DATA_SECTIONS[0];
   if (!active) return null;
-  const Section = SECTION_COMPONENTS[active.key];
+  const { List } = SECTIONS[active.key];
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-4 p-4">
@@ -56,7 +56,7 @@ export default async function MasterDataPage({
         </ul>
       </nav>
 
-      <Section key={active.key} q={q} />
+      <List key={active.key} q={q} />
     </div>
   );
 }

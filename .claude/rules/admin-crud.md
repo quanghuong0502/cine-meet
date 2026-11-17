@@ -17,14 +17,18 @@ Mọi loại master data (thương hiệu, chi nhánh, thể loại...) dùng c�
 3. **Server actions** `src/app/admin/master-data/_sections/<ten>/actions.ts`: `requireAdmin()` lấy admin từ session (không nhận từ form), `parseForm(schema, formData)`,
    gọi dịch vụ, `errorState(formData, ...)` khi lỗi (để form giữ lại những gì người dùng đã nhập), `revalidatePath`. Tham khảo `brands/actions.ts`.
 4. **Tab trong trang Danh mục:** mọi cấu hình master data nằm trên **một trang duy nhất** `/admin/master-data`, mỗi loại là một tab (`?tab=<ten>`), nên menu chỉ cần một liên kết "Danh mục".
-   Viết `src/app/admin/master-data/_sections/<ten>/section.tsx`: component server dịch sẵn mọi chữ rồi đưa vào `ResourceManager` (danh sách thẻ, tìm kiếm trong URL `?q=`,
-   form dạng bottom sheet, xác nhận xóa, nút thêm ghim ở cuối màn hình, tìm kiếm giữ nguyên tab). Tham khảo `_sections/brands/section.tsx`. Không tạo route riêng cho từng loại.
-5. **Đăng ký tab:** thêm vào `src/lib/master-data-sections.ts`, vào `_sections/index.ts` (`SECTION_COMPONENTS`) và khóa `admin.masterData.sections.<ten>` ở cả `vi.json` và `en.json`.
+   Viết `src/app/admin/master-data/_sections/<ten>/section.tsx` xuất một `SectionDefinition` (`_sections/types.ts`) gồm hai phần:
+   - `List({ q })`: component server dịch sẵn mọi chữ rồi đưa vào `ResourceManager` (danh sách thẻ, tìm kiếm trong URL `?q=`, xác nhận xóa, nút thêm ghim ở cuối màn hình).
+   - `loadForm(id | null)`: trả `SectionFormData` (tiêu đề, danh sách trường, giá trị ban đầu, `saveAction`, `removeAction`), hoặc `null` khi không có bản ghi (404).
+   **Form không dùng bottom sheet.** Thêm và sửa là màn nhập riêng `/admin/master-data/<ten>/new` và `/admin/master-data/<ten>/<id>` (dựng bằng `ResourceForm`, nút Lưu cố định ở đáy, thanh menu ẩn).
+   Danh sách gắn `?back=<url danh sách hiện tại>` (tab và tìm kiếm); sau khi lưu hay xóa, form `router.replace(back)` rồi `router.refresh()`; server action cũng `revalidatePath`.
+   `back` chỉ nhận đường dẫn bắt đầu bằng `/admin/master-data` (`src/lib/admin/back-href.ts`). Tham khảo `_sections/brands/section.tsx`. Không tạo route riêng cho từng loại ngoài hai route động trên.
+5. **Đăng ký tab:** thêm vào `src/lib/master-data-sections.ts`, vào `SECTIONS` ở `_sections/index.ts` và khóa `admin.masterData.sections.<ten>` ở cả `vi.json` và `en.json`.
 6. **Chuỗi:** khóa `admin.<ten>.*` ở cả hai ngôn ngữ; lỗi dùng chung nằm ở `admin.common.errors.*` và `admin.validation.*`. Lỗi từ server luôn là mã, không phải câu.
 7. **Test:** thêm test dịch vụ (tạo, trùng tên, sửa, xóa, tìm kiếm, `in_use`) như `brand.service.test.ts`.
 
 Lưu ý đã gặp:
 - Form dùng `noValidate`: lỗi luôn là câu đã dịch của app, không dùng câu của trình duyệt.
 - React xóa sạch form chưa kiểm soát sau mỗi action; vì vậy trạng thái lỗi mang theo `values` và `ResourceForm` dùng lại làm giá trị khởi đầu.
-- Khi sửa giao diện admin, thử luồng đầy đủ (tạo, báo lỗi, trùng tên, sửa, tìm, xóa) ở 393×852, 390×844 và 375×667, cả hai ngôn ngữ, kiểm tra không cuộn ngang
+- Khi sửa giao diện admin, thử luồng đầy đủ (tạo, báo lỗi, trùng tên, sửa, tìm, xóa, quay về đúng tab và tìm kiếm) ở 393×852, 390×844 và 375×667, cả hai ngôn ngữ, kiểm tra không cuộn ngang
   và nút thêm ở cuối màn hình.

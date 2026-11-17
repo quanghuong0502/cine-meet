@@ -1,4 +1,5 @@
 import { AdminBottomNav } from "@/components/admin/admin-bottom-nav";
+import { AdminMain } from "@/components/admin/admin-main";
 import { AdminNav } from "@/components/admin/admin-nav";
 import { Logo } from "@/components/logo";
 import { AppOpenedMarker } from "@/components/route-loading";
@@ -6,7 +7,6 @@ import { SignOutButton } from "@/components/sign-out-button";
 import { UserMenu } from "@/components/user-menu";
 import { ENABLED_ADMIN_NAV_ITEMS, MIN_BOTTOM_NAV_ITEMS } from "@/lib/admin-nav";
 import { requireAdmin } from "@/lib/auth/guards";
-import { cn } from "@/lib/utils";
 
 export default async function AdminLayout({
   children,
@@ -35,16 +35,7 @@ export default async function AdminLayout({
           <Logo size={44} wordmarkClassName="text-xl" />
           <UserMenu area="admin" name={admin.name} />
         </header>
-        {/* --bottom-nav-h: room taken by the bottom bar on phones, used to keep content and the sticky "Add" button clear of it. */}
-        <main
-          data-app-scroll
-          className={cn(
-            "flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain",
-            hasBottomNav && "pb-[var(--bottom-nav-h)] [--bottom-nav-h:calc(var(--spacing-nav)+2*var(--spacing-nav-gap)+env(safe-area-inset-bottom))] md:[--bottom-nav-h:0px]",
-          )}
-        >
-          {children}
-        </main>
+        <AdminMain hasBottomNav={hasBottomNav}>{children}</AdminMain>
       </div>
       <AdminBottomNav />
       <AppOpenedMarker />

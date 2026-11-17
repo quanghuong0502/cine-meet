@@ -1,7 +1,8 @@
 import type { MasterDataSectionKey } from "@/lib/master-data-sections";
-import { BrandsSection } from "./brands/section";
+import { brandsSection } from "./brands/section";
+import type { SectionDefinition } from "./types";
 
-/** Content of each tab on the Catalog page. Add an entry here when a section is added to `MASTER_DATA_SECTIONS`. */
-export const SECTION_COMPONENTS: Record<MasterDataSectionKey, (props: { q: string }) => Promise<React.JSX.Element>> = {
-  brands: BrandsSection,
+/** Every master-data type, by key. Add an entry when a section is added to `MASTER_DATA_SECTIONS`. */
+export const SECTIONS: Record<MasterDataSectionKey, SectionDefinition> = {
+  brands: brandsSection,
 };
