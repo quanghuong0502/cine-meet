@@ -1,7 +1,7 @@
 "use client";
 
 import { Radio } from "lucide-react";
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -52,6 +52,34 @@ function writeOn(value: boolean) {
   }
   listeners.forEach((listener) => listener());
 }
+
+// Where the person dragged the button to ("x,y" in px from the top-left of the screen), kept the same way as the switch.
+// Empty = the default spot (middle of the right edge).
+const POSITION_KEY = "devDomRecorderPosition";
+let memoryPosition = "";
+function readPosition(): string {
+  try {
+    return localStorage.getItem(POSITION_KEY) ?? "";
+  } catch {
+    return memoryPosition;
+  }
+}
+function writePosition(value: string, persist: boolean) {
+  memoryPosition = value;
+  if (persist) {
+    try {
+      localStorage.setItem(POSITION_KEY, value);
+    } catch {
+      // Private mode: the variable above is used instead.
+    }
+  }
+  listeners.forEach((listener) => listener());
+}
+/** Button size (44px) plus a margin, so a saved spot still shows after the window got smaller. */
+const BUTTON_PX = 44;
+const EDGE_PX = 8;
+/** Finger or mouse travel beyond which a press is a drag, not a click. */
+const DRAG_SLOP_PX = 6;
 
 const TRACE_MS = 1_800;
 
@@ -107,6 +135,10 @@ function traceFrames(label: string): Promise<{ label: string; samples: TraceSamp
 export function DomRecorder() {
   const on = useSyncExternalStore(subscribe, readOn, () => false);
   const [link, setLink] = useState<"ok" | "sending" | "lost">("ok");
+  const position = useSyncExternalStore(subscribe, readPosition, () => "");
+  const drag = useRef<{ dx: number; dy: number; startX: number; startY: number; moved: boolean } | null>(null);
+  /** A drag ends with a click event on the button; this swallows it so dropping the button does not toggle recording. */
+  const swallowClick = useRef(false);
 
   useEffect(() => {
     if (!on) return;
@@ -225,7 +257,38 @@ export function DomRecorder() {
     };
   }, [on]);
 
+  function startDrag(event: React.PointerEvent<HTMLButtonElement>) {
+    swallowClick.current = false; // a click left over from an earlier drag must not eat this press
+    const box = event.currentTarget.getBoundingClientRect();
+    drag.current = { dx: event.clientX - box.left, dy: event.clientY - box.top, startX: event.clientX, startY: event.clientY, moved: false };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+
+  function moveDrag(event: React.PointerEvent<HTMLButtonElement>) {
+    const d = drag.current;
+    if (!d) return;
+    if (!d.moved && Math.hypot(event.clientX - d.startX, event.clientY - d.startY) < DRAG_SLOP_PX) return;
+    d.moved = true;
+    const x = Math.min(window.innerWidth - BUTTON_PX - EDGE_PX, Math.max(EDGE_PX, event.clientX - d.dx));
+    const y = Math.min(window.innerHeight - BUTTON_PX - EDGE_PX, Math.max(EDGE_PX, event.clientY - d.dy));
+    writePosition(`${Math.round(x)},${Math.round(y)}`, false);
+  }
+
+  function endDrag(event: React.PointerEvent<HTMLButtonElement>) {
+    const d = drag.current;
+    drag.current = null;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+    if (d?.moved) {
+      swallowClick.current = true;
+      writePosition(memoryPosition, true);
+    }
+  }
+
   function toggle() {
+    if (swallowClick.current) {
+      swallowClick.current = false;
+      return;
+    }
     const next = !on;
     writeOn(next);
     if (!next) {
@@ -246,11 +309,26 @@ export function DomRecorder() {
       size="icon"
       variant={on ? "default" : "secondary"}
       onClick={toggle}
+      onPointerDown={startDrag}
+      onPointerMove={moveDrag}
+      onPointerUp={endDrag}
+      onPointerCancel={endDrag}
       aria-pressed={on}
       aria-label={on ? "Stop recording DOM changes (dev)" : "Record DOM changes (dev)"}
       // pointer-events-auto: an open sheet or dialog turns off touches on everything outside it.
+      // The saved spot is clamped by CSS, so it stays on screen when the window is smaller than when it was saved.
+      style={
+        position
+          ? {
+              left: `min(${position.split(",")[0]}px, calc(100vw - ${BUTTON_PX + EDGE_PX}px))`,
+              top: `min(${position.split(",")[1]}px, calc(100dvh - ${BUTTON_PX + EDGE_PX}px))`,
+            }
+          : undefined
+      }
       className={cn(
-        "pointer-events-auto fixed top-1/2 right-2 z-[60] rounded-full shadow-lg",
+        // touch-none: dragging the button must not scroll the page. Hold and drag to move it; a tap still toggles.
+        "pointer-events-auto fixed z-[60] touch-none rounded-full shadow-lg",
+        !position && "top-1/2 right-2",
         !on && "opacity-60",
         // On: a ring while a snapshot is being sent; red when the dev server cannot be reached.
         on && link === "sending" && "ring-4 ring-ring",
