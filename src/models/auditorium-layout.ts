@@ -1,4 +1,4 @@
-import { model, models, Schema, type Model } from "mongoose";
+import { model, models, Schema, type Model, type Types } from "mongoose";
 import type { LayoutConfig, LayoutSeat } from "@/lib/seat-layout/types";
 
 /**
@@ -6,13 +6,13 @@ import type { LayoutConfig, LayoutSeat } from "@/lib/seat-layout/types";
  * so appointments and showtimes keep pointing at the layout they were made for.
  */
 export interface AuditoriumLayoutDoc {
-  auditoriumId: Schema.Types.ObjectId;
+  auditoriumId: Types.ObjectId;
   version: number;
   config: LayoutConfig;
   seats: LayoutSeat[];
   /** Short Vietnamese description for the chatbot. */
   summary: string;
-  createdBy?: Schema.Types.ObjectId;
+  createdBy?: Types.ObjectId;
   createdAt: Date;
 }
 

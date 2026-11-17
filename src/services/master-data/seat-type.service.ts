@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { optionalColor, optionalText, requiredText } from "@/lib/validation/fields";
+import { AuditoriumLayout } from "@/models/auditorium-layout";
 import { PriceRule } from "@/models/price-rule";
 import { SeatType } from "@/models/seat-type";
 import { createMasterDataService } from "./crud";
@@ -20,6 +21,10 @@ export const seatTypeService = createMasterDataService({
   searchFields: ["name", "nameEn"],
   sort: { capacity: 1, name: 1 },
   editableFields: ["name", "nameEn", "capacity", "color"],
-  // Seat maps will point at seat types too (Sprint 2).
-  dependents: () => [{ model: PriceRule, field: "seatTypeId" }],
+  // Layouts store seat type ids as strings (in each seat and as the room's default type).
+  dependents: () => [
+    { model: PriceRule, field: "seatTypeId" },
+    { model: AuditoriumLayout, field: "seats.type" },
+    { model: AuditoriumLayout, field: "config.defaultSeatType" },
+  ],
 });
