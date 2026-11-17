@@ -69,7 +69,7 @@ Nguồn chính: [firt.dev, iOS PWA compatibility](https://firt.dev/notes/pwa-ios
 
 ### Công cụ kiểm tra có sẵn
 
-Khi chạy dev, nút sóng phát ở mép phải trang (`src/components/dev/dom-recorder.tsx`) ghi cấu trúc DOM, kết quả đo chuẩn mobile (vùng chạm, khoảng cách, chữ nhỏ, cuộn ngang), vùng an toàn, chế độ standalone và từng khung hình khi bàn phím mở hoặc đóng vào `.next/dev-dom.json`. Bật nút trên iPhone, dùng app, rồi đọc file. Tắt nút thì dữ liệu bị xóa.
+Khi chạy dev, nút sóng phát ở mép phải trang (`src/components/dev/dom-recorder.tsx`) ghi cấu trúc DOM, kết quả đo chuẩn mobile (vùng chạm, khoảng cách, chữ nhỏ, cuộn ngang), vùng an toàn, chế độ standalone và từng khung hình khi bàn phím mở hoặc đóng vào `.next/dev-dom.json`. Trang có khối dính cần soi gắn `data-scroll-probe` lên khối đó: khi cuộn, nút ghi vết từng khung hình vị trí khối (`probeTop`, `probeHeight`) và khoảng hở với thanh tiêu đề dính (`gap`); khối dính đúng thì `probeTop` và `gap` không đổi giữa các khung hình. Nút kéo thả được (nhấn giữ rồi kéo) và nhớ vị trí. Bật nút trên iPhone, dùng app, rồi đọc file. Tắt nút thì dữ liệu bị xóa.
 
 ## Service worker (từ Sprint 4)
 
