@@ -103,7 +103,10 @@
         "unknown": "Không lưu được. Hãy thử lại.",
         "last_admin": "Phải còn ít nhất một quản trị viên đang hoạt động.",
         "self": "Bạn không thể tự thực hiện thao tác này với tài khoản của mình.",
-        "no_password": "Tài khoản này không dùng mật khẩu (chỉ đăng nhập bằng Google)."
+        "no_password": "Tài khoản này không dùng mật khẩu (chỉ đăng nhập bằng Google).",
+        "invalid_config": "Cấu hình sơ đồ không hợp lệ. Kiểm tra lại số hàng, số cột và lối đi.",
+        "branch_not_found": "Chi nhánh không còn tồn tại. Hãy chọn lại.",
+        "seat_type_not_found": "Có loại ghế không còn tồn tại. Hãy chọn lại."
       }
     },
     "validation": {
@@ -606,6 +609,128 @@
           "label": "Quảng cáo trước phim (phút)"
         }
       }
+    },
+    "auditoriums": {
+      "title": "Phòng chiếu",
+      "description": "Cấu hình sơ đồ ghế từng phòng.",
+      "addButton": "Thêm phòng chiếu",
+      "emptyTitle": "Chưa có phòng chiếu",
+      "emptyDescription": "Thêm phòng đầu tiên để dựng sơ đồ ghế.",
+      "searchPlaceholder": "Tìm phòng, rạp hoặc thương hiệu",
+      "searchLabel": "Tìm phòng chiếu",
+      "seatCount": "{count, plural, other {# ghế}}",
+      "versionBadge": "Phiên bản {version}",
+      "newTitle": "Thêm phòng chiếu",
+      "versionTitle": "{name}, phiên bản {version}",
+      "needSetup": {
+        "title": "Cần thêm dữ liệu nền trước",
+        "description": "Phòng chiếu cần có chi nhánh và loại ghế. Hãy thêm ở Danh mục.",
+        "action": "Mở Danh mục"
+      },
+      "editor": {
+        "tabsLabel": "Phần chỉnh sửa",
+        "tabs": {
+          "settings": "Thông số",
+          "seats": "Ghế",
+          "versions": "Phiên bản"
+        },
+        "heatmap": "Heatmap điểm ghế",
+        "mapHint": "Kéo hai ngón để phóng to sơ đồ",
+        "fields": {
+          "name": {
+            "label": "Tên phòng",
+            "placeholder": "vd. Phòng 1"
+          },
+          "branch": {
+            "label": "Chi nhánh",
+            "placeholder": "Chọn chi nhánh"
+          },
+          "rows": {
+            "label": "Số hàng"
+          },
+          "cols": {
+            "label": "Số cột"
+          },
+          "rowLabelOrder": {
+            "label": "Nhãn hàng"
+          },
+          "colNumbering": {
+            "label": "Đánh số cột"
+          },
+          "defaultSeatType": {
+            "label": "Loại ghế mặc định",
+            "placeholder": "Chọn loại ghế"
+          },
+          "screenPosition": {
+            "label": "Vị trí màn hình (%)"
+          },
+          "screenWidth": {
+            "label": "Độ rộng màn hình (%)"
+          },
+          "screenDistance": {
+            "label": "Màn hình cách hàng đầu"
+          },
+          "stadiumFromRow": {
+            "label": "Bậc thang từ hàng thứ (tính từ màn hình)",
+            "placeholder": "vd. 3"
+          },
+          "verticalAisles": {
+            "label": "Lối đi dọc (sau cột)"
+          },
+          "horizontalAisles": {
+            "label": "Lối đi ngang (sau hàng)"
+          },
+          "entrances": {
+            "label": "Cửa ra vào"
+          }
+        },
+        "options": {
+          "rowLabelOrder": {
+            "nearScreen": "A gần màn hình",
+            "farScreen": "A xa màn hình"
+          },
+          "colNumbering": {
+            "leftToRight": "Trái sang phải",
+            "rightToLeft": "Phải sang trái"
+          },
+          "distance": {
+            "near": "Gần",
+            "medium": "Vừa",
+            "far": "Xa"
+          },
+          "side": {
+            "left": "Trái",
+            "center": "Giữa",
+            "right": "Phải"
+          },
+          "position": {
+            "front": "Trước",
+            "back": "Sau"
+          },
+          "entrance": "{side} · {position}"
+        },
+        "seats": {
+          "selected": "{count, plural, =0 {Chạm ghế trên sơ đồ để chọn} other {Đã chọn # ô}}",
+          "none": "Không có ghế",
+          "broken": "Ghế hỏng",
+          "obstructed": "Che tầm nhìn",
+          "clear": "Bỏ chọn",
+          "reset": "Đặt lại ô",
+          "typeGroup": "Loại ghế",
+          "flagGroup": "Tình trạng"
+        },
+        "versions": {
+          "current": "Hiện tại",
+          "rowMeta": "{count, plural, other {# ghế}} · {date}",
+          "readOnly": "Đang xem phiên bản {version}. Bản này không sửa trực tiếp.",
+          "editFromThis": "Sửa từ bản này",
+          "summary": "Mô tả cho chatbot",
+          "listLabel": "Các phiên bản"
+        },
+        "fromVersion": "Đang sửa từ phiên bản {version}. Lưu sẽ tạo phiên bản mới.",
+        "saved": "Đã lưu phiên bản {version}",
+        "savedRename": "Đã lưu"
+      }
     }
   },
   "placeholders": {
@@ -613,10 +738,6 @@
       "overview": {
         "title": "Tổng quan quản trị",
         "description": "Sắp có: số liệu tổng quan hệ thống."
-      },
-      "auditoriums": {
-        "title": "Phòng chiếu",
-        "description": "Sắp có: chỉnh sửa phòng chiếu và sơ đồ ghế."
       },
       "movies": {
         "title": "Phim & suất chiếu",

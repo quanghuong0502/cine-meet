@@ -103,7 +103,10 @@
         "unknown": "Couldn't save. Try again.",
         "last_admin": "At least one active admin must remain.",
         "self": "You can't do this to your own account.",
-        "no_password": "This account has no password (Google sign-in only)."
+        "no_password": "This account has no password (Google sign-in only).",
+        "invalid_config": "The seat map settings are not valid. Check rows, columns and aisles.",
+        "branch_not_found": "This cinema no longer exists. Choose another.",
+        "seat_type_not_found": "A seat type no longer exists. Choose again."
       }
     },
     "validation": {
@@ -606,6 +609,128 @@
           "label": "Ads before the movie (minutes)"
         }
       }
+    },
+    "auditoriums": {
+      "title": "Auditoriums",
+      "description": "Set up the seat map of each room.",
+      "addButton": "Add auditorium",
+      "emptyTitle": "No auditoriums yet",
+      "emptyDescription": "Add the first room to build its seat map.",
+      "searchPlaceholder": "Search room, cinema or brand",
+      "searchLabel": "Search auditoriums",
+      "seatCount": "{count, plural, one {# seat} other {# seats}}",
+      "versionBadge": "Version {version}",
+      "newTitle": "Add auditorium",
+      "versionTitle": "{name}, version {version}",
+      "needSetup": {
+        "title": "Add the basics first",
+        "description": "An auditorium needs a cinema and a seat type. Add them in Catalog.",
+        "action": "Open Catalog"
+      },
+      "editor": {
+        "tabsLabel": "Editing section",
+        "tabs": {
+          "settings": "Settings",
+          "seats": "Seats",
+          "versions": "Versions"
+        },
+        "heatmap": "Seat score heatmap",
+        "mapHint": "Pinch to zoom the map",
+        "fields": {
+          "name": {
+            "label": "Room name",
+            "placeholder": "e.g. Room 1"
+          },
+          "branch": {
+            "label": "Cinema",
+            "placeholder": "Choose a cinema"
+          },
+          "rows": {
+            "label": "Rows"
+          },
+          "cols": {
+            "label": "Columns"
+          },
+          "rowLabelOrder": {
+            "label": "Row labels"
+          },
+          "colNumbering": {
+            "label": "Column numbering"
+          },
+          "defaultSeatType": {
+            "label": "Default seat type",
+            "placeholder": "Choose a seat type"
+          },
+          "screenPosition": {
+            "label": "Screen position (%)"
+          },
+          "screenWidth": {
+            "label": "Screen width (%)"
+          },
+          "screenDistance": {
+            "label": "Screen to front row"
+          },
+          "stadiumFromRow": {
+            "label": "Stadium starts at row (from the screen)",
+            "placeholder": "e.g. 3"
+          },
+          "verticalAisles": {
+            "label": "Vertical aisles (after column)"
+          },
+          "horizontalAisles": {
+            "label": "Horizontal aisles (after row)"
+          },
+          "entrances": {
+            "label": "Entrances"
+          }
+        },
+        "options": {
+          "rowLabelOrder": {
+            "nearScreen": "A near the screen",
+            "farScreen": "A far from the screen"
+          },
+          "colNumbering": {
+            "leftToRight": "Left to right",
+            "rightToLeft": "Right to left"
+          },
+          "distance": {
+            "near": "Near",
+            "medium": "Medium",
+            "far": "Far"
+          },
+          "side": {
+            "left": "Left",
+            "center": "Center",
+            "right": "Right"
+          },
+          "position": {
+            "front": "Front",
+            "back": "Back"
+          },
+          "entrance": "{side} · {position}"
+        },
+        "seats": {
+          "selected": "{count, plural, =0 {Tap seats on the map to select} one {# cell selected} other {# cells selected}}",
+          "none": "No seat",
+          "broken": "Broken",
+          "obstructed": "View blocked",
+          "clear": "Deselect",
+          "reset": "Reset cells",
+          "typeGroup": "Seat type",
+          "flagGroup": "Condition"
+        },
+        "versions": {
+          "current": "Current",
+          "rowMeta": "{count, plural, one {# seat} other {# seats}} · {date}",
+          "readOnly": "Viewing version {version}. This version is not edited directly.",
+          "editFromThis": "Edit from this version",
+          "summary": "Description for the chatbot",
+          "listLabel": "Versions"
+        },
+        "fromVersion": "Editing from version {version}. Saving creates a new version.",
+        "saved": "Saved version {version}",
+        "savedRename": "Saved"
+      }
     }
   },
   "placeholders": {
@@ -613,10 +738,6 @@
       "overview": {
         "title": "Admin overview",
         "description": "Coming soon: system overview numbers."
-      },
-      "auditoriums": {
-        "title": "Auditoriums",
-        "description": "Coming soon: auditorium editor and seat maps."
       },
       "movies": {
         "title": "Movies & showtimes",

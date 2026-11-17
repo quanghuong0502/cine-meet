@@ -14,6 +14,9 @@ export type SaveError =
   | "last_admin"
   | "self"
   | "no_password"
+  | "invalid_config"
+  | "branch_not_found"
+  | "seat_type_not_found"
   | "unknown";
 
 export type SaveState =
