@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
+import { ActiveTabStrip } from "@/components/admin/active-tab-strip";
 import { PageHeader } from "@/components/page-header";
 import { MASTER_DATA_SECTIONS } from "@/lib/master-data-sections";
 import { cn } from "@/lib/utils";
@@ -32,7 +33,7 @@ export default async function MasterDataPage({
 
       {/* Tabs scroll sideways inside their own strip when there are more than fit. */}
       <nav aria-label={t("tabsLabel")} className="-mx-4">
-        <ul className="flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <ActiveTabStrip className="relative flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {MASTER_DATA_SECTIONS.map(({ key, icon: Icon }) => {
             const selected = key === active.key;
             return (
@@ -53,7 +54,7 @@ export default async function MasterDataPage({
               </li>
             );
           })}
-        </ul>
+        </ActiveTabStrip>
       </nav>
 
       <List key={active.key} q={q} />
