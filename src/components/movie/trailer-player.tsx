@@ -46,6 +46,14 @@ export function TrailerPlayer({ videoId, title }: { videoId: string; title: stri
   );
 }
 
+/**
+ * iPhone and iPad (including an iPad that says it is a Mac). Their Fullscreen API does not take an iframe reliably, so the player
+ * always expands over the screen there instead of asking the browser for full screen.
+ */
+function isAppleTouchDevice(): boolean {
+  return /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.userAgent.includes("Mac") && navigator.maxTouchPoints > 1);
+}
+
 /** 83 seconds as "1:23". */
 function clock(seconds: number): string {
   const whole = Math.max(0, Math.floor(seconds));
@@ -74,7 +82,7 @@ function Player({ videoId, title }: { videoId: string; title: string }) {
   const [started, setStarted] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(false);
-  // Real full screen where the browser has it; otherwise the player expands over the screen (`player-stage`).
+  // Real full screen where the browser has it (not iPhone or iPad); otherwise the player expands over the screen.
   const [nativeFullscreen, setNativeFullscreen] = useState(false);
   const [expanded, setExpanded] = useState(false);
   // In full screen the bar hides while the video plays (like YouTube); a tap on the video brings it back.
@@ -157,11 +165,15 @@ function Player({ videoId, title }: { videoId: string; title: string }) {
       void document.exitFullscreen().catch(() => undefined);
     } else if (expanded) {
       setExpanded(false);
-    } else if (element && document.fullscreenEnabled && typeof element.requestFullscreen === "function") {
-      element
-        .requestFullscreen()
-        .then(() => (screen.orientation as ScreenOrientation & { lock?: (orientation: "landscape") => Promise<void> } | undefined)?.lock?.("landscape"))
-        .catch(() => setExpanded(true));
+    } else if (element && !isAppleTouchDevice() && document.fullscreenEnabled && typeof element.requestFullscreen === "function") {
+      // Only if the browser refuses full screen do we fall back to expanding; a failed landscape lock must not (it would stack both modes).
+      element.requestFullscreen().then(
+        () => {
+          const orientation = screen.orientation as (ScreenOrientation & { lock?: (orientation: "landscape") => Promise<void> }) | undefined;
+          void orientation?.lock?.("landscape")?.catch(() => undefined);
+        },
+        () => setExpanded(true),
+      );
     } else {
       setExpanded(true);
     }
