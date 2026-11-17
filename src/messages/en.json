@@ -579,6 +579,26 @@
       "lockedToast": "Account locked",
       "unlocked": "Account unlocked",
       "resetPassword": "Reset password"
+    },
+    "systemSettings": {
+      "title": "System settings",
+      "description": "Applies to every user.",
+      "cardDescription": "Reminders, invitation deadline, ad time.",
+      "open": "Open system settings",
+      "fields": {
+        "reminderMinutesBefore": {
+          "label": "Remind before showtime (minutes)",
+          "hint": "Several times, comma-separated, e.g. 1440, 20 (up to 5)"
+        },
+        "responseDeadlineHours": {
+          "label": "Invitation deadline (hours)",
+          "hint": "Hours before the showtime that friends must answer, 1 to 168"
+        },
+        "adMinutes": {
+          "label": "Ads before the movie (minutes)",
+          "hint": "Added to a showtime's end time, 0 to 60"
+        }
+      }
     }
   },
   "placeholders": {
@@ -597,7 +617,7 @@
       },
       "settings": {
         "title": "Settings",
-        "description": "Coming soon: system, AI and notification settings."
+        "description": "Coming soon: AI and notification settings."
       }
     },
     "user": {

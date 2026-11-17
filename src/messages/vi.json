@@ -579,6 +579,26 @@
       "lockedToast": "Đã khóa tài khoản",
       "unlocked": "Đã mở khóa tài khoản",
       "resetPassword": "Đặt lại mật khẩu"
+    },
+    "systemSettings": {
+      "title": "Cài đặt hệ thống",
+      "description": "Áp dụng cho mọi người dùng.",
+      "cardDescription": "Nhắc lịch, hạn phản hồi lời mời, thời gian quảng cáo.",
+      "open": "Mở cài đặt hệ thống",
+      "fields": {
+        "reminderMinutesBefore": {
+          "label": "Nhắc trước giờ chiếu (phút)",
+          "hint": "Nhiều mốc cách nhau dấu phẩy, vd. 1440, 20 (tối đa 5)"
+        },
+        "responseDeadlineHours": {
+          "label": "Hạn phản hồi lời mời (giờ)",
+          "hint": "Số giờ trước giờ chiếu bạn bè cần trả lời, 1 đến 168"
+        },
+        "adMinutes": {
+          "label": "Quảng cáo trước phim (phút)",
+          "hint": "Cộng vào giờ kết thúc suất chiếu, 0 đến 60"
+        }
+      }
     }
   },
   "placeholders": {
@@ -597,7 +617,7 @@
       },
       "settings": {
         "title": "Cài đặt",
-        "description": "Sắp có: cài đặt hệ thống, AI và thông báo."
+        "description": "Sắp có: cài đặt AI và thông báo."
       }
     },
     "user": {
