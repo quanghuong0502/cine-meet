@@ -43,6 +43,13 @@ describe("SeatMap", () => {
     expect(html).toContain('aria-pressed="true"');
   });
 
+  it("draws the selection ring with a fixed screen width, so it does not thicken when zoomed", () => {
+    const html = render({ onSeatTap: () => {}, selectedCodes: new Set(["A1"]) });
+    const ring = html.match(/<rect[^>]*stroke="var\(--foreground\)"[^>]*>/g)?.find((r) => r.includes('stroke-width="1.5"'));
+    expect(ring).toBeDefined();
+    expect(ring).toContain('vector-effect="non-scaling-stroke"');
+  });
+
   it("draws removed cells as tappable outlines and keeps the grid size", () => {
     const html = render({ onEmptyTap: () => {}, emptyCells: [{ code: "A1", x: 0.5, y: 2.5 }] }, { overrides: [{ row: "A", cols: [1], type: "none" }] });
     expect(html.match(/data-seat="A1"/g)?.length).toBe(2);

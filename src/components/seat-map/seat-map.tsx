@@ -55,6 +55,8 @@ function mapPadding(geometry: LayoutGeometry) {
 const SEAT = 0.84;
 /** Zoom level from which the seat code (row and number, e.g. F12) is drawn inside the seats. */
 const LABELS_FROM_SCALE = 1.8;
+/** Width of the selection ring in screen pixels (`non-scaling-stroke`): it stays this thin at every zoom instead of growing with it. */
+const SELECT_RING_PX = 1.5;
 const DEFAULT_COLOR = "var(--muted-foreground)";
 
 interface LayerProps extends Omit<SeatMapProps, "className" | "onSeatTap" | "onRowTap" | "onColTap" | "maxHeight"> {
@@ -162,7 +164,7 @@ const MapLayer = memo(function MapLayer({
         const selected = selectedCodes?.has(cell.code);
         return (
           <g key={`e${cell.code}`} data-seat={cell.code} role={interactive ? "button" : undefined} tabIndex={interactive ? 0 : undefined} aria-pressed={interactive ? !!selected : undefined} aria-label={interactive ? cell.code : undefined} className={cn("outline-none", interactive && "cursor-pointer")}>
-            <rect data-seat={cell.code} x={cell.x - SEAT / 2} y={cell.y - SEAT / 2} width={SEAT} height={SEAT} rx={0.2} fill="transparent" stroke={selected ? "var(--foreground)" : "var(--border)"} strokeWidth={selected ? 0.08 : 0.07} strokeDasharray="0.16 0.12" />
+            <rect data-seat={cell.code} x={cell.x - SEAT / 2} y={cell.y - SEAT / 2} width={SEAT} height={SEAT} rx={0.2} fill="transparent" stroke={selected ? "var(--foreground)" : "var(--border)"} strokeWidth={selected ? SELECT_RING_PX : 1} strokeDasharray="3 3" vectorEffect="non-scaling-stroke" />
           </g>
         );
       })}
@@ -201,7 +203,7 @@ const MapLayer = memo(function MapLayer({
               />
             ) : null}
             {selected ? (
-              <rect x={seat.x - w / 2 - 0.03} y={seat.y - SEAT / 2 - 0.03} width={w + 0.06} height={SEAT + 0.06} rx={0.23} fill="none" stroke="var(--foreground)" strokeWidth={0.07} pointerEvents="none" />
+              <rect x={seat.x - w / 2 - 0.03} y={seat.y - SEAT / 2 - 0.03} width={w + 0.06} height={SEAT + 0.06} rx={0.23} fill="none" stroke="var(--foreground)" strokeWidth={SELECT_RING_PX} vectorEffect="non-scaling-stroke" pointerEvents="none" />
             ) : null}
             {labels && !broken ? (
               <text x={seat.x} y={seat.y + 0.12} textAnchor="middle" fontSize={seat.code.length > 3 ? 0.28 : 0.34} fontWeight={600} fill={showHeatmap ? heatTextColor(seat.score, min, max) : "#fff"} pointerEvents="none" style={showHeatmap ? undefined : { textShadow: "0 0 2px rgba(0,0,0,0.6)" }}>
