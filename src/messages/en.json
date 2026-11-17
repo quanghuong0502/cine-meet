@@ -1009,7 +1009,8 @@
       "description": "This movie has no upcoming showtimes."
     },
     "trailer": {
-      "play": "Play trailer of {title}",
+      "watch": "Watch trailer",
+      "play": "Watch trailer of {title}",
       "playerTitle": "Trailer of {title}",
       "openYoutube": "Watch on YouTube"
     },

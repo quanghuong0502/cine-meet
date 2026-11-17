@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import { EmptyState } from "@/components/empty-state";
 import { AgeRatingBadge } from "@/components/movie/age-rating-badge";
 import { MovieShowtimes } from "@/components/movie/movie-showtimes";
-import { TrailerEmbed } from "@/components/movie/trailer-embed";
+import { TrailerSheet } from "@/components/movie/trailer-sheet";
 import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
 import { requireUser } from "@/lib/auth/guards";
@@ -89,10 +89,9 @@ export default async function MovieDetailPage({ params }: Props) {
               ))}
             </p>
           ) : null}
+          {movie.trailer ? <TrailerSheet videoId={movie.trailer.videoId} title={movie.title} /> : null}
         </div>
       </section>
-
-      {movie.trailer ? <TrailerEmbed videoId={movie.trailer.videoId} title={movie.title} className="-mb-5" /> : null}
 
       <dl className="flex flex-col gap-3 text-sm">
         {facts

@@ -1009,7 +1009,8 @@
       "description": "Phim này chưa có suất nào sắp tới."
     },
     "trailer": {
-      "play": "Phát trailer {title}",
+      "watch": "Xem trailer",
+      "play": "Xem trailer {title}",
       "playerTitle": "Trailer {title}",
       "openYoutube": "Xem trên YouTube"
     },
