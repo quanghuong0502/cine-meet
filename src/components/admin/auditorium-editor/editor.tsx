@@ -2,7 +2,6 @@
 
 import { LoaderCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -19,10 +18,9 @@ import { cn } from "@/lib/utils";
 import { buildLayout } from "@/services/seat-layout-build";
 import { SeatsPanel } from "./seats-panel";
 import { SettingsPanel } from "./settings-panel";
-import type { EditorSeatType, EditorVersion } from "./types";
-import { VersionsPanel } from "./versions-panel";
+import type { EditorSeatType } from "./types";
 
-type Tab = "settings" | "seats" | "versions";
+type Tab = "settings" | "seats";
 
 /** One height for the map on every tab: switching tabs must not make it jump or resize. */
 const MAP_MAX_HEIGHT = "36dvh";
@@ -33,28 +31,21 @@ interface Props {
   branches: { value: string; label: string }[];
   seatTypes: EditorSeatType[];
   initialConfig: LayoutConfig;
-  versions: EditorVersion[];
-  /** Read-only view of an older version: no editing, only a way to start from it. */
-  viewing: { layoutId: string; version: number } | null;
-  /** Editing a copy of this older version: saving creates a new version. */
-  fromVersion: number | null;
   backHref: string;
-  /** `?back=...` to carry over to links within the room's screens. */
-  backParam: string;
 }
 
 /**
  * The room editor: the map on top (always visible, updates as you type or drag), the controls below in three tabs.
- * Saving sends the whole layout config; the server validates it and, if it changed, stores it as a new version.
+ * Saving sends the whole layout config; the server validates it and stores it (a changed layout becomes a new version in the
+ * data; the screen does not show versions).
  */
-export function AuditoriumEditor({ auditorium, branches, seatTypes, initialConfig, versions, viewing, fromVersion, backHref, backParam }: Props) {
+export function AuditoriumEditor({ auditorium, branches, seatTypes, initialConfig, backHref }: Props) {
   const t = useTranslations("admin.auditoriums.editor");
   const tc = useTranslations("admin.common");
   const router = useRouter();
-  const readOnly = viewing !== null;
   const editing = auditorium !== null;
 
-  const [tab, setTab] = useState<Tab>(readOnly ? "versions" : "settings");
+  const [tab, setTab] = useState<Tab>("settings");
   const [name, setName] = useState(auditorium?.name ?? "");
   const [branchId, setBranchId] = useState(auditorium?.branchId ?? "");
   const [config, setConfig] = useState(initialConfig);
@@ -93,7 +84,7 @@ export function AuditoriumEditor({ auditorium, branches, seatTypes, initialConfi
     return codes;
   }, [selected, seatByCell]);
 
-  const inSeatsTab = tab === "seats" && !readOnly;
+  const inSeatsTab = tab === "seats";
 
   function toggleCells(cells: Cell[]) {
     setSelected((current) => {
@@ -130,7 +121,7 @@ export function AuditoriumEditor({ auditorium, branches, seatTypes, initialConfi
       try {
         const result = await saveAuditoriumAction({ id: auditorium?.id, branchId: branchId || auditorium?.branchId || "", name, config });
         if (result.status === "success") {
-          toast.success(result.createdVersion ? t("saved", { version: result.version }) : t("savedRename"));
+          toast.success(tc("saved"));
           router.replace(backHref);
           return;
         }
@@ -146,13 +137,10 @@ export function AuditoriumEditor({ auditorium, branches, seatTypes, initialConfi
     });
   }
 
-  const tabs: { key: Tab; label: string }[] = readOnly
-    ? []
-    : [
-        { key: "settings", label: t("tabs.settings") },
-        { key: "seats", label: t("tabs.seats") },
-        ...(editing ? [{ key: "versions" as const, label: t("tabs.versions") }] : []),
-      ];
+  const tabs: { key: Tab; label: string }[] = [
+    { key: "settings", label: t("tabs.settings") },
+    { key: "seats", label: t("tabs.seats") },
+  ];
 
   return (
     <div className="flex flex-1 flex-col gap-4">
@@ -188,33 +176,25 @@ export function AuditoriumEditor({ auditorium, branches, seatTypes, initialConfi
         </div>
       </div>
 
-      {readOnly ? (
-        <p className="rounded-xl border bg-card px-4 py-3 text-sm text-muted-foreground">{t("versions.readOnly", { version: viewing.version })}</p>
-      ) : fromVersion !== null ? (
-        <p className="rounded-xl border bg-card px-4 py-3 text-sm text-muted-foreground">{t("fromVersion", { version: fromVersion })}</p>
-      ) : null}
+      <div role="tablist" aria-label={t("tabsLabel")} className="flex gap-2">
+        {tabs.map(({ key, label }) => (
+          <button
+            key={key}
+            type="button"
+            role="tab"
+            aria-selected={tab === key}
+            onClick={() => setTab(key)}
+            className={cn(
+              "h-target flex-1 rounded-full border px-3 text-sm font-medium outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
+              tab === key ? "border-transparent bg-primary text-primary-foreground" : "bg-card text-muted-foreground",
+            )}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
 
-      {tabs.length > 0 ? (
-        <div role="tablist" aria-label={t("tabsLabel")} className="flex gap-2">
-          {tabs.map(({ key, label }) => (
-            <button
-              key={key}
-              type="button"
-              role="tab"
-              aria-selected={tab === key}
-              onClick={() => setTab(key)}
-              className={cn(
-                "h-target flex-1 rounded-full border px-3 text-sm font-medium outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
-                tab === key ? "border-transparent bg-primary text-primary-foreground" : "bg-card text-muted-foreground",
-              )}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-      ) : null}
-
-      {tab === "settings" && !readOnly ? (
+      {tab === "settings" ? (
         <SettingsPanel
           name={name}
           onName={(v) => {
@@ -239,7 +219,7 @@ export function AuditoriumEditor({ auditorium, branches, seatTypes, initialConfi
         />
       ) : null}
 
-      {tab === "seats" && !readOnly ? (
+      {tab === "seats" ? (
         <SeatsPanel
           seatTypes={seatTypes}
           selectedCount={selected.size}
@@ -252,34 +232,22 @@ export function AuditoriumEditor({ auditorium, branches, seatTypes, initialConfi
         />
       ) : null}
 
-      {tab === "versions" && auditorium ? (
-        <VersionsPanel auditoriumId={auditorium.id} versions={versions} viewingId={viewing?.layoutId} summary={built.summary} backParam={backParam} />
-      ) : null}
-
       {/* Room for the fixed bar, so the last control can scroll clear of it. */}
       <div aria-hidden className="h-[calc(var(--spacing-control)+2.5rem)] shrink-0" />
 
       <div data-save-bar className="pointer-events-none fixed inset-x-0 bottom-0 z-30 bg-gradient-to-t from-background via-background to-transparent px-4 pt-6 pb-[max(1rem,env(safe-area-inset-bottom))] md:left-64">
         <div className="mx-auto flex max-w-sm items-center gap-2">
-          {readOnly && auditorium ? (
-            <Button asChild size="cta" className="pointer-events-auto min-w-0 flex-1">
-              <Link href={`/admin/auditoriums/${auditorium.id}?from=${viewing.layoutId}${backParam ? `&${backParam.slice(1)}` : ""}`}>{t("versions.editFromThis")}</Link>
-            </Button>
-          ) : (
-            <>
-              {auditorium ? <DeleteRecordButton id={auditorium.id} name={auditorium.name} backHref={backHref} removeAction={removeAuditoriumAction} /> : null}
-              <Button type="button" size="cta" disabled={pending} onClick={save} className="pointer-events-auto min-w-0 flex-1">
-                {pending ? (
-                  <>
-                    <LoaderCircle className="motion-safe:animate-spin" aria-hidden />
-                    {tc("saving")}
-                  </>
-                ) : (
-                  tc("save")
-                )}
-              </Button>
-            </>
-          )}
+          {auditorium ? <DeleteRecordButton id={auditorium.id} name={auditorium.name} backHref={backHref} removeAction={removeAuditoriumAction} /> : null}
+          <Button type="button" size="cta" disabled={pending} onClick={save} className="pointer-events-auto min-w-0 flex-1">
+            {pending ? (
+              <>
+                <LoaderCircle className="motion-safe:animate-spin" aria-hidden />
+                {tc("saving")}
+              </>
+            ) : (
+              tc("save")
+            )}
+          </Button>
         </div>
       </div>
     </div>

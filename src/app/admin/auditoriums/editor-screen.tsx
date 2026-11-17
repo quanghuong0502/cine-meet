@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { resolveBackHref } from "@/lib/admin/back-href";
 import { defaultLayoutConfig } from "@/lib/seat-layout/config";
 import type { LayoutConfig } from "@/lib/seat-layout/types";
-import { getAuditorium, getLayout, listLayoutVersions } from "@/services/auditorium.service";
+import { getAuditorium, getLayout } from "@/services/auditorium.service";
 import { branchService } from "@/services/master-data/branch.service";
 import { getBrandOptions } from "@/services/master-data/brand-options";
 import { seatTypeService } from "@/services/master-data/seat-type.service";
@@ -16,19 +16,14 @@ import { seatTypeService } from "@/services/master-data/seat-type.service";
 interface Props {
   /** Null when adding a room. */
   id: string | null;
-  /** Layout id to look at read-only. */
-  version?: string;
-  /** Layout id to start editing from. */
-  from?: string;
   back?: string;
 }
 
-/** The entry screen of a room (add, edit, or look at an older version): loads what the editor needs. */
-export async function AuditoriumEditorScreen({ id, version, from, back }: Props) {
+/** The entry screen of a room (add or edit): loads what the editor needs. */
+export async function AuditoriumEditorScreen({ id, back }: Props) {
   const t = await getTranslations("admin.auditoriums");
   const locale = await getLocale();
   const backHref = resolveBackHref(back, "/admin/auditoriums");
-  const backParam = back ? `?back=${encodeURIComponent(back)}` : "";
 
   const [branches, brands, types] = await Promise.all([branchService.list({}), getBrandOptions(), seatTypeService.list({})]);
   if (branches.length === 0 || types.length === 0) {
@@ -69,11 +64,7 @@ export async function AuditoriumEditorScreen({ id, version, from, back }: Props)
           branches={branchOptions}
           seatTypes={seatTypes}
           initialConfig={defaultLayoutConfig(defaultType.id)}
-          versions={[]}
-          viewing={null}
-          fromVersion={null}
           backHref={backHref}
-          backParam={backParam}
         />
       </div>
     );
@@ -82,26 +73,19 @@ export async function AuditoriumEditorScreen({ id, version, from, back }: Props)
   const room = await getAuditorium(id);
   if (!room) notFound();
   const current = await getLayout(id);
-  const target = version ? await getLayout(id, version) : from ? await getLayout(id, from) : current;
-  if (!current || !target) notFound();
-  const history = await listLayoutVersions(id);
-  const viewing = version ? { layoutId: target._id.toString(), version: target.version } : null;
+  if (!current) notFound();
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-4 p-4">
-      <PageHeader title={viewing ? t("versionTitle", { name: room.name, version: viewing.version }) : room.name} backHref={viewing ? `/admin/auditoriums/${id}${backParam}` : backHref} />
+      <PageHeader title={room.name} backHref={backHref} />
       <AuditoriumEditor
-        // Different version or room: start the editor's state from scratch.
-        key={`${id}:${target._id.toString()}:${viewing ? "view" : "edit"}`}
+        // Another room: start the editor's state from scratch.
+        key={id}
         auditorium={{ id, name: room.name, branchId: room.branchId.toString() }}
         branches={branchOptions}
         seatTypes={seatTypes}
-        initialConfig={target.config as LayoutConfig}
-        versions={history.map((v) => ({ id: v.id, version: v.version, seatCount: v.seatCount, createdAt: v.createdAt.toISOString(), current: v.id === current._id.toString() }))}
-        viewing={viewing}
-        fromVersion={!viewing && from && target._id.toString() !== current._id.toString() ? target.version : null}
+        initialConfig={current.config as LayoutConfig}
         backHref={backHref}
-        backParam={backParam}
       />
     </div>
   );

@@ -32,7 +32,7 @@ export default async function AdminAuditoriumsPage({ searchParams }: { searchPar
       id: room.id,
       title: room.name,
       subtitle: where || undefined,
-      meta: [t("seatCount", { count: room.seatCount }), t("versionBadge", { version: room.version })],
+      meta: [t("seatCount", { count: room.seatCount })],
     }));
 
   return (

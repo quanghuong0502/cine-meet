@@ -12,9 +12,9 @@ export default async function EditAuditoriumPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ version?: string; from?: string; back?: string }>;
+  searchParams: Promise<{ back?: string }>;
 }) {
   const { id } = await params;
-  const { version, from, back } = await searchParams;
-  return <AuditoriumEditorScreen id={id} version={version} from={from} back={back} />;
+  const { back } = await searchParams;
+  return <AuditoriumEditorScreen id={id} back={back} />;
 }

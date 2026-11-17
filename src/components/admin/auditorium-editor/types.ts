@@ -5,12 +5,3 @@ export interface EditorSeatType {
   color: string | null;
   capacity: number;
 }
-
-export interface EditorVersion {
-  id: string;
-  version: number;
-  seatCount: number;
-  /** ISO string. */
-  createdAt: string;
-  current: boolean;
-}

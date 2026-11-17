@@ -619,9 +619,7 @@
       "searchPlaceholder": "Tìm phòng, rạp hoặc thương hiệu",
       "searchLabel": "Tìm phòng chiếu",
       "seatCount": "{count, plural, other {# ghế}}",
-      "versionBadge": "Phiên bản {version}",
       "newTitle": "Thêm phòng chiếu",
-      "versionTitle": "{name}, phiên bản {version}",
       "needSetup": {
         "title": "Cần thêm dữ liệu nền trước",
         "description": "Phòng chiếu cần có chi nhánh và loại ghế. Hãy thêm ở Danh mục.",
@@ -631,8 +629,7 @@
         "tabsLabel": "Phần chỉnh sửa",
         "tabs": {
           "settings": "Thông số",
-          "seats": "Ghế",
-          "versions": "Phiên bản"
+          "seats": "Ghế"
         },
         "heatmap": "Heatmap điểm ghế",
         "mapHint": "Kéo hai ngón để phóng to sơ đồ",
@@ -718,18 +715,7 @@
           "reset": "Đặt lại ô",
           "typeGroup": "Loại ghế",
           "flagGroup": "Tình trạng"
-        },
-        "versions": {
-          "current": "Hiện tại",
-          "rowMeta": "{count, plural, other {# ghế}} · {date}",
-          "readOnly": "Đang xem phiên bản {version}. Bản này không sửa trực tiếp.",
-          "editFromThis": "Sửa từ bản này",
-          "summary": "Mô tả cho chatbot",
-          "listLabel": "Các phiên bản"
-        },
-        "fromVersion": "Đang sửa từ phiên bản {version}. Lưu sẽ tạo phiên bản mới.",
-        "saved": "Đã lưu phiên bản {version}",
-        "savedRename": "Đã lưu"
+        }
       }
     }
   },

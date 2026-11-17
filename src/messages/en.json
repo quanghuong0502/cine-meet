@@ -619,9 +619,7 @@
       "searchPlaceholder": "Search room, cinema or brand",
       "searchLabel": "Search auditoriums",
       "seatCount": "{count, plural, one {# seat} other {# seats}}",
-      "versionBadge": "Version {version}",
       "newTitle": "Add auditorium",
-      "versionTitle": "{name}, version {version}",
       "needSetup": {
         "title": "Add the basics first",
         "description": "An auditorium needs a cinema and a seat type. Add them in Catalog.",
@@ -631,8 +629,7 @@
         "tabsLabel": "Editing section",
         "tabs": {
           "settings": "Settings",
-          "seats": "Seats",
-          "versions": "Versions"
+          "seats": "Seats"
         },
         "heatmap": "Seat score heatmap",
         "mapHint": "Pinch to zoom the map",
@@ -718,18 +715,7 @@
           "reset": "Reset cells",
           "typeGroup": "Seat type",
           "flagGroup": "Condition"
-        },
-        "versions": {
-          "current": "Current",
-          "rowMeta": "{count, plural, one {# seat} other {# seats}} · {date}",
-          "readOnly": "Viewing version {version}. This version is not edited directly.",
-          "editFromThis": "Edit from this version",
-          "summary": "Description for the chatbot",
-          "listLabel": "Versions"
-        },
-        "fromVersion": "Editing from version {version}. Saving creates a new version.",
-        "saved": "Saved version {version}",
-        "savedRename": "Saved"
+        }
       }
     }
   },
