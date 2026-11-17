@@ -54,6 +54,38 @@ describe("SeatMap", () => {
   });
 });
 
+describe("SeatMap entrances", () => {
+  /** y and height of the outlined door bars, and the baseline of the column numbers. */
+  function doors(html: string) {
+    return [...html.matchAll(/<rect x="[^"]+" y="([^"]+)" width="[^"]+" height="[^"]+" rx="0.08" fill="none" stroke="var\(--primary\)"/g)].map((m) => Number(m[1]));
+  }
+
+  it("draws a back-centre door below the column numbers, labelled, not over them", () => {
+    const config = { ...defaultLayoutConfig("std"), rows: 4, cols: 6, entrances: [{ side: "center" as const, position: "back" as const }] };
+    const html = render({}, config);
+    const { lastRowY } = buildLayout({ ...defaultLayoutConfig("std"), rows: 4, cols: 6 }, TYPES).geometry;
+    const [top] = doors(html);
+    // Column numbers are drawn at lastRowY + 1.2 (baseline); the bar must start below that.
+    expect(top).toBeGreaterThan(lastRowY + 1.2 + 0.15);
+    expect(html).toContain(">Cửa<");
+    expect(html).toContain("<title>Cửa ra vào</title>");
+  });
+
+  it("outlines the door instead of filling it, so it cannot be mistaken for a selected seat", () => {
+    const html = render({}, { entrances: [{ side: "right", position: "back" }] });
+    expect(doors(html)).toHaveLength(1);
+    expect(html).not.toMatch(/<rect[^>]*fill="var\(--primary\)" opacity="0.75"/);
+  });
+
+  it("makes room only on the side that has a door", () => {
+    const viewBox = (patch: object) => /viewBox="([^"]+)"/.exec(render({}, patch))![1].split(" ").map(Number);
+    const none = viewBox({ entrances: [] });
+    const left = viewBox({ entrances: [{ side: "left", position: "back" }] });
+    expect(left[0]).toBeLessThan(none[0]);
+    expect(left[2]).toBeGreaterThan(none[2]);
+  });
+});
+
 describe("heatColor", () => {
   it("runs from dark blue to yellow and copes with equal scores", () => {
     expect(heatColor(0, 0, 10)).toBe("rgb(27 42 107)");

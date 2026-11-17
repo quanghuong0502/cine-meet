@@ -857,7 +857,7 @@
   "seatMap": {
     "label": "Sơ đồ ghế",
     "screen": "MÀN HÌNH",
-    "door": "Cửa ra vào",
+    "door": "Cửa",
     "seat": "Ghế {code}, {type}",
     "score": "điểm {score}",
     "broken": "ghế hỏng",
@@ -866,6 +866,7 @@
     "zoomOut": "Thu nhỏ",
     "zoomReset": "Đặt lại",
     "heatLow": "Điểm thấp",
-    "heatHigh": "Điểm cao"
+    "heatHigh": "Điểm cao",
+    "doorLabel": "Cửa ra vào"
   }
 }

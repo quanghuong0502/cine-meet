@@ -36,7 +36,22 @@ export interface SeatMapProps {
 }
 
 // Space around the seats, in layout units (1 unit = one seat pitch).
-const PAD = { left: 1.6, right: 1.2, top: 1.1, bottom: 2.4 };
+const BASE_PAD = { left: 1.6, right: 0.8, top: 1.1, bottom: 2.4 };
+/** Width of the strip left of the seats that holds row labels (and their tap area). */
+const ROW_LABEL_STRIP = 1.5;
+
+/** Room around the seats; grows only on the side that has an entrance, which needs space for its bar and its "Door" label. */
+function mapPadding(geometry: LayoutGeometry) {
+  const has = (side: string, position: string) => geometry.entrances.some((e) => e.side === side && e.position === position);
+  const side = (name: string) => geometry.entrances.some((e) => e.side === name);
+  return {
+    left: side("left") ? 2.3 : BASE_PAD.left,
+    right: side("right") ? 1.9 : BASE_PAD.right,
+    // A front-centre door sits above the screen; a back-centre door sits below the column numbers.
+    top: has("center", "front") ? 2.2 : BASE_PAD.top,
+    bottom: has("center", "back") ? 3.5 : BASE_PAD.bottom,
+  };
+}
 const SEAT = 0.84;
 /** Zoom level from which seat numbers (or scores) are drawn inside the seats. */
 const LABELS_FROM_SCALE = 1.8;
@@ -50,6 +65,7 @@ interface LayerProps extends Omit<SeatMapProps, "className" | "onSeatTap" | "onR
   screenLabel: string;
   seatAria: (seat: LayoutSeat, typeName: string) => string;
   doorLabel: string;
+  doorText: string;
 }
 
 /** Everything that does not change while zooming, so a pinch never re-renders hundreds of seats. */
@@ -67,6 +83,7 @@ const MapLayer = memo(function MapLayer({
   screenLabel,
   seatAria,
   doorLabel,
+  doorText,
 }: LayerProps) {
   const types = useMemo(() => new Map(seatTypes.map((t) => [t.id, t])), [seatTypes]);
   const { min, max } = useMemo(() => {
@@ -96,17 +113,24 @@ const MapLayer = memo(function MapLayer({
         <line key={`h${y}`} x1={0} x2={g.width} y1={y} y2={y} stroke="var(--border)" strokeWidth={0.06} strokeDasharray="0.2 0.2" />
       ))}
 
-      {/* Entrances */}
+      {/* Entrances: an outlined bar (not a filled one, so it is not mistaken for a selected seat) with a short "Door" label. */}
       {g.entrances.map((e) => {
         const vertical = e.side !== "center";
         const w = vertical ? 0.28 : 1.2;
         const h = vertical ? 1.2 : 0.28;
-        const cx = e.side === "left" ? -0.5 : e.side === "right" ? g.width + 0.5 : e.x;
-        const cy = vertical ? e.y : e.position === "front" ? g.firstRowY - 0.95 : g.lastRowY + 0.95;
+        const cx = e.side === "left" ? -1.5 : e.side === "right" ? g.width + 0.6 : e.x;
+        const cy = vertical ? e.y : e.position === "front" ? -0.95 : g.lastRowY + 1.9;
+        // Front doors are labelled above the bar, back doors below it, so the label never lands on a seat row or label.
+        const labelY = e.position === "front" ? cy - h / 2 - 0.2 : cy + h / 2 + 0.5;
         return (
-          <rect key={`${e.side}-${e.position}`} x={cx - w / 2} y={cy - h / 2} width={w} height={h} rx={0.08} fill="var(--primary)" opacity={0.75}>
-            <title>{doorLabel}</title>
-          </rect>
+          <g key={`${e.side}-${e.position}`}>
+            <rect x={cx - w / 2} y={cy - h / 2} width={w} height={h} rx={0.08} fill="none" stroke="var(--primary)" strokeWidth={0.08}>
+              <title>{doorLabel}</title>
+            </rect>
+            <text x={cx} y={labelY} textAnchor="middle" fontSize={0.42} fill="var(--muted-foreground)" pointerEvents="none">
+              {doorText}
+            </text>
+          </g>
         );
       })}
 
@@ -115,7 +139,7 @@ const MapLayer = memo(function MapLayer({
         const y = g.rowY[i];
         return (
           <g key={`r${label}`} data-row={label} className={rowLabelsTappable ? "cursor-pointer" : undefined}>
-            {rowLabelsTappable ? <rect data-row={label} x={-PAD.left} y={y - 0.5} width={PAD.left - 0.1} height={1} fill="transparent" /> : null}
+            {rowLabelsTappable ? <rect data-row={label} x={-ROW_LABEL_STRIP} y={y - 0.5} width={ROW_LABEL_STRIP - 0.1} height={1} fill="transparent" /> : null}
             <text x={-0.85} y={y + 0.17} textAnchor="middle" fontSize={0.5} fill="var(--muted-foreground)" pointerEvents="none">
               {label}
             </text>
@@ -238,8 +262,9 @@ export function SeatMap({
     },
   });
 
-  const viewW = geometry.width + PAD.left + PAD.right;
-  const viewH = geometry.height + PAD.top + PAD.bottom;
+  const pad = useMemo(() => mapPadding(geometry), [geometry]);
+  const viewW = geometry.width + pad.left + pad.right;
+  const viewH = geometry.height + pad.top + pad.bottom;
 
   const seatAria = (seat: LayoutSeat, typeName: string) =>
     [
@@ -262,7 +287,7 @@ export function SeatMap({
       >
         <div ref={contentRef} className="size-full origin-top-left will-change-transform">
           <svg
-            viewBox={`${-PAD.left} ${-PAD.top} ${viewW} ${viewH}`}
+            viewBox={`${-pad.left} ${-pad.top} ${viewW} ${viewH}`}
             className="size-full"
             role="group"
             aria-label={t("label")}
@@ -281,7 +306,8 @@ export function SeatMap({
               colLabelsTappable={!!onColTap}
               screenLabel={t("screen")}
               seatAria={seatAria}
-              doorLabel={t("door")}
+              doorLabel={t("doorLabel")}
+              doorText={t("door")}
             />
           </svg>
         </div>

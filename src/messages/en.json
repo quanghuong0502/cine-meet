@@ -857,7 +857,7 @@
   "seatMap": {
     "label": "Seat map",
     "screen": "SCREEN",
-    "door": "Entrance",
+    "door": "Door",
     "seat": "Seat {code}, {type}",
     "score": "score {score}",
     "broken": "broken",
@@ -866,6 +866,7 @@
     "zoomOut": "Zoom out",
     "zoomReset": "Reset",
     "heatLow": "Low score",
-    "heatHigh": "High score"
+    "heatHigh": "High score",
+    "doorLabel": "Entrance"
   }
 }
