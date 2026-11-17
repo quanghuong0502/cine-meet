@@ -6,7 +6,7 @@ import { memo, useCallback, useMemo, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import type { LayoutGeometry, LayoutSeat } from "@/lib/seat-layout/types";
 import { cn } from "@/lib/utils";
-import { heatColor } from "./heat-color";
+import { heatColor, heatRange } from "./heat-color";
 import { MAX_SCALE, MIN_SCALE, usePanZoom } from "./use-pan-zoom";
 
 export interface SeatMapSeatType {
@@ -86,10 +86,7 @@ const MapLayer = memo(function MapLayer({
   doorText,
 }: LayerProps) {
   const types = useMemo(() => new Map(seatTypes.map((t) => [t.id, t])), [seatTypes]);
-  const { min, max } = useMemo(() => {
-    const scores = seats.map((s) => s.score);
-    return { min: Math.min(...scores), max: Math.max(...scores) };
-  }, [seats]);
+  const { min, max } = useMemo(() => heatRange(seats), [seats]);
 
   const g = geometry;
   const sx1 = g.screen.x1;

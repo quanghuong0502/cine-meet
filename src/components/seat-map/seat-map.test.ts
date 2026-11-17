@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import vi from "@/messages/vi.json";
 import { defaultLayoutConfig } from "@/lib/seat-layout/config";
 import { buildLayout } from "@/services/seat-layout-build";
-import { heatColor } from "./heat-color";
+import { heatColor, heatRange } from "./heat-color";
 import { SeatMap } from "./seat-map";
 
 const TYPES = [
@@ -92,5 +92,24 @@ describe("heatColor", () => {
     expect(heatColor(10, 0, 10)).toBe("rgb(242 211 56)");
     expect(heatColor(5, 5, 5)).toBe("rgb(242 211 56)");
     expect(heatColor(0, 0, 10)).not.toBe(heatColor(5, 0, 10));
+  });
+});
+
+describe("heatRange", () => {
+  it("ignores broken and blocked seats so one bad seat does not flatten the scale", () => {
+    const seats = [
+      { score: 0, flags: ["broken"] },
+      { score: 25, flags: ["obstructed"] },
+      { score: 60, flags: [] },
+      { score: 90, flags: [] },
+    ];
+    expect(heatRange(seats)).toEqual({ min: 60, max: 90 });
+    // The broken seat still gets a colour: the low end.
+    expect(heatColor(0, 60, 90)).toBe(heatColor(60, 60, 90));
+  });
+
+  it("uses every seat when none is normal, and copes with no seats", () => {
+    expect(heatRange([{ score: 10, flags: ["broken"] }, { score: 30, flags: ["broken"] }])).toEqual({ min: 10, max: 30 });
+    expect(heatRange([])).toEqual({ min: 0, max: 0 });
   });
 });

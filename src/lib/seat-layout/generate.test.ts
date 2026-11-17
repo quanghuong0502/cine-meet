@@ -150,6 +150,31 @@ describe("scoreSeats", () => {
     expect(door).toBeLessThan(scoreOf(base(), "J16"));
   });
 
+  it("peaks at the ideal depth (65% of the way to the last row) in the middle columns, and is symmetric", () => {
+    const cfg = base();
+    const { seats, geometry } = generateGrid(cfg, TYPES);
+    const scored = scoreSeats(seats, cfg, geometry);
+    const best = scored.reduce((a, b) => (b.score > a.score ? b : a));
+    expect(best.row).toBe("F"); // y 7.5 of 11.5 = 0.65
+    expect([8, 9]).toContain(best.col);
+    expect(best.score).toBeGreaterThanOrEqual(95);
+    // Left and right mirror images score the same, row by row.
+    for (const row of ["A", "F", "J"]) {
+      const cells = scored.filter((s) => s.row === row).sort((a, b) => a.col - b.col);
+      expect(cells.map((s) => s.score)).toEqual([...cells].reverse().map((s) => s.score));
+    }
+  });
+
+  it("moves the best row back for a wider screen and forward for a narrower one", () => {
+    const bestRow = (widthPct: number) => {
+      const cfg = { ...base(), screen: { positionPct: 50, widthPct, distance: "medium" as const } };
+      const { seats, geometry } = generateGrid(cfg, TYPES);
+      return scoreSeats(seats, cfg, geometry).reduce((a, b) => (b.score > a.score ? b : a)).rowIndex;
+    };
+    expect(bestRow(100)).toBeGreaterThanOrEqual(bestRow(85));
+    expect(bestRow(40)).toBeLessThanOrEqual(bestRow(85));
+  });
+
   it("stays between 0 and 100", () => {
     const cfg = { ...base(), overrides: [{ row: "A", cols: [1], flags: ["broken" as const, "obstructed" as const] }] };
     const { seats, geometry } = generateGrid(cfg, TYPES);
