@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronRight, LoaderCircle, Plus, Search, Trash2 } from "lucide-react";
+import { LoaderCircle, Plus, Search, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -147,7 +147,6 @@ export function ResourceManager({ items, basePath, query, labels, removeAction, 
                       </span>
                     ) : null}
                   </span>
-                  <ChevronRight className="size-5 shrink-0 text-muted-foreground" aria-hidden />
                 </Link>
                 {removeAction ? (
                 <Button
