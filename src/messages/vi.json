@@ -973,7 +973,6 @@
     "until": "đến {time}",
     "price": "~{amount}",
     "noPrice": "Chưa có giá",
-    "createPlanSoon": "Tạo lịch hẹn (sắp có)",
     "emptyTitle": "Không có suất chiếu",
     "emptyDescription": "Thử chọn ngày khác hoặc bỏ bớt bộ lọc.",
     "filters": {

@@ -973,7 +973,6 @@
     "until": "to {time}",
     "price": "~{amount}",
     "noPrice": "No price yet",
-    "createPlanSoon": "Create plan (coming soon)",
     "emptyTitle": "No showtimes",
     "emptyDescription": "Try another day or remove some filters.",
     "filters": {
