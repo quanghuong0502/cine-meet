@@ -45,7 +45,8 @@ export const MAX_BOTTOM_NAV_ITEMS = 5;
  * the Save button takes its place and the person is working on one thing. Their parent list is the page just above them.
  */
 export function isFocusedAdminRoute(pathname: string): boolean {
-  return /^\/admin\/(master-data|users|auditoriums)\/.+/.test(pathname) || pathname.startsWith("/admin/settings/") || pathname.startsWith("/admin/profile/");
+  // The showtimes list itself is a tab of the Movies page and keeps the bar; its entry screens (bulk, import) hide it.
+  return /^\/admin\/(master-data|users|auditoriums)\/.+/.test(pathname) || /^\/admin\/movies\/(?!showtimes$).+/.test(pathname) || pathname.startsWith("/admin/settings/") || pathname.startsWith("/admin/profile/");
 }
 
 /** The bottom bar shows on every page except entry screens, and also while an entry screen is still loading (`holding`). */
