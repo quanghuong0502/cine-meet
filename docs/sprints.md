@@ -30,7 +30,7 @@ Nguồn chi tiết: `docs/movie-app-mvp-design.md` (số mục ghi ở từng sp
 |---|---|---|---|
 | 0 | Khung nền: scaffold, auth, layout, theme, i18n (vi, en) | — | Xong |
 | 1 | Master data, quản lý người dùng, cài đặt hệ thống, hồ sơ cơ bản | 0 | Xong |
-| 2 | Editor phòng chiếu, sơ đồ ghế, điểm ghế, versioning | 1 | Chờ kiểm tra |
+| 2 | Editor phòng chiếu, sơ đồ ghế, điểm ghế, versioning | 1 | Xong |
 | 3 | Phim (trailer), suất chiếu, trang rạp & lịch chiếu cho user, đánh dấu ghế cá nhân | 2 | Chưa bắt đầu |
 | 4 | Lịch hẹn giai đoạn 1 (mời, vote, chốt người), bạn bè, thông báo in-app, worker, Web Push | 3 | Chưa bắt đầu |
 | 5A | Lịch hẹn giai đoạn 2: chọn suất, xếp ghế, đồ ăn, chi phí, công nợ, xác nhận | 4 | Chưa bắt đầu |
@@ -122,10 +122,10 @@ Trạng thái: Chưa bắt đầu · Đang làm · Chờ kiểm tra · Xong
 **Ngoài phạm vi:** đánh dấu ghế của user, xếp ghế theo lịch hẹn, điểm cộng đồng.
 
 **Tiêu chí hoàn thành**
-- [ ] Tạo một phòng mới, kéo thanh trượt màn hình thì sơ đồ và heatmap đổi theo. (Đã có test hàm; **chờ chủ dự án thử trên điện thoại**.)
+- [x] Tạo một phòng mới, kéo thanh trượt màn hình thì sơ đồ và heatmap đổi theo (chủ dự án đã thử trên điện thoại và duyệt, 2026-11-17).
 - [x] Sửa phòng tạo ra version mới, version cũ vẫn được giữ nguyên (test service `auditorium.service.test.ts`). **Giao diện không hiển thị phiên bản** (chủ dự án bỏ tab Phiên bản, 2026-11-17); dữ liệu vẫn tạo phiên bản mới mỗi lần lưu để suất chiếu và lịch hẹn sau này trỏ đúng sơ đồ cũ.
 - [x] Test điểm ghế: ghế gần tâm lý tưởng điểm cao hơn ghế lệch; ghế hỏng bị phạt (`src/lib/seat-layout/generate.test.ts`).
-- [ ] Dùng được trên điện thoại (cấu hình và xem sơ đồ).
+- [x] Dùng được trên điện thoại (cấu hình và xem sơ đồ), chủ dự án đã duyệt 2026-11-17.
 
 ---
 
@@ -340,7 +340,7 @@ Mỗi sprint xong thêm 3 đến 6 dòng: đã làm gì, còn dở gì, quyết 
 - Quyết định: **mô tả cho chatbot (`summary`) tự tổng hợp từ thông số phòng mỗi lần lưu** (`buildLayoutSummary`), admin không nhập và giao diện không hiển thị; **không có màn hình phiên bản** (chủ dự án bỏ), dữ liệu vẫn giữ phiên bản (`listLayoutVersions` và `getLayout(id, layoutId)` ở service sẵn cho Sprint 3 trở đi); **điểm ghế tính theo mét và góc nhìn thật** (`src/services/seat-score.ts`): góc nhìn ngang tới màn hình (THX tối thiểu 36°, lý tưởng khoảng 40°), góc ngửa cổ tới mép trên màn hình (SMPTE không quá 35°), lệch khỏi trục màn hình, đầu người phía trước che đáy màn hình (tính theo bậc thang, mỗi bậc 0,2 m; phòng không đặt bậc thang coi là phẳng), cân bằng âm thanh theo tâm phòng và độ sâu tham chiếu 65%, cửa, ghế hỏng. Các con số vật lý (ghế rộng 0,55 m, hàng sâu 1,0 m, mắt cao 1,1 m, màn tỉ lệ 2:1 cách sàn 1,0 m) là **giả định** vì layout không có kích thước thật; hệ số và dạng đường cong là phán đoán; nguồn chỉ là bài viết thứ cấp, chưa đọc tài liệu gốc SMPTE/THX. Mọi hằng số gom ở đầu file để chỉnh. Đổi công thức thì chạy `npm run rescore` để tính lại phòng đã lưu. Tâm ngang lý tưởng = tâm màn hình **đã vẽ** (bị kẹt trong phòng nên thanh trượt ở 0% hoặc 100% không đẩy tâm ra tận mép như công thức gốc ở thiết kế 2.3);
   ghế đôi là một ghế chiếm hai ô liền nhau (không ghép qua lối đi hay ô trống); lối đi ngang tính theo thứ tự nhãn hàng, bậc thang tính từ hàng gần màn hình; heatmap tính theo điểm thấp nhất và cao nhất của chính layout đó (không tính ghế hỏng/che tầm nhìn, nếu không một ghế hỏng điểm 0 làm phẳng cả thang)
   (một dải theo màu chủ đạo qua ba mốc: tông tối, `--primary`, tông nhạt; chủ dự án chọn thay cho thang xanh-vàng ban đầu, rồi yêu cầu tăng tương phản nên mở rộng dải; chữ mã ghế đổi sang tối ở đầu nhạt); ghi đè ghế lưu theo ô và gộp về dạng ngắn nhất; loại ghế đang được layout dùng thì không xóa được; phóng sơ đồ bằng cách đổi `viewBox` của SVG (không dùng CSS `transform`/`will-change`, vì bản đó để lộ bóng ma của sơ đồ 1x dưới sơ đồ đã phóng và làm mờ nét); chọn ô trên điện thoại bằng chạm (có chạm nhãn hàng/cột để chọn cả hàng/cột), chưa làm kéo vùng chọn.
-- Còn dở: **chưa thử trên trình duyệt hay điện thoại** (cần đăng nhập admin và chạy `npm run seed:catalog`); chưa đo ở cỡ chữ 125% và 150%; chưa hỗ trợ ghế giường nằm riêng trong heatmap; xóa phòng chưa chặn khi có suất chiếu (Sprint 3 thêm).
+- Còn dở (chuyển sang sprint sau): **chạy `npm run rescore`** để tính lại điểm ghế của phòng đã lưu theo công thức mới (lệnh chưa chạy trên DB dev); chưa đo ở cỡ chữ 125% và 150%; chữ nhãn hàng/cột và "MÀN HÌNH" trong sơ đồ nhỏ hơn 12px ở mức 1× và ghế 16px ở mức 1× (phải phóng to để chọn); chưa hỗ trợ ghế giường nằm riêng trong heatmap; chưa cảnh báo khi dãy ghế đôi có ô lẻ; xóa phòng chưa chặn khi có suất chiếu (Sprint 3 thêm). Chủ dự án đã thử và duyệt Sprint 2 ngày 2026-11-17.
   Cử chỉ pinch và kéo chỉ kiểm tra bằng đọc code, phải thử trên iPhone (vùng chạm slider, `touch-action`, mép trái).
 - File chính: `src/lib/seat-layout/`, `src/services/auditorium.service.ts`, `src/services/seat-score.ts`, `src/components/seat-map/`, `src/components/admin/auditorium-editor/`, `src/app/admin/auditoriums/`.
 
