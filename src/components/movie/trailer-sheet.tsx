@@ -17,7 +17,7 @@ export function TrailerSheet({ videoId, title }: { videoId: string; title: strin
   const [open, setOpen] = useState(false);
   return (
     <Drawer open={open} onOpenChange={setOpen}>
-      <Button type="button" variant="outline" size="pill" className="self-start" onClick={() => setOpen(true)} aria-haspopup="dialog" aria-label={t("play", { title })}>
+      <Button type="button" variant="outline" size="pill" className="h-target self-start px-4 text-sm" onClick={() => setOpen(true)} aria-haspopup="dialog" aria-label={t("play", { title })}>
         <Play aria-hidden className="fill-current" />
         {t("watch")}
       </Button>

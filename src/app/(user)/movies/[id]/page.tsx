@@ -71,23 +71,23 @@ export default async function MovieDetailPage({ params }: Props) {
           </div>
           <p className="text-sm">{t("duration", { minutes: movie.durationMin })}</p>
           <p className="text-sm text-muted-foreground">{t("releaseOn", { date: formatDay(movie.releaseDate, locale) })}</p>
-          {genreNames.length > 0 ? (
-            <p aria-label={t("genres")} className="flex flex-wrap gap-1.5">
-              {genreNames.map((name) => (
-                <Badge key={name} variant="secondary" className="h-auto py-0.5 text-xs font-medium">
-                  {name}
-                </Badge>
-              ))}
-            </p>
-          ) : null}
-          {formatNames.length > 0 ? (
-            <p aria-label={t("formats")} className="flex flex-wrap gap-1.5">
-              {formatNames.map((name) => (
-                <Badge key={name} variant="secondary" className="h-auto py-0.5 text-xs font-medium">
-                  {name}
-                </Badge>
-              ))}
-            </p>
+          {genreNames.length > 0 || formatNames.length > 0 ? (
+            <div className="flex flex-wrap gap-1.5">
+              <span role="group" aria-label={t("genres")} className="contents">
+                {genreNames.map((name) => (
+                  <Badge key={name} variant="secondary" className="h-auto py-0.5 text-xs font-medium">
+                    {name}
+                  </Badge>
+                ))}
+              </span>
+              <span role="group" aria-label={t("formats")} className="contents">
+                {formatNames.map((name) => (
+                  <Badge key={name} variant="secondary" className="h-auto py-0.5 text-xs font-medium">
+                    {name}
+                  </Badge>
+                ))}
+              </span>
+            </div>
           ) : null}
           {movie.trailer ? <TrailerSheet videoId={movie.trailer.videoId} title={movie.title} /> : null}
         </div>
