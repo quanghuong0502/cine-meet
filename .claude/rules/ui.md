@@ -56,6 +56,8 @@ Chỗ nào đặt ảnh cạnh chữ cũng dùng `Logo` hoặc `items-center`, k
 **Tên app: SeatMate.** Luôn hiển thị bằng `<Wordmark />` (`src/components/wordmark.tsx`): "Seat" màu chữ thường, "Mate" màu `primary-text`.
 Không viết tay chữ tên app trong giao diện; dùng hằng `APP_NAME` khi cần tên dạng chữ thuần (tiêu đề trang, manifest, thông báo).
 
+**Màu thương hiệu cấu hình được (2026-11-17):** admin chọn **một** màu ở Cài đặt > Màu thương hiệu (`/admin/settings/appearance`), lưu ở `systemSettings` khóa `brandColor` (mặc định `#C61583`). `deriveBrandTheme` (`src/lib/brand-theme.ts`) đổi nó thành các biến `--brand-h`, `--brand-c`, `--brand-l`, `--brand-fg`, `--brand-ink`; layout chèn `<style>` đặt chúng ở `:root` từ lần vẽ đầu. **Mọi token màu khác tính từ `--brand-h`** (nền, thẻ, viền, chữ phụ, accent, ghế): token mới viết `oklch(L C var(--brand-h))`, **không viết cứng sắc độ 350**. Màu bị từ chối khi quá xám (không có sắc để dựng nền) hoặc quá tối (nút không nổi trên thẻ tối, dưới 3:1); chữ trên nút luôn đạt 4.5:1. Icon màn hình chính và ảnh splash là ảnh tĩnh nên **không đổi theo**: muốn đồng bộ thì xuất lại (`pwa.md`). Khi thêm chỗ cần màu nền PWA, dùng `getBrandTheme()` (`src/services/brand-theme-cache.ts`), không viết `#13080d`.
+
 **Màu (token trong `src/app/globals.css`, không hard-code):**
 - Nền ba tầng: `background` < `card` < `elevated` (popover, bottom sheet). Phân tầng bằng độ sáng và viền mảnh, tối đa một mức đổ bóng.
 - Màu nhấn duy nhất là `primary` (raspberry `#C61583`, giống nhau ở cả hai theme), chỉ dùng cho hành động chính, mục đang chọn. Không tô màu nhấn lên mảng lớn.

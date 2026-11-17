@@ -25,7 +25,7 @@ Viết code đúng quy tắc ngay từ đầu. Thử bản cài trên iPhone 13 
 3. **Không có kéo-để-làm-mới trên iPhone:** màn hiển thị dữ liệu thay đổi phải có cách làm mới và tự cập nhật khi app quay lại (sự kiện `visibilitychange`).
 4. **Mạng yếu hoặc mất mạng:** thao tác ghi bị lỗi mạng phải hiện thông báo rõ (không im lặng) và cho thử lại; không làm mất nội dung form đang nhập.
 5. **Khởi động nhanh:** trang đầu hiển thị khung (skeleton) ngay, ảnh dùng `next/image`, không kéo JS nặng vào màn đầu; font `display: swap`.
-6. **Nền và màu:** `theme-color` và `background_color` của manifest luôn trùng nền app (`#13080d`); đổi màu nền thì đổi cả hai.
+6. **Nền và màu:** `theme-color` và `background_color` của manifest luôn trùng nền app; nền tối suy ra từ màu thương hiệu (mặc định `#13080d`, đọc bằng `getBrandTheme()`, xem `ui.md`), nên hai giá trị này tự đổi theo màu admin chọn. Icon và ảnh splash là ảnh tĩnh, không đổi theo (cập nhật thì chạy lại script xuất).
 7. **Phiên đăng nhập:** bộ nhớ của Safari và PWA đã cài **tách nhau**, nhưng theo firt.dev cookie đăng nhập được **sao chép một lần lúc cài** từ iOS 17.2 (chưa kiểm tra trên máy thật; xem mục "Kỹ thuật tối ưu cho iOS"). Đăng nhập lại trong PWA vẫn có thể xảy ra, đừng coi là lỗi. Đăng nhập Google trong PWA phải thử trên máy thật.
 8. **Cài đặt và quyền:** có hướng dẫn cài (iPhone: Chia sẻ, rồi Thêm vào Màn hình chính; Android: nút cài). Chỉ xin quyền thông báo đẩy khi người dùng bấm,
    và trên iPhone chỉ khi app đã cài (iOS 16.4 trở lên).
