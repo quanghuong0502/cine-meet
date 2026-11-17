@@ -971,7 +971,7 @@
     "dayStrip": "Chọn ngày",
     "today": "Nay",
     "until": "đến {time}",
-    "price": "~{amount}",
+    "price": "{amount}",
     "noPrice": "Chưa có giá",
     "emptyTitle": "Không có suất chiếu",
     "emptyDescription": "Thử chọn ngày khác hoặc bỏ bớt bộ lọc.",

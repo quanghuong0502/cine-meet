@@ -971,7 +971,7 @@
     "dayStrip": "Pick a day",
     "today": "Today",
     "until": "to {time}",
-    "price": "~{amount}",
+    "price": "{amount}",
     "noPrice": "No price yet",
     "emptyTitle": "No showtimes",
     "emptyDescription": "Try another day or remove some filters.",
