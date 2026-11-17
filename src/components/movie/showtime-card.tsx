@@ -6,7 +6,7 @@ import { formatVnd } from "@/lib/money";
 import type { ShowtimeRow } from "@/services/showtime.service";
 
 /**
- * One screening: when, where, format and estimated price. The "Create plan" button comes back with plans (Sprint 4); a disabled
+ * One screening: when (3 lines on the left), then branch, room with format, and price (3 rows on the right, so both columns end together). The "Create plan" button comes back with plans (Sprint 4); a disabled
  * copy on every card only took height (about a third of the card), so it is left out until then.
  * `showMovie` adds the movie title (when the list is not already grouped by movie).
  */
@@ -31,8 +31,8 @@ export function ShowtimeCard({ row, showMovie = false }: { row: ShowtimeRow; sho
           <Badge variant="secondary" className="h-auto py-0.5 text-xs font-medium">
             {row.format.name}
           </Badge>
-          <span className="text-sm">{row.price === null ? t("noPrice") : t("price", { amount: formatVnd(row.price, locale) })}</span>
         </span>
+        <span className="text-sm">{row.price === null ? t("noPrice") : t("price", { amount: formatVnd(row.price, locale) })}</span>
       </div>
     </li>
   );
