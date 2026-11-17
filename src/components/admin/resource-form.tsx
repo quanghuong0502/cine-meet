@@ -70,7 +70,7 @@ function FieldControl({ field, value, invalid, last, onSelect, selected, sibling
 
   switch (field.kind) {
     case "textarea":
-      return <Textarea {...common} defaultValue={value} maxLength={field.maxLength} rows={3} placeholder={field.placeholder} className="resize-none rounded-xl bg-card px-4 py-3 text-base" />;
+      return <Textarea {...common} defaultValue={value} maxLength={field.maxLength} rows={3} placeholder={field.placeholder} className="max-h-40 resize-none overflow-y-auto rounded-xl bg-card px-4 py-3 text-base" />;
     case "color":
       return (
         <input
