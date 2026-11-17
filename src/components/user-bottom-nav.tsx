@@ -1,12 +1,15 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { usePathname } from "next/navigation";
 import { BottomNav } from "@/components/bottom-nav";
-import { ENABLED_NAV_ITEMS } from "@/lib/nav";
+import { ENABLED_NAV_ITEMS, isFocusedUserRoute } from "@/lib/nav";
 
 /** Tabs of the user app. Only tabs whose feature exists are shown (see `src/lib/nav.ts`). */
 export function UserBottomNav() {
   const t = useTranslations("nav");
+  const pathname = usePathname();
+  if (isFocusedUserRoute(pathname)) return null;
   return (
     <BottomNav
       label={t("label")}

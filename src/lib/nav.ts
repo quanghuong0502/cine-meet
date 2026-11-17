@@ -27,3 +27,8 @@ export const NAV_ITEMS: NavItem[] = [
 ];
 
 export const ENABLED_NAV_ITEMS = NAV_ITEMS.filter((item) => item.enabled);
+
+/** Entry screens (such as editing the profile) hide the bottom bar: the Save button takes its place. */
+export function isFocusedUserRoute(pathname: string): boolean {
+  return /^\/profile\/.+/.test(pathname);
+}

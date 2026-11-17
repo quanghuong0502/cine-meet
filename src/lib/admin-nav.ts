@@ -45,5 +45,5 @@ export const MAX_BOTTOM_NAV_ITEMS = 5;
  * the Save button takes its place and the person is working on one thing. Their parent list is the page just above them.
  */
 export function isFocusedAdminRoute(pathname: string): boolean {
-  return /^\/admin\/(master-data|users)\/.+/.test(pathname) || pathname.startsWith("/admin/settings/");
+  return /^\/admin\/(master-data|users)\/.+/.test(pathname) || pathname.startsWith("/admin/settings/") || pathname.startsWith("/admin/profile/");
 }

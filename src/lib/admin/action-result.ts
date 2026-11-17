@@ -42,6 +42,7 @@ export const VALIDATION_CODES = [
   "out_of_range",
   "invalid_date",
   "too_short",
+  "taken",
   "invalid",
 ] as const;
 export type ValidationCode = (typeof VALIDATION_CODES)[number];

@@ -14,3 +14,7 @@ export type AuthProviderName = (typeof AUTH_PROVIDERS)[number];
 
 /** Minimum length for a new password (shared by the service, the form hint and validation). */
 export const MIN_PASSWORD_LENGTH = 8;
+
+/** Where the person likes to sit (used for seat suggestions and the chatbot). */
+export const SEAT_PREFERENCES = ["aisle", "center", "back", "front"] as const;
+export type SeatPreference = (typeof SEAT_PREFERENCES)[number];

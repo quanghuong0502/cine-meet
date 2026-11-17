@@ -23,7 +23,7 @@ export default async function UserLayout({
     <div data-app-shell className="mx-auto flex h-dvh w-full max-w-2xl flex-col overflow-hidden">
       <header className="flex shrink-0 items-center justify-between border-b px-4 py-1">
         <Logo size={48} wordmarkClassName="text-xl" />
-        <UserMenu name={user.name} />
+        <UserMenu name={user.name} image={user.image} />
       </header>
       <main
         data-app-scroll

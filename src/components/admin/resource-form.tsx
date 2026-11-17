@@ -74,12 +74,13 @@ function FieldControl({ field, value, invalid, last }: { field: ResourceField; v
       return (
         <Input
           {...common}
-          type={field.kind === "url" ? "url" : field.kind === "email" ? "email" : field.kind === "number" ? "number" : field.kind === "date" ? "date" : field.kind === "time" ? "time" : "text"}
-          inputMode={field.kind === "email" ? "email" : field.kind === "number" ? (field.step === "1" ? "numeric" : "decimal") : undefined}
+          type={field.kind === "url" ? "url" : field.kind === "email" ? "email" : field.kind === "tel" ? "tel" : field.kind === "number" ? "number" : field.kind === "date" ? "date" : field.kind === "time" ? "time" : "text"}
+          inputMode={field.kind === "email" ? "email" : field.kind === "tel" ? "tel" : field.kind === "number" ? (field.step === "1" ? "numeric" : "decimal") : undefined}
           step={field.step}
           min={field.min}
           max={field.max}
           maxLength={field.maxLength}
+          placeholder={field.placeholder}
           autoCapitalize={isPlain ? "none" : undefined}
           autoCorrect={isPlain ? "off" : undefined}
           spellCheck={isPlain ? false : undefined}
@@ -105,13 +106,15 @@ interface ResourceFormProps {
   itemName?: string;
   saveAction: (previous: SaveState, formData: FormData) => Promise<SaveState>;
   removeAction?: (id: string) => Promise<RemoveResult>;
+  /** Extra content at the top of the form (for example the avatar picker); it is inside the form, so hidden inputs it holds are saved. */
+  lead?: React.ReactNode;
 }
 
 /**
  * The entry screen of a master-data record: a normal page (own URL, back button), not a sheet. Save is the one fixed
  * action at the bottom; once saved, the person goes back to the list they came from, which is refreshed to show the change.
  */
-export function ResourceForm({ itemId, fields, values, backHref, itemName, saveAction, removeAction }: ResourceFormProps) {
+export function ResourceForm({ itemId, fields, values, backHref, itemName, saveAction, removeAction, lead }: ResourceFormProps) {
   const t = useTranslations("admin.common");
   const tv = useTranslations("admin.validation");
   const router = useRouter();
@@ -159,6 +162,7 @@ export function ResourceForm({ itemId, fields, values, backHref, itemName, saveA
   return (
     <form action={formAction} noValidate className="flex flex-1 flex-col gap-4">
       {itemId ? <input type="hidden" name="id" value={itemId} /> : null}
+      {lead}
 
       {fields.map((field) => {
         const code = fieldErrors[field.name];

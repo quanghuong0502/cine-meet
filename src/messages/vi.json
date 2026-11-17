@@ -115,7 +115,8 @@
       "out_of_range": "Giá trị ngoài phạm vi cho phép",
       "invalid_date": "Ngày không hợp lệ",
       "invalid": "Giá trị không hợp lệ",
-      "too_short": "Quá ngắn, cần ít nhất 8 ký tự"
+      "too_short": "Quá ngắn, cần ít nhất 8 ký tự",
+      "taken": "Số này đã được tài khoản khác dùng"
     },
     "masterData": {
       "title": "Danh mục",
@@ -663,8 +664,48 @@
   },
   "profile": {
     "title": "Hồ sơ",
-    "role": "Vai trò: {role, select, admin {Quản trị viên} other {Người dùng}}",
-    "comingSoon": "Sắp có: chỉnh sửa tên, ảnh đại diện và số điện thoại."
+    "editTitle": "Sửa hồ sơ",
+    "edit": "Sửa hồ sơ",
+    "notSet": "Chưa có",
+    "roleLabel": "Vai trò",
+    "roles": {
+      "admin": "Quản trị viên",
+      "user": "Người dùng"
+    },
+    "seat": {
+      "any": "Không ưu tiên",
+      "aisle": "Gần lối đi",
+      "center": "Ở giữa",
+      "back": "Phía sau",
+      "front": "Phía trước"
+    },
+    "fields": {
+      "name": {
+        "label": "Tên"
+      },
+      "phone": {
+        "label": "Số điện thoại",
+        "hint": "Để bạn bè tìm thấy bạn",
+        "placeholder": "vd. 0912 345 678"
+      },
+      "seatPreference": {
+        "label": "Chỗ ngồi hay chọn",
+        "hint": "Dùng để gợi ý ghế"
+      }
+    },
+    "avatar": {
+      "choose": "Chọn ảnh",
+      "change": "Đổi ảnh",
+      "remove": "Bỏ ảnh",
+      "uploading": "Đang tải ảnh...",
+      "errors": {
+        "notImage": "Hãy chọn một tệp ảnh.",
+        "tooBig": "Ảnh lớn quá 8 MB. Hãy chọn ảnh nhỏ hơn.",
+        "failed": "Không tải được ảnh. Hãy thử ảnh khác.",
+        "network": "Mất kết nối khi tải ảnh. Hãy thử lại.",
+        "not_configured": "Chưa cấu hình Cloudinary nên chưa tải ảnh được."
+      }
+    }
   },
   "mascot": {
     "alt": {

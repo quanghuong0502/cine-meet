@@ -115,7 +115,8 @@
       "out_of_range": "Value is out of the allowed range",
       "invalid_date": "Invalid date",
       "invalid": "Invalid value",
-      "too_short": "Too short, at least 8 characters"
+      "too_short": "Too short, at least 8 characters",
+      "taken": "Another account already uses this number"
     },
     "masterData": {
       "title": "Catalog",
@@ -663,8 +664,48 @@
   },
   "profile": {
     "title": "Profile",
-    "role": "Role: {role, select, admin {Admin} other {User}}",
-    "comingSoon": "Coming soon: edit your name, avatar and phone number."
+    "editTitle": "Edit profile",
+    "edit": "Edit profile",
+    "notSet": "Not set",
+    "roleLabel": "Role",
+    "roles": {
+      "admin": "Admin",
+      "user": "User"
+    },
+    "seat": {
+      "any": "No preference",
+      "aisle": "Near the aisle",
+      "center": "In the middle",
+      "back": "At the back",
+      "front": "At the front"
+    },
+    "fields": {
+      "name": {
+        "label": "Name"
+      },
+      "phone": {
+        "label": "Phone number",
+        "hint": "So friends can find you",
+        "placeholder": "e.g. 0912 345 678"
+      },
+      "seatPreference": {
+        "label": "Preferred seats",
+        "hint": "Used for seat suggestions"
+      }
+    },
+    "avatar": {
+      "choose": "Choose photo",
+      "change": "Change photo",
+      "remove": "Remove photo",
+      "uploading": "Uploading...",
+      "errors": {
+        "notImage": "Please choose an image file.",
+        "tooBig": "The photo is over 8 MB. Choose a smaller one.",
+        "failed": "Couldn't upload the photo. Try another.",
+        "network": "Connection lost while uploading. Try again.",
+        "not_configured": "Cloudinary isn't set up yet, so photos can't be uploaded."
+      }
+    }
   },
   "mascot": {
     "alt": {

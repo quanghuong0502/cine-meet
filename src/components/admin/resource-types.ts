@@ -1,6 +1,6 @@
 /** Shapes shared by the master-data list, the entry screen and the server pages that feed them. */
 
-export type ResourceFieldKind = "text" | "textarea" | "url" | "color" | "number" | "select" | "switch" | "date" | "time" | "email";
+export type ResourceFieldKind = "text" | "textarea" | "url" | "color" | "number" | "select" | "switch" | "date" | "time" | "email" | "tel";
 
 /** One form field. All text is already translated by the server page, so the form holds no entity wording. */
 export interface ResourceField {

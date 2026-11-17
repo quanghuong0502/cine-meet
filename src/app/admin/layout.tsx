@@ -33,7 +33,7 @@ export default async function AdminLayout({
         {/* Phones: logo and avatar menu on top, the menu itself is the bottom bar. */}
         <header className="z-30 flex shrink-0 items-center justify-between gap-2 border-b bg-background/95 px-4 py-1 backdrop-blur md:hidden">
           <Logo size={44} wordmarkClassName="text-xl" />
-          <UserMenu area="admin" name={admin.name} />
+          <UserMenu area="admin" name={admin.name} image={admin.image} />
         </header>
         <AdminMain hasBottomNav={hasBottomNav}>{children}</AdminMain>
       </div>

@@ -2,6 +2,7 @@ import { model, models, Schema, type InferSchemaType, type Model } from "mongoos
 import { LOCALES } from "@/i18n/config";
 import {
   AUTH_PROVIDERS,
+  SEAT_PREFERENCES,
   USER_ROLES,
   USER_STATUSES,
 } from "@/lib/user-constants";
@@ -25,6 +26,7 @@ const userSchema = new Schema(
       lowercase: true,
       trim: true,
     },
+    // Stored as 84xxxxxxxxx (see src/lib/phone.ts); optional and unique when present.
     phone: { type: String, trim: true },
     avatar: { type: String },
     role: { type: String, enum: USER_ROLES, default: "user", required: true },
@@ -42,9 +44,13 @@ const userSchema = new Schema(
     // Interface language chosen in Settings; also used for notifications sent to this user.
     // Left unset until the user chooses, so the browser language still applies on first sign-in.
     locale: { type: String, enum: LOCALES },
+    seatPreference: { type: String, enum: SEAT_PREFERENCES },
   },
   { timestamps: true },
 );
+
+// Many users have no phone: the index skips them, so only real numbers must be unique.
+userSchema.index({ phone: 1 }, { unique: true, sparse: true });
 
 userSchema.pre("validate", function requireUsernameOrEmail() {
   if (!this.username && !this.email) {
