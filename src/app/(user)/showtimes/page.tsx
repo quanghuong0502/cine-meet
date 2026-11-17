@@ -61,7 +61,6 @@ export default async function ShowtimesPage({ searchParams }: { searchParams: Pr
   const brandActive = new Map(brands.map((b) => [b.id, b.active]));
   const en = locale === "en";
   const options = {
-    movie: movies.map((m) => ({ value: m._id.toString(), label: m.title })),
     branch: branches.filter((b) => b.active !== false && brandActive.get(b.brandId.toString()) !== false).map((b) => ({ value: b._id.toString(), label: [brandName.get(b.brandId.toString()), b.name].filter(Boolean).join(" · ") })),
     genre: genres.filter((g) => g.active !== false).map((g) => ({ value: g._id.toString(), label: en && g.nameEn ? g.nameEn : g.name })),
     format: formats.filter((f) => f.active !== false).map((f) => ({ value: f._id.toString(), label: f.name })),
@@ -131,7 +130,7 @@ export default async function ShowtimesPage({ searchParams }: { searchParams: Pr
 
 async function Results({ date, values }: { date: string; values: FilterValues }) {
   const t = await getTranslations("showtimes");
-  const rows = await searchShowtimes({ date, movieId: values.movie, branchId: values.branch, genreId: values.genre, formatId: values.format, slot: values.slot });
+  const rows = await searchShowtimes({ date, branchId: values.branch, genreId: values.genre, formatId: values.format, slot: values.slot });
   if (rows.length === 0) {
     return <EmptyState mascot="bubu-sleepy" title={t("emptyTitle")} description={t("emptyDescription")} />;
   }

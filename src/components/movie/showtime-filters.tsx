@@ -1,13 +1,13 @@
 "use client";
 
-import { SlidersHorizontal } from "lucide-react";
+import { SlidersHorizontal, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Chip } from "@/components/admin/auditorium-editor/chips";
+import { Button } from "@/components/ui/button";
+import { Drawer, DrawerContent, DrawerFooter, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { FILTER_KEYS, type FilterKey, type FilterValues } from "@/lib/showtime/filters";
-import { cn } from "@/lib/utils";
-
 
 interface Option {
   value: string;
@@ -20,61 +20,93 @@ interface Props {
   options: Record<FilterKey, Option[]>;
 }
 
-/** Filters of the showtime list. Every choice is written to the URL at once (the list below follows), so a link keeps the filters. */
+/**
+ * Filters of the showtime list, in a bottom sheet so they never push the results down the page. Choices change a draft; "Show results"
+ * writes them to the URL once (the list follows, and a link keeps the filters). The filters in force show as chips next to the button,
+ * and a chip's X drops that filter at once. A group with fewer than two choices is hidden (nothing to choose), unless it is in force.
+ */
 export function ShowtimeFilters({ date, values, options }: Props) {
   const t = useTranslations("showtimes.filters");
   const router = useRouter();
   const pathname = usePathname();
   const [, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
-  const [current, setCurrent] = useState(values);
-  const activeCount = FILTER_KEYS.filter((key) => current[key]).length;
+  const [applied, setApplied] = useState(values);
+  const [draft, setDraft] = useState(values);
 
-  function choose(key: FilterKey, value: string | undefined) {
-    const next = { ...current, [key]: value };
-    setCurrent(next);
+  const activeKeys = FILTER_KEYS.filter((key) => applied[key]);
+  const groups = FILTER_KEYS.filter((key) => options[key].length >= 2 || draft[key]);
+  const labelOf = (key: FilterKey, value: string) => options[key].find((option) => option.value === value)?.label ?? value;
+
+  function apply(next: FilterValues) {
+    setApplied(next);
     const params = new URLSearchParams({ date });
-    for (const k of FILTER_KEYS) if (next[k]) params.set(k, next[k] as string);
+    for (const key of FILTER_KEYS) if (next[key]) params.set(key, next[key] as string);
     startTransition(() => router.replace(`${pathname}?${params}`, { scroll: false }));
   }
 
-  return (
-    <section aria-label={t("title")} className="flex flex-col gap-3">
-      <div className="flex items-center gap-2">
-        <Chip selected={open || activeCount > 0} onClick={() => setOpen((o) => !o)} aria-expanded={open}>
-          <SlidersHorizontal className="size-4" aria-hidden />
-          {activeCount > 0 ? t("titleCount", { count: activeCount }) : t("title")}
-        </Chip>
-        {activeCount > 0 ? (
-          <Chip
-            selected={false}
-            onClick={() => {
-              setCurrent({});
-              startTransition(() => router.replace(`${pathname}?${new URLSearchParams({ date })}`, { scroll: false }));
-            }}
-          >
-            {t("clear")}
-          </Chip>
-        ) : null}
-      </div>
+  function onOpenChange(next: boolean) {
+    if (next) setDraft(applied);
+    setOpen(next);
+  }
 
-      <div className={cn("flex flex-col gap-4", !open && "hidden")}>
-        {FILTER_KEYS.filter((key) => options[key].length > 0).map((key) => (
-          <div key={key} role="group" aria-label={t(`labels.${key}`)} className="flex flex-col gap-2">
-            <span className="text-sm text-muted-foreground">{t(`labels.${key}`)}</span>
-            <div className="scroll-strip flex gap-2 pb-1">
-              <Chip selected={!current[key]} onClick={() => choose(key, undefined)}>
-                {t("all")}
-              </Chip>
-              {options[key].map((option) => (
-                <Chip key={option.value} selected={current[key] === option.value} onClick={() => choose(key, option.value)}>
-                  {option.label}
-                </Chip>
-              ))}
-            </div>
+  if (groups.length === 0 && activeKeys.length === 0) return null;
+
+  return (
+    <section aria-label={t("title")} className="scroll-strip flex items-center gap-2">
+      <Chip selected={activeKeys.length > 0} onClick={() => onOpenChange(true)} aria-haspopup="dialog">
+        <SlidersHorizontal className="size-4" aria-hidden />
+        {activeKeys.length > 0 ? t("titleCount", { count: activeKeys.length }) : t("title")}
+      </Chip>
+      {activeKeys.map((key) => {
+        const name = labelOf(key, applied[key] as string);
+        return (
+          <Chip key={key} selected={false} onClick={() => apply({ ...applied, [key]: undefined })} aria-label={t("remove", { name })}>
+            {name}
+            <X className="size-4" aria-hidden />
+          </Chip>
+        );
+      })}
+
+      <Drawer open={open} onOpenChange={onOpenChange}>
+        <DrawerContent aria-describedby={undefined}>
+          <DrawerHeader>
+            <DrawerTitle className="text-xl font-semibold">{t("title")}</DrawerTitle>
+          </DrawerHeader>
+          <div className="flex min-h-0 flex-col gap-4 overflow-y-auto overscroll-contain px-4 pb-4">
+            {groups.map((key) => (
+              <div key={key} role="group" aria-label={t(`labels.${key}`)} className="flex flex-col gap-2">
+                <span className="text-sm text-muted-foreground">{t(`labels.${key}`)}</span>
+                <div className="flex flex-wrap gap-2">
+                  <Chip selected={!draft[key]} onClick={() => setDraft({ ...draft, [key]: undefined })}>
+                    {t("all")}
+                  </Chip>
+                  {options[key].map((option) => (
+                    <Chip key={option.value} selected={draft[key] === option.value} onClick={() => setDraft({ ...draft, [key]: option.value })}>
+                      {option.label}
+                    </Chip>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+          <DrawerFooter className="pb-[max(1rem,env(safe-area-inset-bottom))]">
+            <Button
+              type="button"
+              size="cta"
+              onClick={() => {
+                apply(draft);
+                setOpen(false);
+              }}
+            >
+              {t("show")}
+            </Button>
+            <Button type="button" size="cta-sm" variant="ghost" onClick={() => setDraft({})}>
+              {t("clear")}
+            </Button>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
     </section>
   );
 }

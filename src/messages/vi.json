@@ -976,10 +976,11 @@
     "filters": {
       "title": "Bộ lọc",
       "titleCount": "Bộ lọc ({count})",
+      "show": "Xem kết quả",
+      "remove": "Bỏ lọc {name}",
       "clear": "Xóa lọc",
       "all": "Tất cả",
       "labels": {
-        "movie": "Phim",
         "branch": "Rạp",
         "genre": "Thể loại",
         "format": "Định dạng",

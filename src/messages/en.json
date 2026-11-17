@@ -976,10 +976,11 @@
     "filters": {
       "title": "Filters",
       "titleCount": "Filters ({count})",
+      "show": "Show results",
+      "remove": "Remove filter {name}",
       "clear": "Clear",
       "all": "All",
       "labels": {
-        "movie": "Movie",
         "branch": "Cinema",
         "genre": "Genre",
         "format": "Format",
