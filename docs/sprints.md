@@ -29,7 +29,7 @@ Nguồn chi tiết: `docs/movie-app-mvp-design.md` (số mục ghi ở từng sp
 | Sprint | Nội dung chính | Phụ thuộc | Trạng thái |
 |---|---|---|---|
 | 0 | Khung nền: scaffold, auth, layout, theme, i18n (vi, en) | — | Xong |
-| 1 | Master data, quản lý người dùng, cài đặt hệ thống, hồ sơ cơ bản | 0 | Chờ kiểm tra |
+| 1 | Master data, quản lý người dùng, cài đặt hệ thống, hồ sơ cơ bản | 0 | Xong |
 | 2 | Editor phòng chiếu, sơ đồ ghế, điểm ghế, versioning | 1 | Chưa bắt đầu |
 | 3 | Phim (trailer), suất chiếu, trang rạp & lịch chiếu cho user, đánh dấu ghế cá nhân | 2 | Chưa bắt đầu |
 | 4 | Lịch hẹn giai đoạn 1 (mời, vote, chốt người), bạn bè, thông báo in-app, worker, Web Push | 3 | Chưa bắt đầu |
@@ -97,7 +97,7 @@ Trạng thái: Chưa bắt đầu · Đang làm · Chờ kiểm tra · Xong
 **Ngoài phạm vi:** phòng chiếu, phim, suất chiếu, tùy chọn thông báo chi tiết.
 
 **Tiêu chí hoàn thành**
-- [ ] Admin tạo được đủ master data và dùng thử trên điện thoại.
+- [x] Admin tạo được đủ master data và dùng thử trên điện thoại (chủ dự án đã thử và duyệt, 2026-11-17).
 - [x] Test cho hàm tính giá: ngày thường, cuối tuần, lễ, ưu đãi, chi nhánh thắng thương hiệu, rule hết hiệu lực, `priority` phá hòa, `priceOverride`.
 - [x] Khóa một user thì phiên của họ bị vô hiệu ở request kế tiếp và họ không đăng nhập lại được.
 - [x] Không thể hạ quyền admin cuối cùng.
