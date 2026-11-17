@@ -343,26 +343,3 @@ html[data-keyboard="open"]:has([data-slot="drawer-content"]) body {
     display: none;
   }
 }
-
-/*
- * The trailer stage: a full-screen landscape canvas. On a phone held upright (portrait) it is turned a quarter turn: as wide as the
- * screen is tall, as tall as the screen is wide, centred and rotated, so it covers the screen exactly and the video gets the long side.
- * In landscape it is upright. The padding keeps the bar and the video off the notch and the home indicator: after the quarter turn the
- * stage's left edge is the top of the phone and its right edge is the bottom.
- */
-@utility trailer-stage {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  width: 100dvh;
-  height: 100vw;
-  transform: translate(-50%, -50%) rotate(90deg);
-  padding-left: env(safe-area-inset-top);
-  padding-right: env(safe-area-inset-bottom);
-  @media (orientation: landscape) {
-    width: 100vw;
-    height: 100dvh;
-    transform: translate(-50%, -50%);
-    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-  }
-}
