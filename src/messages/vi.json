@@ -1008,9 +1008,10 @@
       "playerTitle": "Trailer {title}",
       "openYoutube": "Xem trên YouTube"
     },
-    "title": "Chi tiết phim",
     "releaseOn": "Khởi chiếu {date}",
-    "noMatch": "Không có suất phù hợp. Thử đổi ngày hoặc bỏ bớt bộ lọc."
+    "noMatch": "Không có suất phù hợp. Thử đổi ngày hoặc bỏ bớt bộ lọc.",
+    "genres": "Thể loại",
+    "formats": "Định dạng"
   },
   "cinemas": {
     "title": "Rạp",

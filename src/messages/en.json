@@ -1008,9 +1008,10 @@
       "playerTitle": "Trailer of {title}",
       "openYoutube": "Watch on YouTube"
     },
-    "title": "Movie",
     "releaseOn": "Opens {date}",
-    "noMatch": "No matching showtimes. Try another day or fewer filters."
+    "noMatch": "No matching showtimes. Try another day or fewer filters.",
+    "genres": "Genres",
+    "formats": "Formats"
   },
   "cinemas": {
     "title": "Cinemas",

@@ -2,7 +2,8 @@ import { BackButton } from "@/components/back-button";
 import { cn } from "@/lib/utils";
 
 interface PageHeaderProps {
-  title: string;
+  /** Omit it on a screen whose content already starts with its own title: the bar then holds only the back button. */
+  title?: string;
   /** Where the back button goes. Every inner screen (not a tab) sets this: see `BackButton`. */
   backHref?: string;
   description?: string;
@@ -24,10 +25,12 @@ export function PageHeader({ title, backHref, description }: PageHeaderProps) {
       )}
     >
       {backHref ? <BackButton href={backHref} /> : null}
-      <div className={cn("flex min-w-0 flex-col gap-0.5", !backHref && "pt-1.5")}>
-        <h1 className={cn("font-semibold", backHref ? "truncate text-xl" : "text-2xl")}>{title}</h1>
-        {description ? <p className="text-sm text-muted-foreground">{description}</p> : null}
-      </div>
+      {title || description ? (
+        <div className={cn("flex min-w-0 flex-col gap-0.5", !backHref && "pt-1.5")}>
+          {title ? <h1 className={cn("font-semibold", backHref ? "truncate text-xl" : "text-2xl")}>{title}</h1> : null}
+          {description ? <p className="text-sm text-muted-foreground">{description}</p> : null}
+        </div>
+      ) : null}
     </header>
   );
 }

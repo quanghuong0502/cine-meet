@@ -31,11 +31,10 @@ export function MovieShowtimes({ rows }: { rows: ShowtimeRow[] }) {
 
   const today = vietnamToday();
   const weekday = new Intl.DateTimeFormat(locale === "en" ? "en-GB" : "vi-VN", { timeZone: "UTC", weekday: "short" });
-  const month = new Intl.DateTimeFormat(locale === "en" ? "en-GB" : "vi-VN", { timeZone: "UTC", month: "numeric" });
 
   const choices = (label: string, items: [string, string][], value: string | null, set: (next: string | null) => void) =>
     items.length > 1 ? (
-      <div role="group" aria-label={label} className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div role="group" aria-label={label} className="scroll-strip flex gap-2 pb-1">
         <Chip selected={value === null} onClick={() => set(null)}>
           {t("filters.all")}
         </Chip>
@@ -49,8 +48,8 @@ export function MovieShowtimes({ rows }: { rows: ShowtimeRow[] }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <nav aria-label={t("dayStrip")} className="-mx-4">
-        <ul className="flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <nav aria-label={t("dayStrip")}>
+        <ul className="scroll-strip flex gap-2 pb-1">
           {days.map((key) => {
             const date = new Date(`${key}T00:00:00Z`);
             const selected = key === day;
@@ -67,7 +66,6 @@ export function MovieShowtimes({ rows }: { rows: ShowtimeRow[] }) {
                 >
                   <span>{key === today ? t("today") : weekday.format(date)}</span>
                   <span className="text-base font-semibold">{Number(key.slice(8))}</span>
-                  <span className="opacity-80">{`/${month.format(date)}`}</span>
                 </button>
               </li>
             );

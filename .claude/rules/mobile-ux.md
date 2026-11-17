@@ -62,6 +62,10 @@ Căn cứ: [Apple HIG, tab bars](https://developer.apple.com/design/human-interf
 4. Tương phản đạt WCAG ở cả light và dark; màu không phải cách duy nhất truyền đạt trạng thái.
 5. **Trang luôn vừa chiều ngang màn hình:** khung cuộn của app (`main[data-app-scroll]` ở khu admin và khu user) có `min-w-0 overflow-x-hidden`, nên không bao giờ cuộn ngang; phần tử con vẫn phải tự vừa (ô chọn cắt chữ bằng `truncate`, chip `max-w-full`, hàng flex có `min-w-0`), vì `overflow-x-hidden` chỉ che chỗ tràn chứ không sửa nó. Khi báo xong một màn, đo `document.querySelector('[data-app-scroll]').scrollWidth` bằng `clientWidth` ở 320, 360, 390, 393 và 430px (phạm vi hỗ trợ ở `devices.md`: mọi điện thoại cài PWA, iPhone 13 và 14 Pro chỉ là ưu tiên đầu).
 
+## 6. Hàng cuộn ngang trong trang (chip, dải ngày, poster)
+
+Dùng class `scroll-strip` (`globals.css`) cho hàng cuộn ngang, không tự viết `-mx-4 overflow-x-auto px-4`: Safari bỏ phần đệm cuối của hàng cuộn nên phần tử cuối dính mép phải. `scroll-strip` chạy sát hai mép màn hình, chừa **16px ở cả đầu và cuối** (đầu bằng padding, cuối bằng margin của phần tử cuối) và ẩn thanh cuộn. Đặt nó trực tiếp lên phần tử cuộn (không bọc thêm `-mx-4`).
+
 ## Trước khi báo xong một màn hình
 
 Đi qua mục 1 đến 5 ở trên trên **iPhone 13 và iPhone 14 Pro ở chế độ PWA** (hoặc ít nhất DevTools 390×844 và 393×852 + điện thoại qua mạng LAN): quay lại được từ mọi màn, mở bàn phím ở từng ô nhập,

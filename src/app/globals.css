@@ -327,3 +327,21 @@ html[data-keyboard="open"]:has([data-slot="drawer-content"]) body {
   width: 100%;
   overflow: hidden;
 }
+
+/*
+ * A row that scrolls sideways inside a page (chips, days, posters). It runs edge to edge (cancels the page's 16px side padding)
+ * and keeps 16px at BOTH ends: the start as padding, the end as the margin of the last item, because Safari drops the end
+ * padding of a scrolling row, which left the last chip touching the right edge.
+ */
+@utility scroll-strip {
+  margin-inline: -1rem;
+  padding-inline-start: 1rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  & > :last-child {
+    margin-inline-end: 1rem;
+  }
+}

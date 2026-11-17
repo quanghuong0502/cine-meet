@@ -79,7 +79,7 @@ export default async function ShowtimesPage({ searchParams }: { searchParams: Pr
       {nowShowing.length > 0 ? (
         <section aria-label={t("movies")} className="flex flex-col gap-2">
           <h2 className="text-sm text-muted-foreground">{t("movies")}</h2>
-          <ul className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <ul className="scroll-strip flex gap-3 pb-1">
             {nowShowing.map((movie) => (
               <li key={movie._id.toString()} className="w-24 shrink-0">
                 <Link href={`/movies/${movie._id.toString()}`} className="flex flex-col gap-1.5">
@@ -94,8 +94,8 @@ export default async function ShowtimesPage({ searchParams }: { searchParams: Pr
         </section>
       ) : null}
 
-      <nav aria-label={t("dayStrip")} className="-mx-4">
-        <ul className="flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <nav aria-label={t("dayStrip")}>
+        <ul className="scroll-strip flex gap-2 pb-1">
           {days.map((day) => {
             const selected = day === date;
             return (

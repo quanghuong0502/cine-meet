@@ -33,8 +33,8 @@ export function MasterDataTabs({ label, labels, activeKey }: MasterDataTabsProps
   }, [shown]);
 
   return (
-    <nav aria-label={label} className="-mx-4">
-      <ul ref={listRef} className="relative flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <nav aria-label={label}>
+      <ul ref={listRef} className="scroll-strip relative flex gap-2 pb-1">
         {MASTER_DATA_SECTIONS.map(({ key, icon: Icon }) => {
           const selected = key === shown;
           return (
