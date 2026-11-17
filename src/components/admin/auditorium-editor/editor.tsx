@@ -24,6 +24,9 @@ import { VersionsPanel } from "./versions-panel";
 
 type Tab = "settings" | "seats" | "versions";
 
+/** One height for the map on every tab: switching tabs must not make it jump or resize. */
+const MAP_MAX_HEIGHT = "36dvh";
+
 interface Props {
   /** The room being edited, or null when adding one. */
   auditorium: { id: string; name: string; branchId: string } | null;
@@ -160,7 +163,7 @@ export function AuditoriumEditor({ auditorium, branches, seatTypes, initialConfi
           seats={built.seats}
           seatTypes={mapTypes}
           showHeatmap={heat}
-          maxHeight={inSeatsTab ? "40dvh" : "30dvh"}
+          maxHeight={MAP_MAX_HEIGHT}
           selectedCodes={inSeatsTab ? selectedCodes : undefined}
           emptyCells={inSeatsTab ? emptyCells : undefined}
           onSeatTap={inSeatsTab ? (seat) => toggleCells(cellsOfSeat(seat)) : undefined}
