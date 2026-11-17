@@ -1,11 +1,12 @@
 "use client";
 
-import { ExternalLink, Pause, Play, Volume2, VolumeX } from "lucide-react";
+import { ExternalLink, Maximize, Minimize, Pause, Play, Volume2, VolumeX } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Dialog } from "radix-ui";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
+import { cn } from "@/lib/utils";
 import { youtubeEmbedUrl, youtubeWatchUrl } from "@/lib/movie/youtube";
 import { loadYouTubeApi, YT_STATE, type YtPlayer } from "@/lib/movie/youtube-api";
 
@@ -28,7 +29,7 @@ export function TrailerPlayer({ videoId, title }: { videoId: string; title: stri
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/75 supports-backdrop-filter:backdrop-blur-xs" />
         <Dialog.Content
           aria-describedby={undefined}
-          className="fixed top-1/2 left-1/2 z-50 flex max-h-[calc(100dvh-2rem)] w-[calc(100%-3rem)] max-w-xl -translate-x-1/2 -translate-y-1/2 flex-col gap-3 text-white outline-none"
+          className="fixed inset-0 z-50 m-auto flex h-fit max-h-[calc(100dvh-2rem)] w-[calc(100%-3rem)] max-w-xl flex-col gap-3 text-white outline-none"
         >
           {/* Not drawn (the video says what it is); a dialog still needs a name for screen readers. */}
           <Dialog.Title className="sr-only">{t("playerTitle", { title })}</Dialog.Title>
@@ -63,6 +64,7 @@ function clock(seconds: number): string {
  */
 function Player({ videoId, title }: { videoId: string; title: string }) {
   const t = useTranslations("movie.trailer");
+  const stage = useRef<HTMLDivElement>(null);
   const frame = useRef<HTMLIFrameElement>(null);
   const player = useRef<YtPlayer | null>(null);
   const scrubbing = useRef(false);
@@ -71,6 +73,9 @@ function Player({ videoId, title }: { videoId: string; title: string }) {
   const [started, setStarted] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(false);
+  // Real full screen where the browser has it; otherwise the player expands over the screen (`player-stage`).
+  const [nativeFullscreen, setNativeFullscreen] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const [time, setTime] = useState({ current: 0, duration: 0 });
   const [origin] = useState(() => (typeof window === "undefined" ? undefined : window.location.origin));
 
@@ -114,6 +119,33 @@ function Player({ videoId, title }: { videoId: string; title: string }) {
     };
   }, [videoId]);
 
+  useEffect(() => {
+    const element = stage.current;
+    const onChange = () => setNativeFullscreen(document.fullscreenElement === element);
+    document.addEventListener("fullscreenchange", onChange);
+    return () => {
+      document.removeEventListener("fullscreenchange", onChange);
+      if (document.fullscreenElement === element) void document.exitFullscreen().catch(() => undefined);
+    };
+  }, []);
+
+  const fullscreen = nativeFullscreen || expanded;
+  function toggleFullscreen() {
+    const element = stage.current;
+    if (nativeFullscreen) {
+      void document.exitFullscreen().catch(() => undefined);
+    } else if (expanded) {
+      setExpanded(false);
+    } else if (element && document.fullscreenEnabled && typeof element.requestFullscreen === "function") {
+      element
+        .requestFullscreen()
+        .then(() => (screen.orientation as ScreenOrientation & { lock?: (orientation: "landscape") => Promise<void> } | undefined)?.lock?.("landscape"))
+        .catch(() => setExpanded(true));
+    } else {
+      setExpanded(true);
+    }
+  }
+
   const toggle = () => (playing ? player.current?.pauseVideo() : player.current?.playVideo());
   const toggleMute = () => {
     if (!player.current) return;
@@ -123,7 +155,13 @@ function Player({ videoId, title }: { videoId: string; title: string }) {
   };
 
   return (
-    <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-black shadow-2xl">
+    <div
+      ref={stage}
+      className={cn(
+        "relative overflow-hidden bg-black",
+        expanded ? "player-stage" : "aspect-video w-full rounded-xl shadow-2xl [&:fullscreen]:rounded-none [&:fullscreen]:shadow-none",
+      )}
+    >
       <iframe
         key={apiFailed ? "own-bar" : "our-bar"}
         ref={frame}
@@ -162,6 +200,9 @@ function Player({ videoId, title }: { videoId: string; title: string }) {
               className="min-w-0 flex-1"
             />
             <span className="w-10 shrink-0 text-xs text-white/70 tabular-nums">{clock(time.duration)}</span>
+            <Button type="button" variant="ghost" size="icon" onClick={toggleFullscreen} aria-label={fullscreen ? t("exitFullscreen") : t("fullscreen")} className="shrink-0 rounded-full text-white hover:bg-white/15 hover:text-white">
+              {fullscreen ? <Minimize aria-hidden className="size-6" /> : <Maximize aria-hidden className="size-6" />}
+            </Button>
             <Button type="button" variant="ghost" size="icon" onClick={toggleMute} aria-label={muted ? t("unmute") : t("mute")} className="shrink-0 rounded-full text-white hover:bg-white/15 hover:text-white">
               {muted ? <VolumeX aria-hidden className="size-6" /> : <Volume2 aria-hidden className="size-6" />}
             </Button>

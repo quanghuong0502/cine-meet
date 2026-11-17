@@ -1016,6 +1016,8 @@
       "seek": "Tua trailer",
       "mute": "Tắt tiếng",
       "unmute": "Bật tiếng",
+      "fullscreen": "Toàn màn hình",
+      "exitFullscreen": "Thu nhỏ",
       "openYoutube": "Xem trên YouTube"
     },
     "releaseOn": "Khởi chiếu {date}",
