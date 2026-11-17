@@ -72,7 +72,8 @@
 | Loại ghế (`seatTypes`) | tên, số người ngồi (1 hoặc 2), màu hiển thị | Thường, VIP, đôi (Sweetbox), giường nằm, ghế cho người khuyết tật |
 | Bảng giá vé (`priceRules`) | chi nhánh/thương hiệu × định dạng × loại ghế × loại ngày × khung giờ, độ ưu tiên, `validFrom`/`validTo` | Loại ngày: thường, cuối tuần, lễ, ngày ưu đãi. Quy tắc chọn rule ở ngay dưới bảng |
 | Ngày lễ (`holidays`) | ngày, tên | Để xác định giá ngày lễ |
-| Đồ ăn (`fnbItems`, `fnbCombos`) | tên, size, giá theo thương hiệu, `validFrom`/`validTo` | Giá thay đổi theo thời gian |
+| Đồ ăn (`fnbItems`) | tên, size, giá theo thương hiệu, `validFrom`/`validTo` | Giá thay đổi theo thời gian |
+| Combo (`fnbCombos`) | thương hiệu, tên, **món (`fnbItems`) kèm số lượng**, chiết khấu (đồng hoặc %), `validFrom`/`validTo` | **Giá không lưu**: luôn bằng tổng (giá món hiện tại × số lượng) trừ chiết khấu (`src/services/pricing/combo-price.ts`), nên đổi giá món thì combo đổi theo. Món phải cùng thương hiệu; món đang nằm trong combo không xóa được. Giá ước tính của lịch hẹn vẫn được lưu lúc tính |
 
 **Quy tắc chọn rule giá** (khi nhiều rule cùng khớp một suất, xét lần lượt, bước nào phân thắng bại thì dừng):
 1. **Độ cụ thể:** rule theo chi nhánh thắng rule theo thương hiệu; rồi rule chỉ định nhiều điều kiện (định dạng, loại ghế,
@@ -363,7 +364,8 @@ friendGroups             { ownerId, name, memberIds[] }
 brands, branches, genres, formats, seatTypes, holidays
 priceRules               { scope{brandId|branchId}, formatId, seatTypeId, dayType,
                            timeSlot, price, priority, validFrom?, validTo? }
-fnbItems, fnbCombos      { brandId, name, size, price, validFrom, validTo }
+fnbItems                 { brandId, name, nameEn?, size?, price, validFrom?, validTo? }
+fnbCombos                { brandId, name, items[{ itemId, quantity }], discountType(amount|percent), discountValue, validFrom?, validTo? }   // giá = tính, không lưu
 
 auditoriums              { branchId, name, currentLayoutId }
 auditoriumLayouts        { auditoriumId, version, config{...},
