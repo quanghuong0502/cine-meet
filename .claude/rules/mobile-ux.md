@@ -40,7 +40,7 @@ Căn cứ: [Apple HIG, tab bars](https://developer.apple.com/design/human-interf
 3. Ô nhập: cỡ chữ 16px, đúng `type`, `inputMode`, `autoComplete`, `autoCapitalize`, `enterKeyHint` (mật khẩu, email, số điện thoại, URL, số).
 4. Chiều cao toàn màn hình dùng `dvh`; mọi thứ dính mép dưới cộng `env(safe-area-inset-bottom)`. Không đặt `position: fixed` bên trong vùng đã `overflow: hidden` cho form.
 5. **Toast** nằm trên menu dưới và nút cố định (`--toast-offset`), không đè lên chúng.
-6. Bottom sheet (Drawer) cho form ngắn và menu; form dài chia bước. Sheet có `max-h` bằng `dvh` và cuộn bên trong.
+6. Bottom sheet (Drawer) cho form ngắn và menu; form dài chia bước. Sheet có `max-h` bằng `dvh` và cuộn bên trong. **Khi bàn phím mở, chiều cao tối đa của sheet là `--vv-height`** (phần màn hình bàn phím để lại, do `KeyboardWatcher` đặt, rule trong `globals.css`): đã đo trên iPhone 14 Pro (iOS 26, PWA) bàn phím làm co cả `innerHeight` nên `dvh` và cách phát hiện bàn phím của vaul (`innerHeight` trừ `visualViewport`) đều không thấy bàn phím, sheet cao thì đỉnh (tiêu đề, ô đầu) bị đẩy khỏi màn hình. Phần tử cần ẩn khi gõ (ví dụ nút Hủy của form) gắn `data-hide-on-keyboard`.
 
 ## 4. Loading, rỗng, lỗi, mạng
 

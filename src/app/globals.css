@@ -266,3 +266,10 @@
 *::-webkit-scrollbar {
   display: none;
 }
+
+/* Outside any layer on purpose: it must beat the sheet's own `max-h-[92dvh]`.
+   A bottom sheet with the keyboard up is never taller than the part of the screen the keyboard leaves free
+   (see components/keyboard-watcher.tsx), so its title stays on screen and only the form body scrolls. */
+html[data-keyboard="open"] [data-slot="drawer-content"] {
+  max-height: calc(var(--vv-height, 100dvh) - 1rem);
+}
