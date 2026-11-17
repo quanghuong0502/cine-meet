@@ -631,7 +631,7 @@
           "settings": "Settings",
           "seats": "Seats"
         },
-        "heatmap": "Seat score heatmap",
+        "heatmap": "Heatmap",
         "mapHint": "Pinch to zoom the map",
         "fields": {
           "name": {
