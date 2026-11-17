@@ -19,7 +19,7 @@ export function ChangePasswordForm() {
   );
 
   return (
-    <form action={formAction} className="flex flex-col gap-4">
+    <form action={formAction} className="flex flex-col gap-field">
       <div className="flex flex-col gap-3">
         <Label htmlFor="currentPassword"><span>{t("currentLabel")}<RequiredMark /></span></Label>
         <Input

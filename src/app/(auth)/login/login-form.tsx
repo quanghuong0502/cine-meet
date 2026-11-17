@@ -50,7 +50,7 @@ export function LoginForm({ callbackUrl, initialError }: LoginFormProps) {
 
   return (
     <div className="flex flex-col gap-4">
-      <form action={formAction} className="flex flex-col gap-4">
+      <form action={formAction} className="flex flex-col gap-field">
         <input type="hidden" name="callbackUrl" value={callbackUrl} />
 
         <div className="flex flex-col gap-3">

@@ -91,6 +91,7 @@
   --spacing-row: 4rem; /* 64px: list rows with a title and a subtitle */
   --spacing-avatar: 2.5rem; /* 40px: the round avatar picture inside its 44px touch target */
   --spacing-nav: 3.5rem; /* 56px: one tab of the floating bottom navigation pill */
+  --spacing-field: 1.5rem; /* 24px: gap between two fields (blocks) of a form, in every form of the app */
   --spacing-nav-gap: 0.75rem; /* 12px: space around the floating pill (the bar adds the home-bar inset); content clears it by nav + 2 gaps */
 
   --radius-sm: calc(var(--radius) * 0.6);
