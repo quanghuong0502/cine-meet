@@ -671,7 +671,7 @@
             "label": "Màn hình cách hàng đầu"
           },
           "stadiumFromRow": {
-            "label": "Bậc thang từ hàng thứ (tính từ màn hình)",
+            "label": "Bậc thang từ hàng thứ (tính từ màn hình, trống nếu phòng phẳng)",
             "placeholder": "vd. 3"
           },
           "verticalAisles": {

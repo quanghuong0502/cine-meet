@@ -671,7 +671,7 @@
             "label": "Screen to front row"
           },
           "stadiumFromRow": {
-            "label": "Stadium starts at row (from the screen)",
+            "label": "Stadium starts at row (from the screen, empty if flat)",
             "placeholder": "e.g. 3"
           },
           "verticalAisles": {
