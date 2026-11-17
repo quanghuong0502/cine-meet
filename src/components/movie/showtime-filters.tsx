@@ -85,13 +85,19 @@ export function ShowtimeFilters({ date, values, options, records }: Props) {
           </Chip>
         </div>
       ) : null}
-      {/* Once the button above has scrolled away it floats at the bottom right, above the menu, so filtering never means scrolling back up. */}
+      {/* Once the button above has scrolled away it floats at the bottom right, above the menu, as the icon alone (the label and count stay in aria-label). */}
       {canFilter && floating ? (
         <div data-bottom-fixed className="pointer-events-none fixed inset-x-0 bottom-[var(--nav-clearance)] z-30">
           <div className="mx-auto flex max-w-2xl justify-end px-4">
-            <Button type="button" onClick={() => onOpenChange(true)} aria-haspopup="dialog" className="pointer-events-auto h-target rounded-full px-4 text-sm shadow-lg">
-              <SlidersHorizontal className="size-4" aria-hidden />
-              {buttonLabel}
+            <Button
+              type="button"
+              size="icon"
+              onClick={() => onOpenChange(true)}
+              aria-haspopup="dialog"
+              aria-label={buttonLabel}
+              className="pointer-events-auto rounded-full shadow-lg"
+            >
+              <SlidersHorizontal className="size-5" aria-hidden />
             </Button>
           </div>
         </div>
