@@ -31,9 +31,9 @@ export const branchesSection = createSection({
   fields: ({ t, brandOptions }) => [
     { name: "brandId", kind: "select", label: t("fields.brandId.label"), required: true, options: brandOptions, placeholder: t("fields.brandId.placeholder") },
     { name: "name", kind: "text", label: t("fields.name.label"), required: true, maxLength: 80 },
+    { name: "imageUrl", kind: "image", label: t("fields.imageUrl.label"), uploadTicket: getBranchImageUploadTicket },
     { name: "address", kind: "textarea", label: t("fields.address.label"), maxLength: 200 },
     { name: "mapsUrl", kind: "url", label: t("fields.mapsUrl.label"), maxLength: 300 },
-    { name: "imageUrl", kind: "image", label: t("fields.imageUrl.label"), uploadTicket: getBranchImageUploadTicket },
     { name: "floor", kind: "text", label: t("fields.floor.label"), placeholder: t("fields.floor.placeholder"), maxLength: 40 },
     { name: "openingHours", kind: "text", label: t("fields.openingHours.label"), placeholder: t("fields.openingHours.placeholder"), maxLength: 60 },
     { name: "parkingFee", kind: "number", label: t("fields.parkingFee.label"), placeholder: t("fields.parkingFee.placeholder"), step: "1", min: 0 },
