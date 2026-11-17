@@ -20,7 +20,7 @@ export function PageHeader({ title, backHref, description }: PageHeaderProps) {
       className={cn(
         "flex gap-2",
         backHref
-          ? "sticky top-0 z-20 -mx-4 -mt-4 items-center bg-background/95 px-4 pt-4 pb-2 backdrop-blur"
+          ? "sticky top-0 z-20 -mx-4 -mt-4 items-center bg-background/95 px-4 py-1 backdrop-blur"
           : "items-start",
       )}
     >
