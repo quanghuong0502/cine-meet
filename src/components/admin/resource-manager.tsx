@@ -48,7 +48,7 @@ function Marker({ item }: { item: ResourceItem }) {
       style={!showImage && item.color ? { backgroundColor: item.color } : undefined}
     >
       {showImage ? (
-        <Image src={item.imageUrl as string} alt="" width={40} height={40} unoptimized onError={() => setFailed(true)} className="size-full rounded-md object-contain p-1.5" />
+        <Image src={item.imageUrl as string} alt="" width={40} height={40} unoptimized onError={() => setFailed(true)} className="size-full object-cover" />
       ) : (
         item.avatarText
       )}
