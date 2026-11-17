@@ -20,9 +20,18 @@ Nguồn số liệu: [Use Your Loaf](https://useyourloaf.com/blog/iphone-14-scre
 khi trang đặt `viewport-fit=cover` (đã có ở `src/app/layout.tsx`). Chiều cao nhìn thấy được trong Safari thấp hơn 844/852 vì thanh địa chỉ
 và thanh công cụ, giá trị chính xác tùy phiên bản iOS và vị trí thanh địa chỉ, nên xác nhận trên máy thật.
 
+## Phạm vi hỗ trợ (quyết định của chủ dự án, 2026-11-17)
+
+**App phải chạy tốt trên mọi điện thoại cài PWA** (iPhone mọi đời, Android mọi hãng), không chỉ hai máy trên. Hai máy trên là **ưu tiên tối ưu và kiểm tra đầu tiên**, không phải giới hạn.
+- Chiều rộng hỗ trợ từ **320px** (iPhone SE, Android nhỏ) đến khoảng **430px** (iPhone Pro Max, Android lớn); lớn hơn thì canh giữa như máy tính bảng và desktop.
+- Không viết cứng theo 390 hay 393; bố cục co giãn, không cuộn ngang, không cắt nút hay ô ở bất kỳ chiều rộng nào trong khoảng đó.
+- Vùng an toàn (`env(safe-area-inset-*)`), chiều cao `dvh`, cỡ chữ hệ thống 125% và 150% đều phải chịu được, kể cả máy không có tai thỏ hay thanh home (giá trị 0).
+- Trình duyệt khác Safari (Chrome Android, Samsung Internet) cũng phải chạy: không dùng tính năng chỉ có ở một trình duyệt mà không có phương án thay thế.
+- Kiểm tra: đo ở **320, 360, 390, 393, 430**; ở mỗi khổ `scrollWidth` của khung cuộn bằng `clientWidth` và mọi nút, ô vẫn thấy đủ.
+
 ## Quy tắc
 
-1. **Khổ thiết kế 390 đến 393px.** Hai máy chỉ khác 3px chiều rộng, nên bố cục phải co giãn, không viết cứng 390 hay 393. Kiểm tra cả hai.
+1. **Khổ thiết kế ưu tiên 390 đến 393px.** Hai máy chỉ khác 3px chiều rộng, nên bố cục phải co giãn, không viết cứng 390 hay 393. Kiểm tra cả hai.
 2. **Vùng an toàn phía trên khác nhau (47 và 59px):** không viết cứng chiều cao thanh trạng thái. Mọi thứ dính mép trên dùng `env(safe-area-inset-top)`.
    Nếu bật kiểu thanh trạng thái trong suốt cho PWA (`black-translucent`), mọi trang phải chừa `env(safe-area-inset-top)` ở trên cùng.
 3. **Vùng an toàn phía dưới 34px:** thanh điều hướng dưới, thanh hành động cố định và Drawer luôn cộng `env(safe-area-inset-bottom)`

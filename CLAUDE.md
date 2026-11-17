@@ -1,7 +1,7 @@
 ## Nền tảng
 
 - Đây là **web app responsive** (Next.js), không phải app native. Cài lên màn hình chính được qua PWA.
-- Thiết bị chính là **điện thoại** (Safari iOS, Chrome Android). Thiết kế và kiểm tra trước hết trên **iPhone 13 (390×844) và iPhone 14 Pro (393×852)**; quy tắc riêng ở `.claude/rules/devices.md`.
+- Thiết bị chính là **điện thoại** (Safari iOS, Chrome Android). Thiết kế và kiểm tra trước hết trên **iPhone 13 (390×844) và iPhone 14 Pro (393×852)**, nhưng **app phải chạy tốt trên mọi điện thoại cài PWA, từ 320px đến 430px, iOS lẫn Android**; quy tắc riêng và cách kiểm tra ở `.claude/rules/devices.md`.
 - Desktop vẫn được hỗ trợ: user dùng cùng giao diện mobile, canh giữa với chiều rộng tối đa hợp lý;
   admin có bố cục rộng hơn (sidebar, bảng) nhưng mọi chức năng admin vẫn phải dùng được trên điện thoại.
 - Tailwind mobile-first: viết class cho mobile trước, mở rộng bằng `md:` và `lg:`.
