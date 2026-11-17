@@ -149,7 +149,17 @@ export function ShowtimeFilters({ date, values, options, records }: Props) {
             >
               {t("show", { count: countMatching(records, draft) })}
             </Button>
-            <Button type="button" size="cta-sm" variant="ghost" onClick={() => setDraft({})}>
+            <Button
+              type="button"
+              size="cta-sm"
+              variant="ghost"
+              onClick={() => {
+                // Clearing is applied at once and closes the sheet: nothing is left to review.
+                setDraft({});
+                apply({});
+                setOpen(false);
+              }}
+            >
               {t("clear")}
             </Button>
           </DrawerFooter>
