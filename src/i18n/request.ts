@@ -1,7 +1,6 @@
 import { cookies, headers } from "next/headers";
 import { getRequestConfig } from "next-intl/server";
-import { auth } from "@/auth";
-import { getUserLocale } from "@/services/user.service";
+import { getActiveUser } from "@/lib/auth/guards";
 import { LOCALE_COOKIE } from "./config";
 import { resolveLocale } from "./resolve-locale";
 
@@ -11,8 +10,9 @@ import { resolveLocale } from "./resolve-locale";
  * then the browser language, then Vietnamese.
  */
 export default getRequestConfig(async () => {
-  const [cookieStore, headerStore, session] = await Promise.all([cookies(), headers(), auth()]);
-  const savedLocale = session?.user?.id ? await getUserLocale(session.user.id) : null;
+  const [cookieStore, headerStore, user] = await Promise.all([cookies(), headers(), getActiveUser()]);
+  // Same read the layout's guard uses, so the user is loaded once per request (a locked or removed user falls back to the cookie).
+  const savedLocale = user?.locale ?? null;
   const locale = resolveLocale(
     savedLocale ?? cookieStore.get(LOCALE_COOKIE)?.value,
     headerStore.get("accept-language"),

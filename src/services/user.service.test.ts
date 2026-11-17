@@ -161,6 +161,15 @@ describe("findActiveUserById", () => {
     expect(await service.findActiveUserById(id)).toBeNull();
     expect(await service.findActiveUserById("not-an-id")).toBeNull();
   });
+
+  it("carries the saved language, so guards and language lookup share one read", async () => {
+    const user = await User.findOne({ username: "an" });
+    const id = user?._id.toString() ?? "";
+    expect((await service.findActiveUserById(id))?.locale).toBeUndefined();
+
+    await service.setUserLocale(id, "en");
+    expect((await service.findActiveUserById(id))?.locale).toBe("en");
+  });
 });
 
 describe("changePassword", () => {

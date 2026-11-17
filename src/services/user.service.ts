@@ -30,6 +30,8 @@ export interface ActiveUser {
   mustChangePassword: boolean;
   /** False for accounts that only sign in with Google: there is no password to change. */
   hasPassword: boolean;
+  /** The language chosen in Settings; undefined until the user picks one. */
+  locale?: Locale;
 }
 
 export type AuthFailureReason =
@@ -60,6 +62,7 @@ interface UserLike {
   avatar?: string | null;
   role: UserRole;
   mustChangePassword?: boolean | null;
+  locale?: Locale | null;
 }
 
 function toSessionUser(doc: UserLike): SessionUser {
@@ -82,6 +85,7 @@ function toActiveUser(doc: UserLike, hasPassword: boolean): ActiveUser {
     image: doc.avatar ?? undefined,
     mustChangePassword: doc.mustChangePassword === true,
     hasPassword,
+    locale: doc.locale ?? undefined,
   };
 }
 

@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { findActiveUserById, type ActiveUser } from "@/services/user.service";
@@ -15,8 +16,15 @@ export const CHANGE_PASSWORD_PATH = "/change-password";
 export async function getActiveUser(): Promise<ActiveUser | null> {
   const session = await auth();
   if (!session?.user?.id) return null;
-  return findActiveUserById(session.user.id);
+  return loadActiveUser(session.user.id);
 }
+
+/**
+ * One database read per rendered request, shared by the language lookup, the layout and the page (React `cache` lasts only for one
+ * render, never across requests, so a lock or role change still takes effect on the next request). Outside a render, such as in a
+ * server action, it is not cached, so an action always reads fresh data.
+ */
+const loadActiveUser = cache((id: string) => findActiveUserById(id));
 
 interface RequireUserOptions {
   /** Set only on the change-password page itself, to avoid a redirect loop. */
@@ -28,7 +36,7 @@ export async function requireUser(options: RequireUserOptions = {}): Promise<Act
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
-  const user = await findActiveUserById(session.user.id);
+  const user = await loadActiveUser(session.user.id);
   // Valid JWT but the account is gone or locked: drop the cookie, otherwise /login would bounce back here.
   if (!user) redirect(INVALID_SESSION_PATH);
 
