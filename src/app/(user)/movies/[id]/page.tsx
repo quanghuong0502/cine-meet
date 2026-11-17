@@ -46,6 +46,7 @@ export default async function MovieDetailPage({ params }: Props) {
   const rating = ratings.find((r) => r._id.toString() === movie.ageRatingId?.toString());
 
   const facts: [string, string | undefined][] = [
+    [t("synopsis"), movie.synopsis ?? undefined],
     [t("director"), movie.director ?? undefined],
     [t("cast"), movie.cast ?? undefined],
     [t("language"), movie.language ?? undefined],
@@ -93,15 +94,13 @@ export default async function MovieDetailPage({ params }: Props) {
 
       {movie.trailer ? <TrailerEmbed videoId={movie.trailer.videoId} title={movie.title} /> : null}
 
-      {movie.synopsis ? <p className="text-base whitespace-pre-line">{movie.synopsis}</p> : null}
-
       <dl className="flex flex-col gap-3 text-sm">
         {facts
           .filter((fact): fact is [string, string] => Boolean(fact[1]))
           .map(([label, value]) => (
             <div key={label} className="flex flex-col gap-0.5">
               <dt className="text-muted-foreground">{label}</dt>
-              <dd className="text-base">{value}</dd>
+              <dd className="text-base whitespace-pre-line">{value}</dd>
             </div>
           ))}
       </dl>
