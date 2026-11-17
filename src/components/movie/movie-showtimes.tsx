@@ -79,7 +79,7 @@ export function MovieShowtimes({ rows }: { rows: ShowtimeRow[] }) {
       {shown.length === 0 ? (
         <p className="py-6 text-center text-sm text-muted-foreground">{tm("noMatch")}</p>
       ) : (
-        <ul className="flex flex-col gap-2">
+        <ul className="flex flex-col gap-3">
           {shown.map((row) => (
             <ShowtimeCard key={row.id} row={row} />
           ))}

@@ -144,7 +144,7 @@ async function Results({ date, values }: { date: string; values: FilterValues })
           <Link href={`/movies/${group[0].movie.id}`} className="text-xl font-semibold">
             {group[0].movie.title}
           </Link>
-          <ul className="flex flex-col gap-2">
+          <ul className="flex flex-col gap-3">
             {group.map((row) => (
               <ShowtimeCard key={row.id} row={row} />
             ))}
