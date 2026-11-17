@@ -37,10 +37,12 @@ interface ResourceManagerProps {
   searchLabels?: { placeholder: string; label: string };
 }
 
-/** The round marker of a card: the logo when there is one (and it loads), else the colour, with initials if given. */
+/** The round marker of a card: the logo when there is one (and it loads), else the colour, with initials if given; nothing when it has none of them. */
 function Marker({ item }: { item: ResourceItem }) {
   const [failed, setFailed] = useState(false);
   const showImage = item.imageUrl && !failed;
+  // Nothing to show (no picture, colour or initials): no empty circle.
+  if (!showImage && !item.color && !item.avatarText) return null;
   return (
     <span
       aria-hidden
