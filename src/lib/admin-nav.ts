@@ -53,3 +53,11 @@ export function isFocusedAdminRoute(pathname: string): boolean {
 export function showsAdminBar(pathname: string, holding: boolean): boolean {
   return !isFocusedAdminRoute(pathname) || holding;
 }
+
+/**
+ * Root screens of the admin area: the ones that show the phone app bar (logo and avatar). Inner screens (entry forms, profile,
+ * settings pages) have their own back bar instead. The showtimes list is a tab of the Movies page, so it is a root too.
+ */
+export function isAdminTabRoot(pathname: string): boolean {
+  return pathname === "/admin" || pathname === "/admin/movies/showtimes" || ENABLED_ADMIN_NAV_ITEMS.some((item) => item.href === pathname);
+}

@@ -32,3 +32,11 @@ export const ENABLED_NAV_ITEMS = NAV_ITEMS.filter((item) => item.enabled);
 export function isFocusedUserRoute(pathname: string): boolean {
   return /^\/profile\/.+/.test(pathname);
 }
+
+/**
+ * Root screens of the user app: the ones that show the app bar (logo and avatar). Every other screen is an inner screen with its own
+ * back bar, so a second bar above it would only waste height.
+ */
+export function isUserTabRoot(pathname: string): boolean {
+  return pathname === "/" || ENABLED_NAV_ITEMS.some((item) => item.href === pathname);
+}

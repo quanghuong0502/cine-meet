@@ -1,7 +1,6 @@
 import { AppOpenedMarker } from "@/components/route-loading";
-import { Logo } from "@/components/logo";
+import { AppHeader } from "@/components/app-header";
 import { redirect } from "next/navigation";
-import { UserMenu } from "@/components/user-menu";
 import { UserBottomNav } from "@/components/user-bottom-nav";
 import { requireUser } from "@/lib/auth/guards";
 import { ENABLED_NAV_ITEMS } from "@/lib/nav";
@@ -21,10 +20,7 @@ export default async function UserLayout({
 
   return (
     <div data-app-shell className="mx-auto flex h-dvh w-full max-w-2xl flex-col overflow-hidden">
-      <header className="flex shrink-0 items-center justify-between border-b px-4 py-1">
-        <Logo size={48} wordmarkClassName="text-xl" />
-        <UserMenu name={user.name} image={user.image} />
-      </header>
+      <AppHeader area="app" name={user.name} image={user.image} />
       <main
         data-app-scroll
         className={

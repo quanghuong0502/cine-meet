@@ -17,10 +17,11 @@ Căn cứ: [Apple HIG, tab bars](https://developer.apple.com/design/human-interf
 
 1. **Mọi màn không phải tab đều có nút quay lại trong app** (`PageHeader` với `backHref`): PWA không có nút Back của trình duyệt, và có thể không có bottom nav (chưa tab nào bật).
    Không để người dùng kẹt ở một màn.
-2. **Thanh tab dưới chỉ để chuyển mục, không chứa hành động** (Apple HIG); tối đa 5 mục. Điều hướng luôn hiện sẵn, không giấu sau menu hamburger
+2. **Mỗi màn chỉ có một thanh trên cùng, để dành chỗ cho nội dung** (2026-11-17): thanh app (logo + avatar, `AppHeader`) chỉ hiện ở màn gốc của tab (`isUserTabRoot`, `isAdminTabRoot`); màn con đã có thanh quay lại (`PageHeader` với `backHref`) thì ẩn thanh app, vì hai thanh chồng nhau tốn khoảng 56px. Màn gốc mới thêm vào menu phải nằm trong danh sách nav để được hiện thanh app; màn con mới không cần làm gì.
+3. **Thanh tab dưới chỉ để chuyển mục, không chứa hành động** (Apple HIG); tối đa 5 mục. Điều hướng luôn hiện sẵn, không giấu sau menu hamburger
    (NN/g, qua nguồn thứ cấp: điều hướng ẩn làm khả năng được tìm thấy giảm gần một nửa).
-3. **Giữ trạng thái khi chuyển tab** (vị trí cuộn, bộ lọc, ô tìm kiếm) khi màn đó có; không bắt người dùng làm lại.
-4. **Mỗi màn có URL riêng** và mở thẳng được (thông báo đẩy, chia sẻ). Bộ lọc, tab trong trang nằm trên URL (`?tab=`).
+4. **Giữ trạng thái khi chuyển tab** (vị trí cuộn, bộ lọc, ô tìm kiếm) khi màn đó có; không bắt người dùng làm lại.
+5. **Mỗi màn có URL riêng** và mở thẳng được (thông báo đẩy, chia sẻ). Bộ lọc, tab trong trang nằm trên URL (`?tab=`).
 
 ## 2. Vùng chạm và ngón cái
 
