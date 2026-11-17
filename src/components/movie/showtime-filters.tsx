@@ -5,11 +5,9 @@ import { useTranslations } from "next-intl";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Chip } from "@/components/admin/auditorium-editor/chips";
+import { FILTER_KEYS, type FilterKey, type FilterValues } from "@/lib/showtime/filters";
 import { cn } from "@/lib/utils";
 
-export const FILTER_KEYS = ["movie", "branch", "genre", "format", "slot"] as const;
-export type FilterKey = (typeof FILTER_KEYS)[number];
-export type FilterValues = Partial<Record<FilterKey, string>>;
 
 interface Option {
   value: string;
