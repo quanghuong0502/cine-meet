@@ -133,6 +133,8 @@ export function generateGrid(
       x: entranceX[e.side],
       y: e.position === "front" ? firstRowY : lastRowY,
     })),
+    colX,
+    rowY,
     firstRowY,
     lastRowY,
     rowLabels: physRowLabels,

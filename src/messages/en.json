@@ -732,5 +732,19 @@
       "network": "Connection lost while uploading. Try again.",
       "not_configured": "Cloudinary isn't set up yet, so photos can't be uploaded."
     }
+  },
+  "seatMap": {
+    "label": "Seat map",
+    "screen": "SCREEN",
+    "door": "Entrance",
+    "seat": "Seat {code}, {type}",
+    "score": "score {score}",
+    "broken": "broken",
+    "obstructed": "view blocked",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "zoomReset": "Reset",
+    "heatLow": "Low score",
+    "heatHigh": "High score"
   }
 }

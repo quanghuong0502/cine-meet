@@ -732,5 +732,19 @@
       "network": "Mất kết nối khi tải ảnh. Hãy thử lại.",
       "not_configured": "Chưa cấu hình Cloudinary nên chưa tải ảnh được."
     }
+  },
+  "seatMap": {
+    "label": "Sơ đồ ghế",
+    "screen": "MÀN HÌNH",
+    "door": "Cửa ra vào",
+    "seat": "Ghế {code}, {type}",
+    "score": "điểm {score}",
+    "broken": "ghế hỏng",
+    "obstructed": "bị che tầm nhìn",
+    "zoomIn": "Phóng to",
+    "zoomOut": "Thu nhỏ",
+    "zoomReset": "Đặt lại",
+    "heatLow": "Điểm thấp",
+    "heatHigh": "Điểm cao"
   }
 }

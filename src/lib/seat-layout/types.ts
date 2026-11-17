@@ -81,6 +81,9 @@ export interface LayoutGeometry {
   /** y of each horizontal aisle's centre. */
   horizontalAisles: number[];
   entrances: { side: EntranceSide; position: EntrancePosition; x: number; y: number }[];
+  /** Centre x of each physical column (from the left) and centre y of each physical row (from the screen). */
+  colX: number[];
+  rowY: number[];
   /** y of the first and last row centres. */
   firstRowY: number;
   lastRowY: number;
