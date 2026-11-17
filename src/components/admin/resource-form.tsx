@@ -74,7 +74,7 @@ function FieldControl({ field, value, invalid, last }: { field: ResourceField; v
         <Input
           {...common}
           type={field.kind === "url" ? "url" : field.kind === "number" ? "number" : field.kind === "date" ? "date" : "text"}
-          inputMode={field.kind === "number" ? "decimal" : undefined}
+          inputMode={field.kind === "number" ? (field.step === "1" ? "numeric" : "decimal") : undefined}
           step={field.step}
           min={field.min}
           max={field.max}
@@ -125,6 +125,13 @@ export function ResourceForm({ itemId, fields, values, backHref, itemName, saveA
     router.replace(backHref);
     router.refresh();
   }, [state, t, router, backHref]);
+
+  // A long form can hide the field that failed: scroll to the first one (no focus, so the keyboard does not pop up).
+  useEffect(() => {
+    if (state.status !== "error") return;
+    const target = document.querySelector<HTMLElement>('form [aria-invalid="true"]');
+    target?.scrollIntoView({ block: "center", behavior: "smooth" });
+  }, [state]);
 
   function confirmDelete() {
     if (!itemId || !removeAction) return;

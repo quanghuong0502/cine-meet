@@ -34,3 +34,43 @@ export const optionalNumber = (min: number, max: number) =>
 
 /** An HTML checkbox sends "on" when checked and nothing when not. */
 export const checkbox = z.preprocess((value) => value === "on" || value === "true", z.boolean());
+
+/** A required id of another record (24 hex characters). */
+export const objectIdField = z
+  .string({ error: "required" })
+  .regex(/^[0-9a-fA-F]{24}$/, { error: "invalid" });
+
+/** A required whole number in a range; the form sends it as a string. */
+export const requiredInt = (min: number, max: number) =>
+  z
+    .string({ error: "required" })
+    .transform((value) => Number(value))
+    .pipe(
+      z
+        .number({ error: "invalid_number" })
+        .int({ error: "invalid_number" })
+        .min(min, { error: "out_of_range" })
+        .max(max, { error: "out_of_range" }),
+    );
+
+export const optionalInt = (min: number, max: number) => requiredInt(min, max).optional();
+
+/** True for a real calendar date written YYYY-MM-DD (no time zone: Vietnam calendar days). */
+export function isCalendarDate(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const date = new Date(`${value}T00:00:00Z`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
+}
+
+export const requiredDate = z
+  .string({ error: "required" })
+  .refine(isCalendarDate, { error: "invalid_date" });
+
+export const optionalDate = requiredDate.optional();
+
+/** `validTo` may not be before `validFrom` (both optional). Use as `.superRefine(validRange)`. */
+export function validRange(value: { validFrom?: string; validTo?: string }, ctx: z.RefinementCtx) {
+  if (value.validFrom && value.validTo && value.validTo < value.validFrom) {
+    ctx.addIssue({ code: "custom", path: ["validTo"], message: "out_of_range" });
+  }
+}

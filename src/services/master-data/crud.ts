@@ -61,7 +61,7 @@ export function createMasterDataService<T extends object>(config: MasterDataConf
     return (await model.findById(id).lean()) as unknown as WithId<T> | null;
   }
 
-  async function create(input: Partial<T>, actorId: string): Promise<ServiceResult<WithId<T>>> {
+  async function create(input: Record<string, unknown>, actorId: string): Promise<ServiceResult<WithId<T>>> {
     await connectToDatabase();
     try {
       const created = await model.create(input as never);
@@ -74,11 +74,11 @@ export function createMasterDataService<T extends object>(config: MasterDataConf
     }
   }
 
-  async function update(id: string, input: Partial<T>, actorId: string): Promise<ServiceResult<WithId<T>>> {
+  async function update(id: string, input: Record<string, unknown>, actorId: string): Promise<ServiceResult<WithId<T>>> {
     const before = await getById(id);
     if (!before) return { ok: false, error: "not_found" };
 
-    const values = input as Record<string, unknown>;
+    const values = input;
     const $set: Record<string, unknown> = {};
     const $unset: Record<string, 1> = {};
     for (const field of config.editableFields) {

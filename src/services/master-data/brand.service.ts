@@ -1,6 +1,9 @@
 import { z } from "zod";
 import { optionalColor, optionalUrl, requiredText } from "@/lib/validation/fields";
+import { Branch } from "@/models/branch";
 import { Brand } from "@/models/brand";
+import { FnbCombo } from "@/models/fnb-combo";
+import { FnbItem } from "@/models/fnb-item";
 import { createMasterDataService } from "./crud";
 
 export const brandInputSchema = z.object({
@@ -19,6 +22,10 @@ export const brandService = createMasterDataService({
   searchFields: ["name"],
   sort: { name: 1 },
   editableFields: ["name", "logoUrl", "color", "websiteUrl", "appUrl"],
-  // Branches will point at a brand: added when branches exist (Sprint 1, step 2).
-  dependents: () => [],
+  // A brand with branches or food items still in use cannot be deleted.
+  dependents: () => [
+    { model: Branch, field: "brandId" },
+    { model: FnbItem, field: "brandId" },
+    { model: FnbCombo, field: "brandId" },
+  ],
 });

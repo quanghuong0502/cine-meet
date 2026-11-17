@@ -97,7 +97,7 @@
       "itemCount": "{count, plural, one {# item} other {# items}}",
       "errors": {
         "validation": "Check the highlighted fields.",
-        "duplicate": "This name already exists.",
+        "duplicate": "This already exists.",
         "in_use": "It's used elsewhere, so it can't be deleted yet.",
         "not_found": "This item no longer exists. Reload the page.",
         "unknown": "Couldn't save. Try again."
@@ -120,9 +120,46 @@
         "brands": {
           "title": "Brands",
           "description": "Cinema chains like CGV, BHD, Beta."
+        },
+        "branches": {
+          "title": "Branches",
+          "description": "Each cinema location of a brand."
+        },
+        "genres": {
+          "title": "Genres",
+          "description": "Action, comedy, romance..."
+        },
+        "formats": {
+          "title": "Formats",
+          "description": "2D, 3D, IMAX..."
+        },
+        "ageRatings": {
+          "title": "Age ratings",
+          "description": "P, T13, T16, T18..."
+        },
+        "seatTypes": {
+          "title": "Seat types",
+          "description": "Standard, VIP, couple seats..."
+        },
+        "holidays": {
+          "title": "Holidays",
+          "description": "Days priced as holidays."
+        },
+        "fnbItems": {
+          "title": "Food & drinks",
+          "description": "Popcorn and drinks by brand."
+        },
+        "fnbCombos": {
+          "title": "Combos",
+          "description": "Popcorn and drink combos by brand."
         }
       },
-      "tabsLabel": "Catalog types"
+      "tabsLabel": "Catalog types",
+      "needBrand": {
+        "title": "Add a brand first",
+        "description": "This belongs to a cinema brand.",
+        "button": "Add a brand"
+      }
     },
     "brands": {
       "title": "Brands",
@@ -160,6 +197,231 @@
       "label": "Admin menu",
       "settings": "Settings",
       "masterData": "Catalog"
+    },
+    "branches": {
+      "title": "Branches",
+      "createTitle": "Add branch",
+      "editTitle": "Edit branch",
+      "addButton": "Add branch",
+      "emptyTitle": "No branchs yet",
+      "emptyDescription": "Add a brand's cinema to use in showtimes.",
+      "fields": {
+        "brandId": {
+          "label": "Brand",
+          "placeholder": "Select a brand"
+        },
+        "name": {
+          "label": "Branch name",
+          "hint": "Usually the cinema and its area"
+        },
+        "address": {
+          "label": "Address"
+        },
+        "lat": {
+          "label": "Latitude",
+          "hint": "Enter both latitude and longitude, or leave both empty"
+        },
+        "lng": {
+          "label": "Longitude"
+        },
+        "mapsUrl": {
+          "label": "Map link"
+        },
+        "floor": {
+          "label": "Floor",
+          "hint": "e.g. Floor 5"
+        },
+        "openingHours": {
+          "label": "Opening hours",
+          "hint": "e.g. 08:00 – 23:00"
+        },
+        "parkingFee": {
+          "label": "Parking fee",
+          "hint": "In dong, leave empty if unknown"
+        },
+        "parkingLocation": {
+          "label": "Parking spot"
+        },
+        "parkingEntrance": {
+          "label": "Parking entrance"
+        }
+      },
+      "parkingBadge": "Parking {fee}"
+    },
+    "genres": {
+      "title": "Genres",
+      "createTitle": "Add genre",
+      "editTitle": "Edit genre",
+      "addButton": "Add genre",
+      "emptyTitle": "No genres yet",
+      "emptyDescription": "Add genres like Action or Comedy to tag movies with.",
+      "fields": {
+        "name": {
+          "label": "Name"
+        },
+        "nameEn": {
+          "label": "English name",
+          "hint": "Shown when the app is in English"
+        }
+      }
+    },
+    "formats": {
+      "title": "Formats",
+      "createTitle": "Add format",
+      "editTitle": "Edit format",
+      "addButton": "Add format",
+      "emptyTitle": "No formats yet",
+      "emptyDescription": "Add screening formats like 2D, 3D, IMAX.",
+      "fields": {
+        "name": {
+          "label": "Name",
+          "hint": "e.g. 2D, 3D, IMAX"
+        }
+      }
+    },
+    "ageRatings": {
+      "title": "Age ratings",
+      "createTitle": "Add age rating",
+      "editTitle": "Edit age rating",
+      "addButton": "Add age rating",
+      "emptyTitle": "No age ratings yet",
+      "emptyDescription": "Add ratings like P, T13, T16, T18.",
+      "fields": {
+        "code": {
+          "label": "Code",
+          "hint": "e.g. T16"
+        },
+        "description": {
+          "label": "Description"
+        },
+        "descriptionEn": {
+          "label": "English description",
+          "hint": "Shown when the app is in English"
+        },
+        "minAge": {
+          "label": "Minimum age",
+          "hint": "In years, 0 for all ages"
+        }
+      },
+      "minAgeBadge": "Age {age}+"
+    },
+    "seatTypes": {
+      "title": "Seat types",
+      "createTitle": "Add seat type",
+      "editTitle": "Edit seat type",
+      "addButton": "Add seat type",
+      "emptyTitle": "No seat types yet",
+      "emptyDescription": "Add seat types like Standard, VIP, couple.",
+      "fields": {
+        "name": {
+          "label": "Name"
+        },
+        "nameEn": {
+          "label": "English name",
+          "hint": "Shown when the app is in English"
+        },
+        "capacity": {
+          "label": "Capacity",
+          "placeholder": "Select capacity"
+        },
+        "color": {
+          "label": "Map colour",
+          "hint": "Used to colour seats on the seat map"
+        }
+      },
+      "capacitySingle": "Single seat",
+      "capacityCouple": "Couple seat"
+    },
+    "holidays": {
+      "title": "Holidays",
+      "createTitle": "Add holiday",
+      "editTitle": "Edit holiday",
+      "addButton": "Add holiday",
+      "emptyTitle": "No holidays yet",
+      "emptyDescription": "Add holidays to price tickets as holiday days.",
+      "fields": {
+        "date": {
+          "label": "Date",
+          "hint": "Vietnam calendar day"
+        },
+        "name": {
+          "label": "Name"
+        },
+        "nameEn": {
+          "label": "English name",
+          "hint": "Shown when the app is in English"
+        }
+      }
+    },
+    "fnbItems": {
+      "title": "Food & drinks",
+      "createTitle": "Add item",
+      "editTitle": "Edit item",
+      "addButton": "Add item",
+      "emptyTitle": "No items yet",
+      "emptyDescription": "Add a brand's popcorn and drinks.",
+      "fields": {
+        "brandId": {
+          "label": "Brand",
+          "placeholder": "Select a brand"
+        },
+        "name": {
+          "label": "Name"
+        },
+        "nameEn": {
+          "label": "English name",
+          "hint": "Shown when the app is in English"
+        },
+        "size": {
+          "label": "Size",
+          "hint": "e.g. Large, M, 32oz"
+        },
+        "price": {
+          "label": "Price",
+          "hint": "In dong, e.g. 79000"
+        },
+        "validFrom": {
+          "label": "Valid from",
+          "hint": "Leave empty if always valid"
+        },
+        "validTo": {
+          "label": "Valid until"
+        }
+      },
+      "validity": "Valid {from} – {to}"
+    },
+    "fnbCombos": {
+      "title": "Combos",
+      "createTitle": "Add combo",
+      "editTitle": "Edit combo",
+      "addButton": "Add combo",
+      "emptyTitle": "No combos yet",
+      "emptyDescription": "Add a brand's popcorn and drink combos.",
+      "fields": {
+        "brandId": {
+          "label": "Brand",
+          "placeholder": "Select a brand"
+        },
+        "name": {
+          "label": "Name"
+        },
+        "description": {
+          "label": "What's inside",
+          "hint": "e.g. 1 large popcorn + 2 drinks"
+        },
+        "price": {
+          "label": "Price",
+          "hint": "In dong, e.g. 79000"
+        },
+        "validFrom": {
+          "label": "Valid from",
+          "hint": "Leave empty if always valid"
+        },
+        "validTo": {
+          "label": "Valid until"
+        }
+      },
+      "validity": "Valid {from} – {to}"
     }
   },
   "placeholders": {

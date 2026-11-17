@@ -108,7 +108,7 @@ export function ResourceManager({ items, section, query, labels, removeAction }:
           <p className="text-sm text-muted-foreground">{t("itemCount", { count: items.length })}</p>
           <ul className="grid gap-3 md:grid-cols-2">
             {items.map((item) => (
-              <li key={item.id} className="flex items-center gap-2 rounded-xl border bg-card pr-2">
+              <li key={item.id} className="flex min-w-0 items-center gap-2 rounded-xl border bg-card pr-2">
                 <Link href={withBack(`${base}/${item.id}`)} className="flex min-h-row min-w-0 flex-1 items-center gap-3 rounded-xl p-3 text-left">
                   <span
                     aria-hidden
@@ -121,7 +121,7 @@ export function ResourceManager({ items, section, query, labels, removeAction }:
                     {item.meta?.length ? (
                       <span className="flex flex-wrap gap-1">
                         {item.meta.map((entry) => (
-                          <Badge key={entry} variant="secondary" className="text-xs font-medium">
+                          <Badge key={entry} variant="secondary" className="h-auto max-w-full whitespace-normal py-0.5 text-left text-xs font-medium">
                             {entry}
                           </Badge>
                         ))}

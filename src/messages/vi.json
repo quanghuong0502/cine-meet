@@ -97,7 +97,7 @@
       "itemCount": "{count, plural, other {# mục}}",
       "errors": {
         "validation": "Kiểm tra lại các ô được đánh dấu.",
-        "duplicate": "Tên này đã tồn tại.",
+        "duplicate": "Đã có mục trùng.",
         "in_use": "Đang được dùng ở nơi khác nên chưa xóa được.",
         "not_found": "Mục này không còn tồn tại. Hãy tải lại trang.",
         "unknown": "Không lưu được. Hãy thử lại."
@@ -120,9 +120,46 @@
         "brands": {
           "title": "Thương hiệu",
           "description": "Các cụm rạp như CGV, BHD, Beta."
+        },
+        "branches": {
+          "title": "Chi nhánh",
+          "description": "Từng rạp của một thương hiệu."
+        },
+        "genres": {
+          "title": "Thể loại",
+          "description": "Hành động, hài, tình cảm..."
+        },
+        "formats": {
+          "title": "Định dạng",
+          "description": "2D, 3D, IMAX..."
+        },
+        "ageRatings": {
+          "title": "Độ tuổi",
+          "description": "P, T13, T16, T18..."
+        },
+        "seatTypes": {
+          "title": "Loại ghế",
+          "description": "Ghế thường, VIP, ghế đôi..."
+        },
+        "holidays": {
+          "title": "Ngày lễ",
+          "description": "Ngày giá vé theo mức ngày lễ."
+        },
+        "fnbItems": {
+          "title": "Đồ ăn",
+          "description": "Bắp, nước theo từng thương hiệu."
+        },
+        "fnbCombos": {
+          "title": "Combo",
+          "description": "Combo bắp nước theo thương hiệu."
         }
       },
-      "tabsLabel": "Loại danh mục"
+      "tabsLabel": "Loại danh mục",
+      "needBrand": {
+        "title": "Cần thêm thương hiệu trước",
+        "description": "Mục này gắn với một thương hiệu rạp.",
+        "button": "Thêm thương hiệu"
+      }
     },
     "brands": {
       "title": "Thương hiệu",
@@ -160,6 +197,231 @@
       "label": "Menu quản trị",
       "settings": "Cài đặt",
       "masterData": "Danh mục"
+    },
+    "branches": {
+      "title": "Chi nhánh",
+      "createTitle": "Thêm chi nhánh",
+      "editTitle": "Sửa chi nhánh",
+      "addButton": "Thêm chi nhánh",
+      "emptyTitle": "Chưa có chi nhánh",
+      "emptyDescription": "Thêm rạp của một thương hiệu để dùng cho lịch chiếu.",
+      "fields": {
+        "brandId": {
+          "label": "Thương hiệu",
+          "placeholder": "Chọn thương hiệu"
+        },
+        "name": {
+          "label": "Tên chi nhánh",
+          "hint": "Thường gồm tên rạp và khu vực"
+        },
+        "address": {
+          "label": "Địa chỉ"
+        },
+        "lat": {
+          "label": "Vĩ độ",
+          "hint": "Nhập cả vĩ độ và kinh độ, hoặc để trống cả hai"
+        },
+        "lng": {
+          "label": "Kinh độ"
+        },
+        "mapsUrl": {
+          "label": "Liên kết bản đồ"
+        },
+        "floor": {
+          "label": "Tầng",
+          "hint": "vd. Tầng 5"
+        },
+        "openingHours": {
+          "label": "Giờ mở cửa",
+          "hint": "vd. 08:00 – 23:00"
+        },
+        "parkingFee": {
+          "label": "Phí gửi xe",
+          "hint": "Đơn vị đồng, để trống nếu chưa rõ"
+        },
+        "parkingLocation": {
+          "label": "Nơi gửi xe"
+        },
+        "parkingEntrance": {
+          "label": "Lối vào bãi xe"
+        }
+      },
+      "parkingBadge": "Gửi xe {fee}"
+    },
+    "genres": {
+      "title": "Thể loại",
+      "createTitle": "Thêm thể loại",
+      "editTitle": "Sửa thể loại",
+      "addButton": "Thêm thể loại",
+      "emptyTitle": "Chưa có thể loại",
+      "emptyDescription": "Thêm thể loại như Hành động, Hài để gắn cho phim.",
+      "fields": {
+        "name": {
+          "label": "Tên"
+        },
+        "nameEn": {
+          "label": "Tên tiếng Anh",
+          "hint": "Hiện khi dùng tiếng Anh"
+        }
+      }
+    },
+    "formats": {
+      "title": "Định dạng",
+      "createTitle": "Thêm định dạng",
+      "editTitle": "Sửa định dạng",
+      "addButton": "Thêm định dạng",
+      "emptyTitle": "Chưa có định dạng",
+      "emptyDescription": "Thêm định dạng chiếu như 2D, 3D, IMAX.",
+      "fields": {
+        "name": {
+          "label": "Tên",
+          "hint": "vd. 2D, 3D, IMAX"
+        }
+      }
+    },
+    "ageRatings": {
+      "title": "Độ tuổi",
+      "createTitle": "Thêm độ tuổi",
+      "editTitle": "Sửa độ tuổi",
+      "addButton": "Thêm độ tuổi",
+      "emptyTitle": "Chưa có độ tuổi",
+      "emptyDescription": "Thêm mức phân loại như P, T13, T16, T18.",
+      "fields": {
+        "code": {
+          "label": "Mã",
+          "hint": "vd. T16"
+        },
+        "description": {
+          "label": "Mô tả"
+        },
+        "descriptionEn": {
+          "label": "Mô tả tiếng Anh",
+          "hint": "Hiện khi dùng tiếng Anh"
+        },
+        "minAge": {
+          "label": "Tuổi tối thiểu",
+          "hint": "Số tuổi, 0 nếu mọi lứa tuổi"
+        }
+      },
+      "minAgeBadge": "Từ {age} tuổi"
+    },
+    "seatTypes": {
+      "title": "Loại ghế",
+      "createTitle": "Thêm loại ghế",
+      "editTitle": "Sửa loại ghế",
+      "addButton": "Thêm loại ghế",
+      "emptyTitle": "Chưa có loại ghế",
+      "emptyDescription": "Thêm loại ghế như Thường, VIP, ghế đôi.",
+      "fields": {
+        "name": {
+          "label": "Tên"
+        },
+        "nameEn": {
+          "label": "Tên tiếng Anh",
+          "hint": "Hiện khi dùng tiếng Anh"
+        },
+        "capacity": {
+          "label": "Sức chứa",
+          "placeholder": "Chọn sức chứa"
+        },
+        "color": {
+          "label": "Màu trên sơ đồ",
+          "hint": "Dùng để tô ghế trên sơ đồ"
+        }
+      },
+      "capacitySingle": "Ghế đơn",
+      "capacityCouple": "Ghế đôi"
+    },
+    "holidays": {
+      "title": "Ngày lễ",
+      "createTitle": "Thêm ngày lễ",
+      "editTitle": "Sửa ngày lễ",
+      "addButton": "Thêm ngày lễ",
+      "emptyTitle": "Chưa có ngày lễ",
+      "emptyDescription": "Thêm ngày lễ để tính giá vé ngày lễ.",
+      "fields": {
+        "date": {
+          "label": "Ngày",
+          "hint": "Theo lịch Việt Nam"
+        },
+        "name": {
+          "label": "Tên"
+        },
+        "nameEn": {
+          "label": "Tên tiếng Anh",
+          "hint": "Hiện khi dùng tiếng Anh"
+        }
+      }
+    },
+    "fnbItems": {
+      "title": "Đồ ăn",
+      "createTitle": "Thêm món",
+      "editTitle": "Sửa món",
+      "addButton": "Thêm món",
+      "emptyTitle": "Chưa có món nào",
+      "emptyDescription": "Thêm bắp, nước của một thương hiệu.",
+      "fields": {
+        "brandId": {
+          "label": "Thương hiệu",
+          "placeholder": "Chọn thương hiệu"
+        },
+        "name": {
+          "label": "Tên"
+        },
+        "nameEn": {
+          "label": "Tên tiếng Anh",
+          "hint": "Hiện khi dùng tiếng Anh"
+        },
+        "size": {
+          "label": "Cỡ",
+          "hint": "vd. Lớn, M, 32oz"
+        },
+        "price": {
+          "label": "Giá",
+          "hint": "Đơn vị đồng, vd. 79000"
+        },
+        "validFrom": {
+          "label": "Áp dụng từ",
+          "hint": "Để trống nếu luôn áp dụng"
+        },
+        "validTo": {
+          "label": "Áp dụng đến"
+        }
+      },
+      "validity": "Áp dụng {from} – {to}"
+    },
+    "fnbCombos": {
+      "title": "Combo",
+      "createTitle": "Thêm combo",
+      "editTitle": "Sửa combo",
+      "addButton": "Thêm combo",
+      "emptyTitle": "Chưa có combo",
+      "emptyDescription": "Thêm combo bắp nước của một thương hiệu.",
+      "fields": {
+        "brandId": {
+          "label": "Thương hiệu",
+          "placeholder": "Chọn thương hiệu"
+        },
+        "name": {
+          "label": "Tên"
+        },
+        "description": {
+          "label": "Gồm những gì",
+          "hint": "vd. 1 bắp lớn + 2 nước"
+        },
+        "price": {
+          "label": "Giá",
+          "hint": "Đơn vị đồng, vd. 79000"
+        },
+        "validFrom": {
+          "label": "Áp dụng từ",
+          "hint": "Để trống nếu luôn áp dụng"
+        },
+        "validTo": {
+          "label": "Áp dụng đến"
+        }
+      },
+      "validity": "Áp dụng {from} – {to}"
     }
   },
   "placeholders": {
