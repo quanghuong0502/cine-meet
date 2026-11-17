@@ -110,6 +110,8 @@ describe("searchShowtimes", () => {
     await svc.createShowtimesBulk(bulk({ dates: ["2099-12-01"], times: ["15:00"], priceOverride: 60000 }), ACTOR);
     const all = await svc.searchShowtimes({ date: "2099-12-01" });
     expect(all.map((r) => r.price)).toEqual([80000, 60000, 80000]);
+    // One seat type in the test room, so the range is a single price; an override fixes every seat type.
+    expect(all.map((r) => [r.priceMin, r.priceMax])).toEqual([[80000, 80000], [60000, 60000], [80000, 80000]]);
     expect((await svc.searchShowtimes({ date: "2099-12-01", slot: "evening" })).map((r) => r.startAt)).toEqual(["2099-12-01T12:30:00.000Z"]);
     expect(await svc.searchShowtimes({ date: "2099-12-02" })).toEqual([]);
     expect(await svc.searchShowtimes({ movieId: "bad" })).toEqual([]);

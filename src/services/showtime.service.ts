@@ -207,6 +207,9 @@ export interface ShowtimeRow {
   endAt: string;
   /** Whole dong; the standard seat's price for this showtime, null when no price rule matches yet. */
   price: number | null;
+  /** Lowest and highest price over the seat types the room really has (equal when there is one price); null when none has a price. */
+  priceMin: number | null;
+  priceMax: number | null;
 }
 
 export interface ShowtimeFilters {
@@ -334,7 +337,7 @@ export async function searchShowtimes(filters: ShowtimeFilters = {}): Promise<Sh
     Movie.find({ _id: { $in: uniq(rows.map((r) => r.movieId)) } }, "title posterUrl durationMin").lean(),
     Auditorium.find({ _id: { $in: uniq(rows.map((r) => r.auditoriumId)) } }, "name branchId").lean(),
     Format.find({ _id: { $in: uniq(rows.map((r) => r.formatId)) } }, "name active").lean(),
-    AuditoriumLayout.find({ _id: { $in: uniq(rows.map((r) => r.layoutId)) } }, "config.defaultSeatType").lean(),
+    AuditoriumLayout.find({ _id: { $in: uniq(rows.map((r) => r.layoutId)) } }, "config.defaultSeatType seats.type").lean(),
     loadPricing(),
   ]);
   const branches = await Branch.find({ _id: { $in: uniq(rooms.map((r) => r.branchId)) } }, "name brandId active").lean();
@@ -346,6 +349,10 @@ export async function searchShowtimes(filters: ShowtimeFilters = {}): Promise<Sh
   const branchById = new Map(branches.map((b) => [b._id.toString(), b]));
   const brandById = new Map(brands.map((b) => [b._id.toString(), b]));
   const seatTypeByLayout = new Map(layouts.map((l) => [l._id.toString(), (l.config as { defaultSeatType: string }).defaultSeatType]));
+  // Every seat type the room has, so the price can be shown as a range (standard, VIP, couple...).
+  const seatTypesByLayout = new Map(
+    layouts.map((l) => [l._id.toString(), [...new Set([(l.config as { defaultSeatType: string }).defaultSeatType, ...(l.seats ?? []).map((seat) => seat.type)])]]),
+  );
 
   const result: ShowtimeRow[] = [];
   for (const s of rows) {
@@ -357,18 +364,23 @@ export async function searchShowtimes(filters: ShowtimeFilters = {}): Promise<Sh
     // Switched off by an admin: not shown (the admin list shows everything).
     const brand = brandById.get(branch.brandId.toString());
     if (!filters.admin && (format.active === false || branch.active === false || brand?.active === false)) continue;
-    const price = resolveTicketPrice({
-      showtime: {
-        startAt: s.startAt,
-        brandId: branch.brandId.toString(),
-        branchId: branch._id.toString(),
-        formatId: s.formatId.toString(),
-        seatTypeId: seatTypeByLayout.get(s.layoutId.toString()) ?? "",
-      },
-      rules: pricing.rules,
-      holidays: pricing.holidays,
-      priceOverride: s.priceOverride ?? undefined,
-    });
+    const priceOf = (seatTypeId: string) =>
+      resolveTicketPrice({
+        showtime: {
+          startAt: s.startAt,
+          brandId: branch.brandId.toString(),
+          branchId: branch._id.toString(),
+          formatId: s.formatId.toString(),
+          seatTypeId,
+        },
+        rules: pricing.rules,
+        holidays: pricing.holidays,
+        priceOverride: s.priceOverride ?? undefined,
+      })?.price;
+    const price = priceOf(seatTypeByLayout.get(s.layoutId.toString()) ?? "");
+    const seatTypeIds = seatTypesByLayout.get(s.layoutId.toString());
+    // A layout that cannot be read leaves the one price we have as the whole range.
+    const prices = seatTypeIds ? seatTypeIds.map((id) => priceOf(id)).filter((value): value is number => value !== undefined) : price === undefined ? [] : [price];
     result.push({
       id: s._id.toString(),
       movie: { id: movie._id.toString(), title: movie.title, posterUrl: movie.posterUrl ?? null, durationMin: movie.durationMin },
@@ -378,7 +390,9 @@ export async function searchShowtimes(filters: ShowtimeFilters = {}): Promise<Sh
       format: { id: format._id.toString(), name: format.name },
       startAt: s.startAt.toISOString(),
       endAt: s.endAt.toISOString(),
-      price: price?.price ?? null,
+      price: price ?? null,
+      priceMin: prices.length > 0 ? Math.min(...prices) : null,
+      priceMax: prices.length > 0 ? Math.max(...prices) : null,
     });
   }
   return result;

@@ -2,7 +2,7 @@ import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { formatTime } from "@/lib/datetime";
-import { formatVnd } from "@/lib/money";
+import { formatVnd, formatVndRange } from "@/lib/money";
 import type { ShowtimeRow } from "@/services/showtime.service";
 
 /**
@@ -13,6 +13,13 @@ import type { ShowtimeRow } from "@/services/showtime.service";
 export function ShowtimeCard({ row, showMovie = false }: { row: ShowtimeRow; showMovie?: boolean }) {
   const t = useTranslations("showtimes");
   const locale = useLocale();
+  // A room with several seat types (standard, VIP, couple...) shows the range; otherwise the one price.
+  const priceText =
+    row.priceMin !== null && row.priceMax !== null && row.priceMax > row.priceMin
+      ? t("price", { amount: formatVndRange(row.priceMin, row.priceMax, locale) })
+      : row.price === null
+        ? t("noPrice")
+        : t("price", { amount: formatVnd(row.price, locale) });
   return (
     <li className="flex min-w-0 items-start gap-4 rounded-xl border bg-card p-4">
       <div className="flex w-16 shrink-0 flex-col gap-0.5">
@@ -32,7 +39,7 @@ export function ShowtimeCard({ row, showMovie = false }: { row: ShowtimeRow; sho
             {row.format.name}
           </Badge>
         </span>
-        <span className="text-sm">{row.price === null ? t("noPrice") : t("price", { amount: formatVnd(row.price, locale) })}</span>
+        <span className="text-sm">{priceText}</span>
       </div>
     </li>
   );
