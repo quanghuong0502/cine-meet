@@ -5,17 +5,18 @@ import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { youtubeEmbedUrl, youtubeThumbnailUrl, youtubeWatchUrl } from "@/lib/movie/youtube";
 
 /**
  * Trailer as a "lite embed": only the thumbnail loads with the page; the player (youtube-nocookie, `playsinline` so iPhone plays it
  * in the page) loads when the person taps. Some channels forbid embedding, so "Watch on YouTube" is always there as the way out.
  */
-export function TrailerEmbed({ videoId, title }: { videoId: string; title: string }) {
+export function TrailerEmbed({ videoId, title, className }: { videoId: string; title: string; className?: string }) {
   const t = useTranslations("movie.trailer");
   const [playing, setPlaying] = useState(false);
   return (
-    <div className="flex flex-col gap-2">
+    <div className={cn("flex flex-col gap-2", className)}>
       <div className="relative aspect-video w-full overflow-hidden rounded-xl border bg-black">
         {playing ? (
           <iframe

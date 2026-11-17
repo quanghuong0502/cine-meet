@@ -92,7 +92,7 @@ export default async function MovieDetailPage({ params }: Props) {
         </div>
       </section>
 
-      {movie.trailer ? <TrailerEmbed videoId={movie.trailer.videoId} title={movie.title} /> : null}
+      {movie.trailer ? <TrailerEmbed videoId={movie.trailer.videoId} title={movie.title} className="-mb-3" /> : null}
 
       <dl className="flex flex-col gap-3 text-sm">
         {facts
