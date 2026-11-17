@@ -8,9 +8,9 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        // The brand colour and white text, but as see-through as the floating bottom menu (same 55% fill, blur and thin light edge), so what scrolls behind a floating button still shows.
+        // Same look as `destructive` (a see-through tint of the colour, the colour as text, no edge), in the brand colour.
         default:
-          "border-white/15 bg-primary/55 text-primary-foreground shadow-[inset_0_1px_0_rgb(255_255_255/0.12)] backdrop-blur-xl backdrop-saturate-150 hover:bg-primary/45",
+          "bg-primary/10 text-primary-text hover:bg-primary/20 focus-visible:border-primary/40 focus-visible:ring-primary/20 dark:bg-primary/20 dark:hover:bg-primary/30 dark:focus-visible:ring-primary/40",
         outline:
           "border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
         secondary:
