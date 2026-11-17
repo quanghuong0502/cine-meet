@@ -53,7 +53,8 @@ function clock(seconds: number): string {
 }
 
 /**
- * The player on a black stage, with our own controls instead of YouTube's bar (`controls=0`, driven through the IFrame API):
+ * The player on a black stage (full screen, or focus mode: a black screen with only the video, upright, 16:9 and as wide as fits, no
+ * rotation), with our own controls instead of YouTube's bar (`controls=0`, driven through the IFrame API):
  * play or pause (also a tap on the video), a seek bar with the time, and mute.
  * - Until the video has started, YouTube's own play button and title are what is on screen and a tap goes to them: iOS only lets a
  *   video start from a tap inside the player, so a button of ours could not start it. Our controls and tap layer appear once it plays.
@@ -178,75 +179,77 @@ function Player({ videoId, title }: { videoId: string; title: string }) {
     <div
       ref={stage}
       className={cn(
-        "relative overflow-hidden bg-black",
-        expanded ? "player-stage" : "aspect-video w-full rounded-xl shadow-2xl [&:fullscreen]:rounded-none [&:fullscreen]:shadow-none",
+        "w-full [&:fullscreen]:flex [&:fullscreen]:items-center [&:fullscreen]:justify-center [&:fullscreen]:bg-black",
+        expanded && "fixed inset-0 z-60 flex items-center justify-center bg-black px-[max(env(safe-area-inset-left),env(safe-area-inset-right))]",
       )}
     >
-      <iframe
-        key={apiFailed ? "own-bar" : "our-bar"}
-        ref={frame}
-        src={youtubeEmbedUrl(videoId, apiFailed ? { controls: true } : { controls: false, origin })}
-        title={title}
-        allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-        allowFullScreen
-        sandbox="allow-scripts allow-same-origin allow-presentation"
-        referrerPolicy="strict-origin-when-cross-origin"
-        onLoad={() => setLoaded(true)}
-        style={{ colorScheme: "dark" }}
-        className={`absolute inset-0 size-full border-0 bg-black transition-opacity duration-300 motion-reduce:transition-none ${loaded ? "opacity-100" : "opacity-0"}`}
-      />
-      {started && !apiFailed ? (
-        <>
-          <button
-            type="button"
-            onClick={() => {
-              // Inline a tap plays or pauses; in full screen it shows or hides the bar, like YouTube (the bar has the play button).
-              if (!fullscreen) toggle();
-              else if (barVisible) {
-                clearTimeout(hideTimer.current);
-                setBarVisible(false);
-              } else showBarForAWhile();
-            }}
-            aria-label={fullscreen ? (barVisible ? t("hideControls") : t("showControls")) : playing ? t("pause") : t("resume")}
-            className="absolute inset-0 outline-none"
-          />
-          <div
-            onPointerDownCapture={showBarForAWhile}
-            className={cn(
-              "absolute inset-x-0 bottom-0 flex items-center gap-1 bg-gradient-to-t from-black/80 to-transparent px-1 pt-6 transition-opacity duration-200 motion-reduce:transition-none",
-              !showBar && "pointer-events-none opacity-0",
-            )}
-          >
-            <Button type="button" variant="ghost" size="icon" onClick={toggle} aria-label={playing ? t("pause") : t("resume")} className="shrink-0 rounded-full text-white hover:bg-white/15 hover:text-white">
-              {playing ? <Pause aria-hidden className="size-6 fill-current" /> : <Play aria-hidden className="size-6 fill-current" />}
-            </Button>
-            <span className="w-10 shrink-0 text-right text-xs text-white tabular-nums">{clock(time.current)}</span>
-            <Slider
-              aria-label={t("seek")}
-              min={0}
-              max={Math.max(1, Math.floor(time.duration))}
-              step={1}
-              value={[Math.min(Math.floor(time.current), Math.max(1, Math.floor(time.duration)))]}
-              onValueChange={([value]) => {
-                scrubbing.current = true;
-                setTime((previous) => ({ ...previous, current: value ?? 0 }));
+      <div className={cn("relative aspect-video overflow-hidden bg-black", fullscreen ? "w-[min(100%,calc(100dvh*16/9))]" : "w-full rounded-xl shadow-2xl")}>
+        <iframe
+          key={apiFailed ? "own-bar" : "our-bar"}
+          ref={frame}
+          src={youtubeEmbedUrl(videoId, apiFailed ? { controls: true } : { controls: false, origin })}
+          title={title}
+          allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+          allowFullScreen
+          sandbox="allow-scripts allow-same-origin allow-presentation"
+          referrerPolicy="strict-origin-when-cross-origin"
+          onLoad={() => setLoaded(true)}
+          style={{ colorScheme: "dark" }}
+          className={`absolute inset-0 size-full border-0 bg-black transition-opacity duration-300 motion-reduce:transition-none ${loaded ? "opacity-100" : "opacity-0"}`}
+        />
+        {started && !apiFailed ? (
+          <>
+            <button
+              type="button"
+              onClick={() => {
+                // Inline a tap plays or pauses; in full screen it shows or hides the bar, like YouTube (the bar has the play button).
+                if (!fullscreen) toggle();
+                else if (barVisible) {
+                  clearTimeout(hideTimer.current);
+                  setBarVisible(false);
+                } else showBarForAWhile();
               }}
-              onValueCommit={([value]) => {
-                player.current?.seekTo(value ?? 0, true);
-                scrubbing.current = false;
-              }}
-              className="min-w-0 flex-1"
+              aria-label={fullscreen ? (barVisible ? t("hideControls") : t("showControls")) : playing ? t("pause") : t("resume")}
+              className="absolute inset-0 outline-none"
             />
-            <span className="w-10 shrink-0 text-xs text-white/70 tabular-nums">{clock(time.duration)}</span>
-            <Button type="button" variant="ghost" size="icon" onClick={toggleFullscreen} aria-label={fullscreen ? t("exitFullscreen") : t("fullscreen")} className="shrink-0 rounded-full text-white hover:bg-white/15 hover:text-white">
-              {fullscreen ? <Minimize aria-hidden className="size-6" /> : <Maximize aria-hidden className="size-6" />}
-            </Button>
-            <Button type="button" variant="ghost" size="icon" onClick={toggleMute} aria-label={muted ? t("unmute") : t("mute")} className="shrink-0 rounded-full text-white hover:bg-white/15 hover:text-white">
-              {muted ? <VolumeX aria-hidden className="size-6" /> : <Volume2 aria-hidden className="size-6" />}
-            </Button>
-          </div>
-        </>
-      ) : null}
+            <div
+              onPointerDownCapture={showBarForAWhile}
+              className={cn(
+                "absolute inset-x-0 bottom-0 flex items-center gap-1 bg-gradient-to-t from-black/80 to-transparent px-1 pt-6 transition-opacity duration-200 motion-reduce:transition-none",
+                !showBar && "pointer-events-none opacity-0",
+              )}
+            >
+              <Button type="button" variant="ghost" size="icon" onClick={toggle} aria-label={playing ? t("pause") : t("resume")} className="shrink-0 rounded-full text-white hover:bg-white/15 hover:text-white">
+                {playing ? <Pause aria-hidden className="size-6 fill-current" /> : <Play aria-hidden className="size-6 fill-current" />}
+              </Button>
+              <span className="w-10 shrink-0 text-right text-xs text-white tabular-nums">{clock(time.current)}</span>
+              <Slider
+                aria-label={t("seek")}
+                min={0}
+                max={Math.max(1, Math.floor(time.duration))}
+                step={1}
+                value={[Math.min(Math.floor(time.current), Math.max(1, Math.floor(time.duration)))]}
+                onValueChange={([value]) => {
+                  scrubbing.current = true;
+                  setTime((previous) => ({ ...previous, current: value ?? 0 }));
+                }}
+                onValueCommit={([value]) => {
+                  player.current?.seekTo(value ?? 0, true);
+                  scrubbing.current = false;
+                }}
+                className="min-w-0 flex-1"
+              />
+              <span className="w-10 shrink-0 text-xs text-white/70 tabular-nums">{clock(time.duration)}</span>
+              <Button type="button" variant="ghost" size="icon" onClick={toggleFullscreen} aria-label={fullscreen ? t("exitFullscreen") : t("fullscreen")} className="shrink-0 rounded-full text-white hover:bg-white/15 hover:text-white">
+                {fullscreen ? <Minimize aria-hidden className="size-6" /> : <Maximize aria-hidden className="size-6" />}
+              </Button>
+              <Button type="button" variant="ghost" size="icon" onClick={toggleMute} aria-label={muted ? t("unmute") : t("mute")} className="shrink-0 rounded-full text-white hover:bg-white/15 hover:text-white">
+                {muted ? <VolumeX aria-hidden className="size-6" /> : <Volume2 aria-hidden className="size-6" />}
+              </Button>
+            </div>
+          </>
+        ) : null}
+      </div>
     </div>
   );
 }

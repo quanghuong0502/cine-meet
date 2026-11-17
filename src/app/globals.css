@@ -349,28 +349,3 @@ html[data-keyboard="open"]:has([data-slot="drawer-content"]) body {
     display: none;
   }
 }
-
-/*
- * The trailer player expanded over the whole screen where the Fullscreen API is missing (iPhone cannot take an iframe full screen).
- * On a phone held upright it is turned a quarter turn: as wide as the screen is tall, as tall as it is wide, centred, so it covers the
- * screen exactly and the video gets the long side; turn the phone and it is upright (landscape). The padding keeps the controls off the
- * notch and the home indicator (after the quarter turn, the stage's left edge is the top of the phone and its right edge the bottom).
- * Its parent must not have a transform, or `fixed` would be measured from that parent instead of the screen.
- */
-@utility player-stage {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  z-index: 60;
-  width: 100dvh;
-  height: 100vw;
-  transform: translate(-50%, -50%) rotate(90deg);
-  padding-left: env(safe-area-inset-top);
-  padding-right: env(safe-area-inset-bottom);
-  @media (orientation: landscape) {
-    width: 100vw;
-    height: 100dvh;
-    transform: translate(-50%, -50%);
-    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-  }
-}
