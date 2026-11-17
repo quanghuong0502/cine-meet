@@ -37,7 +37,7 @@ function FieldControl({ field, value, invalid, last }: { field: ResourceField; v
 
   switch (field.kind) {
     case "textarea":
-      return <Textarea {...common} defaultValue={value} maxLength={field.maxLength} rows={3} className="rounded-xl bg-card px-4 py-3 text-base" />;
+      return <Textarea {...common} defaultValue={value} maxLength={field.maxLength} rows={3} placeholder={field.placeholder} className="resize-none rounded-xl bg-card px-4 py-3 text-base" />;
     case "color":
       return (
         <input
@@ -95,7 +95,7 @@ function FieldControl({ field, value, invalid, last }: { field: ResourceField; v
           // Off: otherwise iOS guesses a contact field and offers "AutoFill Contact" above the keyboard.
           autoComplete="off"
           defaultValue={value}
-          className={CONTROL_CLASS}
+          className={field.kind === "date" || field.kind === "time" ? `${CONTROL_CLASS} text-left [&::-webkit-date-and-time-value]:text-left` : CONTROL_CLASS}
         />
       );
   }

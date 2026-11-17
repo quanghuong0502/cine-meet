@@ -32,7 +32,7 @@ describe("design tokens", () => {
     const css = readFileSync(join(SRC, "app", "globals.css"), "utf8");
     const required = [
       "--text-xs", "--text-footnote", "--text-sm", "--text-base", "--text-xl", "--text-2xl", "--text-3xl",
-      "--spacing-target", "--spacing-control", "--spacing-control-lg", "--spacing-row", "--spacing-nav",
+      "--spacing-target", "--spacing-control", "--spacing-control-lg", "--spacing-area", "--spacing-row", "--spacing-nav",
     ];
     expect(required.filter((token) => !css.includes(`${token}:`))).toEqual([]);
   });

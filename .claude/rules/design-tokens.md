@@ -38,6 +38,7 @@ Muốn chỉnh cỡ chữ hay kích thước cho cả app thì sửa đúng ở 
 | `h-target`, `size-target`, `min-h-target` | 44px | vùng chạm nhỏ nhất: nút biểu tượng, hàng menu, nút phụ, hàng công tắc |
 | `h-control` | 48px | chiều cao mặc định của ô nhập và nút |
 | `h-control-lg` | 56px | điều khiển rộng rãi |
+| `min-h-area` | 112px | chiều cao tối thiểu của ô nhiều dòng (textarea): cao hơn ô một dòng để gõ thoải mái |
 | `min-h-row` | 64px | hàng danh sách có tiêu đề và dòng phụ |
 | `min-h-nav` | 56px | một tab của thanh điều hướng dưới (thanh tự cộng vùng an toàn) |
 | `size-avatar` | 40px | hình tròn avatar trong nút menu tài khoản (vùng chạm vẫn 44px) |
@@ -51,7 +52,7 @@ Các giá trị mặc định của shadcn (nút cao 32px, ô nhập cao 32px) �
 ## Quy tắc
 
 1. **Không viết kích thước rời rạc.** Cấm `text-[..]` và cỡ chữ ngoài bảng (`text-lg`, `text-4xl`...). Cấm `h-11`, `h-12`, `size-11`, `min-h-11`, `min-h-14`, `min-h-16` ở ngoài `components/ui`: dùng token. Test `src/design-tokens.test.ts` kiểm tra điều này.
-2. **Mọi thứ bấm được cao tối thiểu 44px**, ô nhập và nút chính 48px. Công tắc, ô chọn: cả hàng là vùng bấm, cao từ 44px (nhãn `Label htmlFor`).
+2. **Mọi thứ bấm được cao tối thiểu 44px**, ô nhập và nút chính 48px. **Mọi ô nhập một dòng cao đúng 48px (`h-control`)**: ô chữ, số, ngày, giờ, màu, **ô chọn (select)**, ô tìm kiếm; chỉ ô nhiều dòng (textarea, `min-h-area`) được cao hơn. Mục trong danh sách thả của ô chọn cao từ 44px (`min-h-target`). Công tắc, ô chọn: cả hàng là vùng bấm, cao từ 44px (nhãn `Label htmlFor`).
 3. **Thêm bậc chữ hoặc kích thước mới** = thêm token vào `globals.css`, ghi vào bảng này, rồi mới dùng. Không dùng giá trị `px` tùy ý cho chữ.
 4. **Chịu được cỡ chữ lớn:** bố cục không được vỡ hay cuộn ngang khi người dùng tăng cỡ chữ hệ thống lên 125% và 150%; nhãn dài xuống dòng, không cắt âm thầm.
 5. **Chữ dưới 12px là cấm**; chữ đọc liền mạch dùng `text-base` trở lên.
