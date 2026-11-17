@@ -10,7 +10,6 @@ import { ShowtimeCard } from "@/components/movie/showtime-card";
 import { ShowtimeFilters } from "@/components/movie/showtime-filters";
 import { PageHeader } from "@/components/page-header";
 import { requireUser } from "@/lib/auth/guards";
-import { formatDayKey } from "@/lib/datetime";
 import { vietnamToday } from "@/lib/movie/status";
 import { FILTER_KEYS, type FilterValues } from "@/lib/showtime/filters";
 import { slotName, slotRange } from "@/lib/showtime/slots";
@@ -125,7 +124,7 @@ export default async function ShowtimesPage({ searchParams }: { searchParams: Pr
         </ul>
       </nav>
 
-      <ShowtimeFilters date={date} values={values} options={options} records={facets} caption={formatDayKey(date, locale)} />
+      <ShowtimeFilters date={date} values={values} options={options} records={facets} />
       <Suspense key={`${date}|${JSON.stringify(values)}`} fallback={<LoadingState compact />}>
         <Results date={date} values={values} />
       </Suspense>
