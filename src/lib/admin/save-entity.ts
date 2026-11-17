@@ -1,7 +1,8 @@
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import type { z } from "zod";
 import { requireAdmin } from "@/lib/auth/guards";
 import { errorState, parseForm, type RemoveResult, type SaveState } from "@/lib/admin/action-result";
+import { BRAND_OPTIONS_TAG } from "@/services/master-data/brand-options";
 import type { ServiceResult } from "@/services/master-data/crud";
 
 const PAGE = "/admin/master-data";
@@ -10,6 +11,15 @@ interface EntityService<Input> {
   create(input: Input, actorId: string): Promise<ServiceResult<unknown>>;
   update(id: string, input: Input, actorId: string): Promise<ServiceResult<unknown>>;
   remove(id: string, actorId: string): Promise<ServiceResult<null>>;
+}
+
+/**
+ * After any master-data change: drop the client's cached pages (revalidatePath) and the shared brand pick-list, so the admin sees the
+ * change at once. The pick-list is expired on every change, not only brand changes, because this shared body does not know the type.
+ */
+function refreshMasterData() {
+  revalidatePath(PAGE);
+  updateTag(BRAND_OPTIONS_TAG);
 }
 
 /**
@@ -33,7 +43,7 @@ export async function saveEntity<S extends z.ZodType>(
       : await service.create(parsed.data, admin.userId);
 
   if (!result.ok) return errorState(formData, result.error);
-  revalidatePath(PAGE);
+  refreshMasterData();
   return { status: "success" };
 }
 
@@ -41,6 +51,6 @@ export async function removeEntity(service: EntityService<never>, id: string): P
   const admin = await requireAdmin();
   const result = await service.remove(id, admin.userId);
   if (!result.ok) return result;
-  revalidatePath(PAGE);
+  refreshMasterData();
   return { ok: true };
 }

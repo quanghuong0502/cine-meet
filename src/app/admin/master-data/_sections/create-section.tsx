@@ -6,7 +6,7 @@ import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
 import type { RemoveResult, SaveState } from "@/lib/admin/action-result";
 import { MASTER_DATA_SECTIONS, type MasterDataSectionKey } from "@/lib/master-data-sections";
-import { brandService } from "@/services/master-data/brand.service";
+import { getBrandOptions } from "@/services/master-data/brand-options";
 import type { SectionDefinition } from "./types";
 
 /** Translates a key under the section's own namespace, `admin.<key>`. */
@@ -65,14 +65,16 @@ export function formatValidity(from: string | null | undefined, to: string | nul
 }
 
 async function buildBaseContext(key: MasterDataSectionKey, needsBrand: boolean): Promise<SectionContext> {
-  const t = (await getTranslations(`admin.${key}` as "admin.brands")) as unknown as SectionT;
-  const locale = await getLocale();
-  const brands = needsBrand ? await brandService.list({}) : [];
+  const [t, locale, brands] = await Promise.all([
+    getTranslations(`admin.${key}` as "admin.brands") as unknown as Promise<SectionT>,
+    getLocale(),
+    needsBrand ? getBrandOptions() : Promise.resolve([]),
+  ]);
   return {
     t,
     locale,
-    brandOptions: brands.map((brand) => ({ value: brand._id.toString(), label: brand.name })),
-    brandNames: new Map(brands.map((brand) => [brand._id.toString(), brand.name])),
+    brandOptions: brands.map((brand) => ({ value: brand.id, label: brand.name })),
+    brandNames: new Map(brands.map((brand) => [brand.id, brand.name])),
   };
 }
 
@@ -92,7 +94,8 @@ export function createSection<Doc extends { _id: { toString(): string } }, Extra
 
   return {
     async List({ q }) {
-      const context = await buildContext();
+      // The list query does not depend on the context, so both run at the same time.
+      const [context, docs] = await Promise.all([buildContext(), config.service.list({ q })]);
       const { t } = context;
 
       if (config.needsBrand && context.brandOptions.length === 0) {
@@ -111,7 +114,6 @@ export function createSection<Doc extends { _id: { toString(): string } }, Extra
         );
       }
 
-      const docs = await config.service.list({ q });
       return (
         <ResourceManager
           basePath={`/admin/master-data/${slug}`}
