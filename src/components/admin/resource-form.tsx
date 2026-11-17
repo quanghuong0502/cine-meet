@@ -55,7 +55,7 @@ function FieldControl({ field, value, invalid, last }: { field: ResourceField; v
           getTicket={field.uploadTicket ?? (async () => ({ ok: false, error: "not_configured" }))}
           preview={(url) => (
             <span aria-hidden className="flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-xl border bg-card">
-              {url ? <Image src={url} alt="" width={80} height={80} unoptimized className="size-full object-contain p-1" /> : <ImageIcon className="size-6 text-muted-foreground" />}
+              {url ? <Image src={url} alt="" width={80} height={80} unoptimized className="size-full object-cover" /> : <ImageIcon className="size-6 text-muted-foreground" />}
             </span>
           )}
         />

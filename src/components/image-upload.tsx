@@ -58,8 +58,7 @@ export function ImageUpload({ name, initialUrl, getTicket, preview }: ImageUploa
     <div className="flex items-end gap-4">
       <input type="hidden" name={name} value={url} />
       {preview(url)}
-      {/* pb-1 = the padding between the preview frame and the picture inside it, so the buttons end level with the picture. */}
-      <div className="flex min-w-0 flex-wrap gap-2 pb-1">
+      <div className="flex min-w-0 flex-wrap gap-2">
         <input
           ref={inputRef}
           type="file"
