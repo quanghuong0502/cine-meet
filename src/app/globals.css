@@ -118,6 +118,9 @@
   --brand-h: 350;
   --brand-c: 0.22;
   --brand-l: 0.55;
+  /* Text on the main button, and the brand colour used as text on the light theme: chosen by the admin's colour for contrast. */
+  --brand-fg: oklch(0.99 0.005 var(--brand-h));
+  --brand-ink: oklch(var(--brand-l) var(--brand-c) var(--brand-h));
   /* Where toasts sit on phones: above the floating bottom menu and the fixed "Add" button, never on top of them. */
   --toast-offset: calc(var(--spacing-nav) + 2 * var(--spacing-nav-gap) + var(--spacing-control) + 1.5rem + env(safe-area-inset-bottom));
   --background: oklch(0.99 0.006 var(--brand-h));
@@ -127,9 +130,9 @@
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.22 0.03 var(--brand-h));
   --primary: oklch(var(--brand-l) var(--brand-c) var(--brand-h));
-  --primary-foreground: oklch(0.99 0.005 var(--brand-h));
+  --primary-foreground: var(--brand-fg);
   /* Pink used as TEXT or link: in light it is the brand color itself (5.3:1 on background). */
-  --primary-text: var(--primary);
+  --primary-text: var(--brand-ink);
   --secondary: oklch(0.96 0.014 var(--brand-h));
   --secondary-foreground: oklch(0.25 0.04 var(--brand-h));
   --muted: oklch(0.96 0.014 var(--brand-h));
@@ -150,7 +153,7 @@
   --sidebar: oklch(0.98 0.01 var(--brand-h));
   --sidebar-foreground: oklch(0.22 0.03 var(--brand-h));
   --sidebar-primary: oklch(var(--brand-l) var(--brand-c) var(--brand-h));
-  --sidebar-primary-foreground: oklch(0.99 0.005 var(--brand-h));
+  --sidebar-primary-foreground: var(--brand-fg);
   --sidebar-accent: oklch(0.95 0.035 var(--brand-h));
   --sidebar-accent-foreground: oklch(0.42 0.17 calc(var(--brand-h) + 5));
   --sidebar-border: oklch(0.92 0.015 var(--brand-h));
@@ -185,7 +188,7 @@
   --popover: oklch(0.25 0.034 var(--brand-h));
   --popover-foreground: oklch(0.97 0.008 var(--brand-h));
   --primary: oklch(var(--brand-l) var(--brand-c) var(--brand-h));
-  --primary-foreground: oklch(0.99 0.005 var(--brand-h));
+  --primary-foreground: var(--brand-fg);
   --primary-text: oklch(0.78 0.14 var(--brand-h));
   --secondary: oklch(0.25 0.034 var(--brand-h));
   --secondary-foreground: oklch(0.97 0.008 var(--brand-h));
@@ -207,7 +210,7 @@
   --sidebar: oklch(0.18 0.026 var(--brand-h));
   --sidebar-foreground: oklch(0.97 0.008 var(--brand-h));
   --sidebar-primary: oklch(var(--brand-l) var(--brand-c) var(--brand-h));
-  --sidebar-primary-foreground: oklch(0.99 0.005 var(--brand-h));
+  --sidebar-primary-foreground: var(--brand-fg);
   --sidebar-accent: oklch(0.25 0.034 var(--brand-h));
   --sidebar-accent-foreground: oklch(0.97 0.008 var(--brand-h));
   --sidebar-border: oklch(0.55 0.04 var(--brand-h) / 22%);
