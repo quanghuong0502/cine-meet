@@ -74,10 +74,13 @@ function clock(seconds: number): string {
 function Player({ videoId, title }: { videoId: string; title: string }) {
   const t = useTranslations("movie.trailer");
   const stage = useRef<HTMLDivElement>(null);
+  const box = useRef<HTMLDivElement>(null);
   const frame = useRef<HTMLIFrameElement>(null);
   const player = useRef<YtPlayer | null>(null);
   const scrubbing = useRef(false);
   const [loaded, setLoaded] = useState(false);
+  // See the effect that watches the box: the iframe is made 1px narrower for a moment so YouTube's player measures itself again.
+  const [nudge, setNudge] = useState(false);
   const [apiFailed, setApiFailed] = useState(false);
   const [started, setStarted] = useState(false);
   const [playing, setPlaying] = useState(false);
@@ -142,6 +145,26 @@ function Player({ videoId, title }: { videoId: string; title: string }) {
     };
   }, []);
 
+  // The player inside the iframe sometimes keeps its old size when the iframe is resized (full screen on or off, the phone turned):
+  // the picture then sits small in a corner or slides off-centre. Whenever the box changes size, the iframe is made 1px narrower and
+  // restored a moment later, twice, which makes YouTube's player measure itself again.
+  useEffect(() => {
+    const element = box.current;
+    if (!element || typeof ResizeObserver === "undefined") return;
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    const observer = new ResizeObserver(() => {
+      timers.splice(0).forEach(clearTimeout);
+      for (const delay of [150, 500]) {
+        timers.push(setTimeout(() => setNudge(true), delay), setTimeout(() => setNudge(false), delay + 120));
+      }
+    });
+    observer.observe(element);
+    return () => {
+      observer.disconnect();
+      timers.forEach(clearTimeout);
+    };
+  }, []);
+
   const fullscreen = nativeFullscreen || expanded;
   const showBar = !fullscreen || !playing || barVisible;
 
@@ -195,7 +218,7 @@ function Player({ videoId, title }: { videoId: string; title: string }) {
         expanded && "fixed inset-0 z-60 flex items-center justify-center bg-black px-[max(env(safe-area-inset-left),env(safe-area-inset-right))]",
       )}
     >
-      <div className={cn("relative aspect-video overflow-hidden bg-black", fullscreen ? "w-[min(100%,calc(100dvh*16/9))]" : "w-full rounded-xl shadow-2xl")}>
+      <div ref={box} className={cn("relative aspect-video overflow-hidden bg-black", fullscreen ? "w-[min(100%,calc(100dvh*16/9))]" : "w-full rounded-xl shadow-2xl")}>
         <iframe
           key={apiFailed ? "own-bar" : "our-bar"}
           ref={frame}
@@ -209,7 +232,7 @@ function Player({ videoId, title }: { videoId: string; title: string }) {
           // On a phone held sideways the player inside pads its picture by the notch side's safe area (measured: 138px = 59pt on an
           // iPhone 14 Pro), so the picture slid off-centre and lost a strip. The iframe is made that much wider on each side and the box
           // clips the extra, which puts the picture back in the middle. Both insets are 0 upright, so nothing changes there.
-          style={{ colorScheme: "dark", left: "calc(env(safe-area-inset-left) * -1)", right: "calc(env(safe-area-inset-right) * -1)" }}
+          style={{ colorScheme: "dark", left: "calc(env(safe-area-inset-left) * -1)", right: `calc(env(safe-area-inset-right) * -1 + ${nudge ? 1 : 0}px)` }}
           className={`absolute inset-y-0 border-0 bg-black transition-opacity duration-300 motion-reduce:transition-none ${loaded ? "opacity-100" : "opacity-0"}`}
         />
         {started && !apiFailed ? (
