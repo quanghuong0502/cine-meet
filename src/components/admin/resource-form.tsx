@@ -149,7 +149,7 @@ export function ResourceForm({ itemId, fields, values, backHref, saveAction, del
 
   // noValidate on the form: the server validates and returns translated messages, so the browser must not show its own.
   return (
-    <form action={formAction} noValidate className="flex flex-1 flex-col gap-4">
+    <form action={formAction} noValidate className="flex flex-1 flex-col gap-6">
       {itemId ? <input type="hidden" name="id" value={itemId} /> : null}
       {lead}
 
