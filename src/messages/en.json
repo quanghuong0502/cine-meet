@@ -717,6 +717,111 @@
           "flagGroup": "Condition"
         }
       }
+    },
+    "movies": {
+      "title": "Movies & showtimes",
+      "description": "Movies, trailers and cinema schedules.",
+      "tabs": {
+        "label": "Lists",
+        "movies": "Movies",
+        "showtimes": "Showtimes"
+      },
+      "addButton": "Add movie",
+      "emptyTitle": "No movies yet",
+      "emptyDescription": "Add the first movie to create showtimes.",
+      "searchPlaceholder": "Search by title",
+      "searchLabel": "Search movies",
+      "createTitle": "Add movie",
+      "editTitle": "Edit movie",
+      "duration": "{minutes} min",
+      "status": {
+        "upcoming": "Upcoming",
+        "showing": "Now showing",
+        "ended": "Ended"
+      },
+      "fields": {
+        "title": "Title",
+        "originalTitle": "Original title",
+        "posterUrl": "Poster",
+        "trailerUrl": "YouTube trailer link",
+        "durationMin": "Length (minutes)",
+        "releaseDate": "Release date",
+        "endDate": "Expected end date",
+        "genreIds": "Genres",
+        "ageRatingId": "Age rating",
+        "ageRatingPlaceholder": "Choose a rating",
+        "noAgeRating": "None",
+        "formatIds": "Formats",
+        "language": "Language",
+        "director": "Director",
+        "cast": "Cast",
+        "synopsis": "Synopsis"
+      },
+      "showtimes": {
+        "emptyTitle": "No showtimes yet",
+        "emptyDescription": "Create them in bulk or import a CSV file.",
+        "bulkButton": "Create in bulk",
+        "importButton": "Import CSV",
+        "noPrice": "No price yet",
+        "deleteTitle": "Delete the {time} showtime of \"{movie}\"?"
+      },
+      "bulk": {
+        "title": "Create showtimes in bulk",
+        "movie": "Movie",
+        "moviePlaceholder": "Choose a movie",
+        "format": "Format",
+        "formatPlaceholder": "Choose a format",
+        "rooms": "Auditoriums",
+        "from": "From",
+        "to": "To",
+        "times": "Start times",
+        "addTime": "Add",
+        "removeTime": "Remove {time}",
+        "price": "Own price (VND)",
+        "summary": "{count, plural, =0 {Nothing to create yet} one {Will create # showtime} other {Will create # showtimes}}",
+        "submit": "Create showtimes",
+        "creating": "Creating...",
+        "created": "Created {created} {created, plural, one {showtime} other {showtimes}}{skipped, plural, =0 {} other { ({skipped} skipped for overlapping)}}",
+        "needSetup": {
+          "title": "Set up the basics first",
+          "description": "You need a movie that is showing or upcoming, a screening format and an auditorium with a seat map.",
+          "action": "Open movies"
+        },
+        "errors": {
+          "not_found": "Nothing found.",
+          "movie_not_found": "That movie no longer exists. Choose again.",
+          "auditorium_not_found": "An auditorium no longer exists. Choose again.",
+          "no_layout": "An auditorium has no seat map yet.",
+          "format_not_found": "That format no longer exists. Choose again.",
+          "invalid": "Invalid date or time.",
+          "validation": "Check the highlighted fields.",
+          "too_many": "At most {max} showtimes at a time. Use fewer days or auditoriums."
+        }
+      },
+      "import": {
+        "title": "Import showtimes from CSV",
+        "csv": "CSV content",
+        "pickFile": "Choose a CSV file",
+        "submit": "Import showtimes",
+        "importing": "Importing...",
+        "done": "Imported {count, plural, one {# showtime} other {# showtimes}}",
+        "errorsTitle": "{count, plural, one {# line is wrong} other {# lines are wrong}}. No showtime was created.",
+        "moreErrors": "And {count} more.",
+        "errors": {
+          "columns": "Line {line}: a column is missing (need movie, cinema, auditorium, start, format).",
+          "movie_not_found": "Line {line}: movie \"{value}\" not found.",
+          "movie_ambiguous": "Line {line}: several movies are called \"{value}\".",
+          "branch_not_found": "Line {line}: cinema \"{value}\" not found.",
+          "branch_ambiguous": "Line {line}: several cinemas are called \"{value}\".",
+          "auditorium_not_found": "Line {line}: auditorium \"{value}\" not found in that cinema.",
+          "no_layout": "Line {line}: auditorium \"{value}\" has no seat map yet.",
+          "format_not_found": "Line {line}: format \"{value}\" not found.",
+          "invalid_start": "Line {line}: start \"{value}\" is not valid (use 2026-12-01 19:30).",
+          "invalid_price": "Line {line}: price \"{value}\" is not valid.",
+          "overlap": "Line {line}: overlaps another showtime in the same auditorium.",
+          "too_many": "At most 500 lines per import."
+        }
+      }
     }
   },
   "placeholders": {
@@ -724,10 +829,6 @@
       "overview": {
         "title": "Admin overview",
         "description": "Coming soon: system overview numbers."
-      },
-      "movies": {
-        "title": "Movies & showtimes",
-        "description": "Coming soon: manage movies, trailers and showtimes."
       },
       "settings": {
         "title": "Settings",

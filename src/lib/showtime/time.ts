@@ -37,3 +37,15 @@ export function showtimeEnd(start: Date, durationMin: number, adMinutes: number)
 export function overlaps(a: { start: Date; end: Date }, b: { start: Date; end: Date }): boolean {
   return a.start < b.end && b.start < a.end;
 }
+
+/** Every calendar day from `from` to `to` inclusive (YYYY-MM-DD); empty when either is not a real day or `to` is before `from`. */
+export function datesBetween(from: string, to: string, max = 400): string[] {
+  const start = vietnamDayStart(from);
+  const end = vietnamDayStart(to);
+  if (!start || !end || end < start) return [];
+  const days: string[] = [];
+  for (let day = start.getTime(); day <= end.getTime() && days.length < max; day += 24 * 3600_000) {
+    days.push(new Date(day + 7 * 3600_000).toISOString().slice(0, 10));
+  }
+  return days;
+}

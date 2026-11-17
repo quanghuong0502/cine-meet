@@ -1,6 +1,6 @@
 "use server";
 
-import { cloudinaryConfig, createBranchImageUploadTicket, createBrandLogoUploadTicket } from "@/lib/cloudinary";
+import { cloudinaryConfig, createBranchImageUploadTicket, createBrandLogoUploadTicket, createMoviePosterUploadTicket } from "@/lib/cloudinary";
 import { requireAdmin } from "@/lib/auth/guards";
 import type { TicketResult } from "@/lib/upload-types";
 
@@ -18,4 +18,12 @@ export async function getBranchImageUploadTicket(): Promise<TicketResult> {
   const config = cloudinaryConfig();
   if (!config) return { ok: false, error: "not_configured" };
   return { ok: true, ticket: createBranchImageUploadTicket(config) };
+}
+
+/** A signed ticket for uploading a movie poster; only an admin can get one. */
+export async function getMoviePosterUploadTicket(): Promise<TicketResult> {
+  await requireAdmin();
+  const config = cloudinaryConfig();
+  if (!config) return { ok: false, error: "not_configured" };
+  return { ok: true, ticket: createMoviePosterUploadTicket(config) };
 }

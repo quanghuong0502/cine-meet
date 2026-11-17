@@ -717,6 +717,111 @@
           "flagGroup": "Tình trạng"
         }
       }
+    },
+    "movies": {
+      "title": "Phim & suất chiếu",
+      "description": "Phim, trailer và lịch chiếu của các rạp.",
+      "tabs": {
+        "label": "Danh sách",
+        "movies": "Phim",
+        "showtimes": "Suất chiếu"
+      },
+      "addButton": "Thêm phim",
+      "emptyTitle": "Chưa có phim",
+      "emptyDescription": "Thêm phim đầu tiên để tạo suất chiếu.",
+      "searchPlaceholder": "Tìm theo tên phim",
+      "searchLabel": "Tìm phim",
+      "createTitle": "Thêm phim",
+      "editTitle": "Sửa phim",
+      "duration": "{minutes} phút",
+      "status": {
+        "upcoming": "Sắp chiếu",
+        "showing": "Đang chiếu",
+        "ended": "Đã ngừng chiếu"
+      },
+      "fields": {
+        "title": "Tên phim",
+        "originalTitle": "Tên gốc",
+        "posterUrl": "Poster",
+        "trailerUrl": "Link trailer YouTube",
+        "durationMin": "Thời lượng (phút)",
+        "releaseDate": "Ngày khởi chiếu",
+        "endDate": "Ngày kết thúc dự kiến",
+        "genreIds": "Thể loại",
+        "ageRatingId": "Phân loại tuổi",
+        "ageRatingPlaceholder": "Chọn phân loại",
+        "noAgeRating": "Chưa có",
+        "formatIds": "Định dạng",
+        "language": "Ngôn ngữ",
+        "director": "Đạo diễn",
+        "cast": "Diễn viên",
+        "synopsis": "Nội dung"
+      },
+      "showtimes": {
+        "emptyTitle": "Chưa có suất chiếu",
+        "emptyDescription": "Tạo hàng loạt hoặc nhập từ file CSV.",
+        "bulkButton": "Tạo hàng loạt",
+        "importButton": "Nhập CSV",
+        "noPrice": "Chưa có giá",
+        "deleteTitle": "Xóa suất {time} của \"{movie}\"?"
+      },
+      "bulk": {
+        "title": "Tạo suất hàng loạt",
+        "movie": "Phim",
+        "moviePlaceholder": "Chọn phim",
+        "format": "Định dạng",
+        "formatPlaceholder": "Chọn định dạng",
+        "rooms": "Phòng chiếu",
+        "from": "Từ ngày",
+        "to": "Đến ngày",
+        "times": "Giờ chiếu",
+        "addTime": "Thêm",
+        "removeTime": "Bỏ giờ {time}",
+        "price": "Giá riêng (VND)",
+        "summary": "{count, plural, =0 {Chưa có suất nào để tạo} other {Sẽ tạo # suất}}",
+        "submit": "Tạo suất chiếu",
+        "creating": "Đang tạo...",
+        "created": "Đã tạo {created} suất{skipped, plural, =0 {} other { (bỏ qua # suất trùng giờ)}}",
+        "needSetup": {
+          "title": "Cần thêm dữ liệu trước",
+          "description": "Cần có phim đang hoặc sắp chiếu, định dạng chiếu và phòng chiếu đã dựng sơ đồ.",
+          "action": "Mở danh sách phim"
+        },
+        "errors": {
+          "not_found": "Không tìm thấy dữ liệu.",
+          "movie_not_found": "Phim không còn tồn tại. Hãy chọn lại.",
+          "auditorium_not_found": "Có phòng chiếu không còn tồn tại. Hãy chọn lại.",
+          "no_layout": "Có phòng chưa có sơ đồ ghế.",
+          "format_not_found": "Định dạng không còn tồn tại. Hãy chọn lại.",
+          "invalid": "Ngày hoặc giờ không hợp lệ.",
+          "validation": "Kiểm tra lại các ô được đánh dấu.",
+          "too_many": "Tối đa {max} suất mỗi lần. Hãy chia nhỏ khoảng ngày hoặc số phòng."
+        }
+      },
+      "import": {
+        "title": "Nhập suất từ CSV",
+        "csv": "Nội dung CSV",
+        "pickFile": "Chọn file CSV",
+        "submit": "Nhập suất chiếu",
+        "importing": "Đang nhập...",
+        "done": "Đã nhập {count} suất",
+        "errorsTitle": "{count, plural, other {# dòng chưa đúng}}. Chưa có suất nào được tạo.",
+        "moreErrors": "Và {count} dòng khác.",
+        "errors": {
+          "columns": "Dòng {line}: thiếu cột (cần phim, rạp, phòng, giờ bắt đầu, định dạng).",
+          "movie_not_found": "Dòng {line}: không tìm thấy phim \"{value}\".",
+          "movie_ambiguous": "Dòng {line}: có nhiều phim tên \"{value}\".",
+          "branch_not_found": "Dòng {line}: không tìm thấy chi nhánh \"{value}\".",
+          "branch_ambiguous": "Dòng {line}: có nhiều chi nhánh tên \"{value}\".",
+          "auditorium_not_found": "Dòng {line}: không tìm thấy phòng \"{value}\" ở chi nhánh này.",
+          "no_layout": "Dòng {line}: phòng \"{value}\" chưa có sơ đồ ghế.",
+          "format_not_found": "Dòng {line}: không tìm thấy định dạng \"{value}\".",
+          "invalid_start": "Dòng {line}: giờ bắt đầu \"{value}\" không hợp lệ (cần dạng 2026-12-01 19:30).",
+          "invalid_price": "Dòng {line}: giá \"{value}\" không hợp lệ.",
+          "overlap": "Dòng {line}: trùng giờ với một suất khác trong cùng phòng.",
+          "too_many": "Tối đa 500 dòng mỗi lần nhập."
+        }
+      }
     }
   },
   "placeholders": {
@@ -724,10 +829,6 @@
       "overview": {
         "title": "Tổng quan quản trị",
         "description": "Sắp có: số liệu tổng quan hệ thống."
-      },
-      "movies": {
-        "title": "Phim & suất chiếu",
-        "description": "Sắp có: quản lý phim, trailer và suất chiếu."
       },
       "settings": {
         "title": "Cài đặt",

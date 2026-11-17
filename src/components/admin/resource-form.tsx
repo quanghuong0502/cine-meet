@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ComboItemsField } from "@/components/admin/combo-items-field";
 import { DeleteRecordButton } from "@/components/admin/delete-record-button";
+import { Chip } from "@/components/admin/auditorium-editor/chips";
 import { ImageUpload } from "@/components/image-upload";
 import { RequiredMark } from "@/components/required-mark";
 import { useActionState, useEffect, useState } from "react";
@@ -30,6 +31,22 @@ function isValidationCode(code: string): code is ValidationCode {
 }
 
 const CONTROL_CLASS = "h-control rounded-xl bg-card px-4 text-base";
+
+/** Pick any number of options (chips); the choice travels as one comma-separated hidden field. */
+function MultiSelectField({ name, label, options, initial }: { name: string; label: string; options: { value: string; label: string }[]; initial: string }) {
+  const [chosen, setChosen] = useState<string[]>(() => initial.split(",").filter(Boolean));
+  const toggle = (value: string) => setChosen((current) => (current.includes(value) ? current.filter((v) => v !== value) : [...current, value]));
+  return (
+    <div role="group" aria-label={label} className="flex flex-wrap gap-2">
+      <input type="hidden" name={name} value={chosen.join(",")} />
+      {options.map((option) => (
+        <Chip key={option.value} selected={chosen.includes(option.value)} onClick={() => toggle(option.value)}>
+          {option.label}
+        </Chip>
+      ))}
+    </div>
+  );
+}
 
 interface FieldControlProps {
   field: ResourceField;
@@ -88,6 +105,8 @@ function FieldControl({ field, value, invalid, last, onSelect, selected, sibling
           )}
         />
       );
+    case "multiSelect":
+      return <MultiSelectField name={field.name} label={field.label} options={field.options ?? []} initial={value} />;
     case "switch":
       return <Switch {...common} defaultChecked={value === "on"} />;
     case "select":
@@ -177,7 +196,7 @@ export function ResourceForm({ itemId, fields, values, backHref, saveAction, del
   // After a failed save, start from what the user typed; otherwise from the saved record.
   const typed = state.status === "error" ? state.values : undefined;
   const formError = state.status === "error" && state.error !== "validation" ? state.error : null;
-  const lastTypingField = fields.findLast((field) => !["switch", "color", "select", "textarea"].includes(field.kind))?.name;
+  const lastTypingField = fields.findLast((field) => !["switch", "color", "select", "textarea", "multiSelect", "image"].includes(field.kind))?.name;
 
   // noValidate on the form: the server validates and returns translated messages, so the browser must not show its own.
   return (

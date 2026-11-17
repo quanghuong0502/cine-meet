@@ -25,7 +25,8 @@ export const movieInputSchema = z
     trailerUrl: trailerLink,
     durationMin: requiredInt(1, 600),
     genreIds: idList,
-    ageRatingId: objectIdField.optional(),
+    // The form's "none" choice clears the rating.
+    ageRatingId: z.string().optional().transform((v) => (v === "none" ? undefined : v)).pipe(objectIdField.optional()),
     director: optionalText(120),
     cast: optionalText(300),
     language: optionalText(60),

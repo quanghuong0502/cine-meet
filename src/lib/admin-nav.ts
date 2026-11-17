@@ -30,7 +30,7 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
   { href: "/admin/users", key: "users", icon: Users, enabled: true },
   { href: "/admin/master-data", key: "masterData", icon: Database, enabled: true },
   { href: "/admin/auditoriums", key: "auditoriums", icon: Projector, enabled: true },
-  { href: "/admin/movies", key: "movies", icon: Clapperboard, enabled: false }, // Sprint 3
+  { href: "/admin/movies", key: "movies", icon: Clapperboard, enabled: true },
   { href: "/admin/settings", key: "settings", icon: Settings, enabled: true },
 ];
 
