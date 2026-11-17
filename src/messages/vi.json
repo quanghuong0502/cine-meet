@@ -843,14 +843,6 @@
       "chat": {
         "title": "Chat",
         "description": "Sắp có: trợ lý AI giúp chọn ghế và tra cứu."
-      },
-      "cinemas": {
-        "title": "Rạp",
-        "description": "Sắp có: danh sách rạp và sơ đồ phòng chiếu."
-      },
-      "showtimes": {
-        "title": "Lịch chiếu",
-        "description": "Sắp có: danh sách suất chiếu và trailer phim."
       }
     }
   },
@@ -954,6 +946,107 @@
     "zoomReset": "Đặt lại",
     "heatLow": "Điểm thấp",
     "heatHigh": "Điểm cao",
-    "doorLabel": "Cửa ra vào"
+    "doorLabel": "Cửa ra vào",
+    "markFavorite": "đã đánh dấu thích",
+    "markAvoid": "đã đánh dấu tránh"
+  },
+  "showtimes": {
+    "title": "Lịch chiếu",
+    "movies": "Phim",
+    "dayStrip": "Chọn ngày",
+    "today": "Nay",
+    "until": "đến {time}",
+    "price": "~{amount}",
+    "noPrice": "Chưa có giá",
+    "createPlanSoon": "Tạo lịch hẹn (sắp có)",
+    "emptyTitle": "Không có suất chiếu",
+    "emptyDescription": "Thử chọn ngày khác hoặc bỏ bớt bộ lọc.",
+    "slots": {
+      "morning": "Sáng (trước 12h)",
+      "afternoon": "Chiều (12h đến 17h)",
+      "evening": "Tối (17h đến 22h)",
+      "late": "Khuya (sau 22h)"
+    },
+    "filters": {
+      "title": "Bộ lọc",
+      "titleCount": "Bộ lọc ({count})",
+      "clear": "Xóa lọc",
+      "all": "Tất cả",
+      "labels": {
+        "movie": "Phim",
+        "branch": "Rạp",
+        "genre": "Thể loại",
+        "format": "Định dạng",
+        "slot": "Khung giờ"
+      }
+    }
+  },
+  "movie": {
+    "posterAlt": "Poster phim {title}",
+    "duration": "{minutes} phút",
+    "status": {
+      "upcoming": "Sắp chiếu",
+      "showing": "Đang chiếu",
+      "ended": "Đã ngừng chiếu"
+    },
+    "director": "Đạo diễn",
+    "cast": "Diễn viên",
+    "language": "Ngôn ngữ",
+    "formats": "Định dạng",
+    "releaseDate": "Khởi chiếu",
+    "showtimes": "Suất chiếu",
+    "noShowtimes": {
+      "title": "Chưa có suất chiếu",
+      "description": "Phim này chưa có suất nào sắp tới."
+    },
+    "trailer": {
+      "play": "Phát trailer {title}",
+      "playerTitle": "Trailer {title}",
+      "openYoutube": "Xem trên YouTube"
+    }
+  },
+  "cinemas": {
+    "title": "Rạp",
+    "emptyTitle": "Chưa có rạp",
+    "emptyDescription": "Rạp sẽ hiện ở đây khi quản trị viên thêm chi nhánh và phòng chiếu.",
+    "roomCount": "{count, plural, other {# phòng}}",
+    "seatCount": "{count, plural, other {# ghế}}",
+    "parkingFee": "Gửi xe {fee}",
+    "directions": "Chỉ đường",
+    "rooms": "Phòng chiếu",
+    "room": {
+      "subtitle": "Sơ đồ phòng chiếu",
+      "layers": "Lớp hiển thị",
+      "layerScore": "Điểm ghế",
+      "layerMine": "Đánh dấu của tôi",
+      "tapSeat": "Chạm một ghế để xem điểm và đánh dấu.",
+      "seatTitle": "Ghế {code}",
+      "score": "điểm {score}",
+      "close": "Đóng",
+      "flags": {
+        "broken": "ghế hỏng",
+        "obstructed": "bị che tầm nhìn"
+      },
+      "kindLabel": "Loại đánh dấu",
+      "favorite": "Thích",
+      "avoid": "Tránh",
+      "tagsLabel": "Ghi chú nhanh",
+      "tags": {
+        "aisle": "Gần lối đi",
+        "near_door": "Sát cửa",
+        "obstructed": "Bị che",
+        "loose": "Ghế lỏng",
+        "near_speaker": "Gần loa"
+      },
+      "noteLabel": "Ghi chú",
+      "notePlaceholder": "Ghi chú của bạn",
+      "saveMark": "Lưu đánh dấu",
+      "removeMark": "Bỏ",
+      "saved": "Đã lưu đánh dấu",
+      "removed": "Đã bỏ đánh dấu",
+      "saveFailed": "Chưa lưu được. Kiểm tra mạng rồi thử lại.",
+      "oldMarks": "Đánh dấu cũ",
+      "oldMarksDescription": "Ghế đã dời hoặc bị xóa khi phòng đổi sơ đồ."
+    }
   }
 }

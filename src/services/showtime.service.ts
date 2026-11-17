@@ -253,7 +253,9 @@ export async function searchShowtimes(filters: ShowtimeFilters = {}): Promise<Sh
   if (filters.date) {
     const from = vietnamDayStart(filters.date);
     if (!from) return [];
-    query.startAt = { $gte: from, $lt: new Date(from.getTime() + 24 * 3600_000) };
+    // Today shows what has not started yet (an admin list still shows the whole day).
+    const start = filters.includePast ? from : new Date(Math.max(from.getTime(), Date.now()));
+    query.startAt = { $gte: start, $lt: new Date(from.getTime() + 24 * 3600_000) };
   } else {
     query.startAt = { $gte: filters.includePast ? new Date(Date.now() - 6 * 3600_000) : new Date() };
   }

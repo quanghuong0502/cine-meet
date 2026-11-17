@@ -843,14 +843,6 @@
       "chat": {
         "title": "Chat",
         "description": "Coming soon: an AI assistant to help you pick seats and look things up."
-      },
-      "cinemas": {
-        "title": "Cinemas",
-        "description": "Coming soon: cinema list and auditorium seat maps."
-      },
-      "showtimes": {
-        "title": "Showtimes",
-        "description": "Coming soon: showtime list and movie trailers."
       }
     }
   },
@@ -954,6 +946,107 @@
     "zoomReset": "Reset",
     "heatLow": "Low score",
     "heatHigh": "High score",
-    "doorLabel": "Entrance"
+    "doorLabel": "Entrance",
+    "markFavorite": "marked as favourite",
+    "markAvoid": "marked to avoid"
+  },
+  "showtimes": {
+    "title": "Showtimes",
+    "movies": "Movies",
+    "dayStrip": "Pick a day",
+    "today": "Today",
+    "until": "to {time}",
+    "price": "~{amount}",
+    "noPrice": "No price yet",
+    "createPlanSoon": "Create plan (coming soon)",
+    "emptyTitle": "No showtimes",
+    "emptyDescription": "Try another day or remove some filters.",
+    "slots": {
+      "morning": "Morning (before 12:00)",
+      "afternoon": "Afternoon (12:00 to 17:00)",
+      "evening": "Evening (17:00 to 22:00)",
+      "late": "Late (after 22:00)"
+    },
+    "filters": {
+      "title": "Filters",
+      "titleCount": "Filters ({count})",
+      "clear": "Clear",
+      "all": "All",
+      "labels": {
+        "movie": "Movie",
+        "branch": "Cinema",
+        "genre": "Genre",
+        "format": "Format",
+        "slot": "Time of day"
+      }
+    }
+  },
+  "movie": {
+    "posterAlt": "Poster of {title}",
+    "duration": "{minutes} min",
+    "status": {
+      "upcoming": "Upcoming",
+      "showing": "Now showing",
+      "ended": "Ended"
+    },
+    "director": "Director",
+    "cast": "Cast",
+    "language": "Language",
+    "formats": "Formats",
+    "releaseDate": "Release date",
+    "showtimes": "Showtimes",
+    "noShowtimes": {
+      "title": "No showtimes yet",
+      "description": "This movie has no upcoming showtimes."
+    },
+    "trailer": {
+      "play": "Play trailer of {title}",
+      "playerTitle": "Trailer of {title}",
+      "openYoutube": "Watch on YouTube"
+    }
+  },
+  "cinemas": {
+    "title": "Cinemas",
+    "emptyTitle": "No cinemas yet",
+    "emptyDescription": "Cinemas show up here once an admin adds branches and auditoriums.",
+    "roomCount": "{count, plural, one {# auditorium} other {# auditoriums}}",
+    "seatCount": "{count, plural, one {# seat} other {# seats}}",
+    "parkingFee": "Parking {fee}",
+    "directions": "Get directions",
+    "rooms": "Auditoriums",
+    "room": {
+      "subtitle": "Auditorium seat map",
+      "layers": "Layers",
+      "layerScore": "Seat score",
+      "layerMine": "My marks",
+      "tapSeat": "Tap a seat to see its score and mark it.",
+      "seatTitle": "Seat {code}",
+      "score": "score {score}",
+      "close": "Close",
+      "flags": {
+        "broken": "broken",
+        "obstructed": "view blocked"
+      },
+      "kindLabel": "Kind of mark",
+      "favorite": "Like",
+      "avoid": "Avoid",
+      "tagsLabel": "Quick notes",
+      "tags": {
+        "aisle": "Near aisle",
+        "near_door": "Next to door",
+        "obstructed": "Blocked",
+        "loose": "Loose seat",
+        "near_speaker": "Near speaker"
+      },
+      "noteLabel": "Note",
+      "notePlaceholder": "Your note",
+      "saveMark": "Save mark",
+      "removeMark": "Remove",
+      "saved": "Mark saved",
+      "removed": "Mark removed",
+      "saveFailed": "Could not save. Check your connection and try again.",
+      "oldMarks": "Old marks",
+      "oldMarksDescription": "Seats that moved or were removed when the auditorium changed its seat map."
+    }
   }
 }

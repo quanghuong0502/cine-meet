@@ -1,9 +1,9 @@
 import { model, models, Schema, type InferSchemaType, type Model } from "mongoose";
 
-export const SEAT_MARK_KINDS = ["favorite", "avoid"] as const;
-export type SeatMarkKind = (typeof SEAT_MARK_KINDS)[number];
-export const SEAT_MARK_TAGS = ["aisle", "near_door", "obstructed", "loose", "near_speaker"] as const;
-export type SeatMarkTag = (typeof SEAT_MARK_TAGS)[number];
+import { SEAT_MARK_KINDS, SEAT_MARK_TAGS } from "./seat-mark-constants";
+
+export { SEAT_MARK_KINDS, SEAT_MARK_TAGS };
+export type { SeatMarkKind, SeatMarkTag } from "./seat-mark-constants";
 
 /**
  * A person's own mark on one seat. It is stored against the layout version the person was looking at; looking at a newer

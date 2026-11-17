@@ -148,9 +148,9 @@ Trạng thái: Chưa bắt đầu · Đang làm · Chờ kiểm tra · Xong
 **Ngoài phạm vi:** đánh dấu công khai/cộng đồng (hoãn), đánh giá phòng, nút tạo lịch hẹn (có thể để nút vô hiệu).
 
 **Tiêu chí hoàn thành**
-- [ ] Tạo suất hàng loạt và import CSV thành công, báo lỗi rõ khi dòng CSV sai.
+- [x] Tạo suất hàng loạt và import CSV thành công, báo lỗi rõ khi dòng CSV sai (test `showtime.service.test.ts`, `csv.test.ts`; màn hình chưa thử trên điện thoại).
 - [ ] Trailer phát được ngay trong trang trên điện thoại.
-- [ ] Đánh dấu ghế ở một phòng rồi mở lại vẫn thấy; sau khi phòng có version mới (không đổi ghế đó), đánh dấu vẫn hiện; ghế bị dời hoặc xóa thì vào "Đánh dấu cũ".
+- [x] Đánh dấu ghế ở một phòng rồi mở lại vẫn thấy (test service `seat-mark.service.test.ts`; màn hình chưa thử trên điện thoại); sau khi phòng có version mới (không đổi ghế đó), đánh dấu vẫn hiện; ghế bị dời hoặc xóa thì vào "Đánh dấu cũ".
 - [ ] Bộ lọc lịch chiếu hoạt động và nhanh trên dữ liệu mẫu.
 
 ---
@@ -342,6 +342,15 @@ Mỗi sprint xong thêm 3 đến 6 dòng: đã làm gì, còn dở gì, quyết 
   (một dải theo màu chủ đạo qua ba mốc: tông tối, `--primary`, tông nhạt; chủ dự án chọn thay cho thang xanh-vàng ban đầu, rồi yêu cầu tăng tương phản nên mở rộng dải; chữ mã ghế đổi sang tối ở đầu nhạt); ghi đè ghế lưu theo ô và gộp về dạng ngắn nhất; loại ghế đang được layout dùng thì không xóa được; phóng sơ đồ bằng cách đổi `viewBox` của SVG (không dùng CSS `transform`/`will-change`, vì bản đó để lộ bóng ma của sơ đồ 1x dưới sơ đồ đã phóng và làm mờ nét); chọn ô trên điện thoại bằng chạm (có chạm nhãn hàng/cột để chọn cả hàng/cột), chưa làm kéo vùng chọn.
 - Còn dở (chuyển sang sprint sau): **chạy `npm run rescore`** để tính lại điểm ghế của phòng đã lưu theo công thức mới (lệnh chưa chạy trên DB dev); chưa đo ở cỡ chữ 125% và 150%; chữ nhãn hàng/cột và "MÀN HÌNH" trong sơ đồ nhỏ hơn 12px ở mức 1× và ghế 16px ở mức 1× (phải phóng to để chọn); chưa hỗ trợ ghế giường nằm riêng trong heatmap; chưa cảnh báo khi dãy ghế đôi có ô lẻ; xóa phòng chưa chặn khi có suất chiếu (Sprint 3 thêm). Chủ dự án đã thử và duyệt Sprint 2 ngày 2026-11-17.
 - File chính: `src/lib/seat-layout/`, `src/services/auditorium.service.ts`, `src/services/seat-score.ts`, `src/components/seat-map/`, `src/components/admin/auditorium-editor/`, `src/app/admin/auditoriums/`.
+
+### Sprint 3 (2026-11-17)
+- Xong (code, test, build; **chưa thử trên điện thoại**): model `Movie`, `Showtime`, `SeatMark`; `movie.service` (trạng thái phim **tính theo ngày**, không lưu, nên không cần job cập nhật), `showtime.service` (tạo hàng loạt, nhập CSV, tìm suất kèm giá ước tính), `seat-mark.service` (đánh dấu theo phiên bản layout), `cinema.service`;
+  admin `/admin/movies` (danh sách và form phim có poster Cloudinary, trailer YouTube, thể loại, định dạng; tab Suất chiếu; tạo hàng loạt; nhập CSV; mục Phim bật ở thanh dưới admin);
+  user: `/showtimes` (dải ngày 15 ngày, lọc phim, rạp, thể loại, định dạng, khung giờ trên URL; hàng phim ở đầu trang), `/movies/[id]` (thông tin, trailer lite embed, các suất), `/cinemas`, `/cinemas/[branchId]`, `/cinemas/[branchId]/[auditoriumId]` (sơ đồ chỉ đọc, hai lớp Điểm ghế và Đánh dấu của tôi, ⭐ thích / tránh, tag nhanh, ghi chú, mục "Đánh dấu cũ"); hai tab Lịch chiếu và Rạp đã bật; `npm run seed:movies` nạp 4 phim mẫu và 84 suất (chạy sau `seed:catalog`).
+- Quyết định: **tạo hàng loạt theo khoảng ngày (từ, đến) × nhiều giờ × nhiều phòng**, mỗi lần tối đa 500 suất, suất trùng giờ với suất khác cùng phòng bị bỏ qua và báo số lượng; **CSV chạy tất cả hoặc không**: cột `movie,branch,auditorium,start,format,price` (giờ `YYYY-MM-DD HH:mm` giờ Việt Nam, giá để trống thì theo bảng giá, khớp tên không phân biệt dấu và hoa thường, dòng đầu tiêu đề có hay không đều được, ngăn cách `,` `;` hoặc tab), một dòng sai hoặc trùng giờ thì không tạo suất nào và liệt kê từng dòng lỗi; giờ kết thúc = bắt đầu + thời lượng + phút quảng cáo (cài đặt hệ thống); suất gắn `layoutId` hiện tại của phòng;
+  **giá ước tính** = giá ghế mặc định của layout theo bảng giá (`resolveTicketPrice`), có `priceOverride` thì dùng giá đó; **một ghế một đánh dấu cho mỗi người trong một phòng**, đánh dấu còn hiệu lực ở layout mới khi ghế giữ nguyên mã, hàng, cột và độ rộng, không thì vào "Đánh dấu cũ" (`src/lib/seat-layout/marks.ts`); **bản đồ chi nhánh**: nút "Chỉ đường" mở link Google Maps ngoài app (không thêm thư viện bản đồ); khung sửa đánh dấu là phần của trang dưới sơ đồ, **không dùng bottom sheet** vì ô ghi chú trong sheet gây lỗi bàn phím trên PWA iOS; nút "Tạo lịch hẹn" hiện nhưng tắt (Sprint 4 bật); xóa phòng bị chặn khi còn suất chiếu; thể loại, định dạng, phân loại tuổi đang được phim dùng thì không xóa được.
+- Còn dở: **chủ dự án cần thử trên điện thoại** (trailer phát tại chỗ trên iPhone, tốc độ bộ lọc, khung đánh dấu ghế, nhập CSV bằng file); trailer mẫu chưa có (thêm link YouTube thật ở Admin > Phim); chưa có đánh giá phòng và lịch sử ngồi (thiết kế 3.2, để Sprint 6); chưa đo ở cỡ chữ 125% và 150%.
+- File chính: `src/services/{movie,showtime,seat-mark,cinema}.service.ts`, `src/lib/showtime/`, `src/lib/movie/`, `src/lib/seat-layout/marks.ts`, `src/app/admin/movies/`, `src/components/admin/showtime-*.tsx`, `src/app/(user)/{showtimes,movies,cinemas}/`, `src/components/movie/`, `src/components/seat-map/room-seat-view.tsx`, `scripts/seed-movies.ts`.
 
 <!-- Ví dụ:
 ### Sprint 2 (2026-12-01)

@@ -21,6 +21,8 @@ export interface SeatMapProps {
   seatTypes: SeatMapSeatType[];
   /** Colour seats by score instead of seat type. */
   showHeatmap?: boolean;
+  /** The viewer's own marks by seat code: a star (favourite) or a crossed circle (avoid) in the seat's corner. */
+  marks?: ReadonlyMap<string, "favorite" | "avoid">;
   /** Seat codes drawn with a selection ring. */
   selectedCodes?: ReadonlySet<string>;
   onSeatTap?: (seat: LayoutSeat) => void;
@@ -65,7 +67,7 @@ interface LayerProps extends Omit<SeatMapProps, "className" | "onSeatTap" | "onR
   rowLabelsTappable: boolean;
   colLabelsTappable: boolean;
   screenLabel: string;
-  seatAria: (seat: LayoutSeat, typeName: string) => string;
+  seatAria: (seat: LayoutSeat, typeName: string, mark?: "favorite" | "avoid") => string;
   doorLabel: string;
   doorText: string;
 }
@@ -76,6 +78,7 @@ const MapLayer = memo(function MapLayer({
   seats,
   seatTypes,
   showHeatmap,
+  marks,
   selectedCodes,
   emptyCells,
   labels,
@@ -177,13 +180,14 @@ const MapLayer = memo(function MapLayer({
         const selected = selectedCodes?.has(seat.code);
         const broken = seat.flags.includes("broken");
         const obstructed = seat.flags.includes("obstructed");
+        const mark = marks?.get(seat.code);
         return (
           <g
             key={seat.code}
             data-seat={seat.code}
             role={interactive ? "button" : undefined}
             tabIndex={interactive ? 0 : undefined}
-            aria-label={interactive ? seatAria(seat, type?.name ?? "") : undefined}
+            aria-label={interactive ? seatAria(seat, type?.name ?? "", mark) : undefined}
             aria-pressed={interactive ? !!selected : undefined}
             className={cn("outline-none", interactive && "cursor-pointer")}
           >
@@ -202,6 +206,7 @@ const MapLayer = memo(function MapLayer({
                 pointerEvents="none"
               />
             ) : null}
+            {mark ? <MarkBadge kind={mark} x={seat.x + w / 2 - 0.02} y={seat.y - SEAT / 2 + 0.02} /> : null}
             {selected ? (
               <rect x={seat.x - w / 2 - 0.03} y={seat.y - SEAT / 2 - 0.03} width={w + 0.06} height={SEAT + 0.06} rx={0.23} fill="none" stroke="var(--foreground)" strokeWidth={SELECT_RING_PX} vectorEffect="non-scaling-stroke" pointerEvents="none" />
             ) : null}
@@ -217,6 +222,24 @@ const MapLayer = memo(function MapLayer({
   );
 });
 
+/** Corner badge of a marked seat: a gold star, or a red circle with a bar. Shape differs, so colour is not the only signal. */
+function MarkBadge({ kind, x, y }: { kind: "favorite" | "avoid"; x: number; y: number }) {
+  if (kind === "favorite") {
+    const points = Array.from({ length: 10 }, (_, i) => {
+      const radius = i % 2 === 0 ? 0.3 : 0.13;
+      const angle = (Math.PI / 5) * i - Math.PI / 2;
+      return `${(x + radius * Math.cos(angle)).toFixed(3)},${(y + radius * Math.sin(angle)).toFixed(3)}`;
+    }).join(" ");
+    return <polygon points={points} fill="#facc15" stroke="#000" strokeOpacity={0.55} strokeWidth={0.04} pointerEvents="none" />;
+  }
+  return (
+    <g pointerEvents="none">
+      <circle cx={x} cy={y} r={0.25} fill="#dc2626" stroke="#fff" strokeWidth={0.05} />
+      <line x1={x - 0.14} y1={y} x2={x + 0.14} y2={y} stroke="#fff" strokeWidth={0.07} strokeLinecap="round" />
+    </g>
+  );
+}
+
 /**
  * Seat map drawn as SVG from a generated layout: pinch to zoom, drag to pan, tap a seat.
  * One component for every screen (admin editor now; user seat view and seat picking later).
@@ -226,6 +249,7 @@ export function SeatMap({
   seats,
   seatTypes,
   showHeatmap = false,
+  marks,
   selectedCodes,
   onSeatTap,
   onRowTap,
@@ -268,10 +292,11 @@ export function SeatMap({
 
   // Stable between renders: the layer below is memoized and must not redraw every seat at each zoom step.
   const seatAria = useCallback(
-    (seat: LayoutSeat, typeName: string) =>
+    (seat: LayoutSeat, typeName: string, mark?: "favorite" | "avoid") =>
       [
         t("seat", { code: seat.code, type: typeName }),
         t("score", { score: seat.score }),
+        mark === "favorite" ? t("markFavorite") : mark === "avoid" ? t("markAvoid") : null,
         seat.flags.includes("broken") ? t("broken") : null,
         seat.flags.includes("obstructed") ? t("obstructed") : null,
       ]
@@ -303,6 +328,7 @@ export function SeatMap({
             seats={seats}
             seatTypes={seatTypes}
             showHeatmap={showHeatmap}
+            marks={marks}
             selectedCodes={selectedCodes}
             emptyCells={emptyCells}
             labels={scale >= LABELS_FROM_SCALE}

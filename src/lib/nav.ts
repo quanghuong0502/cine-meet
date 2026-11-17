@@ -20,9 +20,9 @@ export interface NavItem {
 
 export const NAV_ITEMS: NavItem[] = [
   { href: "/", key: "overview", icon: LayoutDashboard, enabled: false }, // Sprint 6
-  { href: "/showtimes", key: "showtimes", icon: Clapperboard, enabled: false }, // Sprint 3
+  { href: "/showtimes", key: "showtimes", icon: Clapperboard, enabled: true },
   { href: "/appointments", key: "appointments", icon: CalendarHeart, enabled: false }, // Sprint 4
-  { href: "/cinemas", key: "cinemas", icon: Popcorn, enabled: false }, // Sprint 3
+  { href: "/cinemas", key: "cinemas", icon: Popcorn, enabled: true },
   { href: "/chat", key: "chat", icon: MessageCircle, enabled: false }, // Sprint 7
 ];
 
