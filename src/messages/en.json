@@ -1011,7 +1011,6 @@
       "watch": "Watch trailer",
       "play": "Watch trailer of {title}",
       "playerTitle": "Trailer of {title}",
-      "close": "Close trailer",
       "openYoutube": "Watch on YouTube"
     },
     "releaseOn": "Opens {date}",
