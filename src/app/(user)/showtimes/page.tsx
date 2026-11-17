@@ -102,7 +102,7 @@ export default async function ShowtimesPage({ searchParams }: { searchParams: Pr
                   scroll={false}
                   aria-current={selected ? "date" : undefined}
                   className={cn(
-                    "flex h-target min-w-14 flex-col items-center justify-center rounded-xl border px-2 text-xs leading-tight",
+                    "flex min-h-row min-w-16 flex-col items-center justify-center gap-0.5 rounded-2xl border px-4 py-2 text-xs leading-tight",
                     selected ? "border-transparent bg-primary text-primary-foreground" : "bg-card text-muted-foreground",
                   )}
                 >
