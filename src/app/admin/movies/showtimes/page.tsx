@@ -17,7 +17,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function AdminShowtimesPage() {
   const t = await getTranslations("admin.movies");
-  const rows = await searchShowtimes({ includePast: true, limit: 300 });
+  const rows = await searchShowtimes({ admin: true, limit: 300 });
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-4 p-4">

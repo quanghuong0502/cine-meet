@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { optionalColor, optionalUrl, requiredText } from "@/lib/validation/fields";
+import { checkbox, optionalColor, optionalUrl, requiredText } from "@/lib/validation/fields";
 import { Branch } from "@/models/branch";
 import { Brand } from "@/models/brand";
 import { FnbCombo } from "@/models/fnb-combo";
@@ -13,6 +13,7 @@ export const brandInputSchema = z.object({
   color: optionalColor,
   websiteUrl: optionalUrl,
   appUrl: optionalUrl,
+  active: checkbox,
 });
 
 export type BrandInput = z.infer<typeof brandInputSchema>;
@@ -22,7 +23,7 @@ export const brandService = createMasterDataService({
   model: Brand,
   searchFields: ["name"],
   sort: { name: 1 },
-  editableFields: ["name", "logoUrl", "color", "websiteUrl", "appUrl"],
+  editableFields: ["name", "logoUrl", "color", "websiteUrl", "appUrl", "active"],
   // A brand with branches or food items still in use cannot be deleted.
   dependents: () => [
     { model: Branch, field: "brandId" },

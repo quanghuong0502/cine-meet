@@ -5,6 +5,8 @@ const genreSchema = new Schema(
   {
     name: { type: String, required: true, trim: true },
     nameEn: { type: String, trim: true },
+    // Off = not offered as a filter or in new pick-lists (a missing value counts as on).
+    active: { type: Boolean, default: true },
   },
   { timestamps: true },
 );

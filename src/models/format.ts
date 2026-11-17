@@ -4,6 +4,8 @@ import { model, models, Schema, type InferSchemaType, type Model } from "mongoos
 const formatSchema = new Schema(
   {
     name: { type: String, required: true, trim: true },
+    // Off = not offered as a filter or in new pick-lists, and its showtimes are hidden from users (a missing value counts as on).
+    active: { type: Boolean, default: true },
   },
   { timestamps: true },
 );

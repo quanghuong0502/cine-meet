@@ -107,7 +107,9 @@
         "invalid_config": "Cấu hình sơ đồ không hợp lệ. Kiểm tra lại số hàng, số cột và lối đi.",
         "branch_not_found": "Chi nhánh không còn tồn tại. Hãy chọn lại.",
         "seat_type_not_found": "Có loại ghế không còn tồn tại. Hãy chọn lại."
-      }
+      },
+      "activeLabel": "Đang bật",
+      "inactiveBadge": "Đang tắt"
     },
     "validation": {
       "required": "Không được để trống",

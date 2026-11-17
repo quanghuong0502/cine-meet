@@ -27,6 +27,9 @@ export interface CinemaGroup {
   branches: (CinemaBranch & { roomCount: number })[];
 }
 
+/** A record switched off by an admin is hidden from users; one with no value (made before the switch existed) counts as on. */
+export const ACTIVE = { active: { $ne: false } } as const;
+
 interface BranchLean {
   _id: { toString(): string };
   name: string;
@@ -59,8 +62,8 @@ function toBranch(doc: BranchLean): CinemaBranch {
 export async function listCinemaGroups(): Promise<CinemaGroup[]> {
   await connectToDatabase();
   const [brands, branches, rooms] = await Promise.all([
-    Brand.find({}).sort({ name: 1 }).lean(),
-    Branch.find({}).sort({ name: 1 }).lean(),
+    Brand.find(ACTIVE).sort({ name: 1 }).lean(),
+    Branch.find(ACTIVE).sort({ name: 1 }).lean(),
     Auditorium.find({ currentLayoutId: { $exists: true } }, "branchId").lean(),
   ]);
   const roomCount = new Map<string, number>();
@@ -78,10 +81,10 @@ export async function listCinemaGroups(): Promise<CinemaGroup[]> {
 export async function getCinema(branchId: string) {
   if (!isValidObjectId(branchId)) return null;
   await connectToDatabase();
-  const branch = await Branch.findById(branchId).lean();
+  const branch = await Branch.findOne({ _id: branchId, ...ACTIVE }).lean();
   if (!branch) return null;
   const [brand, rooms] = await Promise.all([
-    Brand.findById(branch.brandId).lean(),
+    Brand.findOne({ _id: branch.brandId, ...ACTIVE }).lean(),
     Auditorium.find({ branchId, currentLayoutId: { $exists: true } }).sort({ name: 1 }).lean(),
   ]);
   const layouts = await AuditoriumLayout.aggregate<{ _id: { toString(): string }; seatCount: number }>([
@@ -89,8 +92,9 @@ export async function getCinema(branchId: string) {
     { $project: { seatCount: { $size: "$seats" } } },
   ]);
   const seatCount = new Map(layouts.map((l) => [l._id.toString(), l.seatCount]));
+  if (!brand) return null;
   return {
-    brand: { id: brand?._id.toString() ?? "", name: brand?.name ?? "", logoUrl: brand?.logoUrl ?? null },
+    brand: { id: brand._id.toString(), name: brand.name, logoUrl: brand.logoUrl ?? null },
     branch: toBranch(branch),
     rooms: rooms.map((r) => ({ id: r._id.toString(), name: r.name, seatCount: seatCount.get(r.currentLayoutId?.toString() ?? "") ?? 0 })),
   };
@@ -115,16 +119,17 @@ export async function getRoomView(branchId: string, auditoriumId: string): Promi
   if (!room?.currentLayoutId) return null;
   const [layout, branch, types] = await Promise.all([
     AuditoriumLayout.findById(room.currentLayoutId).lean(),
-    Branch.findById(branchId).lean(),
+    Branch.findOne({ _id: branchId, ...ACTIVE }).lean(),
     SeatType.find({}).lean(),
   ]);
   if (!layout || !branch) return null;
-  const brand = await Brand.findById(branch.brandId, "name").lean();
+  const brand = await Brand.findOne({ _id: branch.brandId, ...ACTIVE }, "name").lean();
+  if (!brand) return null;
   const infos: SeatTypeInfo[] = types.map((t) => ({ id: t._id.toString(), name: t.name, capacity: t.capacity }));
   const { geometry } = generateGrid(layout.config as LayoutConfig, infos);
   return {
     auditorium: { id: room._id.toString(), name: room.name },
-    branch: { id: branch._id.toString(), name: branch.name, brandName: brand?.name ?? "" },
+    branch: { id: branch._id.toString(), name: branch.name, brandName: brand.name },
     layoutId: layout._id.toString(),
     version: layout.version,
     seats: JSON.parse(JSON.stringify(layout.seats)) as LayoutSeat[],

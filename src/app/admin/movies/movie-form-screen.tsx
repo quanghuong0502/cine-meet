@@ -24,6 +24,9 @@ export async function MovieFormScreen({ id, back }: { id: string | null; back?: 
   ]);
   if (id && !movie) notFound();
   const backHref = resolveBackHref(back, "/admin/movies");
+  // Switched-off genres and formats are not offered for new choices, but a movie that already has one keeps showing it.
+  const keep = new Set([...(movie?.genreIds ?? []), ...(movie?.formatIds ?? [])].map(String));
+  const offered = <T extends { _id: { toString(): string }; active?: boolean | null }>(items: T[]) => items.filter((item) => item.active !== false || keep.has(item._id.toString()));
 
   const fields: ResourceField[] = [
     { name: "title", kind: "text", label: t("fields.title"), required: true, maxLength: 120 },
@@ -33,7 +36,7 @@ export async function MovieFormScreen({ id, back }: { id: string | null; back?: 
     { name: "durationMin", kind: "number", label: t("fields.durationMin"), required: true, step: "1", min: 1, max: 600, placeholder: "120" },
     { name: "releaseDate", kind: "date", label: t("fields.releaseDate"), required: true },
     { name: "endDate", kind: "date", label: t("fields.endDate") },
-    { name: "genreIds", kind: "multiSelect", label: t("fields.genreIds"), options: genres.map((g) => ({ value: g._id.toString(), label: locale === "en" && g.nameEn ? g.nameEn : g.name })) },
+    { name: "genreIds", kind: "multiSelect", label: t("fields.genreIds"), options: offered(genres).map((g) => ({ value: g._id.toString(), label: locale === "en" && g.nameEn ? g.nameEn : g.name })) },
     {
       name: "ageRatingId",
       kind: "select",
@@ -41,7 +44,7 @@ export async function MovieFormScreen({ id, back }: { id: string | null; back?: 
       placeholder: t("fields.ageRatingPlaceholder"),
       options: [{ value: "none", label: t("fields.noAgeRating") }, ...ratings.map((r) => ({ value: r._id.toString(), label: `${r.code} · ${locale === "en" && r.descriptionEn ? r.descriptionEn : r.description}` }))],
     },
-    { name: "formatIds", kind: "multiSelect", label: t("fields.formatIds"), options: formats.map((f) => ({ value: f._id.toString(), label: f.name })) },
+    { name: "formatIds", kind: "multiSelect", label: t("fields.formatIds"), options: offered(formats).map((f) => ({ value: f._id.toString(), label: f.name })) },
     { name: "language", kind: "text", label: t("fields.language"), maxLength: 60 },
     { name: "director", kind: "text", label: t("fields.director"), maxLength: 120 },
     { name: "cast", kind: "textarea", label: t("fields.cast"), maxLength: 300 },

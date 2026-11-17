@@ -44,9 +44,12 @@ export async function AuditoriumEditorScreen({ id, back }: Props) {
   }
 
   const brandName = new Map(brands.map((b) => [b.id, b.name]));
-  const branchOptions = branches
-    .map((b) => ({ value: b._id.toString(), label: [brandName.get(b.brandId.toString()), b.name].filter(Boolean).join(" · ") }))
-    .sort((a, b) => a.label.localeCompare(b.label, "vi"));
+  // Switched-off branches are not offered for a new room; a room that already belongs to one keeps it in the list.
+  const optionsFor = (currentBranchId?: string) =>
+    branches
+      .filter((b) => b.active !== false || b._id.toString() === currentBranchId)
+      .map((b) => ({ value: b._id.toString(), label: [brandName.get(b.brandId.toString()), b.name].filter(Boolean).join(" · ") }))
+      .sort((a, b) => a.label.localeCompare(b.label, "vi"));
   const seatTypes = types.map((type) => ({
     id: type._id.toString(),
     name: locale === "en" && type.nameEn ? type.nameEn : type.name,
@@ -61,7 +64,7 @@ export async function AuditoriumEditorScreen({ id, back }: Props) {
         <PageHeader title={t("newTitle")} backHref={backHref} />
         <AuditoriumEditor
           auditorium={null}
-          branches={branchOptions}
+          branches={optionsFor()}
           seatTypes={seatTypes}
           initialConfig={defaultLayoutConfig(defaultType.id)}
           backHref={backHref}
@@ -82,7 +85,7 @@ export async function AuditoriumEditorScreen({ id, back }: Props) {
         // Another room: start the editor's state from scratch.
         key={id}
         auditorium={{ id, name: room.name, branchId: room.branchId.toString() }}
-        branches={branchOptions}
+        branches={optionsFor(room.branchId.toString())}
         seatTypes={seatTypes}
         initialConfig={current.config as LayoutConfig}
         backHref={backHref}

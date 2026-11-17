@@ -115,3 +115,26 @@ describe("searchShowtimes", () => {
     expect(await svc.searchShowtimes({ movieId: "bad" })).toEqual([]);
   });
 });
+
+describe("switched-off master data", () => {
+  it("hides showtimes of an off branch, brand or format from users, but not from the admin view", async () => {
+    await svc.createShowtimesBulk(bulk({ dates: ["2099-12-01"], times: ["10:00"] }), ACTOR);
+    expect(await svc.searchShowtimes({ date: "2099-12-01" })).toHaveLength(1);
+
+    await models.Format.updateOne({ _id: formatId }, { active: false });
+    expect(await svc.searchShowtimes({ date: "2099-12-01" })).toHaveLength(0);
+    expect(await svc.searchShowtimes({ date: "2099-12-01", admin: true })).toHaveLength(1);
+    await models.Format.updateOne({ _id: formatId }, { active: true });
+
+    const branch = await models.Branch.findOne({});
+    await models.Branch.updateOne({ _id: branch?._id }, { active: false });
+    expect(await svc.searchShowtimes({ date: "2099-12-01" })).toHaveLength(0);
+    await models.Branch.updateOne({ _id: branch?._id }, { active: true });
+
+    await models.Brand.updateOne({ _id: branch?.brandId }, { active: false });
+    expect(await svc.searchShowtimes({ date: "2099-12-01" })).toHaveLength(0);
+    await models.Brand.updateOne({ _id: branch?.brandId }, { $unset: { active: 1 } });
+    // A record made before the switch existed (no value) counts as on.
+    expect(await svc.searchShowtimes({ date: "2099-12-01" })).toHaveLength(1);
+  });
+});

@@ -15,6 +15,8 @@ const branchSchema = new Schema(
     parkingFee: { type: Number, min: 0 },
     parkingLocation: { type: String, trim: true },
     parkingEntrance: { type: String, trim: true },
+    // Off = hidden from the user app and from new pick-lists (a missing value counts as on).
+    active: { type: Boolean, default: true },
   },
   { timestamps: true },
 );

@@ -9,6 +9,8 @@ const brandSchema = new Schema(
     color: { type: String, trim: true },
     websiteUrl: { type: String, trim: true },
     appUrl: { type: String, trim: true },
+    // Off = hidden from the user app and from new pick-lists; records that point at it stay as they are. A missing value counts as on.
+    active: { type: Boolean, default: true },
   },
   { timestamps: true },
 );

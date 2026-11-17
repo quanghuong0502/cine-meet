@@ -107,7 +107,9 @@
         "invalid_config": "The seat map settings are not valid. Check rows, columns and aisles.",
         "branch_not_found": "This cinema no longer exists. Choose another.",
         "seat_type_not_found": "A seat type no longer exists. Choose again."
-      }
+      },
+      "activeLabel": "Active",
+      "inactiveBadge": "Off"
     },
     "validation": {
       "required": "This can't be empty",

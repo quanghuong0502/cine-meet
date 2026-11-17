@@ -217,8 +217,8 @@ export interface ShowtimeFilters {
   genreId?: string;
   formatId?: string;
   slot?: TimeSlot;
-  /** Admin lists also show what started in the last hours. */
-  includePast?: boolean;
+  /** The admin view: also shows what started in the last hours, and showtimes hidden from users by an off switch. */
+  admin?: boolean;
   limit?: number;
 }
 
@@ -254,10 +254,10 @@ export async function searchShowtimes(filters: ShowtimeFilters = {}): Promise<Sh
     const from = vietnamDayStart(filters.date);
     if (!from) return [];
     // Today shows what has not started yet (an admin list still shows the whole day).
-    const start = filters.includePast ? from : new Date(Math.max(from.getTime(), Date.now()));
+    const start = filters.admin ? from : new Date(Math.max(from.getTime(), Date.now()));
     query.startAt = { $gte: start, $lt: new Date(from.getTime() + 24 * 3600_000) };
   } else {
-    query.startAt = { $gte: filters.includePast ? new Date(Date.now() - 6 * 3600_000) : new Date() };
+    query.startAt = { $gte: filters.admin ? new Date(Date.now() - 6 * 3600_000) : new Date() };
   }
   if (filters.movieId) query.movieId = filters.movieId;
   if (filters.formatId) query.formatId = filters.formatId;
@@ -287,12 +287,12 @@ export async function searchShowtimes(filters: ShowtimeFilters = {}): Promise<Sh
   const [movies, rooms, formats, layouts, pricing] = await Promise.all([
     Movie.find({ _id: { $in: uniq(rows.map((r) => r.movieId)) } }, "title posterUrl durationMin").lean(),
     Auditorium.find({ _id: { $in: uniq(rows.map((r) => r.auditoriumId)) } }, "name branchId").lean(),
-    Format.find({ _id: { $in: uniq(rows.map((r) => r.formatId)) } }, "name").lean(),
+    Format.find({ _id: { $in: uniq(rows.map((r) => r.formatId)) } }, "name active").lean(),
     AuditoriumLayout.find({ _id: { $in: uniq(rows.map((r) => r.layoutId)) } }, "config.defaultSeatType").lean(),
     loadPricing(),
   ]);
-  const branches = await Branch.find({ _id: { $in: uniq(rooms.map((r) => r.branchId)) } }, "name brandId").lean();
-  const brands = await Brand.find({ _id: { $in: uniq(branches.map((b) => b.brandId)) } }, "name").lean();
+  const branches = await Branch.find({ _id: { $in: uniq(rooms.map((r) => r.branchId)) } }, "name brandId active").lean();
+  const brands = await Brand.find({ _id: { $in: uniq(branches.map((b) => b.brandId)) } }, "name active").lean();
 
   const movieById = new Map(movies.map((m) => [m._id.toString(), m]));
   const roomById = new Map(rooms.map((r) => [r._id.toString(), r]));
@@ -308,6 +308,9 @@ export async function searchShowtimes(filters: ShowtimeFilters = {}): Promise<Sh
     const format = formatById.get(s.formatId.toString());
     const branch = room && branchById.get(room.branchId.toString());
     if (!movie || !room || !format || !branch) continue;
+    // Switched off by an admin: not shown (the admin list shows everything).
+    const brand = brandById.get(branch.brandId.toString());
+    if (!filters.admin && (format.active === false || branch.active === false || brand?.active === false)) continue;
     const price = resolveTicketPrice({
       showtime: {
         startAt: s.startAt,
@@ -323,7 +326,7 @@ export async function searchShowtimes(filters: ShowtimeFilters = {}): Promise<Sh
     result.push({
       id: s._id.toString(),
       movie: { id: movie._id.toString(), title: movie.title, posterUrl: movie.posterUrl ?? null, durationMin: movie.durationMin },
-      branch: { id: branch._id.toString(), name: branch.name, brandName: brandById.get(branch.brandId.toString())?.name ?? "" },
+      branch: { id: branch._id.toString(), name: branch.name, brandName: brand?.name ?? "" },
       auditorium: { id: room._id.toString(), name: room.name },
       layoutId: s.layoutId.toString(),
       format: { id: format._id.toString(), name: format.name },

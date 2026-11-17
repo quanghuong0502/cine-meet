@@ -55,12 +55,13 @@ export default async function ShowtimesPage({ searchParams }: { searchParams: Pr
     formatService.list({}),
   ]);
   const brandName = new Map(brands.map((b) => [b.id, b.name]));
+  const brandActive = new Map(brands.map((b) => [b.id, b.active]));
   const en = locale === "en";
   const options = {
     movie: movies.filter((m) => m.status !== "ended").map((m) => ({ value: m._id.toString(), label: m.title })),
-    branch: branches.map((b) => ({ value: b._id.toString(), label: [brandName.get(b.brandId.toString()), b.name].filter(Boolean).join(" · ") })),
-    genre: genres.map((g) => ({ value: g._id.toString(), label: en && g.nameEn ? g.nameEn : g.name })),
-    format: formats.map((f) => ({ value: f._id.toString(), label: f.name })),
+    branch: branches.filter((b) => b.active !== false && brandActive.get(b.brandId.toString()) !== false).map((b) => ({ value: b._id.toString(), label: [brandName.get(b.brandId.toString()), b.name].filter(Boolean).join(" · ") })),
+    genre: genres.filter((g) => g.active !== false).map((g) => ({ value: g._id.toString(), label: en && g.nameEn ? g.nameEn : g.name })),
+    format: formats.filter((f) => f.active !== false).map((f) => ({ value: f._id.toString(), label: f.name })),
     slot: TIME_SLOTS.map((slot) => ({ value: slot, label: t(`slots.${slot}`) })),
   };
   const nowShowing = movies.filter((m) => m.status !== "ended");
