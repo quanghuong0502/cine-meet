@@ -247,10 +247,21 @@
   input[type="datetime-local"] {
     -webkit-appearance: none;
     appearance: none;
-    display: block;
+    /* Flex centres the value up and down: without the native look Safari draws it at the top of the box. */
+    display: flex;
+    align-items: center;
     width: 100%;
     min-width: 0;
     max-width: 100%;
+    padding-block: 0;
+    text-align: left;
+  }
+  input[type="date"]::-webkit-date-and-time-value,
+  input[type="time"]::-webkit-date-and-time-value,
+  input[type="datetime-local"]::-webkit-date-and-time-value {
+    text-align: left;
+    min-height: 1.5em;
+    margin: 0;
   }
   /*
    * No pinch zoom and no double-tap zoom, only scrolling (pan). Works on Chrome/Android and Safari/iOS 13+.
