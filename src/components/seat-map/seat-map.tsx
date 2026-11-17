@@ -207,7 +207,7 @@ const MapLayer = memo(function MapLayer({
               <rect x={seat.x - w / 2 - 0.05} y={seat.y - SEAT / 2 - 0.05} width={w + 0.1} height={SEAT + 0.1} rx={0.25} fill="none" stroke="var(--foreground)" strokeWidth={0.12} pointerEvents="none" />
             ) : null}
             {labels && !broken ? (
-              <text x={seat.x} y={seat.y + 0.15} textAnchor="middle" fontSize={0.42} fontWeight={600} fill="#fff" pointerEvents="none" style={{ textShadow: "0 0 2px rgba(0,0,0,0.6)" }}>
+              <text x={seat.x} y={seat.y + 0.12} textAnchor="middle" fontSize={0.34} fontWeight={600} fill="#fff" pointerEvents="none" style={{ textShadow: "0 0 2px rgba(0,0,0,0.6)" }}>
                 {showHeatmap ? seat.score : seat.col}
               </text>
             ) : null}
