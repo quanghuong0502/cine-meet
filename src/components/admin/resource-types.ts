@@ -2,7 +2,7 @@ import type { TicketResult } from "@/lib/upload-types";
 
 /** Shapes shared by the master-data list, the entry screen and the server pages that feed them. */
 
-export type ResourceFieldKind = "text" | "textarea" | "url" | "color" | "number" | "select" | "switch" | "date" | "time" | "email" | "tel" | "image";
+export type ResourceFieldKind = "text" | "textarea" | "url" | "color" | "number" | "select" | "switch" | "date" | "time" | "email" | "tel" | "image" | "comboItems";
 
 /** One form field. All text is already translated by the server page, so the form holds no entity wording. */
 export interface ResourceField {
@@ -23,6 +23,34 @@ export interface ResourceField {
   uploadTicket?: () => Promise<TicketResult>;
   /** An identifier or code: no auto-capitalisation, auto-correct or spell-check. */
   plain?: boolean;
+  /** For `comboItems` fields: what the items editor needs. */
+  combo?: ComboFieldConfig;
+}
+
+/** The combo items editor (kind `comboItems`): a picker of items with quantities, a discount, and the computed price. */
+export interface ComboFieldConfig {
+  /** Items of every brand; the editor lists the ones of the brand picked in the form. */
+  catalog: { id: string; brandId: string; name: string; size?: string; price: number }[];
+  /** Name of the select field that holds the brand. */
+  brandField: string;
+  locale: string;
+  labels: {
+    add: string;
+    addPlaceholder: string;
+    empty: string;
+    chooseBrand: string;
+    allAdded: string;
+    decrease: string;
+    increase: string;
+    remove: string;
+    discountType: string;
+    amount: string;
+    percent: string;
+    discountValue: string;
+    subtotal: string;
+    discount: string;
+    price: string;
+  };
 }
 
 /** One card in a master-data list. */

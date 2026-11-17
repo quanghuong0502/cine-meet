@@ -2,6 +2,7 @@ import { z } from "zod";
 import {
   objectIdField, optionalDate, optionalText, requiredInt, requiredText, validRange,
 } from "@/lib/validation/fields";
+import { FnbCombo } from "@/models/fnb-combo";
 import { FnbItem } from "@/models/fnb-item";
 import { createMasterDataService } from "./crud";
 
@@ -23,5 +24,6 @@ export const fnbItemService = createMasterDataService({
   searchFields: ["name", "nameEn"],
   sort: { name: 1, size: 1 },
   editableFields: ["brandId", "name", "nameEn", "size", "price", "validFrom", "validTo"],
-  dependents: () => [],
+  // An item that a combo contains cannot be deleted.
+  dependents: () => [{ model: FnbCombo, field: "items.itemId" }],
 });

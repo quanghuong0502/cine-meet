@@ -39,14 +39,7 @@ interface SectionConfig<Doc extends { _id: { toString(): string } }, Extra exten
   name: (doc: Doc) => string;
 }
 
-/** `price` as VND money, in the language in use. */
-export function formatVnd(value: number, locale: string): string {
-  return new Intl.NumberFormat(locale === "en" ? "en-US" : "vi-VN", {
-    style: "currency",
-    currency: "VND",
-    maximumFractionDigits: 0,
-  }).format(value);
-}
+export { formatVnd } from "@/lib/money";
 
 /** YYYY-MM-DD as a day in the language in use (the string has no time zone, so no shifting). */
 export function formatDay(value: string, locale: string, dateStyle: "medium" | "short" = "medium"): string {

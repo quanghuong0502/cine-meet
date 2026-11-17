@@ -97,6 +97,8 @@
         "validation": "Kiểm tra lại các ô được đánh dấu.",
         "duplicate": "Đã có mục trùng.",
         "in_use": "Đang được dùng ở nơi khác nên chưa xóa được.",
+        "item_invalid": "Có món không còn tồn tại hoặc không thuộc thương hiệu này. Hãy chọn lại món.",
+        "discount_too_high": "Chiết khấu lớn hơn tổng giá các món.",
         "not_found": "Mục này không còn tồn tại. Hãy tải lại trang.",
         "unknown": "Không lưu được. Hãy thử lại.",
         "last_admin": "Phải còn ít nhất một quản trị viên đang hoạt động.",
@@ -109,6 +111,7 @@
       "too_long": "Quá dài",
       "invalid_url": "Đường dẫn không hợp lệ, cần bắt đầu bằng https://",
       "invalid_color": "Màu không hợp lệ",
+      "no_items": "Chọn ít nhất một món",
       "too_gray": "Màu quá xám, hãy chọn màu có sắc rõ hơn",
       "too_dark": "Màu quá tối, nút sẽ khó thấy trên nền tối",
       "invalid_number": "Số không hợp lệ",
@@ -397,13 +400,8 @@
         "name": {
           "label": "Tên"
         },
-        "description": {
-          "label": "Gồm những gì",
-          "placeholder": "vd. 1 bắp lớn + 2 nước"
-        },
-        "price": {
-          "label": "Giá (đồng)",
-          "placeholder": "vd. 99000"
+        "items": {
+          "label": "Món trong combo"
         },
         "validFrom": {
           "label": "Áp dụng từ"
@@ -412,7 +410,25 @@
           "label": "Áp dụng đến"
         }
       },
-      "validity": "Áp dụng {from} – {to}"
+      "validity": "Áp dụng {from} – {to}",
+      "noItems": "Chưa chọn món",
+      "combo": {
+        "add": "Thêm món",
+        "addPlaceholder": "Chọn món để thêm",
+        "empty": "Chưa có món nào",
+        "chooseBrand": "Chọn thương hiệu để thêm món",
+        "allAdded": "Đã thêm hết món của thương hiệu này",
+        "decrease": "Giảm số lượng",
+        "increase": "Tăng số lượng",
+        "remove": "Bỏ món",
+        "discountType": "Loại chiết khấu",
+        "amount": "Chiết khấu (đồng)",
+        "percent": "Chiết khấu (%)",
+        "discountValue": "Mức chiết khấu",
+        "subtotal": "Tổng các món",
+        "discount": "Chiết khấu",
+        "price": "Giá combo"
+      }
     },
     "priceRules": {
       "title": "Giá vé",

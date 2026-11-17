@@ -4,10 +4,11 @@ import { ImageIcon, LoaderCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { ComboItemsField } from "@/components/admin/combo-items-field";
 import { DeleteRecordButton } from "@/components/admin/delete-record-button";
 import { ImageUpload } from "@/components/image-upload";
 import { RequiredMark } from "@/components/required-mark";
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,8 +31,23 @@ function isValidationCode(code: string): code is ValidationCode {
 
 const CONTROL_CLASS = "h-control rounded-xl bg-card px-4 text-base";
 
-/** `last`: the final typing field of the form, whose return key says "Done" instead of "Next". */
-function FieldControl({ field, value, invalid, last }: { field: ResourceField; value: string; invalid: boolean; last: boolean }) {
+interface FieldControlProps {
+  field: ResourceField;
+  value: string;
+  invalid: boolean;
+  /** The final typing field of the form, whose return key says "Done" instead of "Next". */
+  last: boolean;
+  /** Called when a select changes, so a field that depends on it (combo items on the brand) can follow. */
+  onSelect: (name: string, value: string) => void;
+  /** Current value of every select of the form, by name. */
+  selected: Record<string, string>;
+  /** Starting values of the whole form (what was typed after a failed save, else the saved record). */
+  siblings: Record<string, string>;
+  /** Translated error of a field that has no control of its own in the list (the combo's discount). */
+  discountError?: string;
+}
+
+function FieldControl({ field, value, invalid, last, onSelect, selected, siblings, discountError }: FieldControlProps) {
   const isPlain = field.plain || field.kind === "url" || field.kind === "email";
   const common = { id: field.name, name: field.name, "aria-invalid": invalid || undefined, "aria-required": field.required || undefined } as const;
 
@@ -47,6 +63,18 @@ function FieldControl({ field, value, invalid, last }: { field: ResourceField; v
           className="h-control w-20 cursor-pointer rounded-xl border bg-card p-1"
         />
       );
+    case "comboItems":
+      return field.combo ? (
+        <ComboItemsField
+          config={field.combo}
+          brandId={selected[field.combo.brandField] || undefined}
+          initialItems={value}
+          initialDiscountType={siblings.discountType ?? "amount"}
+          initialDiscountValue={siblings.discountValue ?? ""}
+          discountError={discountError}
+          invalid={invalid}
+        />
+      ) : null;
     case "image":
       return (
         <ImageUpload
@@ -64,7 +92,7 @@ function FieldControl({ field, value, invalid, last }: { field: ResourceField; v
       return <Switch {...common} defaultChecked={value === "on"} />;
     case "select":
       return (
-        <Select name={field.name} defaultValue={value || undefined}>
+        <Select name={field.name} defaultValue={value || undefined} onValueChange={(next) => onSelect(field.name, next)}>
           <SelectTrigger id={field.name} aria-invalid={invalid || undefined} aria-required={field.required || undefined} className={`${CONTROL_CLASS} w-full`}>
             <SelectValue placeholder={field.placeholder} />
           </SelectTrigger>
@@ -125,6 +153,10 @@ export function ResourceForm({ itemId, fields, values, backHref, saveAction, del
   const tv = useTranslations("admin.validation");
   const router = useRouter();
   const [state, formAction, isPending] = useActionState(saveAction, IDLE_STATE);
+  // The value of each select, followed live: a field can depend on another (the combo's items depend on its brand).
+  const [selected, setSelected] = useState<Record<string, string>>(() =>
+    Object.fromEntries(fields.filter((field) => field.kind === "select").map((field) => [field.name, values[field.name] ?? ""])),
+  );
 
   useEffect(() => {
     if (state.status !== "success") return;
@@ -173,6 +205,10 @@ export function ResourceForm({ itemId, fields, values, backHref, saveAction, del
               value={typed ? (typed[field.name] ?? "") : (values[field.name] ?? "")}
               invalid={Boolean(code)}
               last={field.name === lastTypingField}
+              onSelect={(name, next) => setSelected((current) => ({ ...current, [name]: next }))}
+              selected={selected}
+              siblings={typed ?? values}
+              discountError={field.kind === "comboItems" && fieldErrors.discountValue ? tv(isValidationCode(fieldErrors.discountValue) ? fieldErrors.discountValue : "invalid") : undefined}
             />
             {code ? (
               <p role="alert" className="-mt-1 text-sm text-destructive">

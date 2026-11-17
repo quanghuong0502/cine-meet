@@ -137,10 +137,26 @@ async function seedCatalog(): Promise<void> {
       await FnbItem.create({ brandId, name: itemName, nameEn: `Sweet popcorn ${SAMPLE}`, size: "Lớn", price: 59000 });
       added.fnbItems = (added.fnbItems ?? 0) + 1;
     }
+    const drinkName = `Nước ngọt ${SAMPLE}`;
+    if (!(await FnbItem.exists({ brandId, name: drinkName, size: "Vừa" }).collation(collation))) {
+      await FnbItem.create({ brandId, name: drinkName, nameEn: `Soft drink ${SAMPLE}`, size: "Vừa", price: 35000 });
+      added.fnbItems = (added.fnbItems ?? 0) + 1;
+    }
+    // A combo = items with a quantity each, minus a discount (1 popcorn + 2 drinks, 10% off).
     const comboName = `Combo 1 ${SAMPLE}`;
     if (!(await FnbCombo.exists({ brandId, name: comboName }).collation(collation))) {
-      await FnbCombo.create({ brandId, name: comboName, description: "1 bắp lớn + 1 nước", price: 89000 });
-      added.fnbCombos = (added.fnbCombos ?? 0) + 1;
+      const popcorn = await FnbItem.findOne({ brandId, name: itemName, size: "Lớn" }).collation(collation).lean();
+      const drink = await FnbItem.findOne({ brandId, name: drinkName, size: "Vừa" }).collation(collation).lean();
+      if (popcorn && drink) {
+        await FnbCombo.create({
+          brandId,
+          name: comboName,
+          items: [{ itemId: popcorn._id, quantity: 1 }, { itemId: drink._id, quantity: 2 }],
+          discountType: "percent",
+          discountValue: 10,
+        });
+        added.fnbCombos = (added.fnbCombos ?? 0) + 1;
+      }
     }
 
     // Sample ticket prices, one set per brand: normal, weekend, holiday and a Wednesday promotion (2D, standard seat).

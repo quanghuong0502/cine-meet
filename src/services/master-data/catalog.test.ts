@@ -4,6 +4,7 @@ import { startTestDatabase, stopTestDatabase } from "@/test/mongo";
 
 const ACTOR = new Types.ObjectId().toString();
 const BRAND = new Types.ObjectId().toString();
+const ITEM = new Types.ObjectId().toString();
 
 let s: {
   brand: typeof import("./brand.service");
@@ -66,7 +67,8 @@ describe("brand protection", () => {
     expect(await s.brand.brandService.remove(brandId, ACTOR)).toEqual({ ok: false, error: "in_use" });
 
     await s.branch.branchService.remove(branch.data._id.toString(), ACTOR);
-    await s.fnbCombo.fnbComboService.create({ brandId, name: "Combo 1", price: 79000 }, ACTOR);
+    const item = await s.fnbItem.fnbItemService.create({ brandId, name: "Bắp", price: 59000 }, ACTOR);
+    if (!item.ok) throw new Error("setup failed");
     expect(await s.brand.brandService.remove(brandId, ACTOR)).toEqual({ ok: false, error: "in_use" });
   });
 });
@@ -140,7 +142,7 @@ describe("simple types", () => {
 describe("food and drinks", () => {
   it("rejects a validity window that ends before it starts", () => {
     for (const schema of [s.fnbItem.fnbItemInputSchema, s.fnbCombo.fnbComboInputSchema]) {
-      const base = { brandId: BRAND, name: "Bắp", price: "59000" };
+      const base = { brandId: BRAND, name: "Bắp", price: "59000", items: JSON.stringify([{ itemId: ITEM, quantity: 1 }]) };
       expect(codes(schema, { ...base, validFrom: "2026-03-10", validTo: "2026-03-01" })).toEqual({ validTo: "out_of_range" });
       expect(codes(schema, { ...base, validFrom: "2026-03-01", validTo: "2026-03-01" })).toEqual({});
       expect(codes(schema, { ...base, validFrom: "2026-03-01" })).toEqual({});
@@ -161,15 +163,78 @@ describe("food and drinks", () => {
   });
 
   it("clears a validity date that the form left empty", async () => {
+    const item = await s.fnbItem.fnbItemService.create({ brandId: BRAND, name: "Bắp", price: 59000 }, ACTOR);
+    if (!item.ok) throw new Error("setup failed");
+    const lines = [{ itemId: item.data._id.toString(), quantity: 1 }];
     const created = await s.fnbCombo.fnbComboService.create(
-      { brandId: BRAND, name: "Combo 1", price: 99000, validFrom: "2026-01-01", validTo: "2026-02-01" },
+      { brandId: BRAND, name: "Combo 1", items: lines, validFrom: "2026-01-01", validTo: "2026-02-01" },
       ACTOR,
     );
     if (!created.ok) throw new Error("setup failed");
     const id = created.data._id.toString();
-    await s.fnbCombo.fnbComboService.update(id, { brandId: BRAND, name: "Combo 1", price: 99000, validFrom: "2026-01-01" }, ACTOR);
+    await s.fnbCombo.fnbComboService.update(id, { brandId: BRAND, name: "Combo 1", items: lines, validFrom: "2026-01-01" }, ACTOR);
     const saved = await s.fnbCombo.fnbComboService.getById(id);
     expect(saved?.validTo).toBeUndefined();
     expect(saved?.validFrom).toBe("2026-01-01");
+  });
+});
+
+describe("combos", () => {
+  const lines = (...entries: Array<[string, number]>) => JSON.stringify(entries.map(([itemId, quantity]) => ({ itemId, quantity })));
+
+  async function twoItems(brandId = BRAND) {
+    const popcorn = await s.fnbItem.fnbItemService.create({ brandId, name: "Bắp", price: 69000 }, ACTOR);
+    const drink = await s.fnbItem.fnbItemService.create({ brandId, name: "Nước", price: 35000 }, ACTOR);
+    if (!popcorn.ok || !drink.ok) throw new Error("setup failed");
+    return { popcorn: popcorn.data._id.toString(), drink: drink.data._id.toString() };
+  }
+
+  it("needs at least one item and reads the items and the discount from the form", () => {
+    const schema = s.fnbCombo.fnbComboInputSchema;
+    expect(codes(schema, { brandId: BRAND, name: "C", items: "[]" })).toEqual({ items: "no_items" });
+    expect(codes(schema, { brandId: BRAND, name: "C" })).toHaveProperty("items");
+    expect(codes(schema, { brandId: BRAND, name: "C", items: "not json" })).toHaveProperty("items");
+    expect(codes(schema, { brandId: BRAND, name: "C", items: lines([ITEM, 0]) })).toHaveProperty("items");
+    expect(codes(schema, { brandId: BRAND, name: "C", items: lines([ITEM, 1], [ITEM, 2]) })).toHaveProperty("items");
+
+    const parsed = schema.parse({ brandId: BRAND, name: "C", items: lines([ITEM, 2]), discountType: "percent", discountValue: "10" });
+    expect(parsed).toMatchObject({ items: [{ itemId: ITEM, quantity: 2 }], discountType: "percent", discountValue: 10 });
+    // No discount typed means none.
+    expect(schema.parse({ brandId: BRAND, name: "C", items: lines([ITEM, 1]) })).toMatchObject({ discountType: "amount", discountValue: 0 });
+    expect(codes(schema, { brandId: BRAND, name: "C", items: lines([ITEM, 1]), discountType: "percent", discountValue: "101" })).toEqual({ discountValue: "out_of_range" });
+  });
+
+  it("saves a combo whose items belong to its brand and prices it from them", async () => {
+    const { popcorn, drink } = await twoItems();
+    const input = { brandId: BRAND, name: "Combo 1", items: [{ itemId: popcorn, quantity: 1 }, { itemId: drink, quantity: 2 }], discountType: "amount", discountValue: 19000 };
+    const created = await s.fnbCombo.fnbComboService.create(input, ACTOR);
+    if (!created.ok) throw new Error("setup failed");
+
+    const prices = new Map([[popcorn, 69000], [drink, 35000]]);
+    expect(s.fnbCombo.priceOfCombo(created.data, prices)).toEqual({ subtotal: 139000, discount: 19000, price: 120000 });
+    // The item price moves, the combo follows.
+    expect(s.fnbCombo.priceOfCombo(created.data, new Map([[popcorn, 79000], [drink, 35000]]))?.price).toBe(130000);
+  });
+
+  it("refuses an item of another brand or one that does not exist", async () => {
+    const other = await twoItems(new Types.ObjectId().toString());
+    const mine = await twoItems();
+    expect(await s.fnbCombo.fnbComboService.create({ brandId: BRAND, name: "A", items: [{ itemId: other.popcorn, quantity: 1 }] }, ACTOR)).toEqual({ ok: false, error: "item_invalid" });
+    expect(await s.fnbCombo.fnbComboService.create({ brandId: BRAND, name: "B", items: [{ itemId: new Types.ObjectId().toString(), quantity: 1 }] }, ACTOR)).toEqual({ ok: false, error: "item_invalid" });
+    expect((await s.fnbCombo.fnbComboService.create({ brandId: BRAND, name: "C", items: [{ itemId: mine.popcorn, quantity: 1 }] }, ACTOR)).ok).toBe(true);
+  });
+
+  it("refuses a discount in dong that is more than the items cost", async () => {
+    const { drink } = await twoItems();
+    const items = [{ itemId: drink, quantity: 1 }];
+    expect(await s.fnbCombo.fnbComboService.create({ brandId: BRAND, name: "A", items, discountType: "amount", discountValue: 35001 }, ACTOR)).toEqual({ ok: false, error: "discount_too_high" });
+    expect((await s.fnbCombo.fnbComboService.create({ brandId: BRAND, name: "B", items, discountType: "amount", discountValue: 35000 }, ACTOR)).ok).toBe(true);
+  });
+
+  it("does not delete an item that a combo contains", async () => {
+    const { popcorn, drink } = await twoItems();
+    await s.fnbCombo.fnbComboService.create({ brandId: BRAND, name: "Combo", items: [{ itemId: popcorn, quantity: 1 }] }, ACTOR);
+    expect(await s.fnbItem.fnbItemService.remove(popcorn, ACTOR)).toEqual({ ok: false, error: "in_use" });
+    expect((await s.fnbItem.fnbItemService.remove(drink, ACTOR)).ok).toBe(true);
   });
 });

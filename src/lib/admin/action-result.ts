@@ -8,6 +8,8 @@ export type SaveError =
   | "validation"
   | "duplicate"
   | "in_use"
+  | "item_invalid"
+  | "discount_too_high"
   | "not_found"
   | "last_admin"
   | "self"
@@ -38,6 +40,7 @@ export const VALIDATION_CODES = [
   "too_long",
   "invalid_url",
   "invalid_color",
+  "no_items",
   "too_gray",
   "too_dark",
   "invalid_number",

@@ -2,7 +2,7 @@ import { isValidObjectId, type Model } from "mongoose";
 import { connectToDatabase } from "@/lib/db";
 import { recordAudit } from "@/services/audit.service";
 
-export type ServiceError = "not_found" | "duplicate" | "in_use";
+export type ServiceError = "not_found" | "duplicate" | "in_use" | "item_invalid" | "discount_too_high";
 export type ServiceResult<T> = { ok: true; data: T } | { ok: false; error: ServiceError };
 
 /** Anything that can say how many documents point at a record (a Mongoose model does). */
