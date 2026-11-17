@@ -68,6 +68,12 @@ export function createBrandLogoUploadTicket(config: CloudinaryConfig, nowMs: num
   return createUploadTicket({ publicId: `brands/${unique}`, transformation: "c_limit,w_512,h_512", overwrite: false }, config, nowMs);
 }
 
+/** A ticket for a branch photo: kept whole (no crop) and at most 1280px, under its own new name each time. */
+export function createBranchImageUploadTicket(config: CloudinaryConfig, nowMs: number = Date.now()): UploadTicket {
+  const unique = `${nowMs.toString(36)}${randomBytes(4).toString("hex")}`;
+  return createUploadTicket({ publicId: `branches/${unique}`, transformation: "c_limit,w_1280,h_1280", overwrite: false }, config, nowMs);
+}
+
 /** Only this person's own avatar on our Cloudinary account is accepted as a profile picture (the form cannot point it elsewhere). */
 export function isOwnAvatarUrl(url: string, userId: string, config: CloudinaryConfig): boolean {
   let parsed: URL;

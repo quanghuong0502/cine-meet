@@ -220,14 +220,11 @@
         "address": {
           "label": "Address"
         },
-        "lat": {
-          "label": "Latitude"
-        },
-        "lng": {
-          "label": "Longitude"
-        },
         "mapsUrl": {
-          "label": "Map link"
+          "label": "Google Maps link"
+        },
+        "imageUrl": {
+          "label": "Branch photo"
         },
         "floor": {
           "label": "Floor",

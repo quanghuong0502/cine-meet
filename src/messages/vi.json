@@ -220,14 +220,11 @@
         "address": {
           "label": "Địa chỉ"
         },
-        "lat": {
-          "label": "Vĩ độ"
-        },
-        "lng": {
-          "label": "Kinh độ"
-        },
         "mapsUrl": {
-          "label": "Liên kết bản đồ"
+          "label": "Liên kết Google Maps"
+        },
+        "imageUrl": {
+          "label": "Ảnh chi nhánh"
         },
         "floor": {
           "label": "Tầng",

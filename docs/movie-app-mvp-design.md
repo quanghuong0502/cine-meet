@@ -65,7 +65,7 @@
 | Nhóm | Trường chính | Ghi chú |
 |---|---|---|
 | Thương hiệu (`brands`) | tên, logo, màu, link website/app | CGV, BHD, Beta, Lotte, Galaxy… |
-| Chi nhánh (`branches`) | thương hiệu, tên, địa chỉ, lat/lng, link Google Maps, **thông tin gửi xe** (giá, tầng, lối vào), tầng của rạp, giờ mở cửa | Giải quyết pain point "đường đi thế nào" |
+| Chi nhánh (`branches`) | thương hiệu, tên, ảnh chi nhánh, địa chỉ, một link Google Maps (không lưu lat/lng), **thông tin gửi xe** (giá, tầng, lối vào), tầng của rạp, giờ mở cửa | Giải quyết pain point "đường đi thế nào" |
 | Thể loại (`genres`) | tên | Kinh dị, hành động, hoạt hình… |
 | Định dạng (`formats`) | 2D, 3D, IMAX, 4DX, ScreenX… | Ảnh hưởng giá vé |
 | Phân loại tuổi | P, K, T13, T16, T18 | |

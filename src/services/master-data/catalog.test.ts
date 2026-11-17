@@ -82,13 +82,13 @@ describe("branches", () => {
     });
   });
 
-  it("needs both coordinates or neither", () => {
+  it("checks the brand and takes one Google Maps link and one photo link", () => {
     const schema = s.branch.branchInputSchema;
-    expect(codes(schema, { brandId: BRAND, name: "A", lat: "10.7" })).toEqual({ lng: "required" });
-    expect(codes(schema, { brandId: BRAND, name: "A", lng: "106.7" })).toEqual({ lat: "required" });
-    expect(codes(schema, { brandId: BRAND, name: "A", lat: "10.7", lng: "106.7" })).toEqual({});
     expect(codes(schema, { brandId: BRAND, name: "A" })).toEqual({});
-    expect(codes(schema, { brandId: BRAND, name: "A", lat: "95", lng: "106" })).toEqual({ lat: "out_of_range" });
+    expect(
+      codes(schema, { brandId: BRAND, name: "A", mapsUrl: "https://maps.app.goo.gl/abc", imageUrl: "https://res.cloudinary.com/x/a.jpg" }),
+    ).toEqual({});
+    expect(codes(schema, { brandId: BRAND, name: "A", mapsUrl: "not a link" })).toEqual({ mapsUrl: "invalid_url" });
     expect(codes(schema, { name: "A" })).toHaveProperty("brandId");
     expect(codes(schema, { brandId: "nope", name: "A" })).toEqual({ brandId: "invalid" });
   });

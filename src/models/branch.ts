@@ -6,9 +6,9 @@ const branchSchema = new Schema(
     brandId: { type: Schema.Types.ObjectId, ref: "Brand", required: true, index: true },
     name: { type: String, required: true, trim: true },
     address: { type: String, trim: true },
-    lat: { type: Number, min: -90, max: 90 },
-    lng: { type: Number, min: -180, max: 180 },
+    // One Google Maps link replaces coordinates: opening it gives directions.
     mapsUrl: { type: String, trim: true },
+    imageUrl: { type: String, trim: true },
     floor: { type: String, trim: true },
     openingHours: { type: String, trim: true },
     // Parking fee in VND (whole dong), where to park and which entrance to use.

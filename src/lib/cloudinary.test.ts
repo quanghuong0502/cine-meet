@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
-import { cloudinaryConfig, createAvatarUploadTicket, createBrandLogoUploadTicket, isOwnAvatarUrl, signParams } from "./cloudinary";
+import { cloudinaryConfig, createAvatarUploadTicket, createBranchImageUploadTicket, createBrandLogoUploadTicket, isOwnAvatarUrl, signParams } from "./cloudinary";
 
 const CONFIG = { cloudName: "demo", apiKey: "key123", apiSecret: "s3cret" };
 const USER = "6afbb4609e156d9ab456f6d3";
@@ -38,6 +38,17 @@ describe("createBrandLogoUploadTicket", () => {
     const { api_key: _key, signature, ...signed } = a.fields;
     void _key;
     expect(signature).toBe(signParams(signed, "s3cret"));
+  });
+});
+
+describe("createBranchImageUploadTicket", () => {
+  it("lands under branches/ with a new name each time, at most 1280px, and does not overwrite", () => {
+    const a = createBranchImageUploadTicket(CONFIG, 1_700_000_000_000);
+    const b = createBranchImageUploadTicket(CONFIG, 1_700_000_000_000);
+    expect(a.fields.public_id).toMatch(/^branches\/[0-9a-z]+$/);
+    expect(a.fields.public_id).not.toBe(b.fields.public_id);
+    expect(a.fields.transformation).toBe("c_limit,w_1280,h_1280");
+    expect(a.fields).not.toHaveProperty("overwrite");
   });
 });
 
