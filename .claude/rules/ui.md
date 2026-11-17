@@ -80,7 +80,7 @@ Không viết tay chữ tên app trong giao diện; dùng hằng `APP_NAME` khi 
 - Poster là nhân vật chính: tỉ lệ 2:3, bo góc, lớp phủ gradient khi có chữ đè lên.
 
 **Nút (đồng bộ giữa mọi màn, không tự viết lại chuỗi class):** chỉ dùng các cỡ có tên của `Button` (`src/components/ui/button.tsx`):
-- **Kiểu nút (chủ dự án chọn, 2026-11-17): mọi nút hành động trong suốt như nút Xóa**: `variant="default"` dùng công thức của `destructive` nhưng màu thương hiệu và đặc hơn một chút (`bg-primary/30`, dark `/40`, chữ `primary-text`, không viền, không làm mờ); `destructive` là bản màu đỏ. Nút cố định phía trên menu dưới không có dải nền riêng. Không tự viết nền đặc `bg-primary` cho nút mới (chip đang chọn vẫn đặc vì là trạng thái, không phải hành động).
+- **Kiểu nút (chủ dự án chọn, 2026-11-17): mọi nút hành động trong suốt như nút Xóa**: `variant="default"` dùng công thức của `destructive` nhưng màu thương hiệu và đặc hơn một chút (`bg-primary/40`, dark `/50`, chữ `primary-text`, không viền, không làm mờ); `destructive` là bản màu đỏ. Nút cố định phía trên menu dưới không có dải nền riêng. Không tự viết nền đặc `bg-primary` cho nút mới (chip đang chọn vẫn đặc vì là trạng thái, không phải hành động).
 - `size="cta"`: nút chính duy nhất của form hoặc màn hình (Lưu, Đăng nhập, Thêm), toàn chiều rộng, 48px, bo tròn, chữ semibold. Nút phụ cùng nhóm là `variant="outline"` cùng cỡ (đăng nhập Google).
 - `size="cta-sm"` + `variant="ghost"`: hành động nhẹ nằm ngay dưới nút chính (Hủy), toàn chiều rộng, 44px. Thứ tự luôn là nút chính trên, Hủy dưới.
 - `size="pill"`: nút chính đứng một mình, giữ chiều rộng riêng (Thử lại, Về trang chủ, mở một trang), 48px, `px-8`.
