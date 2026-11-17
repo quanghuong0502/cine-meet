@@ -104,60 +104,68 @@
 }
 
 /*
- * Light theme. Developed in parallel with dark: same hue family (pink-magenta, hue 350), same roles,
+ * Light theme. Developed in parallel with dark: same hue family (the brand hue, pink-magenta 350 by default), same roles,
  * every token defined in both blocks. Brand color "raspberry" #C61583 is identical in both themes.
  * Contrast checked (WCAG): text on card >= 4.5:1; success/warning/info 4.7:1+; form borders and seat
  * outlines >= 3:1; primary button text 5.3:1. Decorative borders (--border) are intentionally subtle.
  */
 :root {
+  /*
+   * The brand colour, as three numbers (OKLCH): hue, chroma, lightness of the main button. Every other colour of the app (surfaces,
+   * borders, muted text, accents, seats) is computed from the hue below, so changing the brand colour means changing only these.
+   * The admin sets them in Settings > Appearance (a <style> in the root layout overrides them); these are the defaults, raspberry #C61583.
+   */
+  --brand-h: 350;
+  --brand-c: 0.22;
+  --brand-l: 0.55;
   /* Where toasts sit on phones: above the floating bottom menu and the fixed "Add" button, never on top of them. */
   --toast-offset: calc(var(--spacing-nav) + 2 * var(--spacing-nav-gap) + var(--spacing-control) + 1.5rem + env(safe-area-inset-bottom));
-  --background: oklch(0.99 0.006 350);
-  --foreground: oklch(0.22 0.03 350);
+  --background: oklch(0.99 0.006 var(--brand-h));
+  --foreground: oklch(0.22 0.03 var(--brand-h));
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.22 0.03 350);
+  --card-foreground: oklch(0.22 0.03 var(--brand-h));
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.22 0.03 350);
-  --primary: oklch(0.55 0.22 350);
-  --primary-foreground: oklch(0.99 0.005 350);
+  --popover-foreground: oklch(0.22 0.03 var(--brand-h));
+  --primary: oklch(var(--brand-l) var(--brand-c) var(--brand-h));
+  --primary-foreground: oklch(0.99 0.005 var(--brand-h));
   /* Pink used as TEXT or link: in light it is the brand color itself (5.3:1 on background). */
-  --primary-text: oklch(0.55 0.22 350);
-  --secondary: oklch(0.96 0.014 350);
-  --secondary-foreground: oklch(0.25 0.04 350);
-  --muted: oklch(0.96 0.014 350);
-  --muted-foreground: oklch(0.5 0.035 350);
-  --accent: oklch(0.95 0.035 350);
-  --accent-foreground: oklch(0.42 0.17 355);
+  --primary-text: var(--primary);
+  --secondary: oklch(0.96 0.014 var(--brand-h));
+  --secondary-foreground: oklch(0.25 0.04 var(--brand-h));
+  --muted: oklch(0.96 0.014 var(--brand-h));
+  --muted-foreground: oklch(0.5 0.035 var(--brand-h));
+  --accent: oklch(0.95 0.035 var(--brand-h));
+  --accent-foreground: oklch(0.42 0.17 calc(var(--brand-h) + 5));
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.92 0.015 350);
-  --input: oklch(0.65 0.025 350);
-  --ring: oklch(0.68 0.17 355);
+  --border: oklch(0.92 0.015 var(--brand-h));
+  --input: oklch(0.65 0.025 var(--brand-h));
+  --ring: oklch(0.68 0.17 calc(var(--brand-h) + 5));
   /* Categorical chart colors: pink, teal, amber, violet, sky. */
-  --chart-1: oklch(0.58 0.2 350);
+  --chart-1: oklch(0.58 0.2 var(--brand-h));
   --chart-2: oklch(0.66 0.12 190);
   --chart-3: oklch(0.8 0.15 85);
   --chart-4: oklch(0.55 0.18 290);
   --chart-5: oklch(0.68 0.13 235);
   --radius: 0.875rem;
-  --sidebar: oklch(0.98 0.01 350);
-  --sidebar-foreground: oklch(0.22 0.03 350);
-  --sidebar-primary: oklch(0.55 0.22 350);
-  --sidebar-primary-foreground: oklch(0.99 0.005 350);
-  --sidebar-accent: oklch(0.95 0.035 350);
-  --sidebar-accent-foreground: oklch(0.42 0.17 355);
-  --sidebar-border: oklch(0.92 0.015 350);
-  --sidebar-ring: oklch(0.68 0.17 355);
+  --sidebar: oklch(0.98 0.01 var(--brand-h));
+  --sidebar-foreground: oklch(0.22 0.03 var(--brand-h));
+  --sidebar-primary: oklch(var(--brand-l) var(--brand-c) var(--brand-h));
+  --sidebar-primary-foreground: oklch(0.99 0.005 var(--brand-h));
+  --sidebar-accent: oklch(0.95 0.035 var(--brand-h));
+  --sidebar-accent-foreground: oklch(0.42 0.17 calc(var(--brand-h) + 5));
+  --sidebar-border: oklch(0.92 0.015 var(--brand-h));
+  --sidebar-ring: oklch(0.68 0.17 calc(var(--brand-h) + 5));
 
   --elevated: oklch(1 0 0);
   --success: oklch(0.52 0.14 155);
   --warning: oklch(0.56 0.13 65);
   --info: oklch(0.55 0.15 245);
-  --seat-available: oklch(0.62 0.03 350);
-  --seat-reserved: oklch(0.91 0.012 350);
+  --seat-available: oklch(0.62 0.03 var(--brand-h));
+  --seat-reserved: oklch(0.91 0.012 var(--brand-h));
   --seat-selected: var(--primary);
   --seat-favorite: var(--warning);
   --seat-avoid: var(--destructive);
-  --screen-glow: oklch(0.55 0.22 350 / 25%);
+  --screen-glow: oklch(var(--brand-l) var(--brand-c) var(--brand-h) / 25%);
 }
 
 /*
@@ -170,53 +178,53 @@
  * from available seats by shape (filled vs outlined), not only by color.
  */
 .dark {
-  --background: oklch(0.155 0.022 350);
-  --foreground: oklch(0.97 0.008 350);
-  --card: oklch(0.205 0.028 350);
-  --card-foreground: oklch(0.97 0.008 350);
-  --popover: oklch(0.25 0.034 350);
-  --popover-foreground: oklch(0.97 0.008 350);
-  --primary: oklch(0.55 0.22 350);
-  --primary-foreground: oklch(0.99 0.005 350);
-  --primary-text: oklch(0.78 0.14 350);
-  --secondary: oklch(0.25 0.034 350);
-  --secondary-foreground: oklch(0.97 0.008 350);
-  --muted: oklch(0.25 0.034 350);
-  --muted-foreground: oklch(0.74 0.025 350);
+  --background: oklch(0.155 0.022 var(--brand-h));
+  --foreground: oklch(0.97 0.008 var(--brand-h));
+  --card: oklch(0.205 0.028 var(--brand-h));
+  --card-foreground: oklch(0.97 0.008 var(--brand-h));
+  --popover: oklch(0.25 0.034 var(--brand-h));
+  --popover-foreground: oklch(0.97 0.008 var(--brand-h));
+  --primary: oklch(var(--brand-l) var(--brand-c) var(--brand-h));
+  --primary-foreground: oklch(0.99 0.005 var(--brand-h));
+  --primary-text: oklch(0.78 0.14 var(--brand-h));
+  --secondary: oklch(0.25 0.034 var(--brand-h));
+  --secondary-foreground: oklch(0.97 0.008 var(--brand-h));
+  --muted: oklch(0.25 0.034 var(--brand-h));
+  --muted-foreground: oklch(0.74 0.025 var(--brand-h));
   /* Soft pink surface for badges and highlights (the price pill in the reference design). */
-  --accent: oklch(0.31 0.09 350);
-  --accent-foreground: oklch(0.85 0.09 350);
+  --accent: oklch(0.31 0.09 var(--brand-h));
+  --accent-foreground: oklch(0.85 0.09 var(--brand-h));
   --destructive: oklch(0.7 0.19 22);
-  --border: oklch(0.55 0.04 350 / 22%);
-  --input: oklch(0.55 0.04 350 / 30%);
-  --ring: oklch(0.7 0.17 355);
+  --border: oklch(0.55 0.04 var(--brand-h) / 22%);
+  --input: oklch(0.55 0.04 var(--brand-h) / 30%);
+  --ring: oklch(0.7 0.17 calc(var(--brand-h) + 5));
   /* Categorical chart colors: pink, teal, amber, violet, sky. */
-  --chart-1: oklch(0.7 0.19 350);
+  --chart-1: oklch(0.7 0.19 var(--brand-h));
   --chart-2: oklch(0.75 0.12 190);
   --chart-3: oklch(0.84 0.15 85);
   --chart-4: oklch(0.7 0.15 290);
   --chart-5: oklch(0.76 0.12 235);
-  --sidebar: oklch(0.18 0.026 350);
-  --sidebar-foreground: oklch(0.97 0.008 350);
-  --sidebar-primary: oklch(0.55 0.22 350);
-  --sidebar-primary-foreground: oklch(0.99 0.005 350);
-  --sidebar-accent: oklch(0.25 0.034 350);
-  --sidebar-accent-foreground: oklch(0.97 0.008 350);
-  --sidebar-border: oklch(0.55 0.04 350 / 22%);
-  --sidebar-ring: oklch(0.7 0.17 355);
+  --sidebar: oklch(0.18 0.026 var(--brand-h));
+  --sidebar-foreground: oklch(0.97 0.008 var(--brand-h));
+  --sidebar-primary: oklch(var(--brand-l) var(--brand-c) var(--brand-h));
+  --sidebar-primary-foreground: oklch(0.99 0.005 var(--brand-h));
+  --sidebar-accent: oklch(0.25 0.034 var(--brand-h));
+  --sidebar-accent-foreground: oklch(0.97 0.008 var(--brand-h));
+  --sidebar-border: oklch(0.55 0.04 var(--brand-h) / 22%);
+  --sidebar-ring: oklch(0.7 0.17 calc(var(--brand-h) + 5));
 
-  --elevated: oklch(0.25 0.034 350);
+  --elevated: oklch(0.25 0.034 var(--brand-h));
   --success: oklch(0.78 0.16 155);
   --warning: oklch(0.84 0.15 85);
   --info: oklch(0.78 0.12 245);
   /* Seat states: available = visible outline, reserved = dim filled, selected = brand. */
-  --seat-available: oklch(0.55 0.03 350);
-  --seat-reserved: oklch(0.3 0.02 350);
+  --seat-available: oklch(0.55 0.03 var(--brand-h));
+  --seat-reserved: oklch(0.3 0.02 var(--brand-h));
   --seat-selected: var(--primary);
   --seat-favorite: var(--warning);
   --seat-avoid: var(--destructive);
   /* Glow under the curved screen line in the seat map. */
-  --screen-glow: oklch(0.55 0.22 350 / 35%);
+  --screen-glow: oklch(var(--brand-l) var(--brand-c) var(--brand-h) / 35%);
 }
 
 @layer base {
