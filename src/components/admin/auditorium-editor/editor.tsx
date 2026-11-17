@@ -235,7 +235,7 @@ export function AuditoriumEditor({ auditorium, branches, seatTypes, initialConfi
       {/* Room for the fixed bar, so the last control can scroll clear of it. */}
       <div aria-hidden className="h-[calc(var(--spacing-control)+2.5rem)] shrink-0" />
 
-      <div data-save-bar className="pointer-events-none fixed inset-x-0 bottom-0 z-30 bg-gradient-to-t from-background via-background to-transparent px-4 pt-6 pb-[max(1rem,env(safe-area-inset-bottom))] md:left-64">
+      <div data-save-bar className="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] md:left-64">
         <div className="mx-auto flex max-w-sm items-center gap-2">
           {auditorium ? <DeleteRecordButton id={auditorium.id} name={auditorium.name} backHref={backHref} removeAction={removeAuditoriumAction} /> : null}
           <Button type="button" size="cta" disabled={pending} onClick={save} className="pointer-events-auto min-w-0 flex-1">

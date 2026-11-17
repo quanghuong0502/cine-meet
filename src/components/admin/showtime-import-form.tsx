@@ -84,9 +84,9 @@ export function ShowtimeImportForm({ backHref, action }: Props) {
       ) : null}
 
       <div aria-hidden className="h-[calc(var(--spacing-control)+2.5rem)] shrink-0" />
-      <div data-save-bar className="pointer-events-none fixed inset-x-0 bottom-0 z-30 bg-gradient-to-t from-background via-background to-transparent px-4 pt-6 pb-[max(1rem,env(safe-area-inset-bottom))] md:left-64">
+      <div data-save-bar className="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] md:left-64">
         <div className="mx-auto flex max-w-sm">
-          <Button type="submit" size="cta" disabled={isPending || text.trim() === ""} className="pointer-events-auto min-w-0 flex-1">
+          <Button type="submit" size="cta" disabled={isPending} className="pointer-events-auto min-w-0 flex-1">
             {isPending ? (
               <>
                 <LoaderCircle className="motion-safe:animate-spin" aria-hidden />
