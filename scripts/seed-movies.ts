@@ -6,10 +6,12 @@
  * Refuses to run when NODE_ENV=production unless SEED_ALLOW_PRODUCTION=1.
  *
  * Usage: npm run seed:movies   (reads .env.local if present)
+ *        npm run seed:movies -- --posters-only   (only gives the sample movies without a poster one: no showtimes are added)
  */
 import { existsSync } from "node:fs";
 import mongoose from "mongoose";
 import { connectToDatabase } from "@/lib/db";
+import { cloudinaryConfig, createMoviePosterUploadTicket } from "@/lib/cloudinary";
 import { vietnamToday } from "@/lib/movie/status";
 import { datesBetween } from "@/lib/showtime/time";
 import { AgeRating } from "@/models/age-rating";
@@ -19,6 +21,7 @@ import { Genre } from "@/models/genre";
 import { Movie } from "@/models/movie";
 import { User } from "@/models/user";
 import { createShowtimesBulk } from "@/services/showtime.service";
+import { makePoster, SAMPLE_POSTERS } from "./sample-posters";
 
 const ENV_FILE = ".env.local";
 
@@ -28,6 +31,36 @@ const SAMPLES = [
   { title: "Bóng Tối Dưới Nhà (mẫu)", durationMin: 96, genres: ["Kinh dị"], rating: "T18", startOffset: -1, endOffset: 14, director: "Đạo diễn mẫu", cast: "Diễn viên E", synopsis: "Phim mẫu để thử giao diện." },
   { title: "Vũ Trụ Nhỏ (mẫu)", durationMin: 92, genres: ["Hoạt hình"], rating: "P", startOffset: 12, endOffset: 50, director: "Đạo diễn mẫu", cast: "", synopsis: "Phim sắp chiếu mẫu." },
 ];
+
+/**
+ * Gives every sample movie that has no poster one drawn poster (`sample-posters.ts`), uploaded to Cloudinary the way the admin form does
+ * (a signed ticket from `createMoviePosterUploadTicket`). Movies that already have a poster are left alone; without Cloudinary
+ * settings it only says so.
+ */
+async function addMissingPosters(): Promise<void> {
+  const config = cloudinaryConfig();
+  if (!config) {
+    console.log("Chưa cấu hình Cloudinary: bỏ qua poster phim mẫu.");
+    return;
+  }
+  const movies = await Movie.find({ title: /\(mẫu\)$/, $or: [{ posterUrl: { $exists: false } }, { posterUrl: null }, { posterUrl: "" }] }).lean();
+  for (const movie of movies) {
+    const spec = SAMPLE_POSTERS[movie.title.replace(/\s*\(mẫu\)$/, "")];
+    if (!spec) continue;
+    const ticket = createMoviePosterUploadTicket(config);
+    const form = new FormData();
+    for (const [name, value] of Object.entries(ticket.fields)) form.append(name, value);
+    form.append("file", new Blob([new Uint8Array(await makePoster(spec))], { type: "image/jpeg" }), "poster.jpg");
+    const response = await fetch(ticket.uploadUrl, { method: "POST", body: form });
+    const body = (await response.json()) as { secure_url?: string; error?: { message?: string } };
+    if (!response.ok || !body.secure_url) {
+      console.warn(`Không tải được poster cho ${movie.title}: ${body.error?.message ?? response.status}`);
+      continue;
+    }
+    await Movie.updateOne({ _id: movie._id }, { posterUrl: body.secure_url });
+    console.log(`Đã thêm poster: ${movie.title}`);
+  }
+}
 
 function shiftDays(days: number): string {
   return new Date(Date.parse(`${vietnamToday()}T00:00:00Z`) + days * 86_400_000).toISOString().slice(0, 10);
@@ -68,6 +101,9 @@ async function seed(): Promise<void> {
     movieIds.push(created._id.toString());
     console.log(`Đã thêm phim: ${sample.title}`);
   }
+
+  await addMissingPosters();
+  if (process.argv.includes("--posters-only")) return;
 
   // The three movies already out get showtimes for a week, spread over the rooms.
   const today = vietnamToday();
