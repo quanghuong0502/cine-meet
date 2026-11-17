@@ -144,7 +144,7 @@ async function Results({ date, values }: { date: string; values: FilterValues })
     <div className="flex flex-col gap-6">
       {[...byMovie.values()].map((group) => (
         <section key={group[0].movie.id} className="flex flex-col gap-3">
-          <Link href={`/movies/${group[0].movie.id}`} className="text-xl font-semibold">
+          <Link href={`/movies/${group[0].movie.id}`} className="text-base font-semibold">
             {group[0].movie.title}
           </Link>
           <ul className="flex flex-col gap-3">
