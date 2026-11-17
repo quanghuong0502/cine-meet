@@ -57,8 +57,8 @@ export default async function MovieDetailPage({ params }: Props) {
       <PageHeader backHref="/showtimes" />
 
       <section className="flex gap-4">
-        <div className="relative aspect-[2/3] w-28 shrink-0 overflow-hidden rounded-xl border bg-muted">
-          {movie.posterUrl ? <Image src={movie.posterUrl} alt={t("posterAlt", { title: movie.title })} fill sizes="112px" unoptimized className="object-cover" priority /> : null}
+        <div className="relative aspect-[2/3] w-36 shrink-0 overflow-hidden rounded-xl border bg-muted">
+          {movie.posterUrl ? <Image src={movie.posterUrl} alt={t("posterAlt", { title: movie.title })} fill sizes="144px" unoptimized className="object-cover" priority /> : null}
         </div>
         <div className="flex min-w-0 flex-1 flex-col gap-2">
           <h1 className="text-xl font-semibold tracking-tight">{movie.title}</h1>
