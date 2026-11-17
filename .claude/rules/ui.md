@@ -93,6 +93,7 @@ cả hai ngôn ngữ, có và không có khung lỗi.
 
 **Form (mẫu theo màn đăng nhập), quy tắc của chủ dự án (2026-11-17):**
 - **Không có gợi ý, mô tả hay chú thích dưới nhãn và dưới ô nhập, và không có mô tả dưới tiêu đề màn nhập.** Form chỉ gồm nhãn, ô, lỗi. Thông tin cần để điền đúng thì đưa vào: nhãn (đơn vị, ví dụ "Giá vé (đồng)"), placeholder (ví dụ giá trị, "vd. 95000") hoặc thông báo lỗi sau khi gửi.
+- **Ô nhiều dòng (`Textarea`) luôn có chiều cao tối đa** (mặc định `max-h-40` đã nằm sẵn trong `components/ui/textarea.tsx`, quá thì cuộn trong ô): ô tự giãn theo chữ (`field-sizing-content`) sẽ đẩy form dài vô hạn và đẩy nút Lưu xa. Ô cần rộng hơn (dán CSV) tự đặt `max-h-*` lớn hơn, không bao giờ để không giới hạn.
 - **Ô bắt buộc: dấu `*` ngay sau nhãn (`RequiredMark`, màu đỏ, ẩn với trình đọc màn hình; ô có `aria-required`). Ô không bắt buộc: không ghi gì** (không có chữ "Không bắt buộc").
 - Khung dùng chung `ResourceForm` đã áp dụng sẵn; form tự dựng (đăng nhập, đổi mật khẩu) dùng `RequiredMark` và không thêm gợi ý.
 - Khoảng cách nhãn tới ô nhập **12px** (`gap-3`), giữa hai trường 24px (token `gap-field`, chủ dự án chọn cho thoáng, dùng cho mọi form hiện tại và sau này): nhãn luôn gần ô của nó hơn trường phía trên; thông báo lỗi sát dưới ô (8px).
