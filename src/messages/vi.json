@@ -1011,6 +1011,11 @@
       "watch": "Xem trailer",
       "play": "Xem trailer {title}",
       "playerTitle": "Trailer {title}",
+      "pause": "Tạm dừng",
+      "resume": "Phát tiếp",
+      "seek": "Tua trailer",
+      "mute": "Tắt tiếng",
+      "unmute": "Bật tiếng",
       "openYoutube": "Xem trên YouTube"
     },
     "releaseOn": "Khởi chiếu {date}",

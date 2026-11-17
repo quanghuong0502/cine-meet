@@ -1011,6 +1011,11 @@
       "watch": "Watch trailer",
       "play": "Watch trailer of {title}",
       "playerTitle": "Trailer of {title}",
+      "pause": "Pause",
+      "resume": "Resume",
+      "seek": "Seek in trailer",
+      "mute": "Mute",
+      "unmute": "Unmute",
       "openYoutube": "Watch on YouTube"
     },
     "releaseOn": "Opens {date}",

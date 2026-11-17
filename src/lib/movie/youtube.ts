@@ -23,5 +23,11 @@ export function parseYoutubeId(input: string): string | null {
 }
 
 export const youtubeThumbnailUrl = (videoId: string) => `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
-export const youtubeEmbedUrl = (videoId: string) => `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&playsinline=1&rel=0&modestbranding=1&iv_load_policy=3`;
+/**
+ * The player address. With `controls: false` YouTube draws no bar of its own (we draw ours, driven by the IFrame API, which needs
+ * `enablejsapi` and our `origin`); without it the player keeps its own bar, as the way out when the API cannot load.
+ */
+export const youtubeEmbedUrl = (videoId: string, options: { controls: boolean; origin?: string } = { controls: true }) =>
+  `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&playsinline=1&rel=0&modestbranding=1&iv_load_policy=3` +
+  (options.controls ? "" : `&controls=0&fs=0&disablekb=1&enablejsapi=1${options.origin ? `&origin=${encodeURIComponent(options.origin)}` : ""}`);
 export const youtubeWatchUrl = (videoId: string) => `https://www.youtube.com/watch?v=${videoId}`;
