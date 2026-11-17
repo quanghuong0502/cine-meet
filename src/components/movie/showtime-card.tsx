@@ -16,7 +16,7 @@ export function ShowtimeCard({ row, showMovie = false }: { row: ShowtimeRow; sho
   const locale = useLocale();
   return (
     <li className="flex flex-col gap-4 rounded-xl border bg-card p-4">
-      <div className="flex min-w-0 items-baseline gap-4">
+      <div className="flex min-w-0 items-start gap-4">
         <div className="flex w-16 shrink-0 flex-col gap-0.5">
           <span className="text-xl font-semibold tabular-nums">{formatTime(row.startAt, locale)}</span>
           <span className="text-sm text-muted-foreground tabular-nums">{t("until", { time: formatTime(row.endAt, locale) })}</span>
