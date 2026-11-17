@@ -3,7 +3,7 @@
 import { SlidersHorizontal, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { usePathname, useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { Chip } from "@/components/admin/auditorium-editor/chips";
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent, DrawerFooter, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
@@ -37,6 +37,9 @@ export function ShowtimeFilters({ date, values, options, records }: Props) {
   const [open, setOpen] = useState(false);
   const [applied, setApplied] = useState(values);
   const [draft, setDraft] = useState(values);
+  const anchor = useRef<HTMLDivElement>(null);
+  // True once the filter button at the top has scrolled out of the screen: the floating button then takes its place.
+  const [floating, setFloating] = useState(false);
 
   const activeKeys = FILTER_KEYS.filter((key) => applied[key]);
   const available = availableValues(records, draft);
@@ -59,14 +62,38 @@ export function ShowtimeFilters({ date, values, options, records }: Props) {
 
   const canFilter = groups.length > 0 || activeKeys.length > 0;
 
+  useEffect(() => {
+    const element = anchor.current;
+    if (!element || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(([entry]) => setFloating(!entry?.isIntersecting), { root: element.closest("[data-app-scroll]") });
+    observer.observe(element);
+    return () => {
+      observer.disconnect();
+      setFloating(false);
+    };
+  }, [canFilter]);
+
+  const buttonLabel = activeKeys.length > 0 ? t("titleCount", { count: activeKeys.length }) : t("title");
+
   return (
     <section aria-label={t("title")} className="flex flex-col gap-2">
       {canFilter ? (
-        <div className="flex justify-end">
+        <div ref={anchor} className="flex justify-end">
           <Chip selected={activeKeys.length > 0} onClick={() => onOpenChange(true)} aria-haspopup="dialog">
             <SlidersHorizontal className="size-4" aria-hidden />
-            {activeKeys.length > 0 ? t("titleCount", { count: activeKeys.length }) : t("title")}
+            {buttonLabel}
           </Chip>
+        </div>
+      ) : null}
+      {/* Once the button above has scrolled away it floats at the bottom right, above the menu, so filtering never means scrolling back up. */}
+      {canFilter && floating ? (
+        <div data-bottom-fixed className="pointer-events-none fixed inset-x-0 bottom-[var(--nav-clearance)] z-30">
+          <div className="mx-auto flex max-w-2xl justify-end px-4">
+            <Button type="button" onClick={() => onOpenChange(true)} aria-haspopup="dialog" className="pointer-events-auto h-target rounded-full px-4 text-sm shadow-lg">
+              <SlidersHorizontal className="size-4" aria-hidden />
+              {buttonLabel}
+            </Button>
+          </div>
         </div>
       ) : null}
       {activeKeys.length > 0 ? (
