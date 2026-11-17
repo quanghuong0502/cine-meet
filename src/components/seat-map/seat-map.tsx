@@ -27,6 +27,11 @@ export interface SeatMapProps {
   /** Tapping a row label (e.g. "D") or a column number. */
   onRowTap?: (rowLabel: string) => void;
   onColTap?: (colNumber: number) => void;
+  /** Cells without a seat that stay tappable (editor: so a removed seat can be brought back). Drawn as dashed outlines. */
+  emptyCells?: { code: string; x: number; y: number }[];
+  onEmptyTap?: (cellCode: string) => void;
+  /** CSS max-height of the map frame. */
+  maxHeight?: string;
   className?: string;
 }
 
@@ -37,7 +42,7 @@ const SEAT = 0.84;
 const LABELS_FROM_SCALE = 1.8;
 const DEFAULT_COLOR = "var(--muted-foreground)";
 
-interface LayerProps extends Omit<SeatMapProps, "className" | "onSeatTap" | "onRowTap" | "onColTap"> {
+interface LayerProps extends Omit<SeatMapProps, "className" | "onSeatTap" | "onRowTap" | "onColTap" | "maxHeight"> {
   labels: boolean;
   interactive: boolean;
   rowLabelsTappable: boolean;
@@ -54,6 +59,7 @@ const MapLayer = memo(function MapLayer({
   seatTypes,
   showHeatmap,
   selectedCodes,
+  emptyCells,
   labels,
   interactive,
   rowLabelsTappable,
@@ -130,6 +136,16 @@ const MapLayer = memo(function MapLayer({
         );
       })}
 
+      {/* Empty cells (editor only) */}
+      {emptyCells?.map((cell) => {
+        const selected = selectedCodes?.has(cell.code);
+        return (
+          <g key={`e${cell.code}`} data-seat={cell.code} role={interactive ? "button" : undefined} tabIndex={interactive ? 0 : undefined} aria-pressed={interactive ? !!selected : undefined} aria-label={interactive ? cell.code : undefined} className={cn("outline-none", interactive && "cursor-pointer")}>
+            <rect data-seat={cell.code} x={cell.x - SEAT / 2} y={cell.y - SEAT / 2} width={SEAT} height={SEAT} rx={0.2} fill="transparent" stroke={selected ? "var(--foreground)" : "var(--border)"} strokeWidth={selected ? 0.12 : 0.07} strokeDasharray="0.16 0.12" />
+          </g>
+        );
+      })}
+
       {/* Seats */}
       {seats.map((seat) => {
         const type = types.get(seat.type);
@@ -191,12 +207,16 @@ export function SeatMap({
   onSeatTap,
   onRowTap,
   onColTap,
+  emptyCells,
+  onEmptyTap,
+  maxHeight = "60dvh",
   className,
 }: SeatMapProps) {
   const t = useTranslations("seatMap");
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const seatsByCode = useMemo(() => new Map(seats.map((s) => [s.code, s])), [seats]);
+  const emptyByCode = useMemo(() => new Map((emptyCells ?? []).map((c) => [c.code, c])), [emptyCells]);
 
   const { scale, handlers, zoomIn, zoomOut, reset } = usePanZoom(containerRef, contentRef, {
     onTap: (target) => {
@@ -205,6 +225,7 @@ export function SeatMap({
       if (seatCode) {
         const seat = seatsByCode.get(seatCode);
         if (seat) onSeatTap?.(seat);
+        else if (emptyByCode.has(seatCode)) onEmptyTap?.(seatCode);
         return;
       }
       const row = el?.closest("[data-row]")?.getAttribute("data-row");
@@ -236,7 +257,7 @@ export function SeatMap({
         ref={containerRef}
         {...handlers}
         // At 1x a vertical drag must still scroll the page; zoomed in, the map takes every gesture.
-        style={{ touchAction: scale > 1 ? "none" : "pan-y", aspectRatio: `${viewW} / ${viewH}`, maxHeight: "60dvh" }}
+        style={{ touchAction: scale > 1 ? "none" : "pan-y", aspectRatio: `${viewW} / ${viewH}`, maxHeight }}
         className="relative w-full overflow-hidden rounded-xl border bg-card select-none"
       >
         <div ref={contentRef} className="size-full origin-top-left will-change-transform">
@@ -253,8 +274,9 @@ export function SeatMap({
               seatTypes={seatTypes}
               showHeatmap={showHeatmap}
               selectedCodes={selectedCodes}
+              emptyCells={emptyCells}
               labels={scale >= LABELS_FROM_SCALE}
-              interactive={!!onSeatTap}
+              interactive={!!onSeatTap || !!onEmptyTap}
               rowLabelsTappable={!!onRowTap}
               colLabelsTappable={!!onColTap}
               screenLabel={t("screen")}

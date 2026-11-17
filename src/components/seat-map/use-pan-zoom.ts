@@ -7,6 +7,8 @@ export const MAX_SCALE = 6;
 /** Finger travel (px) beyond which a touch is a drag, not a tap. */
 const TAP_SLOP = 8;
 const BUTTON_STEP = 1.5;
+/** A touch this close to the screen's left edge is left to iOS's swipe-back gesture (devices.md). */
+const EDGE_GUARD = 20;
 
 interface View {
   s: number;
@@ -112,6 +114,7 @@ export function usePanZoom(containerRef: RefObject<HTMLElement | null>, contentR
 
   const handlers = {
     onPointerDown(e: React.PointerEvent) {
+      if (e.pointerType === "touch" && e.clientX < EDGE_GUARD) return;
       const p = local(e);
       pointers.current.set(e.pointerId, p);
       if (pointers.current.size === 1) {
