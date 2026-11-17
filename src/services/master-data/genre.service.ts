@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { optionalText, requiredText } from "@/lib/validation/fields";
+import { Movie } from "@/models/movie";
 import { Genre } from "@/models/genre";
 import { createMasterDataService } from "./crud";
 
@@ -15,5 +16,5 @@ export const genreService = createMasterDataService({
   sort: { name: 1 },
   editableFields: ["name", "nameEn"],
   // Movies will point at genres: added with Sprint 3.
-  dependents: () => [],
+  dependents: () => [{ model: Movie, field: "genreIds" }],
 });

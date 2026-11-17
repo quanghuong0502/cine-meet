@@ -5,6 +5,8 @@ import { NO_SEAT, type LayoutConfig, type SeatTypeInfo } from "@/lib/seat-layout
 import { Auditorium } from "@/models/auditorium";
 import { AuditoriumLayout } from "@/models/auditorium-layout";
 import { Branch } from "@/models/branch";
+import { Showtime } from "@/models/showtime";
+import { SeatMark } from "@/models/seat-mark";
 import { SeatType } from "@/models/seat-type";
 import { recordAudit } from "@/services/audit.service";
 import { buildLayout } from "@/services/seat-layout-build";
@@ -14,7 +16,8 @@ export type AuditoriumError =
   | "duplicate"
   | "invalid_config"
   | "branch_not_found"
-  | "seat_type_not_found";
+  | "seat_type_not_found"
+  | "in_use";
 export type AuditoriumResult<T> = { ok: true; data: T } | { ok: false; error: AuditoriumError };
 
 export interface AuditoriumSummary {
@@ -213,11 +216,13 @@ export async function updateAuditorium(
   }
 }
 
-/** Deletes a room and all its layout versions. Showtimes (Sprint 3) must block this once they exist. */
+/** Deletes a room and all its layout versions. A room that still has showtimes cannot be deleted; its seat marks go with it. */
 export async function removeAuditorium(id: string, actorId: string): Promise<AuditoriumResult<null>> {
   await connectToDatabase();
   const room = await getAuditorium(id);
   if (!room) return { ok: false, error: "not_found" };
+  if ((await Showtime.countDocuments({ auditoriumId: id })) > 0) return { ok: false, error: "in_use" };
+  await SeatMark.deleteMany({ auditoriumId: id });
   await AuditoriumLayout.deleteMany({ auditoriumId: id });
   await Auditorium.deleteOne({ _id: id });
   await recordAudit({

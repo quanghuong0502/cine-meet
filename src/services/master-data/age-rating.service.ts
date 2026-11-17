@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { optionalText, requiredInt, requiredText } from "@/lib/validation/fields";
 import { AgeRating } from "@/models/age-rating";
+import { Movie } from "@/models/movie";
 import { createMasterDataService } from "./crud";
 
 export const ageRatingInputSchema = z.object({
@@ -16,6 +17,5 @@ export const ageRatingService = createMasterDataService({
   searchFields: ["code", "description"],
   sort: { minAge: 1, code: 1 },
   editableFields: ["code", "description", "descriptionEn", "minAge"],
-  // Movies will point at age ratings: added with Sprint 3.
-  dependents: () => [],
+  dependents: () => [{ model: Movie, field: "ageRatingId" }],
 });

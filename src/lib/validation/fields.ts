@@ -74,3 +74,10 @@ export function validRange(value: { validFrom?: string; validTo?: string }, ctx:
     ctx.addIssue({ code: "custom", path: ["validTo"], message: "out_of_range" });
   }
 }
+
+/** Several ids of other records, sent by a multi-pick as one comma-separated string; empty means none. */
+export const idList = z
+  .string()
+  .optional()
+  .transform((value) => (value ? [...new Set(value.split(",").map((id) => id.trim()).filter(Boolean))] : []))
+  .pipe(z.array(z.string().regex(/^[0-9a-fA-F]{24}$/, { error: "invalid" })));
