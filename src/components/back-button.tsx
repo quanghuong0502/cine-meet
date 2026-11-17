@@ -17,7 +17,7 @@ export function BackButton({ href, className }: BackButtonProps) {
   return (
     <Button asChild variant="ghost" size="icon" className={`-ml-2 shrink-0 rounded-full ${className ?? ""}`} aria-label={t("back")}>
       <Link href={href}>
-        <ArrowLeft aria-hidden />
+        <ArrowLeft className="size-6" aria-hidden />
       </Link>
     </Button>
   );
