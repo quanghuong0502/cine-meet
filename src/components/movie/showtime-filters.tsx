@@ -62,7 +62,7 @@ export function ShowtimeFilters({ date, values, options, records }: Props) {
   return (
     <section aria-label={t("title")} className="flex flex-col gap-2">
       {canFilter ? (
-        <div className="flex">
+        <div className="flex justify-end">
           <Chip selected={activeKeys.length > 0} onClick={() => onOpenChange(true)} aria-haspopup="dialog">
             <SlidersHorizontal className="size-4" aria-hidden />
             {activeKeys.length > 0 ? t("titleCount", { count: activeKeys.length }) : t("title")}
