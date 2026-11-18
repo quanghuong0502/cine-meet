@@ -101,8 +101,9 @@ function FieldControl({ field, value, invalid, last, onSelect, selected, sibling
           initialUrl={value || undefined}
           getTicket={field.uploadTicket ?? (async () => ({ ok: false, error: "not_configured" }))}
           preview={(url) => (
-            <span aria-hidden className="flex size-swatch shrink-0 items-center justify-center overflow-hidden rounded-xl border bg-card">
-              {url ? <Image src={url} alt="" width={PX.swatch} height={PX.swatch} unoptimized className="size-full object-cover" /> : <ImageIcon className="size-icon-lg text-muted-foreground" />}
+            // A logo previews as a square; a movie poster keeps its 2:3 shape (same width, taller) so it is not cropped.
+            <span aria-hidden className={`relative flex w-swatch shrink-0 items-center justify-center overflow-hidden rounded-xl border bg-card ${field.imageShape === "poster" ? "aspect-[2/3]" : "aspect-square"}`}>
+              {url ? <Image src={url} alt="" fill sizes={`${PX.swatch}px`} unoptimized className="object-cover" /> : <ImageIcon className="size-icon-lg text-muted-foreground" />}
             </span>
           )}
         />

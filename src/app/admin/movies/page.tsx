@@ -34,6 +34,7 @@ export default async function AdminMoviesPage({ searchParams }: { searchParams: 
           id: movie._id.toString(),
           title: movie.title,
           imageUrl: movie.posterUrl ?? undefined,
+          imageShape: "poster" as const,
           subtitle: (movie.genreIds ?? []).map((id) => genreName.get(id.toString())).filter(Boolean).join(", ") || undefined,
           meta: [tm(`status.${movie.status}`), tm("duration", { minutes: movie.durationMin }), formatDay(movie.releaseDate, locale, "short")],
         }))}

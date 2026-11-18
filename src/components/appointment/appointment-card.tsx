@@ -31,7 +31,7 @@ export function AppointmentCard({ item }: { item: AppointmentSummary }) {
   return (
     <li>
       <Link href={`/appointments/${item.id}`} className="flex min-h-row items-center gap-item rounded-xl border bg-card p-inset-sm">
-        <ListThumb imageUrl={item.movie.posterUrl} />
+        <ListThumb shape="poster" imageUrl={item.movie.posterUrl} />
         <div className="flex min-w-0 flex-1 flex-col gap-tight">
           <span className="break-words type-item-title">{item.movie.title}</span>
           <span className="type-secondary text-muted-foreground tabular-nums">{when}</span>

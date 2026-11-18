@@ -79,7 +79,7 @@ export function AppointmentDetail({ view, friends = [], groups = [] }: DetailPro
   return (
     <div className="flex flex-col gap-section">
       <section className="flex items-start gap-item">
-        <ListThumb imageUrl={view.movie.posterUrl} />
+        <ListThumb shape="poster" imageUrl={view.movie.posterUrl} />
         <div className="flex min-w-0 flex-1 flex-col gap-stack">
           <h2 className="break-words type-heading">{view.movie.title}</h2>
           <span className="type-secondary text-muted-foreground">{view.isCreator ? tc("byMe") : tc("byName", { name: view.creator.name })}</span>

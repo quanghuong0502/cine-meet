@@ -46,7 +46,7 @@ function Marker({ item }: { item: ResourceItem }) {
       </span>
     );
   }
-  return <ListThumb imageUrl={item.imageUrl} color={item.color} />;
+  return <ListThumb imageUrl={item.imageUrl} color={item.color} shape={item.imageShape} />;
 }
 
 const CONTROL_CLASS = "h-control rounded-xl bg-card px-inset type-body";

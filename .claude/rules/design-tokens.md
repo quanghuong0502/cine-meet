@@ -110,7 +110,7 @@ Nguồn: [Apple HIG, Typography](https://developer.apple.com/design/human-interf
 | `min-h-area` | 112px | chiều cao tối thiểu của ô nhiều dòng (textarea): cao hơn ô một dòng để gõ thoải mái |
 | `min-h-row` | 64px | hàng danh sách có tiêu đề và dòng phụ |
 | `min-h-nav` | 68px | chiều cao viên thuốc điều hướng dưới (mỗi tab lấp đầy); viên thuốc cách hai bên 16px, cách đáy `--nav-bottom` (8px, hoặc trên iPhone có thanh home là vùng an toàn trừ 20px) |
-| `size-thumb` | 56px | ảnh nhỏ của một mục trong danh sách (logo, chi nhánh, poster), vuông bo góc `rounded-lg`, dùng `ListThumb`; danh sách người dùng giữ avatar tròn `size-avatar` |
+| `size-thumb` | 56px | ảnh nhỏ của một mục trong danh sách (logo, chi nhánh), vuông bo góc `rounded-lg`, dùng `ListThumb`; **poster phim dùng `ListThumb shape="poster"`: cùng chiều rộng 56px, tỉ lệ 2:3 (cao 84px), không cắt vuông**; danh sách người dùng giữ avatar tròn `size-avatar` |
 | `size-avatar` | 40px | hình tròn avatar trong nút menu tài khoản (vùng chạm vẫn 44px) |
 | `gap-field` (`--spacing-field`) | 24px | khoảng cách giữa hai trường (block) của mọi form; form mới luôn dùng class này, không viết `gap-4`/`gap-6` rời |
 | `--spacing-nav-gap` | 12px | khoảng giữ phía trên viên thuốc điều hướng nổi; nội dung chừa `--nav-clearance` = nav + gap + `--nav-bottom` |

@@ -31,7 +31,7 @@ export async function MovieFormScreen({ id, back }: { id: string | null; back?: 
   const fields: ResourceField[] = [
     { name: "title", kind: "text", label: t("fields.title"), required: true, maxLength: 120 },
     { name: "originalTitle", kind: "text", label: t("fields.originalTitle"), maxLength: 120 },
-    { name: "posterUrl", kind: "image", label: t("fields.posterUrl"), uploadTicket: getMoviePosterUploadTicket },
+    { name: "posterUrl", kind: "image", imageShape: "poster", label: t("fields.posterUrl"), uploadTicket: getMoviePosterUploadTicket },
     { name: "trailerUrl", kind: "url", label: t("fields.trailerUrl"), placeholder: "https://youtu.be/...", maxLength: 300 },
     { name: "durationMin", kind: "number", label: t("fields.durationMin"), required: true, step: "1", min: 1, max: 600, placeholder: "120" },
     { name: "releaseDate", kind: "date", label: t("fields.releaseDate"), required: true },
