@@ -13,6 +13,7 @@ Bản Next là 16.4 (đọc `node_modules/next/dist/docs/` trước khi dùng AP
 | Giữ khung khi chuyển | Danh mục: `MasterDataTabs` + `<Suspense key={tab}>` quanh danh sách; menu: `useOptimisticPath` tô sáng mục vừa bấm | Tiêu đề và tab không biến mất; loader chỉ ở vùng danh sách |
 | Màn con (thêm/sửa) | `master-data/[section]/loading.tsx` dùng `EntryLoading`: vẽ lại khung trang Danh mục bằng thành phần thật (tiêu đề, `MasterDataTabs`), chỉ vùng nội dung là loader; `entry-loading-store` giữ menu dưới trong lúc chờ (`useShowsAdminBar`) | Bấm một mục không làm tiêu đề, tab, menu nhấp nháy. Màn con mới nên làm tương tự, không dùng khung giả (skeleton) của màn cha |
 | Màu thương hiệu | `getBrandTheme` (`src/services/brand-theme-cache.ts`): `unstable_cache`, tag `settings:brand-color`, 1 giờ; lỗi DB thì dùng màu mặc định; `saveBrandColorAction` gọi `updateTag` và `revalidatePath("/", "layout")` | Dùng ở root layout, `generateViewport`, manifest. Chỉ chuỗi/số thuần |
+| Cách xưng hô | `getPronounsCached` (`src/services/pronouns-cache.ts`): `unstable_cache`, tag `settings:pronouns`, 1 giờ; lỗi DB thì dùng cặp mặc định (bạn, tôi); `savePronounsAction` gọi `updateTag` và `revalidatePath("/", "layout")` | Dùng ở `src/i18n/request.ts` để thay token xưng hô trong chuỗi tiếng Việt. Chỉ hai chuỗi thuần; kết quả thay token còn được nhớ theo từng cặp trong bộ nhớ tiến trình |
 | Loader hiện trễ | `RouteLoading` hiện sau 150ms (`motion-safe`) | Trang tới trong 150ms không chớp loader (`mobile-ux.md` mục 4) |
 
 ## Quy tắc

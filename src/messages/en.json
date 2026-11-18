@@ -575,6 +575,18 @@
       "unlocked": "Account unlocked",
       "resetPassword": "Reset password"
     },
+    "pronouns": {
+      "title": "Forms of address",
+      "cardDescription": "Choose what the app calls people and itself (Vietnamese only).",
+      "open": "Change forms of address",
+      "presets": "Quick pairs",
+      "fields": {
+        "you": { "label": "The app calls the user" },
+        "me": { "label": "The app calls itself" }
+      },
+      "preview": "Preview",
+      "sample": "{You} locked seat D8! {Me} will remind {you} before the show."
+    },
     "appearance": {
       "title": "Brand color",
       "cardDescription": "The main color of the whole app.",

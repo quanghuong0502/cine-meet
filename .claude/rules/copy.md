@@ -22,7 +22,7 @@ Mọi chữ mới (thông báo lỗi, toast, trạng thái rỗng, nhãn nhắc,
 Mỗi chuỗi phải tự đủ nghĩa khi tách khỏi màn hình (đọc bằng trình đọc màn hình, hiện trong toast, trong thông báo đẩy).
 - Cắt chữ thừa ("Vui lòng", "Hãy", "Xin", "Bạn có thể"), nhưng không cắt đối tượng: "Chọn ghế" tốt hơn "Chọn"; "Chốt người tham gia" tốt hơn "Xác nhận".
 - Dùng từ người dùng quen (lịch hẹn, suất chiếu, ghế, bắp rang), không dùng thuật ngữ kỹ thuật hay mã lỗi.
-- Câu chủ động, xưng "bạn" (tiếng Việt) và "you" (tiếng Anh). Không đổ lỗi cho người dùng.
+- Câu chủ động. Không đổ lỗi cho người dùng. **Cách xưng hô tiếng Việt do admin cấu hình** (Cài đặt, Cách xưng hô; mặc định bạn và tôi): **không viết "bạn", "tôi", "mình" (khi là ngôi xưng) trần trong `vi.json`**, dùng token `[you]` (gọi người dùng) và `[me]` (app tự xưng); đầu câu viết `[You]` và `[Me]` để tự viết hoa. Token được thay khi tải chuỗi (`src/i18n/request.ts`, `src/lib/pronouns.ts`), cũng dùng cho thông báo đẩy và chatbot sau này (gọi `applyPronounsToText` với cặp lấy từ `getPronounsCached()`). "Bạn bè" (danh từ) viết bình thường. Nhãn nói từ phía người dùng về chính họ ("Đánh dấu của mình") dùng "mình" cố định. Tiếng Anh luôn "you" và "I", không dùng token. `messages.test.ts` báo đỏ nếu còn "bạn" hoặc "tôi" trần.
 - Một khái niệm chỉ có một tên trong toàn app (xem từ điển trong `.claude/rules/i18n.md`); không lúc "lịch hẹn" lúc "cuộc hẹn".
 
 **Theo từng loại chữ:**

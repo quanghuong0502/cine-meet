@@ -22,17 +22,17 @@
         "invalidInput": "Nhập tên đăng nhập (hoặc email) và mật khẩu.",
         "invalidCredentials": "Tên đăng nhập/email hoặc mật khẩu không đúng.",
         "accountLocked": "Tài khoản đã bị khóa. Hãy liên hệ quản trị viên.",
-        "tooManyAttempts": "Bạn đã nhập sai quá nhiều lần. Thử lại sau {minutes, plural, other {# phút}}.",
+        "tooManyAttempts": "[You] đã nhập sai quá nhiều lần. Thử lại sau {minutes, plural, other {# phút}}.",
         "emailUnverified": "Email Google chưa được xác minh nên không thể đăng nhập.",
         "notRegistered": "Tài khoản chưa được cấp quyền. Hãy liên hệ quản trị viên.",
         "sessionExpired": "Phiên đăng nhập đã hết hiệu lực. Hãy đăng nhập lại.",
-        "accessDenied": "Bạn không có quyền đăng nhập bằng tài khoản này.",
+        "accessDenied": "[You] không có quyền đăng nhập bằng tài khoản này.",
         "fallback": "Không đăng nhập được. Hãy thử lại."
       }
     },
     "changePassword": {
       "title": "Đổi mật khẩu",
-      "descriptionRequired": "Đây là lần đăng nhập đầu hoặc mật khẩu vừa được đặt lại. Hãy đặt mật khẩu mới của riêng bạn.",
+      "descriptionRequired": "Đây là lần đăng nhập đầu hoặc mật khẩu vừa được đặt lại. Hãy đặt mật khẩu mới của riêng [you].",
       "description": "Nhập mật khẩu hiện tại và mật khẩu mới.",
       "currentLabel": "Mật khẩu hiện tại",
       "newLabel": "Mật khẩu mới",
@@ -102,7 +102,7 @@
         "not_found": "Mục này không còn tồn tại. Hãy tải lại trang.",
         "unknown": "Không lưu được. Hãy thử lại.",
         "last_admin": "Phải còn ít nhất một quản trị viên đang hoạt động.",
-        "self": "Bạn không thể tự thực hiện thao tác này với tài khoản của mình.",
+        "self": "[You] không thể tự thực hiện thao tác này với tài khoản của mình.",
         "no_password": "Tài khoản này không dùng mật khẩu (chỉ đăng nhập bằng Google).",
         "invalid_config": "Cấu hình sơ đồ không hợp lệ. Kiểm tra lại số hàng, số cột và lối đi.",
         "branch_not_found": "Chi nhánh không còn tồn tại. Hãy chọn lại.",
@@ -568,12 +568,24 @@
       "lock": "Khóa tài khoản",
       "unlock": "Mở khóa tài khoản",
       "lockTitle": "Khóa {name}?",
-      "lockDescription": "Họ bị đăng xuất ở thao tác kế tiếp và không đăng nhập lại được cho tới khi bạn mở khóa.",
+      "lockDescription": "Họ bị đăng xuất ở thao tác kế tiếp và không đăng nhập lại được cho tới khi [you] mở khóa.",
       "unlockTitle": "Mở khóa {name}?",
       "unlockDescription": "Họ đăng nhập lại được bình thường.",
       "lockedToast": "Đã khóa tài khoản",
       "unlocked": "Đã mở khóa tài khoản",
       "resetPassword": "Đặt lại mật khẩu"
+    },
+    "pronouns": {
+      "title": "Cách xưng hô",
+      "cardDescription": "Chọn cách app gọi người dùng và tự xưng.",
+      "open": "Đổi cách xưng hô",
+      "presets": "Cặp gợi ý",
+      "fields": {
+        "you": { "label": "App gọi người dùng là" },
+        "me": { "label": "App tự xưng là" }
+      },
+      "preview": "Xem trước",
+      "sample": "{You} đã chốt ghế D8 rồi nè. {Me} sẽ nhắc {you} trước giờ chiếu nha!"
     },
     "appearance": {
       "title": "Màu thương hiệu",
@@ -587,7 +599,7 @@
       "pickColor": "Chọn màu",
       "reset": "Đặt lại màu mặc định",
       "resetTitle": "Đặt lại về màu mặc định?",
-      "resetDescription": "Mọi người dùng sẽ thấy bộ màu mặc định ngay. Bạn vẫn chọn lại được màu khác sau đó.",
+      "resetDescription": "Mọi người dùng sẽ thấy bộ màu mặc định ngay. [You] vẫn chọn lại được màu khác sau đó.",
       "resetConfirm": "Đặt lại",
       "resetDone": "Đã đặt lại màu mặc định",
       "preview": {
@@ -865,12 +877,12 @@
     "comingSoon": "Đang phát triển",
     "loading": "Đang tải...",
     "welcome": {
-      "title": "Chào mừng bạn!",
+      "title": "Chào mừng [you]!",
       "description": "Các tính năng sẽ lần lượt xuất hiện ở đây."
     },
     "notFound": {
       "title": "Không tìm thấy trang",
-      "description": "Trang bạn tìm không tồn tại hoặc đã được chuyển đi.",
+      "description": "Trang [you] tìm không tồn tại hoặc đã được chuyển đi.",
       "action": "Về trang chủ"
     },
     "error": {
@@ -927,11 +939,11 @@
     "title": "Cài đặt",
     "language": {
       "title": "Ngôn ngữ",
-      "description": "Dùng cho giao diện và thông báo gửi cho bạn."
+      "description": "Dùng cho giao diện và thông báo gửi cho [you]."
     },
     "security": {
       "title": "Bảo mật",
-      "description": "Mật khẩu đăng nhập của bạn.",
+      "description": "Mật khẩu đăng nhập của [you].",
       "changePassword": "Đổi mật khẩu"
     }
   },
@@ -1035,7 +1047,7 @@
     "room": {
       "layers": "Lớp hiển thị",
       "layerScore": "Điểm ghế",
-      "layerMine": "Đánh dấu của tôi",
+      "layerMine": "Đánh dấu của mình",
       "tapSeat": "Chạm một ghế để xem điểm và đánh dấu.",
       "seatTitle": "Ghế {code}",
       "score": "điểm {score}",
@@ -1045,7 +1057,7 @@
         "obstructed": "bị che tầm nhìn"
       },
       "kindLabel": "Loại đánh dấu",
-      "kindRequired": "Ghế này bạn thích hay tránh nè?",
+      "kindRequired": "Ghế này [you] thích hay tránh nè?",
       "favorite": "Thích",
       "avoid": "Tránh",
       "tagsLabel": "Ghi chú nhanh",
@@ -1057,7 +1069,7 @@
         "near_speaker": "Gần loa"
       },
       "noteLabel": "Ghi chú",
-      "notePlaceholder": "Ghi chú của bạn",
+      "notePlaceholder": "Ghi chú của [you]",
       "saveMark": "Lưu đánh dấu",
       "removeMark": "Bỏ",
       "saved": "Đã lưu đánh dấu",
