@@ -88,6 +88,8 @@ import { makeBranchImage, makeBrandLogo } from "./sample-images";
 
 const ENV_FILE = ".env.local";
 const SAMPLE = "(mẫu)";
+/** Google Maps link shared by every sample branch (they are all invented, so one place stands in for all). */
+const SAMPLE_MAPS_URL = "https://maps.app.goo.gl/8jhMmuEFsHhUF8Bg7";
 
 const BRANDS = [
   { name: "CGV", color: "#e71a0f", websiteUrl: "https://www.cgv.vn" },
@@ -254,11 +256,15 @@ async function seedCatalog(): Promise<void> {
         brandId,
         name: branchName,
         address: `Địa chỉ ${SAMPLE}`,
+        mapsUrl: SAMPLE_MAPS_URL,
         openingHours: "09:00 – 23:00",
         parkingFee: 5000,
         parkingLocation: `Hầm gửi xe ${SAMPLE}`,
       });
       added.branches = (added.branches ?? 0) + 1;
+    } else {
+      // A sample branch made before the link existed gets it too; one with its own link is left alone.
+      await Branch.updateOne({ brandId, name: branchName, $or: [{ mapsUrl: { $exists: false } }, { mapsUrl: null }, { mapsUrl: "" }] }, { mapsUrl: SAMPLE_MAPS_URL }).collation(collation);
     }
 
     // Several items per brand, so a combo has something to pick from.
