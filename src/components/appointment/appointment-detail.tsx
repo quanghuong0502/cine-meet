@@ -319,7 +319,7 @@ function PollSection({ view, canVote, pending, nameOf, when, onVote, onPropose }
           <div className="flex gap-stack">
             <Input type="date" aria-label={t("proposeDate")} value={date} onChange={(e) => setDate(e.target.value)} className={cn(CONTROL, "min-w-0 flex-1 text-left [&::-webkit-date-and-time-value]:text-left")} />
             <Input type="time" aria-label={t("proposeTime")} value={time} onChange={(e) => setTime(e.target.value)} className={cn(CONTROL, "w-auto text-left [&::-webkit-date-and-time-value]:text-left")} />
-            <Button type="button" variant="outline" size="icon" disabled={pending} aria-label={t("proposeButton")} onClick={propose}>
+            <Button type="button" variant="outline" size="icon" className="size-control shrink-0" disabled={pending} aria-label={t("proposeButton")} onClick={propose}>
               {pending ? <LoaderCircle className="motion-safe:animate-spin" aria-hidden /> : <Plus aria-hidden />}
             </Button>
           </div>

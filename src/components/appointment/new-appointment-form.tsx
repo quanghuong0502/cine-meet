@@ -189,7 +189,7 @@ export function NewAppointmentForm({ movies, movieId, showtimes, initialShowtime
           <div className="flex gap-stack">
             <Input type="date" aria-label={t("customDate")} value={date} onChange={(e) => setDate(e.target.value)} className={`${CONTROL} min-w-0 flex-1 text-left [&::-webkit-date-and-time-value]:text-left`} />
             <Input type="time" aria-label={t("customTime")} value={time} onChange={(e) => setTime(e.target.value)} className={`${CONTROL} w-auto text-left [&::-webkit-date-and-time-value]:text-left`} />
-            <Button type="button" variant="outline" size="icon" aria-label={t("addTime")} onClick={addCustom}>
+            <Button type="button" variant="outline" size="icon" className="size-control shrink-0" aria-label={t("addTime")} onClick={addCustom}>
               <Plus aria-hidden />
             </Button>
           </div>
