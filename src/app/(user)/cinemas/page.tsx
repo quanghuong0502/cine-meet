@@ -34,13 +34,13 @@ export default async function CinemasPage() {
             <ul className="flex flex-col gap-stack">
               {group.branches.map((branch) => (
                 <li key={branch.id}>
-                  <Link href={`/cinemas/${branch.id}`} className="flex min-h-row flex-col overflow-hidden rounded-xl border bg-card">
+                  <Link href={`/cinemas/${branch.id}`} className="flex min-h-row items-center gap-item rounded-xl border bg-card p-inset">
                     {branch.imageUrl ? (
-                      <div className="relative aspect-video w-full bg-muted">
-                        <Image src={branch.imageUrl} alt="" fill sizes={`(max-width: ${PX.column}px) 100vw, ${PX.column}px`} unoptimized className="object-cover" />
+                      <div className="relative size-swatch shrink-0 overflow-hidden rounded-lg bg-muted">
+                        <Image src={branch.imageUrl} alt="" fill sizes={`${PX.swatch}px`} unoptimized className="object-cover" />
                       </div>
                     ) : null}
-                    <div className="flex flex-col gap-stack p-inset">
+                    <div className="flex min-w-0 flex-1 flex-col gap-stack">
                       <span className="type-item-title">{branch.name}</span>
                       {branch.address ? (
                         <span className="flex items-start gap-stack type-secondary text-muted-foreground">
