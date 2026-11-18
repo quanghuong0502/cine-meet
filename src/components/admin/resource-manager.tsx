@@ -125,6 +125,7 @@ export function ResourceManager({ items, basePath, query, labels, removeAction, 
       {items.length === 0 ? (
         <EmptyState
           mascot="bubu-sleepy"
+          className="flex-1 justify-center"
           title={hasSearch ? t("noResultsTitle") : labels.emptyTitle}
           description={hasSearch ? t("noResultsDescription") : labels.emptyDescription}
         />

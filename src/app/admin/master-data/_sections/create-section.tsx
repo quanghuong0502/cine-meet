@@ -105,6 +105,7 @@ export function createSection<Doc extends { _id: { toString(): string } }, Extra
         return (
           <EmptyState
             mascot="bubu-sleepy"
+            className="flex-1 justify-center"
             title={tc("needBrand.title")}
             description={tc("needBrand.description")}
             action={
