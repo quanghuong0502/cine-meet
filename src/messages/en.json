@@ -706,8 +706,7 @@
             "placeholder": "e.g. 3"
           },
           "stepsPerRow": {
-            "label": "Steps between two rows",
-            "flat": "Flat"
+            "label": "Steps between two rows"
           },
           "verticalAisles": {
             "label": "Vertical aisles (after column)"

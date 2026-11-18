@@ -214,7 +214,7 @@ export function SettingsPanel({ name, onName, branchId, onBranch, branchLocked, 
           label={t("fields.stepsPerRow.label")}
           value={config.stadiumFromRow === null ? "0" : String(config.stepsPerRow)}
           options={[
-            { value: "0", label: t("fields.stepsPerRow.flat") },
+            { value: "0", label: "0" },
             ...Array.from({ length: MAX_STEPS_PER_ROW - MIN_STEPS_PER_ROW + 1 }, (_, i) => String(MIN_STEPS_PER_ROW + i)).map((n) => ({ value: n, label: n })),
           ]}
           onChange={(n) =>

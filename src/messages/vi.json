@@ -706,8 +706,7 @@
             "placeholder": "vd. 3"
           },
           "stepsPerRow": {
-            "label": "Số bậc giữa hai hàng",
-            "flat": "Phẳng"
+            "label": "Số bậc giữa hai hàng"
           },
           "verticalAisles": {
             "label": "Lối đi dọc (sau cột)"
