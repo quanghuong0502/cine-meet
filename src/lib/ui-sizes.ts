@@ -13,7 +13,7 @@ export const PX = {
   /** = `--spacing-thumb-poster`: a movie poster in a list (user and admin lists alike). */
   thumbPoster: 64,
   /** = `--spacing-thumb-poster-lg`: the movie poster at the top of the appointment screen. */
-  thumbPosterLg: 96,
+  thumbPosterLg: 112,
   /** = `--spacing-swatch`: an image preview and the profile photo being uploaded. */
   swatch: 80,
   /** The logo (the two characters) in the app bar, and in the narrower admin bar. */
