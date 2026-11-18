@@ -7,6 +7,7 @@ import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { createAppointmentAction } from "@/actions/appointments";
 import { Chip } from "@/components/admin/auditorium-editor/chips";
+import { LoadingState } from "@/components/loading-state";
 import { RequiredMark } from "@/components/required-mark";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,6 +46,10 @@ export function NewAppointmentForm({ movies, movieId, showtimes, initialShowtime
   const locale = useLocale();
   const router = useRouter();
   const [pending, start] = useTransition();
+  // Picking a movie reloads the page for that movie's showtimes. The select shows the new movie at once, and the times area shows a loader until they arrive.
+  const [loadingMovie, startLoadingMovie] = useTransition();
+  const [pickedMovie, setPickedMovie] = useState<string | undefined>(undefined);
+  const shownMovie = loadingMovie ? pickedMovie : movieId;
 
   // Times belong to a movie: picking another movie starts the times over (the page below re-renders with that movie's showtimes).
   const [timesFor, setTimesFor] = useState(movieId);
@@ -78,7 +83,10 @@ export function NewAppointmentForm({ movies, movieId, showtimes, initialShowtime
   }
 
   function pickMovie(id: string) {
-    router.replace(`/appointments/new?movieId=${id}`);
+    setPickedMovie(id);
+    startLoadingMovie(() => {
+      router.replace(`/appointments/new?movieId=${id}`);
+    });
   }
 
   function groupChosen(memberIds: string[]) {
@@ -138,7 +146,7 @@ export function NewAppointmentForm({ movies, movieId, showtimes, initialShowtime
           {t("movieLabel")}
           <RequiredMark />
         </Label>
-        <Select value={movieId ?? ""} onValueChange={pickMovie}>
+        <Select value={shownMovie ?? ""} onValueChange={pickMovie}>
           <SelectTrigger id="appointment-movie" aria-required aria-invalid={errors.movie ? true : undefined} className={`${CONTROL} w-full`}>
             <SelectValue placeholder={t("moviePlaceholder")} />
           </SelectTrigger>
@@ -158,7 +166,9 @@ export function NewAppointmentForm({ movies, movieId, showtimes, initialShowtime
           {t("timesLabel")}
           <RequiredMark />
         </span>
-        {showtimes.length > 0 ? (
+        {loadingMovie ? (
+          <LoadingState compact />
+        ) : showtimes.length > 0 ? (
           <div role="group" aria-labelledby="appointment-times" className="flex flex-col gap-stack">
             {showtimes.map((showtime) => {
               const chosen = showtimeIds.includes(showtime.id);
