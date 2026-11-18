@@ -596,6 +596,7 @@ Chi tiết phạm vi, ranh giới và tiêu chí hoàn thành từng sprint nằ
 | 6 | Dashboard, ngân sách, ghi lại buổi đã xem, đánh giá cá nhân |
 | 7 | Chatbot: tầng provider, tools, lưu context |
 | 8 | Production & hardening: môi trường production, sao lưu, rà soát cuối |
+| 9 | Công tắc tính năng theo môi trường (nút debug, hướng dẫn, tính năng thử nghiệm) |
 
 ## 9. Câu hỏi còn mở
 

@@ -38,6 +38,7 @@ Nguồn chi tiết: `docs/movie-app-mvp-design.md` (số mục ghi ở từng sp
 | 6 | Dashboard, ngân sách, ghi lại buổi đã xem, đánh giá cá nhân | 5B | Chưa bắt đầu |
 | 7 | Chatbot AI (tầng provider, tool, lưu context) | 6 | Chưa bắt đầu |
 | 8 | Production & hardening: môi trường production, sao lưu, rà soát cuối | 7 | Chưa bắt đầu |
+| 9 | Công tắc tính năng theo môi trường: bật/tắt nút debug, hướng dẫn trong Cài đặt và mọi thứ thêm sau này | 8 | Chưa bắt đầu |
 
 Trạng thái: Chưa bắt đầu · Đang làm · Chờ kiểm tra · Xong
 
@@ -311,6 +312,31 @@ giới hạn tra cứu, kết bạn cần chấp nhận (thiết kế mục 6 v�
 - [ ] Nhắc lịch chạy đúng giờ trên production; khởi động lại server không làm mất hoặc gửi trùng.
 - [ ] Có bản sao lưu và đã thử khôi phục một lần.
 - [ ] Cài PWA lên màn hình chính trên iOS và Android, và nhận được Web Push thật trên production.
+
+---
+
+## Sprint 9: Công tắc tính năng theo môi trường
+**Mục tiêu:** một chỗ duy nhất quyết định thứ nào hiện ở môi trường nào (dev, staging, production), thay cho các điều kiện `NODE_ENV` rải rác; admin bật/tắt được mà không cần sửa code.
+**Tham chiếu:** `src/app/layout.tsx` (nút ghi DOM `DomRecorder`), `src/app/api/dev/dom/route.ts`, `src/components/install-guide.tsx` (hướng dẫn cài app trong Cài đặt người dùng), thiết kế mục 2.7 (cài đặt hệ thống).
+**Bối cảnh:** hiện nút debug chỉ tắt bằng `NODE_ENV !== "production"` viết cứng ở vài nơi, còn các thứ như hướng dẫn cài app, thẻ "Cài app" hay các màn thử nghiệm luôn hiện. Sau này sẽ còn thêm nữa (màn debug, nút thử, hướng dẫn, tính năng chưa hoàn thiện), nên cần một cơ chế chung thay vì mỗi chỗ tự xử lý.
+
+**Phạm vi**
+- **Danh mục công tắc ở một file** (`src/lib/feature-flags.ts`): mỗi công tắc có khóa, mô tả, nhóm (debug, hướng dẫn, thử nghiệm), mặc định cho từng môi trường (dev, staging, production) và nơi dùng (máy chủ, giao diện, hoặc cả hai). Thêm công tắc mới = thêm một dòng vào danh mục.
+- **Biết đang ở môi trường nào:** biến `APP_ENV` (`dev` | `staging` | `production`), tách khỏi `NODE_ENV` (staging vẫn chạy `NODE_ENV=production`); thiếu biến thì coi là `production` (an toàn: không lộ nút debug).
+- **Bật/tắt theo giá trị mặc định của môi trường, có thể ghi đè từ Admin** (Cài đặt > Tính năng): admin thấy danh sách theo nhóm, mỗi công tắc ghi giá trị đang áp dụng, mặc định của môi trường, và công tắc Bật/Tắt/Theo mặc định. Lưu ở `systemSettings`, có audit log, cache theo tag và `updateTag` khi ghi (đúng `caching.md`).
+- **Đọc ở cả hai phía:** hàm `isFeatureEnabled(key)` cho máy chủ; giao diện nhận giá trị qua một provider ở layout (chuỗi/số thuần, không cache dữ liệu cá nhân); route API dev trả 404 khi công tắc tắt.
+- **Chuyển các thứ đang có sang công tắc:** nút ghi DOM (`DomRecorder` và `/api/dev/dom`), thẻ hướng dẫn cài app (`InstallGuide`) và thẻ gửi thử push trong Admin, và mọi điều kiện `NODE_ENV` còn lại trong mã nguồn.
+- **Quy tắc cho việc làm sau này:** thêm vào `CLAUDE.md` và `.claude/rules/`: mọi nút debug, hướng dẫn, màn thử nghiệm hay tính năng chưa hoàn thiện đều phải đăng ký công tắc, không viết `NODE_ENV` rời. Có test quét mã nguồn: báo đỏ nếu còn `NODE_ENV` ngoài file danh mục, hoặc có công tắc nào dùng mà chưa đăng ký.
+- Mặc định đề xuất: nút debug bật ở dev, tắt ở staging và production; hướng dẫn cài app bật ở mọi môi trường; thẻ thử push của admin bật ở dev và staging, tắt ở production.
+
+**Ngoài phạm vi:** công tắc theo từng người dùng hoặc phần trăm người dùng (A/B), phân quyền theo công tắc, dịch vụ công tắc bên ngoài.
+
+**Tiêu chí hoàn thành**
+- [ ] Đặt `APP_ENV=production`: nút debug không hiện và `/api/dev/dom` trả 404; đặt `APP_ENV=dev`: nút hiện lại; thiếu biến thì hành xử như production.
+- [ ] Admin tắt hướng dẫn cài app ở Cài đặt > Tính năng thì thẻ đó biến mất khỏi Cài đặt người dùng ở lần tải kế tiếp, không cần deploy lại; bật lại thì hiện lại.
+- [ ] Không còn `process.env.NODE_ENV` rải rác trong `src` (test kiểm tra).
+- [ ] Thêm một công tắc mới chỉ cần sửa file danh mục và có test báo đỏ nếu thiếu mô tả hoặc thiếu mặc định cho một môi trường.
+- [ ] Mỗi lần đổi công tắc có dòng trong nhật ký thay đổi.
 
 ---
 
