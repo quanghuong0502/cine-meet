@@ -1,6 +1,7 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
-import { join, relative } from "node:path";
+import { join, relative, sep } from "node:path";
 import { describe, expect, it } from "vitest";
+import { PX } from "@/lib/ui-sizes";
 
 /** Keeps the design tokens honest (docs: .claude/rules/design-tokens.md). Applies to every component, the shadcn ones in `ui/` too. */
 const SRC = join(process.cwd(), "src");
@@ -132,5 +133,29 @@ describe("design tokens", () => {
     const names = (prefix: string) => new Set([...css.matchAll(new RegExp(`--${prefix}-([a-z0-9-]+):`, "g"))].map((match) => match[1] as string));
     const containers = names("container");
     expect([...names("spacing")].filter((name) => containers.has(name))).toEqual([]);
+  });
+  it("passes sizes to components by name (PX in lib/ui-sizes.ts), never as a number", () => {
+    // size={44}, width={80}, size={a ? 44 : 48}, sizes="128px". The one exception is the seat map: its numbers are drawing coordinates
+    // inside the SVG's own unit (1 = one seat), not pixels on the screen.
+    const literal = /\b(?:size|width|height|iconSize)=\{\s*-?\d+(?:\.\d+)?\s*\}|\b(?:size|width|height)=\{[^}\n]*\?\s*\d+\s*:\s*\d+/;
+    const hint = /\bsizes=[^\n]*?\d+(?:\.\d+)?px/;
+    const files = appFiles.filter((path) => !path.split(sep).join("/").endsWith("/components/seat-map/seat-map.tsx"));
+    const bad = files.flatMap((path) =>
+      read(path)
+        .split("\n")
+        .flatMap((line, index) => (literal.test(line) || hint.test(line) ? [`${relative(SRC, path)}:${index + 1}`] : [])),
+    );
+    expect(bad).toEqual([]);
+  });
+
+  it("keeps the PX constants equal to their twins in globals.css", () => {
+    const css = readFileSync(join(SRC, "app", "globals.css"), "utf8");
+    const px = (name: string) => Number(new RegExp(`${name}:\\s*([0-9.]+)rem`).exec(css)?.[1]) * 16;
+    expect({ avatar: PX.avatar, swatch: PX.swatch, poster: PX.poster, column: PX.column }).toEqual({
+      avatar: px("--spacing-avatar"),
+      swatch: px("--spacing-swatch"),
+      poster: px("--spacing-poster"),
+      column: px("--container-app"),
+    });
   });
 });

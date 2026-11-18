@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/card";
 import { requireUser } from "@/lib/auth/guards";
 import { ChangePasswordForm } from "./change-password-form";
+import { PX } from "@/lib/ui-sizes";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("auth.changePassword");
@@ -30,7 +31,7 @@ export default async function ChangePasswordPage() {
           <BackButton href={user.role === "admin" ? "/admin/settings" : "/settings"} />
         </div>
       )}
-      <Mascot pose="duo-watching" size={144} decorative priority />
+      <Mascot pose="duo-watching" size={PX.mascot} decorative priority />
       <Card className="w-full max-w-form">
         <CardHeader>
           <CardTitle className="type-title">{t("title")}</CardTitle>

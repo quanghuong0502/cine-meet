@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { requireUser } from "@/lib/auth/guards";
 import { formatVnd } from "@/lib/money";
 import { getCinema } from "@/services/cinema.service";
+import { PX } from "@/lib/ui-sizes";
 
 type Props = { params: Promise<{ branchId: string }> };
 
@@ -38,7 +39,7 @@ export default async function CinemaPage({ params }: Props) {
 
       {branch.imageUrl ? (
         <div className="relative aspect-video w-full overflow-hidden rounded-xl border bg-muted">
-          <Image src={branch.imageUrl} alt="" fill sizes="(max-width: 672px) 100vw, 672px" unoptimized className="object-cover" priority />
+          <Image src={branch.imageUrl} alt="" fill sizes={`(max-width: ${PX.column}px) 100vw, ${PX.column}px`} unoptimized className="object-cover" priority />
         </div>
       ) : null}
 

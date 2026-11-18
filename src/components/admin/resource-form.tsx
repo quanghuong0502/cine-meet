@@ -26,6 +26,7 @@ import {
   type ValidationCode,
 } from "@/lib/admin/action-result";
 import type { ResourceField } from "./resource-types";
+import { PX } from "@/lib/ui-sizes";
 
 function isValidationCode(code: string): code is ValidationCode {
   return VALIDATION_CODES.some((known) => known === code);
@@ -101,7 +102,7 @@ function FieldControl({ field, value, invalid, last, onSelect, selected, sibling
           getTicket={field.uploadTicket ?? (async () => ({ ok: false, error: "not_configured" }))}
           preview={(url) => (
             <span aria-hidden className="flex size-swatch shrink-0 items-center justify-center overflow-hidden rounded-xl border bg-card">
-              {url ? <Image src={url} alt="" width={80} height={80} unoptimized className="size-full object-cover" /> : <ImageIcon className="size-icon-lg text-muted-foreground" />}
+              {url ? <Image src={url} alt="" width={PX.swatch} height={PX.swatch} unoptimized className="size-full object-cover" /> : <ImageIcon className="size-icon-lg text-muted-foreground" />}
             </span>
           )}
         />

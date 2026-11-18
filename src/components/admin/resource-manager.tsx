@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { RemoveResult } from "@/lib/admin/action-result";
 import type { ResourceItem, ResourceLabels } from "./resource-types";
+import { PX } from "@/lib/ui-sizes";
 
 interface ResourceManagerProps {
   items: ResourceItem[];
@@ -50,7 +51,7 @@ function Marker({ item }: { item: ResourceItem }) {
       style={!showImage && item.color ? { backgroundColor: item.color } : undefined}
     >
       {showImage ? (
-        <Image src={item.imageUrl as string} alt="" width={40} height={40} unoptimized onError={() => setFailed(true)} className="size-full object-cover" />
+        <Image src={item.imageUrl as string} alt="" width={PX.avatar} height={PX.avatar} unoptimized onError={() => setFailed(true)} className="size-full object-cover" />
       ) : (
         item.avatarText
       )}

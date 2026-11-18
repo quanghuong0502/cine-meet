@@ -6,6 +6,7 @@ import { UserMenu } from "@/components/user-menu";
 import { isAdminTabRoot } from "@/lib/admin-nav";
 import { isUserTabRoot } from "@/lib/nav";
 import { cn } from "@/lib/utils";
+import { PX } from "@/lib/ui-sizes";
 
 interface AppHeaderProps {
   area: "app" | "admin";
@@ -29,7 +30,7 @@ export function AppHeader({ area, name, image }: AppHeaderProps) {
         area === "admin" && "bg-background/95 backdrop-blur md:hidden",
       )}
     >
-      <Logo size={area === "admin" ? 44 : 48} wordmarkClassName="type-heading" />
+      <Logo size={area === "admin" ? PX.logoCompact : PX.logo} wordmarkClassName="type-heading" />
       <UserMenu area={area} name={name} image={image} />
     </header>
   );

@@ -14,6 +14,7 @@ import { formatService } from "@/services/master-data/format.service";
 import { genreService } from "@/services/master-data/genre.service";
 import { getMovie } from "@/services/movie.service";
 import { searchShowtimes } from "@/services/showtime.service";
+import { PX } from "@/lib/ui-sizes";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -57,7 +58,7 @@ export default async function MovieDetailPage({ params }: Props) {
 
       <section className="flex gap-group">
         <div className="relative aspect-[2/3] w-poster shrink-0 overflow-hidden rounded-xl border bg-muted">
-          {movie.posterUrl ? <Image src={movie.posterUrl} alt={t("posterAlt", { title: movie.title })} fill sizes="136px" unoptimized className="object-cover" priority /> : null}
+          {movie.posterUrl ? <Image src={movie.posterUrl} alt={t("posterAlt", { title: movie.title })} fill sizes={`${PX.poster}px`} unoptimized className="object-cover" priority /> : null}
         </div>
         <div className="flex min-w-0 flex-1 flex-col gap-stack">
           <h1 className="type-heading">{movie.title}</h1>

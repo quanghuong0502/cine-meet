@@ -7,6 +7,7 @@ import { AppOpenedMarker } from "@/components/route-loading";
 import { SignOutButton } from "@/components/sign-out-button";
 import { ENABLED_ADMIN_NAV_ITEMS, MIN_BOTTOM_NAV_ITEMS } from "@/lib/admin-nav";
 import { requireAdmin } from "@/lib/auth/guards";
+import { PX } from "@/lib/ui-sizes";
 
 export default async function AdminLayout({
   children,
@@ -21,7 +22,7 @@ export default async function AdminLayout({
     <div data-app-shell className="h-dvh overflow-hidden md:grid md:grid-cols-[var(--spacing-sidebar)_1fr] md:grid-rows-1">
       <aside className="sticky top-0 hidden h-dvh flex-col gap-group border-r p-inset md:flex">
         <span className="px-inset-sm py-inset-xs">
-          <Logo size={44} wordmarkClassName="type-heading" />
+          <Logo size={PX.logoCompact} wordmarkClassName="type-heading" />
         </span>
         <AdminNav />
         <div className="mt-auto">

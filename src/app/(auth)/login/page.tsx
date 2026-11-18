@@ -5,6 +5,7 @@ import { Wordmark } from "@/components/wordmark";
 import { getSafeRedirectPath } from "@/lib/redirect";
 import { LoginForm } from "./login-form";
 import { loginErrorKey } from "./login-errors";
+import { PX } from "@/lib/ui-sizes";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("auth.login");
@@ -29,7 +30,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         <div className="flex min-h-0 w-full flex-1 items-center justify-center">
           <Mascot
             pose="duo-watching"
-            size={200}
+            size={PX.mascotLg}
             decorative
             priority
             fillHeight

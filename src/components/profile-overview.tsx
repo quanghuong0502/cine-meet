@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatVietnamPhone } from "@/lib/phone";
 import type { SeatPreference, UserRole } from "@/lib/user-constants";
+import { PX } from "@/lib/ui-sizes";
 
 interface ProfileOverviewProps {
   name: string;
@@ -36,7 +37,7 @@ export async function ProfileOverview({ name, identity, role, avatar, phone, sea
       <PageHeader title={t("title")} backHref={backHref} />
       <Card>
         <CardHeader className="flex-row items-center gap-group">
-          <UserAvatar name={name} image={avatar} size={64} />
+          <UserAvatar name={name} image={avatar} size={PX.avatarLg} />
           <div className="flex min-w-0 flex-col gap-tight">
             <CardTitle className="type-heading break-words">{name}</CardTitle>
             <CardDescription className="break-words">{identity}</CardDescription>

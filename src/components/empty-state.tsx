@@ -1,5 +1,6 @@
 import { Mascot, type MascotPose } from "@/components/mascot";
 import { cn } from "@/lib/utils";
+import { PX } from "@/lib/ui-sizes";
 
 interface EmptyStateProps {
   title: string;
@@ -25,7 +26,7 @@ export function EmptyState({
         className,
       )}
     >
-      <Mascot pose={mascot} size={140} decorative priority />
+      <Mascot pose={mascot} size={PX.mascot} decorative priority />
       <h2 className="type-heading">{title}</h2>
       {description ? (
         <p className="max-w-hint type-secondary text-muted-foreground">{description}</p>

@@ -24,6 +24,7 @@ import { genreService } from "@/services/master-data/genre.service";
 import { listFilterMovies } from "@/services/movie.service";
 import { getSystemSettings } from "@/services/settings.service";
 import { listShowtimeFacets, searchShowtimes } from "@/services/showtime.service";
+import { PX } from "@/lib/ui-sizes";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("showtimes");
@@ -89,7 +90,7 @@ export default async function ShowtimesPage({ searchParams }: { searchParams: Pr
                     {movie.ageRatingId && ratingById.get(movie.ageRatingId.toString()) ? (
                       <AgeRatingBadge rating={ratingById.get(movie.ageRatingId.toString())!} className="absolute top-stack left-stack z-10" />
                     ) : null}
-                    {movie.posterUrl ? <Image src={movie.posterUrl} alt="" fill sizes="128px" unoptimized className="object-cover" /> : null}
+                    {movie.posterUrl ? <Image src={movie.posterUrl} alt="" fill sizes={`${PX.posterList}px`} unoptimized className="object-cover" /> : null}
                   </span>
                   <span className="line-clamp-2 type-secondary leading-snug!">{movie.title}</span>
                 </Link>
