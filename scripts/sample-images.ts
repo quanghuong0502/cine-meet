@@ -49,15 +49,17 @@ export async function makeBranchImage(brandName: string, color: string): Promise
     <ellipse cx="${width * 0.7}" cy="${height * 0.45}" rx="300" ry="260" fill="url(#glow)"/>
     <rect width="${width}" height="${height}" fill="url(#shade)"/>
   </svg>`;
+  // The name must end before the characters begin (they take the right 380px), so a long name is set smaller.
+  const nameSize = Math.min(84, Math.floor(440 / (0.6 * brandName.length)));
   const text = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
-    <text x="56" y="${height - 96}" font-family="Helvetica Neue, Arial, sans-serif" font-weight="800" font-size="84" fill="#fff">${escapeXml(brandName)}</text>
+    <text x="56" y="${height - 96}" font-family="Helvetica Neue, Arial, sans-serif" font-weight="800" font-size="${nameSize}" fill="#fff">${escapeXml(brandName)}</text>
     <text x="58" y="${height - 48}" font-family="Helvetica Neue, Arial, sans-serif" font-weight="600" font-size="26" fill="#fff" fill-opacity="0.75" letter-spacing="6">RẠP MẪU</text>
   </svg>`;
-  const mascot = await sharp(join(process.cwd(), "src/images/characters", "duo-watching.png")).resize({ width: 480, height: 400, fit: "inside", kernel: "lanczos3" }).toBuffer();
-  const { width: mw = 480, height: mh = 400 } = await sharp(mascot).metadata();
+  const mascot = await sharp(join(process.cwd(), "src/images/characters", "duo-watching.png")).resize({ width: 380, height: 330, fit: "inside", kernel: "lanczos3" }).toBuffer();
+  const { width: mw = 380, height: mh = 330 } = await sharp(mascot).metadata();
   return sharp(Buffer.from(background))
     .composite([
-      { input: mascot, left: width - mw - 64, top: Math.round((height - mh) / 2) - 20 },
+      { input: mascot, left: width - mw - 48, top: Math.round((height - mh) / 2) - 20 },
       { input: Buffer.from(text), left: 0, top: 0 },
     ])
     .jpeg({ quality: 88 })
