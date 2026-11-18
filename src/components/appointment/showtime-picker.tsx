@@ -1,11 +1,11 @@
 "use client";
 
-import { Circle, CircleCheck, X } from "lucide-react";
+import { Circle, CircleCheck } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { Chip } from "@/components/admin/auditorium-editor/chips";
 import { Badge } from "@/components/ui/badge";
-import { formatDayLong, formatTime, vietnamDayKey } from "@/lib/datetime";
+import { formatTime, vietnamDayKey } from "@/lib/datetime";
 import { formatVnd, formatVndRange } from "@/lib/money";
 import { vietnamToday } from "@/lib/movie/status";
 import { cn } from "@/lib/utils";
@@ -34,7 +34,7 @@ interface Props {
 
 /**
  * Picks showtimes of one movie without listing them all: a strip of the days that have showtimes (one day at a time), a cinema filter
- * when there is more than one, then that day's showtimes. What is picked stays visible as chips on top, whatever day is open.
+ * when there is more than one, then that day's showtimes. A picked showtime is shown by the check on its own row.
  */
 export function ShowtimePicker({ showtimes, selectedIds, onToggle, initialDay }: Props) {
   const t = useTranslations("showtimes");
@@ -48,24 +48,12 @@ export function ShowtimePicker({ showtimes, selectedIds, onToggle, initialDay }:
   const branch = pickedBranch && branches.some(([id]) => id === pickedBranch) ? pickedBranch : null;
 
   const shown = showtimes.filter((s) => vietnamDayKey(s.startAt) === day && (!branch || s.branchId === branch));
-  const selected = selectedIds.map((id) => showtimes.find((s) => s.id === id)).filter((s): s is ShowtimeChoice => Boolean(s));
 
   const today = vietnamToday();
   const weekday = new Intl.DateTimeFormat(locale === "en" ? "en-GB" : "vi-VN", { timeZone: "UTC", weekday: "short" });
 
   return (
     <div className="flex flex-col gap-item">
-      {selected.length > 0 ? (
-        <div role="group" aria-label={ta("pickedShowtimes")} className="flex flex-wrap gap-stack">
-          {selected.map((s) => (
-            <Chip key={s.id} selected onClick={() => onToggle(s.id)} aria-label={ta("removeTime")}>
-              {formatDayLong(s.startAt, locale)} · {formatTime(s.startAt, locale)}
-              <X className="size-icon-sm" aria-hidden />
-            </Chip>
-          ))}
-        </div>
-      ) : null}
-
       <nav aria-label={t("dayStrip")}>
         <ul className="scroll-strip flex gap-stack pb-tight">
           {days.map((key) => {

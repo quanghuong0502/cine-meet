@@ -1318,7 +1318,6 @@
         "duplicate": "That time is already on the list.",
         "tooManyTimes": "Up to {max} times."
       },
-      "pickedShowtimes": "Picked times",
       "noShowtimesFilter": "No showtimes on this day at the chosen cinema."
     },
     "detail": {

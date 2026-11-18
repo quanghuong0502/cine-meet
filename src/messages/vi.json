@@ -1318,7 +1318,6 @@
         "duplicate": "Giờ này có trong danh sách rồi.",
         "tooManyTimes": "Tối đa {max} giờ thôi nha."
       },
-      "pickedShowtimes": "Giờ đã chọn",
       "noShowtimesFilter": "Ngày này chưa có suất nào ở rạp đã chọn."
     },
     "detail": {
