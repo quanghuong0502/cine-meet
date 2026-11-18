@@ -1,4 +1,4 @@
-import webpush from "web-push";
+import { sendNotification } from "web-push";
 
 /** What a pushed message carries: short, the details are in the app. */
 export interface PushPayload {
@@ -31,7 +31,7 @@ export const sendWebPush: PushSender = async (target, payload) => {
   const config = pushConfig();
   if (!config) return { status: "error", message: "not_configured" };
   try {
-    await webpush.sendNotification(target, JSON.stringify(payload), {
+    await sendNotification(target, JSON.stringify(payload), {
       vapidDetails: config,
       TTL: 60 * 60 * 24,
       // Time-sensitive: an invitation is worth little a day later, and a pushed "leaving now" even less.

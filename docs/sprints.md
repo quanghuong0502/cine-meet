@@ -32,7 +32,7 @@ Nguồn chi tiết: `docs/movie-app-mvp-design.md` (số mục ghi ở từng sp
 | 1 | Master data, quản lý người dùng, cài đặt hệ thống, hồ sơ cơ bản | 0 | Xong |
 | 2 | Editor phòng chiếu, sơ đồ ghế, điểm ghế, versioning | 1 | Xong |
 | 3 | Phim (trailer), suất chiếu, trang rạp & lịch chiếu cho user, đánh dấu ghế cá nhân | 2 | Xong |
-| 4 | Lịch hẹn giai đoạn 1 (mời, vote, chốt người), bạn bè, thông báo in-app, worker, Web Push | 3 | Chưa bắt đầu |
+| 4 | Lịch hẹn giai đoạn 1 (mời, vote, chốt người), bạn bè, thông báo in-app, worker, Web Push | 3 | Chờ kiểm tra |
 | 5A | Lịch hẹn giai đoạn 2: chọn suất, xếp ghế, đồ ăn, chi phí, công nợ, xác nhận | 4 | Chưa bắt đầu |
 | 5B | Nhắc lịch và các thông báo theo giờ (#3, #8), tự hoàn thành | 5A | Chưa bắt đầu |
 | 6 | Dashboard, ngân sách, ghi lại buổi đã xem, đánh giá cá nhân | 5B | Chưa bắt đầu |
@@ -185,12 +185,12 @@ giới hạn tra cứu, kết bạn cần chấp nhận (thiết kế mục 6 v�
 
 **Tiêu chí hoàn thành**
 - [ ] Đi hết luồng với 3 tài khoản: mời → đề xuất giờ khác → vote → chốt người.
-- [ ] Sau khi chốt, người tạo không thêm/bớt được người; người tham gia tự rút được và người tạo nhận thông báo.
-- [ ] Người vote Có phương án khác phương án được chọn không tự động nằm trong danh sách (người tạo phải thêm tay).
+- [x] Sau khi chốt, người tạo không thêm/bớt được người; người tham gia tự rút được và người tạo nhận thông báo (test `appointment.service.test.ts`; màn hình chưa thử trên điện thoại).
+- [x] Người vote Có phương án khác phương án được chọn không tự động nằm trong danh sách (người tạo phải thêm tay) (test service; màn hình chưa thử trên điện thoại).
 - [ ] Thông báo in-app đến đúng người, đúng thời điểm.
 - [ ] Web Push: bật trên Android và trên iPhone (đã cài PWA), "Gửi thử" nhận được kể cả khi đã đóng app; sự kiện mời/chốt/hủy đến đúng người.
-- [ ] Không gửi trùng khi chạy hai worker; một thiết bị lỗi 410 thì subscription bị xóa, các thiết bị khác vẫn nhận.
-- [ ] Test máy trạng thái pass; test tra cứu số điện thoại bị giới hạn tần suất.
+- [x] Không gửi trùng khi chạy hai worker; một thiết bị lỗi 410 thì subscription bị xóa, các thiết bị khác vẫn nhận (test `src/notifications/deliver.test.ts` với bộ gửi giả).
+- [x] Test máy trạng thái pass; test tra cứu số điện thoại bị giới hạn tần suất (`state.test.ts`, `friend.service.test.ts`).
 
 ---
 
@@ -354,6 +354,19 @@ Mỗi sprint xong thêm 3 đến 6 dòng: đã làm gì, còn dở gì, quyết 
 - Làm thêm theo yêu cầu (2026-11-17): **công tắc Bật/Tắt** (`active`, mặc định bật, bản ghi cũ chưa có giá trị tính là bật) cho thương hiệu, chi nhánh, thể loại, định dạng: mục tắt không hiện ở bộ lọc, danh sách rạp, suất chiếu của user (suất của chi nhánh, thương hiệu hay định dạng đang tắt bị ẩn) và không được gợi ý khi admin tạo mới, mục đang được dùng thì vẫn hiện; **lọc phim theo khoảng thời gian**: cài đặt hệ thống `movieUpcomingDays` (mặc định 30), bộ lọc phim và hàng poster chỉ gồm phim đang chiếu và phim khởi chiếu trong N ngày tới (`isOfferedInFilter`); **khung giờ chiếu do admin cấu hình** (cài đặt hệ thống `timeSlots`: tên, tên tiếng Anh, từ, đến, tối đa 8, không chồng lấn; mặc định 4 khung cũ; `00:00` ở ô Đến là hết ngày; xóa hết khung thì ẩn bộ lọc Khung giờ; đổi khung giờ chỉ đổi cách lọc, không đụng suất đã tạo). Bảng giá và các lựa chọn khác trong Danh mục chưa lọc theo công tắc.
 - **Chốt 2026-11-18: chủ dự án xác nhận Sprint 3 xong.** (Mục dưới là ghi chú lúc đó.) Còn dở cũ: **thử trên điện thoại** (trailer phát tại chỗ trên iPhone, tốc độ bộ lọc, khung đánh dấu ghế, nhập CSV bằng file); trailer mẫu chưa có (thêm link YouTube thật ở Admin > Phim); chưa có đánh giá phòng và lịch sử ngồi (thiết kế 3.2, để Sprint 6); chưa đo ở cỡ chữ 125% và 150%.
 - File chính: `src/services/{movie,showtime,seat-mark,cinema}.service.ts`, `src/lib/showtime/`, `src/lib/movie/`, `src/lib/seat-layout/marks.ts`, `src/app/admin/movies/`, `src/components/admin/showtime-*.tsx`, `src/app/(user)/{showtimes,movies,cinemas}/`, `src/components/movie/`, `src/components/seat-map/room-seat-view.tsx`, `scripts/seed-movies.ts`.
+
+### Sprint 4 (2026-11-18)
+- Xong (code, test, build; **chưa thử trên điện thoại**; đã chạy thử bản dev với DB tạm, đăng nhập thật và mở mọi trang mới đều trả 200, không lỗi server; chưa bấm thao tác bằng trình duyệt vì extension Chrome không kết nối):
+  **Bạn bè** (`friendships`, `friendGroups`, `friendLookups`, `users.inviteCode`; kết bạn bằng số điện thoại hoặc link mời `/friends/invite/[code]`, lời mời cần chấp nhận, hai bên cùng gửi thì thành bạn, nhóm bạn; tra cứu số trả lời giống nhau dù số có tài khoản hay không, 10 lần mỗi giờ).
+  **Lịch hẹn giai đoạn 1** (`appointments`; `src/lib/appointment/state.ts` là máy trạng thái thuần có test; `appointment.service.ts`: tạo, gửi, vote, đề xuất giờ, từ chối, chốt, rút lui, hủy; lưu bằng optimistic concurrency và thử lại); màn `/appointments`, `/appointments/new`, `/appointments/[id]`; tab Lịch hẹn bật; nút "Tạo lịch hẹn từ suất này" trên thẻ suất chiếu.
+  **Thông báo** (`notifications`, `notificationDeliveries`, `pushSubscriptions`; sự kiện #1, #2, #4, #7, #13; chuông và badge ở header, `/notifications`).
+  **Web Push** (`web-push`, VAPID, `public/sw.js`, `/offline`, worker `src/notifications/worker.ts` qua `src/instrumentation.ts`; Cài đặt: bật theo thiết bị, gửi thử, tắt từng thiết bị, bật/tắt từng loại, hướng dẫn cài app).
+- Quyết định: **thông báo trong app luôn ghi** (khớp thiết kế 4.1), công tắc từng loại trong Cài đặt chỉ điều khiển **push**; nội dung thông báo không lưu câu chữ mà lưu id và dữ kiện, dựng chữ khi hiển thị hoặc khi đẩy theo ngôn ngữ người nhận (có thay cặp xưng hô); ghi thông báo lỗi chỉ log, không làm hỏng thao tác lịch hẹn;
+  trạng thái người tham gia thêm `excluded` (người tạo không xếp vào danh sách khi chốt) ngoài bốn giá trị trong thiết kế; vote Có ở bất kỳ phương án nào là đồng ý, bỏ hết vote Có thì về "chưa trả lời"; người tạo chỉ nhận thông báo "đồng ý" lần đầu một người chuyển sang đồng ý, không nhận mỗi lần đổi vote;
+  worker nhận việc bằng `findOneAndUpdate` (lấy lại việc kẹt quá 2 phút), thử tối đa 3 lần cách 1 và 5 phút; một thiết bị lỗi tạm thời mà thiết bị khác nhận được thì tính là đã gửi; **người tạo lịch hẹn không sửa được lịch hẹn nháp** (service có `send: false`, `sendInvitations`, nhưng giao diện chỉ có "Gửi lời mời"); đề xuất giờ khác chỉ nhập giờ tay (service cũng nhận `showtimeId`).
+- Cần làm để chạy: thêm vào `.env.local` (và staging) `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` (tạo bằng `npx web-push generate-vapid-keys`), `VAPID_SUBJECT` (dạng `mailto:địa-chỉ-liên-hệ` hoặc một địa chỉ https), `ENABLE_WORKER=true`. Thiếu khóa thì Cài đặt báo chưa bật thông báo đẩy, thông báo trong app vẫn chạy.
+- Còn dở: **chủ dự án cần thử trên điện thoại** (luồng 3 tài khoản; push trên Android và iPhone đã cài PWA, cần HTTPS; trang offline); chưa đo ở cỡ chữ 125% và 150%; chưa có huy hiệu số trên icon (Badging API); thông báo #3 (sắp hết hạn trả lời) để Sprint 5B.
+- File chính: `src/services/{friend,appointment,notification,push}.service.ts`, `src/lib/appointment/`, `src/notifications/`, `src/models/{friendship,friend-group,friend-lookup,appointment,notification,notification-delivery,push-subscription}.ts`, `src/actions/{friends,appointments,notifications,push}.ts`, `src/components/{friends,appointment}/`, `src/components/notification-*.tsx`, `src/app/(user)/{friends,appointments,notifications}/`, `public/sw.js`.
 
 <!-- Ví dụ:
 ### Sprint 2 (2026-12-01)

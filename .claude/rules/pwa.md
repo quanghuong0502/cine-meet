@@ -14,8 +14,9 @@ Viết code đúng quy tắc ngay từ đầu. Thử bản cài trên iPhone 13 
 - Có: manifest (`src/app/manifest.ts`: standalone, dọc, màu nền, icon PNG 192, 512 và maskable, là logo app: ảnh `duo-watching` trên nền hồng thương hiệu; xuất lại bằng `sharp` khi đổi logo), `apple-icon.png` (iPhone), favicon PNG,
   `theme-color`, thẻ Apple (`appleWebApp`, thanh trạng thái đen), `viewport-fit=cover`, vùng an toàn và `dvh`.
 - Đã có: nút quay lại trong app (`PageHeader`), báo mất/có mạng và tự làm mới khi quay lại app (`NetworkWatcher`), ẩn phần tử cố định đáy khi bàn phím mở (`KeyboardWatcher`). Checklist đầy đủ ở `mobile-ux.md`.
-- Chưa có (làm ở Sprint 4 cùng Web Push): service worker `public/sw.js`, trang `/offline`, hướng dẫn cài app. `proxy.ts` đã loại `sw.js` và `offline`
-  khỏi yêu cầu đăng nhập để trình duyệt đăng ký và tải được khi chưa đăng nhập.
+- Đã có (Sprint 4): service worker `public/sw.js` (thông báo đẩy, trang `/offline` khi mất mạng; không cache trang hay dữ liệu cá nhân; đăng ký ở `ServiceWorkerRegister`), trang `/offline`,
+  hướng dẫn cài app và bật thông báo đẩy trong Cài đặt (`InstallGuide`, `NotificationSettings`). `proxy.ts` loại `sw.js` và `offline` khỏi yêu cầu đăng nhập.
+  Chưa thử trên máy thật: thông báo đẩy trên iPhone đã cài PWA (cần HTTPS), trang offline khi tắt mạng.
 
 ## Quy tắc cho mọi màn hình
 
@@ -41,10 +42,10 @@ Nguồn chính: [firt.dev, iOS PWA compatibility](https://firt.dev/notes/pwa-ios
 | 1 | **Màn hình khởi động `apple-touch-startup-image`** cho từng cỡ máy (ảnh phải đúng từng pixel, nền `#13080d`, kèm `apple-mobile-web-app-capable`). iOS **bỏ qua** `background_color` của manifest, thiếu thì thấy nền trắng lúc mở app | firt.dev | **Đã làm** (9 cỡ iPhone, `npm run splash:generate`, danh sách ở `src/lib/splash-screens.json`; thêm máy mới thì thêm vào danh sách rồi chạy lại; chưa kiểm tra trên máy thật) | xong |
 | 2 | **CSS cảm giác như app:** `-webkit-tap-highlight-color: transparent` (Tailwind preflight đã có sẵn), `-webkit-touch-callout: none` và `user-select: none` cho nút, thanh điều hướng, header, ảnh (không áp lên nội dung chữ và ô nhập) | blog (netguru, MagicBell), chưa chắc | **Đã làm** (`globals.css`) | xong |
 | 3 | **`orientation` trong manifest bị iOS bỏ qua:** app vẫn xoay ngang. Bố cục phải chịu được hoặc hiện lời nhắc xoay dọc | firt.dev | Chưa xử lý | 8 |
-| 4 | **Thông báo đẩy chỉ chạy khi đã cài app.** Từ **iOS 18.4 có Declarative Web Push** (không cần service worker); có thêm **Badging API** (số trên icon) từ 16.4. Cân nhắc cả hai khi thiết kế thông báo | firt.dev, WebKit | Chưa làm | **4** |
-| 5 | **Hướng dẫn cài app** (Chia sẻ, rồi Thêm vào Màn hình chính): iOS không có `beforeinstallprompt` và `appinstalled` | firt.dev | Chưa làm | 4 hoặc 8 |
+| 4 | **Thông báo đẩy chỉ chạy khi đã cài app.** Từ **iOS 18.4 có Declarative Web Push** (không cần service worker); có thêm **Badging API** (số trên icon) từ 16.4. Cân nhắc cả hai khi thiết kế thông báo | firt.dev, WebKit | Đã làm (Web Push cổ điển qua service worker; Declarative Web Push của iOS 18.4 chưa dùng; chưa thử máy thật) | xong |
+| 5 | **Hướng dẫn cài app** (Chia sẻ, rồi Thêm vào Màn hình chính): iOS không có `beforeinstallprompt` và `appinstalled` | firt.dev | Đã làm (`InstallGuide` trong Cài đặt: các bước cho iPhone và Android, tự ẩn khi đã cài) | xong |
 | 6 | **Dùng `@media (display-mode: standalone)`** để chỉnh riêng cho app đã cài; không dùng `navigator.standalone` (đã deprecated từ 11.3) | firt.dev | Chưa dùng | khi cần |
-| 7 | **Ngoại tuyến:** service worker, Cache Storage, Navigation Preload (iOS 15.4). Chỉ cache tài nguyên tĩnh, không cache dữ liệu cá nhân | firt.dev | Chưa làm | 4 |
+| 7 | **Ngoại tuyến:** service worker, Cache Storage, Navigation Preload (iOS 15.4). Chỉ cache tài nguyên tĩnh, không cache dữ liệu cá nhân | firt.dev | Đã làm (chỉ trang `/offline` và icon; điều hướng ưu tiên mạng; chưa dùng Navigation Preload) | xong |
 | 8 | **Icon:** `apple-touch-icon` được ưu tiên hơn icon trong manifest; icon maskable và monochrome bị bỏ qua; SVG chỉ chạy từ iOS 26 và phải khai trong manifest | firt.dev | Đã có `apple-icon.png` | đã đủ |
 
 ### Có thể làm nhưng phải thử trên máy thật trước
