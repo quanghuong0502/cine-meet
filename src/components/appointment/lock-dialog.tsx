@@ -41,7 +41,11 @@ export function LockDialog({ open, onOpenChange, timeText, voters, pending, onCo
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle className="type-item-title">{t("lockDialogTitle")}</AlertDialogTitle>
-          <AlertDialogDescription>{t("lockDialogDescription", { time: timeText })}</AlertDialogDescription>
+          <AlertDialogDescription>
+            {/* Two lines of their own: which time, then what locking means. */}
+            <span className="block text-foreground">{timeText}</span>
+            <span className="block">{t("lockDialogDescription")}</span>
+          </AlertDialogDescription>
         </AlertDialogHeader>
         <div role="group" aria-label={t("lockPickPeople")} className="flex flex-wrap gap-stack">
           {voters.map((voter) => (

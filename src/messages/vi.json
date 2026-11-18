@@ -1389,7 +1389,7 @@
       "timesCreator": "Khung giờ",
       "lockThisTime": "Chốt giờ này",
       "lockDialogTitle": "Chốt giờ này?",
-      "lockDialogDescription": "{time}. Chốt xong không đổi người được nữa."
+      "lockDialogDescription": "Chốt xong không đổi người được nữa."
     },
     "invite": {
       "title": "Mời thêm",
