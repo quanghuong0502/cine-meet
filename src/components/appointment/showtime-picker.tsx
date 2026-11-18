@@ -30,13 +30,15 @@ interface Props {
   onToggle: (id: string) => void;
   /** The day to open on (the day of the showtime the person came from). */
   initialDay?: string;
+  /** The day is already decided: no day strip, only that day's showtimes. */
+  hideDays?: boolean;
 }
 
 /**
  * Picks showtimes of one movie without listing them all: a strip of the days that have showtimes (one day at a time), a cinema filter
  * when there is more than one, then that day's showtimes. A picked showtime is shown by the check on its own row.
  */
-export function ShowtimePicker({ showtimes, selectedIds, onToggle, initialDay }: Props) {
+export function ShowtimePicker({ showtimes, selectedIds, onToggle, initialDay, hideDays = false }: Props) {
   const t = useTranslations("showtimes");
   const ta = useTranslations("appointments.new");
   const locale = useLocale();
@@ -54,7 +56,7 @@ export function ShowtimePicker({ showtimes, selectedIds, onToggle, initialDay }:
 
   return (
     <div className="flex flex-col gap-item">
-      <nav aria-label={t("dayStrip")}>
+      {hideDays ? null : <nav aria-label={t("dayStrip")}>
         <ul className="scroll-strip flex gap-stack pb-tight">
           {days.map((key) => {
             const date = new Date(`${key}T00:00:00Z`);
@@ -77,7 +79,7 @@ export function ShowtimePicker({ showtimes, selectedIds, onToggle, initialDay }:
             );
           })}
         </ul>
-      </nav>
+      </nav>}
 
       {branches.length > 1 ? (
         <div role="group" aria-label={t("filters.labels.branch")} className="scroll-strip flex gap-stack pb-tight">

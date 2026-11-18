@@ -1305,7 +1305,8 @@
       "not_attendee": "That person isn't on the list going.",
       "invalid_food": "That item isn't sold at this cinema, pick another.",
       "too_early": "The movie hasn't started yet, so it can't be marked as watched.",
-      "invalid_amount": "That amount doesn't look right, check it again."
+      "invalid_amount": "That amount doesn't look right, check it again.",
+      "wrong_day": "That showtime is not on the agreed day, pick one on that day."
     },
     "new": {
       "title": "Create plan",

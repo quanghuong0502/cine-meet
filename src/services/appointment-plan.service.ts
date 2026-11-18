@@ -18,6 +18,7 @@ import { generateGrid } from "@/lib/seat-layout/generate";
 import type { LayoutConfig, LayoutGeometry, LayoutSeat, SeatTypeInfo } from "@/lib/seat-layout/types";
 import { SeatType } from "@/models/seat-type";
 import { searchShowtimes, type ShowtimeRow } from "@/services/showtime.service";
+import { vietnamDayKey } from "@/lib/datetime";
 import { vietnamParts } from "@/services/pricing/ticket-price";
 import { comboPrice } from "@/services/pricing/combo-price";
 
@@ -67,6 +68,9 @@ export async function chooseShowtime(creatorId: string, id: string, showtimeId: 
     if (doc.status !== "PLANNING" && doc.status !== "CONFIRMED") return { ok: false as const, error: "bad_state" as const };
     const showtime = await Showtime.findOne({ _id: showtimeId, movieId: doc.movieId }, "startAt").lean();
     if (!showtime || showtime.startAt.getTime() <= now.getTime()) return { ok: false as const, error: "no_showtime" as const };
+    // The group agreed on a day: the showtime has to be on it.
+    const agreed = chosenOption(doc);
+    if (agreed && vietnamDayKey(agreed.startAt.toISOString()) !== vietnamDayKey(showtime.startAt.toISOString())) return { ok: false as const, error: "wrong_day" as const };
     if (sameId(doc.showtimeId, showtimeId)) return { ok: true as const, changed: false, wasConfirmed: false, slotAt: showtime.startAt.toISOString(), attendeeIds: [] as string[] };
 
     let option = doc.timeOptions.find((o) => sameId(o.showtimeId, showtimeId));
@@ -368,9 +372,12 @@ export interface PlanData {
 export async function getPlanData(userId: string, id: string): Promise<PlanData | null> {
   if (!isValidObjectId(id)) return null;
   await connectToDatabase();
-  const doc = await Appointment.findById(id, "creatorId status movieId showtimeId").lean();
+  const doc = await Appointment.findById(id, "creatorId status movieId showtimeId chosenOptionId timeOptions").lean();
   if (!doc || !sameId(doc.creatorId, userId) || (doc.status !== "PLANNING" && doc.status !== "CONFIRMED")) return null;
-  const showtimes = await searchShowtimes({ movieId: doc.movieId.toString(), limit: 300 });
+  // Only showtimes on the day the group agreed on.
+  const agreed = doc.timeOptions.find((o) => sameId(o._id, doc.chosenOptionId?.toString() ?? ""));
+  const day = agreed ? vietnamDayKey(agreed.startAt.toISOString()) : undefined;
+  const showtimes = await searchShowtimes({ movieId: doc.movieId.toString(), date: day, limit: 300 });
   const data: PlanData = { showtimes, food: { items: [], combos: [] } };
   if (!doc.showtimeId) return data;
 

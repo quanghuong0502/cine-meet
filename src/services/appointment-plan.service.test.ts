@@ -119,6 +119,15 @@ describe("appointment planning (stage 2)", () => {
     expect(await (await import("@/models/seat-claim")).SeatClaim.countDocuments({ seatCode: "A1" })).toBe(1);
   });
 
+  it("only accepts a showtime on the day the group agreed on", async () => {
+    const id = await lockedAppointment();
+    await plan.beginPlanning(creator, id);
+    const room = await m.Auditorium!.create({ branchId: oid(), name: "P2" });
+    const otherDay = String((await m.Showtime!.create({ movieId: movie, auditoriumId: room._id, layoutId: oid(), startAt: hours(5 + 48), endAt: hours(7 + 48), formatId: oid() }))._id);
+    expect(await plan.chooseShowtime(creator, id, otherDay)).toEqual({ ok: false, error: "wrong_day" });
+    expect(await plan.chooseShowtime(creator, id, showtime)).toEqual({ ok: true });
+  });
+
   it("refuses broken, unknown and over-full seats and people not going", async () => {
     const id = await lockedAppointment();
     await plan.beginPlanning(creator, id);

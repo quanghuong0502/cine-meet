@@ -84,6 +84,7 @@ export function PlanSection({ view, plan, run, busy }: Props) {
               showtimes={choices}
               selectedIds={view.showtimeId ? [view.showtimeId] : []}
               initialDay={current ? vietnamDayKey(current.startAt) : undefined}
+              hideDays
               onToggle={(id) => run(() => chooseShowtimeAction(view.id, id), t("showtimeSaved"), () => setChanging(false))}
             />
           ) : (

@@ -1305,7 +1305,8 @@
       "not_attendee": "Người này không nằm trong danh sách đi xem.",
       "invalid_food": "Món này không có ở rạp này, chọn món khác nha.",
       "too_early": "Phim chưa chiếu nên chưa đóng lịch hẹn được nha.",
-      "invalid_amount": "Số tiền chưa đúng, kiểm tra lại nha."
+      "invalid_amount": "Số tiền chưa đúng, kiểm tra lại nha.",
+      "wrong_day": "Suất này không cùng ngày đã chốt nha, chọn suất trong ngày đó."
     },
     "new": {
       "title": "Tạo lịch hẹn",

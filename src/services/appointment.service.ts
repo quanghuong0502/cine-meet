@@ -72,6 +72,7 @@ export type AppointmentError =
   | "reminder_too_soon"
   | "conflict"
   | "no_showtime"
+  | "wrong_day"
   | "seat_taken"
   | "invalid_seat"
   | "needs_seat"
