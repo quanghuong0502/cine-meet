@@ -22,6 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { canWithdraw, isFinished, isOpenForReplies } from "@/lib/appointment/state";
 import { formatDayCompact, formatDayLong, formatTime } from "@/lib/datetime";
+import { cn } from "@/lib/utils";
 import type { AppointmentView, ParticipantView } from "@/services/appointment.service";
 
 type Dialog = "decline" | "withdraw" | "cancel" | null;
@@ -44,6 +45,8 @@ export function AppointmentDetail({ view, friends = [], groups = [] }: DetailPro
   const locale = useLocale();
   const [pending, start] = useTransition();
   const [dialog, setDialog] = useState<Dialog>(null);
+  // The poll's fixed bottom bar floats over the page, so while it shows the page keeps room for it at its end.
+  const [barVisible, setBarVisible] = useState(false);
 
   const open = isOpenForReplies(view.status);
   // After the answer-by time the server refuses replies, so the controls are not offered at all.
@@ -74,7 +77,7 @@ export function AppointmentDetail({ view, friends = [], groups = [] }: DetailPro
   const when = (iso: string) => `${formatDayLong(iso, locale)} · ${formatTime(iso, locale)}`;
 
   return (
-    <div className="flex flex-col gap-section has-[[data-poll-bar]]:pb-action-clear">
+    <div className={cn("flex flex-col gap-section", barVisible && "pb-action-clear")}>
       <section className="flex items-start gap-item">
         <ListThumb shape="poster" imageUrl={view.movie.posterUrl} />
         <div className="flex min-w-0 flex-1 flex-col gap-stack">
@@ -140,6 +143,7 @@ export function AppointmentDetail({ view, friends = [], groups = [] }: DetailPro
           nameOf={nameOf}
           when={when}
           busy={pending}
+          onBarVisibleChange={setBarVisible}
           // The creator locks a time straight from its card (the dialog there asks first and lets them untick people).
           onLock={view.isCreator && open ? (optionId, attendeeIds) => run(() => lockParticipantsAction(view.id, { optionId, attendeeIds }), t("locked", { count: attendeeIds.length })) : undefined}
           onRemind={view.isCreator && open && !view.deadlinePassed ? (optionId) => run(() => remindVotersAction(view.id, optionId), (count) => t("reminded", { count: count ?? 0 })) : undefined}

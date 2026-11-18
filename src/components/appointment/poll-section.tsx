@@ -2,7 +2,7 @@
 
 import { BellRing, CalendarClock, LoaderCircle, Plus, Save, ThumbsDown, ThumbsUp, Undo2, UserLock, X } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { submitResponseAction } from "@/actions/appointments";
 import { Chip } from "@/components/admin/auditorium-editor/chips";
@@ -29,6 +29,8 @@ interface Props {
   onLock?: (optionId: string, attendeeIds: string[]) => void;
   /** For the creator while people can still answer: nudges the people who have not voted on this time. */
   onRemind?: (optionId: string) => void;
+  /** Tells the page whether the fixed bottom bar is showing, so it can leave room for it at its very end. */
+  onBarVisibleChange?: (visible: boolean) => void;
   /** A write is running (the lock, in the creator's case). */
   busy?: boolean;
 }
@@ -39,7 +41,7 @@ interface Props {
  * at once. The counts and names show the person's own draft straight away. The parent gives this a `key` that changes after a save,
  * so it starts again from what the server now has.
  */
-export function PollSection({ view, canVote, nameOf, when, declineButton, onLock, onRemind, busy = false }: Props) {
+export function PollSection({ view, canVote, nameOf, when, declineButton, onLock, onRemind, onBarVisibleChange, busy = false }: Props) {
   const t = useTranslations("appointments.detail");
   const tc = useTranslations("appointments");
   const [pending, start] = useTransition();
@@ -52,6 +54,11 @@ export function PollSection({ view, canVote, nameOf, when, declineButton, onLock
 
   const changed = view.options.filter((o) => (draft[o.id] ?? null) !== (o.myVote ?? null));
   const dirty = changed.length > 0 || proposals.length > 0;
+  const barVisible = Boolean(canVote && (dirty || declineButton));
+
+  useEffect(() => {
+    onBarVisibleChange?.(barVisible);
+  }, [barVisible, onBarVisibleChange]);
 
   function addProposal() {
     const iso = vietnamToIso(date, time);
@@ -207,11 +214,10 @@ export function PollSection({ view, canVote, nameOf, when, declineButton, onLock
         />
       ) : null}
 
-      {canVote && (dirty || declineButton) ? (
+      {barVisible ? (
         <>
-          {/* Tells the page to leave room at its very end for the fixed bar (see `has-[[data-poll-bar]]` on the screen), so the last
-              thing on the page can scroll clear of it. The room is not made here: it would open a gap in the middle of the page. */}
-          <span data-poll-bar hidden />
+          {/* The page leaves room at its very end for this fixed bar (`onBarVisibleChange`), so the last thing on the page can scroll
+              clear of it. The room is not made here: it would open a gap in the middle of the page. */}
           <div data-bottom-fixed className="pointer-events-none fixed inset-x-0 bottom-[var(--nav-clearance)] z-30 px-inset">
             <div className="mx-auto flex max-w-form items-center gap-stack">
               {dirty ? (
