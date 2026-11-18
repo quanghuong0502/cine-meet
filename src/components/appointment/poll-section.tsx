@@ -122,7 +122,7 @@ export function PollSection({ view, canVote, nameOf, when, declineButton, onLock
                 </div>
                 {/* Creator: nudge the people who have not voted on this time, or lock it in (nobody said Yes -> nobody could go, so it is off). */}
                 {onLock || onRemind ? (
-                  <div className="flex shrink-0 gap-stack">
+                  <div className="flex shrink-0 flex-col gap-stack">
                     {onRemind ? (
                       <Button type="button" variant="outline" size="icon" disabled={busy || option.waitingCount === 0 || option.recentlyReminded} aria-label={t("remindThisTime")} onClick={() => onRemind(option.id)}>
                         <BellRing aria-hidden />
