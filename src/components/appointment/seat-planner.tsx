@@ -6,13 +6,12 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { assignSeatsAction, type ActionResult } from "@/actions/appointments";
 import { SeatMap, type SeatMapSeatType } from "@/components/seat-map/seat-map";
-import { UserAvatar, getInitials } from "@/components/user-avatar";
+import { PersonChip } from "@/components/appointment/person-chip";
+import { getInitials } from "@/components/user-avatar";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { suggestTogether } from "@/lib/appointment/suggest";
-import { PX } from "@/lib/ui-sizes";
-import { cn } from "@/lib/utils";
 import type { LayoutSeat } from "@/lib/seat-layout/types";
 import type { AppointmentView } from "@/services/appointment.service";
 import type { PlanData } from "@/services/appointment-plan.service";
@@ -116,20 +115,7 @@ export function SeatPlanner({ view, room, onSave, busy, onDraft, initialSeats }:
       </h2>
       <div role="group" aria-label={t("whoIsSeated")} className="scroll-strip flex gap-stack pb-tight">
         {view.attendees.map((p) => (
-          <button
-            key={p.id}
-            type="button"
-            aria-pressed={active === p.id}
-            onClick={() => setActive(p.id)}
-            className={cn(
-              "flex min-h-target shrink-0 items-center gap-stack rounded-full border py-tight pr-inset pl-tight outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
-              active === p.id ? "border-transparent bg-primary text-primary-foreground" : "bg-card",
-            )}
-          >
-            <UserAvatar name={p.name} image={p.avatar} size={PX.avatar} />
-            <span className="type-label">{p.name}</span>
-            <span className="type-label tabular-nums">{draft.get(p.id) ?? t("noSeat")}</span>
-          </button>
+          <PersonChip key={p.id} person={{ name: p.name, avatar: p.avatar }} selected={active === p.id} onClick={() => setActive(p.id)} trailing={draft.get(p.id) ?? t("noSeat")} />
         ))}
       </div>
       <SeatMap showHeatmap={heat} geometry={room.geometry} seats={room.seats} seatTypes={types} selectedCodes={selectedCodes} reservedCodes={taken} holderLabels={holderLabels} onSeatTap={onSeatTap} />

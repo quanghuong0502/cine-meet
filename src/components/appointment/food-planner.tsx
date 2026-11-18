@@ -1,10 +1,11 @@
 "use client";
 
-import { Minus, Plus } from "lucide-react";
+import { Minus, Plus, Users } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { setFoodAction, type ActionResult } from "@/actions/appointments";
 import { Chip } from "@/components/admin/auditorium-editor/chips";
+import { PersonChip } from "@/components/appointment/person-chip";
 import { Button } from "@/components/ui/button";
 import { formatVnd } from "@/lib/money";
 import type { AppointmentView } from "@/services/appointment.service";
@@ -83,13 +84,9 @@ export function FoodPlanner({ view, food, onSave, busy, onDraft, initialLines }:
         {t("foodTitle")}
       </h2>
       <div role="group" aria-label={t("foodFor")} className="scroll-strip flex gap-stack pb-tight">
-        <Chip selected={owner === SHARED} onClick={() => setOwner(SHARED)}>
-          {t("foodShared")}
-        </Chip>
+        <PersonChip selected={owner === SHARED} onClick={() => setOwner(SHARED)} icon={<Users className="ml-stack size-icon" aria-hidden />} label={t("foodShared")} />
         {view.attendees.map((p) => (
-          <Chip key={p.id} selected={owner === p.id} onClick={() => setOwner(p.id)}>
-            {p.name}
-          </Chip>
+          <PersonChip key={p.id} person={{ name: p.name, avatar: p.avatar }} selected={owner === p.id} onClick={() => setOwner(p.id)} />
         ))}
       </div>
       {food.categories.length > 0 || food.combos.length > 0 ? (
