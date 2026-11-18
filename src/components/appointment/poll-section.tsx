@@ -2,7 +2,8 @@
 
 import { BellRing, CalendarClock, Clock, LoaderCircle, Plus, Save, ThumbsDown, ThumbsUp, Undo2, UserLock, X } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
+import { createPortal } from "react-dom";
 import { toast } from "sonner";
 import { submitResponseAction } from "@/actions/appointments";
 import { Chip } from "@/components/admin/auditorium-editor/chips";
@@ -29,8 +30,11 @@ interface Props {
   onLock?: (optionId: string, attendeeIds: string[]) => void;
   /** For the creator while people can still answer: nudges the people who have not voted on this time. */
   onRemind?: (optionId: string) => void;
-  /** Tells the page whether the fixed bottom bar is showing, so it can leave room for it at its very end. */
-  onBarVisibleChange?: (visible: boolean) => void;
+  /**
+   * Where the bottom bar (Save, Decline) is drawn: a sticky strip at the very end of the page, owned by the page. It sits in the flow, so a
+   * short page does not grow (and scroll) just to make room for it, and a long page keeps it above the menu while scrolling.
+   */
+  barSlot?: HTMLElement | null;
   /** A write is running (the lock, in the creator's case). */
   busy?: boolean;
 }
@@ -41,7 +45,7 @@ interface Props {
  * at once. The counts and names show the person's own draft straight away. The parent gives this a `key` that changes after a save,
  * so it starts again from what the server now has.
  */
-export function PollSection({ view, canVote, when, declineButton, onLock, onRemind, onBarVisibleChange, busy = false }: Props) {
+export function PollSection({ view, canVote, when, declineButton, onLock, onRemind, barSlot = null, busy = false }: Props) {
   const t = useTranslations("appointments.detail");
   const tc = useTranslations("appointments");
   const [pending, start] = useTransition();
@@ -55,10 +59,6 @@ export function PollSection({ view, canVote, when, declineButton, onLock, onRemi
   const changed = view.options.filter((o) => (draft[o.id] ?? null) !== (o.myVote ?? null));
   const dirty = changed.length > 0 || proposals.length > 0;
   const barVisible = Boolean(canVote && (dirty || declineButton));
-
-  useEffect(() => {
-    onBarVisibleChange?.(barVisible);
-  }, [barVisible, onBarVisibleChange]);
 
   function addProposal() {
     const iso = vietnamToIso(date, time);
@@ -234,11 +234,8 @@ export function PollSection({ view, canVote, when, declineButton, onLock, onRemi
         />
       ) : null}
 
-      {barVisible ? (
-        <>
-          {/* The page leaves room at its very end for this fixed bar (`onBarVisibleChange`), so the last thing on the page can scroll
-              clear of it. The room is not made here: it would open a gap in the middle of the page. */}
-          <div data-bottom-fixed className="pointer-events-none fixed inset-x-0 bottom-[var(--nav-clearance)] z-30 px-inset">
+      {barVisible && barSlot
+        ? createPortal(
             <div className="mx-auto flex max-w-form items-center gap-stack">
               {dirty ? (
                 <Button type="button" variant="outline" size="icon" disabled={pending} onClick={discard} aria-label={t("discard")} className="pointer-events-auto size-control shrink-0 rounded-full">
@@ -252,10 +249,10 @@ export function PollSection({ view, canVote, when, declineButton, onLock, onRemi
                   {t("save")}
                 </Button>
               ) : null}
-            </div>
-          </div>
-        </>
-      ) : null}
+            </div>,
+            barSlot,
+          )
+        : null}
     </section>
   );
 }

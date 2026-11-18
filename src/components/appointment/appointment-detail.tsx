@@ -26,7 +26,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { canWithdraw, isFinished, isOpenForReplies } from "@/lib/appointment/state";
 import { formatDayCompact, formatDayLong, formatTime } from "@/lib/datetime";
-import { cn } from "@/lib/utils";
 import type { AppointmentView, ParticipantView } from "@/services/appointment.service";
 import type { CostView, PlanData } from "@/services/appointment-plan.service";
 
@@ -54,8 +53,8 @@ export function AppointmentDetail({ view, friends = [], groups = [], plan = null
   const locale = useLocale();
   const [pending, start] = useTransition();
   const [dialog, setDialog] = useState<Dialog>(null);
-  // The poll's fixed bottom bar floats over the page, so while it shows the page keeps room for it at its end.
-  const [barVisible, setBarVisible] = useState(false);
+  // The strip at the end of the page that holds the poll's Save and Decline buttons (drawn into it by `PollSection`).
+  const [barSlot, setBarSlot] = useState<HTMLDivElement | null>(null);
 
   const open = isOpenForReplies(view.status);
   // After the answer-by time the server refuses replies, so the controls are not offered at all.
@@ -90,7 +89,7 @@ export function AppointmentDetail({ view, friends = [], groups = [], plan = null
   const when = (iso: string) => `${formatDayLong(iso, locale)} · ${formatTime(iso, locale)}`;
 
   return (
-    <div className={cn("flex flex-col gap-section", (barVisible || hasFloatingAction) && "pb-action-clear")}>
+    <div className="flex flex-col gap-section">
       <section className="flex items-start gap-item">
         <ListThumb shape="poster" imageUrl={view.movie.posterUrl} />
         <div className="flex min-w-0 flex-1 flex-col gap-stack">
@@ -159,7 +158,7 @@ export function AppointmentDetail({ view, friends = [], groups = [], plan = null
           canVote={canVote}
           when={when}
           busy={pending}
-          onBarVisibleChange={setBarVisible}
+          barSlot={barSlot}
           // The creator locks a time straight from its card (the dialog there asks first and lets them untick people).
           onLock={view.isCreator && open ? (optionId, attendeeIds) => run(() => lockParticipantsAction(view.id, { optionId, attendeeIds }), t("locked", { count: attendeeIds.length })) : undefined}
           onRemind={view.isCreator && open && !view.deadlinePassed ? (optionId) => run(() => remindVotersAction(view.id, optionId), (count) => t("reminded", { count: count ?? 0 })) : undefined}
@@ -202,7 +201,8 @@ export function AppointmentDetail({ view, friends = [], groups = [], plan = null
       ) : null}
 
       {hasFloatingAction ? (
-        <div data-bottom-fixed className="pointer-events-none fixed inset-x-0 bottom-[var(--nav-clearance)] z-30 px-inset">
+        // In the flow, stuck above the menu: a short page does not get taller (and scrollable) to make room for it.
+        <div data-bottom-fixed className="pointer-events-none sticky bottom-[var(--nav-clearance)] z-30">
           <div className="mx-auto flex max-w-form flex-col gap-stack">
             {canConfirm ? (
               <Button type="button" size="cta" disabled={pending} onClick={() => run(() => confirmAppointmentAction(view.id), t("plan.confirmed"))} className="pointer-events-auto">
@@ -231,6 +231,8 @@ export function AppointmentDetail({ view, friends = [], groups = [], plan = null
           </div>
         </div>
       ) : null}
+
+      <div ref={setBarSlot} data-bottom-fixed className="pointer-events-none sticky bottom-[var(--nav-clearance)] z-30 empty:hidden" />
 
       <ReasonDialog
         open={dialog === "decline"}
