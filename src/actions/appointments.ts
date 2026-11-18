@@ -10,11 +10,15 @@ import {
   chooseShowtime,
   completeAppointment,
   confirmAppointment,
+  confirmPlan,
+  confirmPlanSchema,
+  getPlanData,
   personCostSchema,
   setFood,
   setFoodSchema,
   setPersonCost,
 } from "@/services/appointment-plan.service";
+import type { PlanData } from "@/services/appointment-plan.service";
 import { searchShowtimesFrom, type ShowtimeRow } from "@/services/showtime.service";
 import {
   cancelAppointment,
@@ -201,4 +205,23 @@ export async function findShowtimesFromAction(movieId: string, startAt: string):
   const when = new Date(startAt);
   if (!idSchema.safeParse(movieId).success || Number.isNaN(when.getTime())) return { ok: false, error: "validation" };
   return { ok: true, showtimes: await searchShowtimesFrom(movieId, when) };
+}
+
+/** The room and food of a showtime the creator is trying (not saved yet): read only, nothing is written. */
+export async function loadPlanRoomAction(id: string, showtimeId: string): Promise<ActionResult<{ room?: PlanData["room"]; food: PlanData["food"] }>> {
+  const user = await requireUser();
+  if (!idSchema.safeParse(id).success || !idSchema.safeParse(showtimeId).success) return { ok: false, error: "validation" };
+  const data = await getPlanData(user.userId, id, showtimeId);
+  if (!data) return { ok: false, error: "no_showtime" };
+  return { ok: true, room: data.room, food: data.food };
+}
+
+/** Saves showtime, seats and food together, then confirms the plan. */
+export async function confirmPlanAction(id: string, input: unknown): Promise<ActionResult> {
+  const user = await requireUser();
+  const parsed = confirmPlanSchema.safeParse(input);
+  if (!idSchema.safeParse(id).success || !parsed.success) return { ok: false, error: "validation" };
+  const result = await confirmPlan(user.userId, id, parsed.data);
+  refresh(id);
+  return result.ok ? { ok: true } : result;
 }

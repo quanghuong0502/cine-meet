@@ -7,6 +7,8 @@ import { beginPlanningAction, chooseShowtimeAction, type ActionResult } from "@/
 import { EstimateList } from "@/components/appointment/estimate-list";
 import { FoodPlanner } from "@/components/appointment/food-planner";
 import { SeatPlanner } from "@/components/appointment/seat-planner";
+import { LoadingState } from "@/components/loading-state";
+import type { PlanDraft } from "@/components/appointment/use-plan-draft";
 import { ShowtimePicker, type ShowtimeChoice } from "@/components/appointment/showtime-picker";
 import { UserAvatar } from "@/components/user-avatar";
 import { Button } from "@/components/ui/button";
@@ -21,13 +23,15 @@ interface Props {
   plan: PlanData | null;
   run: (action: () => Promise<ActionResult>, done: string, after?: () => void) => void;
   busy: boolean;
+  /** What the creator is trying while planning; nothing in it is saved until the plan is confirmed. */
+  draft: PlanDraft;
 }
 
 /**
  * Stage 2 of an appointment. The creator picks the showtime, seats everyone, adds food and confirms (the confirm button floats above the
  * menu, in the parent). Everyone else sees where people sit and what it costs. Showtime, seats and food stay editable after confirming.
  */
-export function PlanSection({ view, plan, run, busy }: Props) {
+export function PlanSection({ view, plan, run, busy, draft }: Props) {
   const t = useTranslations("appointments.detail.plan");
   const [changing, setChanging] = useState(false);
 
@@ -47,7 +51,9 @@ export function PlanSection({ view, plan, run, busy }: Props) {
       })),
     [plan?.showtimes],
   );
-  const current = plan?.showtimes.find((s) => s.id === view.showtimeId);
+  const planning = view.status === "PLANNING";
+  const showtimeId = planning ? draft.showtimeId : view.showtimeId;
+  const current = plan?.showtimes.find((s) => s.id === showtimeId);
   // The chosen showtime may not be in the list (it is not offered earlier than the agreed time), so its place is also read from the chosen time.
   const chosenPlace = view.options.find((o) => o.id === view.chosenOptionId)?.place;
 
@@ -67,7 +73,7 @@ export function PlanSection({ view, plan, run, busy }: Props) {
   if (view.status !== "PLANNING" && view.status !== "CONFIRMED" && view.status !== "COMPLETED") return null;
 
   const editable = view.isCreator && plan !== null;
-  const pickerOpen = editable && (changing || !view.showtimeId);
+  const pickerOpen = editable && (changing || !showtimeId);
 
   return (
     <>
@@ -84,10 +90,14 @@ export function PlanSection({ view, plan, run, busy }: Props) {
           {pickerOpen ? (
             <ShowtimePicker
               showtimes={choices}
-              selectedIds={view.showtimeId ? [view.showtimeId] : []}
+              selectedIds={showtimeId ? [showtimeId] : []}
               initialDay={current ? vietnamDayKey(current.startAt) : undefined}
               hideDays
-              onToggle={(id) => run(() => chooseShowtimeAction(view.id, id), t("showtimeSaved"), () => setChanging(false))}
+              onToggle={(id) => {
+                if (!planning) return run(() => chooseShowtimeAction(view.id, id), t("showtimeSaved"), () => setChanging(false));
+                setChanging(false);
+                void draft.changeShowtime(id);
+              }}
             />
           ) : (
             <Button type="button" variant="outline" size="cta" disabled={busy} onClick={() => setChanging(true)}>
@@ -97,8 +107,15 @@ export function PlanSection({ view, plan, run, busy }: Props) {
         </section>
       ) : null}
 
-      {editable && plan.room ? <SeatPlanner key={`seats:${view.seats.map((s) => `${s.userId}:${s.seatCode}`).join("|")}`} view={view} room={plan.room} onSave={run} busy={busy} /> : null}
-      {editable && plan.room ? <FoodPlanner key={`food:${view.fnb.map((l) => `${l.id}`).join("|")}`} view={view} food={plan.food} onSave={run} busy={busy} /> : null}
+      {editable && planning && draft.loading ? <LoadingState compact /> : null}
+      {editable && planning && !draft.loading && draft.room && draft.food ? (
+        <>
+          <SeatPlanner key={`draft-seats:${draft.showtimeId}`} view={view} room={draft.room} onSave={run} busy={busy} initialSeats={draft.seats} onDraft={draft.setSeats} />
+          <FoodPlanner key={`draft-food:${draft.showtimeId}`} view={view} food={draft.food} onSave={run} busy={busy} initialLines={draft.lines} onDraft={draft.setLines} />
+        </>
+      ) : null}
+      {editable && !planning && plan.room ? <SeatPlanner key={`seats:${view.seats.map((s) => `${s.userId}:${s.seatCode}`).join("|")}`} view={view} room={plan.room} onSave={run} busy={busy} /> : null}
+      {editable && !planning && plan.room ? <FoodPlanner key={`food:${view.fnb.map((l) => `${l.id}`).join("|")}`} view={view} food={plan.food} onSave={run} busy={busy} /> : null}
 
       {!editable ? (
         <section aria-labelledby="appt-where" className="flex flex-col gap-item">
@@ -120,7 +137,7 @@ export function PlanSection({ view, plan, run, busy }: Props) {
         </section>
       ) : null}
 
-      {view.showtimeId ? <EstimateList view={view} title={view.status === "COMPLETED" ? t("estimateTitleDone") : t("estimateTitle")} /> : null}
+      {view.showtimeId && !(editable && planning) ? <EstimateList view={view} title={view.status === "COMPLETED" ? t("estimateTitleDone") : t("estimateTitle")} /> : null}
     </>
   );
 }

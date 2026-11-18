@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import {
   cancelAppointmentAction,
   completeAppointmentAction,
-  confirmAppointmentAction,
+  confirmPlanAction,
   declineInvitationAction,
   lockParticipantsAction,
   remindVotersAction,
@@ -19,6 +19,7 @@ import { AppointmentStatusBadge } from "@/components/appointment/status-badge";
 import { ReasonDialog } from "@/components/appointment/reason-dialog";
 import { PollSection } from "@/components/appointment/poll-section";
 import { CostSection } from "@/components/appointment/cost-section";
+import { usePlanDraft } from "@/components/appointment/use-plan-draft";
 import { PlanSection } from "@/components/appointment/plan-section";
 import { PersonRow } from "@/components/friends/person-row";
 import { ListThumb } from "@/components/list-thumb";
@@ -54,6 +55,7 @@ export function AppointmentDetail({ view, friends = [], groups = [], plan = null
   const locale = useLocale();
   const [pending, start] = useTransition();
   const [dialog, setDialog] = useState<Dialog>(null);
+  const draft = usePlanDraft(view, plan);
   // The strip at the end of the page that holds the poll's Save and Decline buttons (drawn into it by `PollSection`).
   const [barSlot, setBarSlot] = useState<HTMLDivElement | null>(null);
   // The buttons are fixed above the menu; the page keeps only as much room at its end as they actually cover (none on a short page).
@@ -149,7 +151,7 @@ export function AppointmentDetail({ view, friends = [], groups = [], plan = null
             {chosen.place ? <span className="break-words type-secondary text-muted-foreground">{chosen.place}</span> : null}
           </div>
         </section>
-        {view.status !== "CANCELLED" && view.myStatus !== "excluded" && view.myStatus !== "dropped" ? <PlanSection view={view} plan={plan} run={run} busy={pending} /> : null}
+        {view.status !== "CANCELLED" && view.myStatus !== "excluded" && view.myStatus !== "dropped" ? <PlanSection view={view} plan={plan} run={run} busy={pending} draft={draft} /> : null}
         {view.status === "COMPLETED" ? <CostSection view={view} costs={costs} onSave={run} busy={pending} /> : null}
         </>
       ) : (
@@ -206,7 +208,7 @@ export function AppointmentDetail({ view, friends = [], groups = [], plan = null
       <div ref={barRef} data-bottom-fixed className="pointer-events-none fixed inset-x-0 bottom-[var(--nav-clearance)] z-30 px-inset">
         <div className="mx-auto flex max-w-form flex-col gap-stack">
             {!finished && canConfirm ? (
-              <Button type="button" size="cta" disabled={pending} onClick={() => run(() => confirmAppointmentAction(view.id), t("plan.confirmed"))} className="pointer-events-auto">
+              <Button type="button" size="cta" disabled={pending || draft.loading} onClick={() => run(() => confirmPlanAction(view.id, draft.payload()), t("plan.confirmed"))} className="pointer-events-auto">
                 <CircleCheck aria-hidden />
                 {t("plan.confirm")}
               </Button>

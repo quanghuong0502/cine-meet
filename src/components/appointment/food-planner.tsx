@@ -9,26 +9,36 @@ import { Button } from "@/components/ui/button";
 import { formatVnd } from "@/lib/money";
 import type { AppointmentView } from "@/services/appointment.service";
 import type { PlanData } from "@/services/appointment-plan.service";
+import type { FoodLine } from "@/components/appointment/use-plan-draft";
 
 interface Props {
   view: AppointmentView;
   food: PlanData["food"];
   onSave: (action: () => Promise<ActionResult>, done: string) => void;
   busy: boolean;
+  /** While the plan is being made nothing is saved: every change goes here, there is no save button, and the list starts from `initialLines`. */
+  onDraft?: (lines: FoodLine[]) => void;
+  initialLines?: FoodLine[];
 }
 
 const SHARED = "shared";
 const key = (owner: string, kind: string, refId: string) => `${owner}|${kind}|${refId}`;
 
 /** Food and drinks: pick whose they are (the whole group's, or one person's), then set how many of each. Saved with one button. */
-export function FoodPlanner({ view, food, onSave, busy }: Props) {
+export function FoodPlanner({ view, food, onSave, busy, onDraft, initialLines }: Props) {
   const t = useTranslations("appointments.detail.plan");
   const locale = useLocale();
   const [owner, setOwner] = useState(SHARED);
-  const [qty, setQty] = useState(() => new Map(view.fnb.map((l) => [key(l.ownerId ?? SHARED, l.kind, l.refId), l.quantity])));
+  const [qty, setQty] = useState(() => new Map((initialLines ?? view.fnb).map((l) => [key(l.ownerId ?? SHARED, l.kind, l.refId), l.quantity])));
   const [dirty, setDirty] = useState(false);
 
   const count = (kind: "item" | "combo", id: string) => qty.get(key(owner, kind, id)) ?? 0;
+  function toLines(map: Map<string, number>): FoodLine[] {
+    return [...map].map(([k, quantity]) => {
+      const [who, kind, refId] = k.split("|") as [string, "item" | "combo", string];
+      return { ownerId: who === SHARED ? undefined : who, kind, refId, quantity };
+    });
+  }
   function change(kind: "item" | "combo", id: string, delta: number) {
     const next = new Map(qty);
     const value = Math.max(0, Math.min(20, count(kind, id) + delta));
@@ -36,13 +46,11 @@ export function FoodPlanner({ view, food, onSave, busy }: Props) {
     else next.set(key(owner, kind, id), value);
     setQty(next);
     setDirty(true);
+    onDraft?.(toLines(next));
   }
 
   function save() {
-    const lines = [...qty].map(([k, quantity]) => {
-      const [who, kind, refId] = k.split("|") as [string, "item" | "combo", string];
-      return { ownerId: who === SHARED ? undefined : who, kind, refId, quantity };
-    });
+    const lines = toLines(qty);
     onSave(async () => {
       const result = await setFoodAction(view.id, { lines });
       if (result.ok) setDirty(false);
@@ -98,9 +106,11 @@ export function FoodPlanner({ view, food, onSave, busy }: Props) {
           })}
         </ul>
       )}
-      <Button type="button" size="cta" disabled={busy || !dirty} onClick={save}>
-        {t("saveFood")}
-      </Button>
+      {onDraft ? null : (
+        <Button type="button" size="cta" disabled={busy || !dirty} onClick={save}>
+          {t("saveFood")}
+        </Button>
+      )}
     </section>
   );
 }

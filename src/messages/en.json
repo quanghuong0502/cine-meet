@@ -1421,6 +1421,7 @@
         "whoIsSeated": "Pick who to seat",
         "noSeat": "No seat yet",
         "seatsSaved": "Seating saved",
+        "roomFailed": "Couldn't load that room, try picking the showtime again",
         "seatTakenByOthers": "Another plan already holds this seat.",
         "seatBroken": "That seat is broken, pick another.",
         "seatFull": "That seat is full.",

@@ -23,16 +23,19 @@ interface Props {
   /** Runs the write and reports it (toast, busy state) like every other action on the screen. */
   onSave: (action: () => Promise<ActionResult>, done: string) => void;
   busy: boolean;
+  /** While the plan is being made nothing is saved: every change goes here instead, and the seats shown start from `initialSeats`. */
+  onDraft?: (next: Map<string, string>) => void;
+  initialSeats?: Map<string, string>;
 }
 
 /**
- * The creator seats everyone: tap a person, then tap a seat (tap again to take them off). Each tap is saved straight away, so a seat
- * somebody else just took is refused on the spot. A couple seat holds two. The map shows the first letters of who sits where.
+ * The creator seats everyone: tap a person, then tap a seat (tap again to take them off). While the plan is being made a tap only changes the draft (saved on confirm); after confirming each tap is saved straight
+ * away, so a seat somebody else just took is refused on the spot. A couple seat holds two. The map shows the first letters of who sits where.
  */
-export function SeatPlanner({ view, room, onSave, busy }: Props) {
+export function SeatPlanner({ view, room, onSave, busy, onDraft, initialSeats }: Props) {
   const t = useTranslations("appointments.detail.plan");
   const locale = useLocale();
-  const [draft, setDraft] = useState(() => new Map(view.seats.map((s) => [s.userId, s.seatCode])));
+  const [draft, setDraft] = useState(() => initialSeats ?? new Map(view.seats.map((s) => [s.userId, s.seatCode])));
   const firstFree = (map: Map<string, string>) => view.attendees.find((p) => !map.has(p.id))?.id ?? view.attendees[0]?.id ?? "";
   const [active, setActive] = useState(() => firstFree(draft));
 
@@ -51,6 +54,10 @@ export function SeatPlanner({ view, room, onSave, busy }: Props) {
 
   function save(next: Map<string, string>, previous: Map<string, string>) {
     setDraft(next);
+    if (onDraft) {
+      onDraft(next);
+      return;
+    }
     onSave(
       async () => {
         const result = await assignSeatsAction(view.id, { assignments: [...next].map(([userId, seatCode]) => ({ userId, seatCode })) });

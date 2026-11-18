@@ -267,6 +267,31 @@ export async function confirmAppointment(creatorId: string, id: string): Promise
   return { ok: true };
 }
 
+export const confirmPlanSchema = z.object({
+  /** Only when the creator picked another showtime than the saved one. */
+  showtimeId: objectId.optional(),
+  assignments: assignSeatsSchema.shape.assignments,
+  lines: setFoodSchema.shape.lines,
+});
+export type ConfirmPlanInput = z.infer<typeof confirmPlanSchema>;
+
+/**
+ * Nothing the creator tries while planning (showtime, seats, food) is saved until now: this saves all of it, one step after the other,
+ * then confirms. A step that is refused (a seat somebody just took, a missing seat...) stops here with its reason and the screen keeps
+ * what the creator had, so they fix that one thing and press confirm again.
+ */
+export async function confirmPlan(creatorId: string, id: string, input: ConfirmPlanInput): Promise<{ ok: true } | Failure> {
+  if (input.showtimeId) {
+    const chosen = await chooseShowtime(creatorId, id, input.showtimeId);
+    if (!chosen.ok) return chosen;
+  }
+  const seated = await assignSeats(creatorId, id, { assignments: input.assignments });
+  if (!seated.ok) return seated;
+  const fed = await setFood(creatorId, id, { lines: input.lines });
+  if (!fed.ok) return fed;
+  return confirmAppointment(creatorId, id);
+}
+
 /** Rebuilds the appointment's group cost from everyone's expenses, so the two can never disagree. */
 async function syncActualCost(id: string): Promise<void> {
   const rows = await Expense.aggregate<{ _id: ExpenseCategory; amount: number }>([{ $match: { appointmentId: new mongoose.Types.ObjectId(id) } }, { $group: { _id: "$category", amount: { $sum: "$amount" } } }]);
@@ -371,20 +396,23 @@ export interface PlanData {
 }
 
 /** What the creator needs on screen to plan or edit: showtimes, the room with taken seats, and the cinema brand's food. Null for anyone else. */
-export async function getPlanData(userId: string, id: string): Promise<PlanData | null> {
+export async function getPlanData(userId: string, id: string, roomOf?: string): Promise<PlanData | null> {
   if (!isValidObjectId(id)) return null;
+  if (roomOf !== undefined && !isValidObjectId(roomOf)) return null;
   await connectToDatabase();
   const doc = await Appointment.findById(id, "creatorId status movieId showtimeId chosenOptionId timeOptions lockedStartAt").lean();
   if (!doc || !sameId(doc.creatorId, userId) || (doc.status !== "PLANNING" && doc.status !== "CONFIRMED")) return null;
   // Only showtimes on the day the group agreed on, from the agreed time onwards.
   const agreedAt = doc.lockedStartAt ?? doc.timeOptions.find((o) => sameId(o._id, doc.chosenOptionId?.toString() ?? ""))?.startAt;
   const day = agreedAt ? vietnamDayKey(agreedAt.toISOString()) : undefined;
-  const found = await searchShowtimes({ movieId: doc.movieId.toString(), date: day, limit: 300 });
+  // `roomOf` = the room and food of a showtime the creator is trying on screen (not saved yet), so the list of showtimes is not needed.
+  const found = roomOf ? [] : await searchShowtimes({ movieId: doc.movieId.toString(), date: day, limit: 300 });
   const showtimes = agreedAt ? found.filter((s) => new Date(s.startAt).getTime() >= agreedAt.getTime()) : found;
   const data: PlanData = { showtimes, food: { items: [], combos: [] } };
-  if (!doc.showtimeId) return data;
+  const showtimeId = roomOf ?? doc.showtimeId?.toString();
+  if (!showtimeId) return data;
 
-  const showtime = await Showtime.findById(doc.showtimeId, "layoutId auditoriumId startAt").lean();
+  const showtime = await Showtime.findOne({ _id: showtimeId, movieId: doc.movieId }, "layoutId auditoriumId startAt").lean();
   const layout = showtime ? await AuditoriumLayout.findById(showtime.layoutId).lean() : null;
   const room = showtime ? await Auditorium.findById(showtime.auditoriumId, "branchId").lean() : null;
   const branch = room ? await Branch.findById(room.branchId, "brandId").lean() : null;
@@ -396,7 +424,7 @@ export async function getPlanData(userId: string, id: string): Promise<PlanData 
     seats: JSON.parse(JSON.stringify(layout.seats)) as LayoutSeat[],
     geometry: generateGrid(layout.config as LayoutConfig, infos).geometry,
     seatTypes: types.map((t) => ({ id: t._id.toString(), name: t.name, nameEn: t.nameEn ?? null, color: t.color ?? null })),
-    taken: await takenSeatCodes(doc.showtimeId.toString(), id),
+    taken: await takenSeatCodes(showtimeId, id),
   };
 
   const today = vietnamParts(showtime.startAt).date;
