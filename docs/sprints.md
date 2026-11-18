@@ -32,7 +32,7 @@ Nguồn chi tiết: `docs/movie-app-mvp-design.md` (số mục ghi ở từng sp
 | 1 | Master data, quản lý người dùng, cài đặt hệ thống, hồ sơ cơ bản | 0 | Xong |
 | 2 | Editor phòng chiếu, sơ đồ ghế, điểm ghế, versioning | 1 | Xong |
 | 3 | Phim (trailer), suất chiếu, trang rạp & lịch chiếu cho user, đánh dấu ghế cá nhân | 2 | Xong |
-| 4 | Lịch hẹn giai đoạn 1 (mời, vote, chốt người), bạn bè, thông báo in-app, worker, Web Push | 3 | Chờ kiểm tra |
+| 4 | Lịch hẹn giai đoạn 1 (mời, vote, chốt người), bạn bè, thông báo in-app, worker, Web Push | 3 | Xong |
 | 5A | Lịch hẹn giai đoạn 2: chọn suất, xếp ghế, đồ ăn, chi phí, công nợ, xác nhận | 4 | Chưa bắt đầu |
 | 5B | Nhắc lịch và các thông báo theo giờ (#3, #8), tự hoàn thành | 5A | Chưa bắt đầu |
 | 6 | Dashboard, ngân sách, ghi lại buổi đã xem, đánh giá cá nhân | 5B | Chưa bắt đầu |
@@ -185,11 +185,11 @@ giới hạn tra cứu, kết bạn cần chấp nhận (thiết kế mục 6 v�
 **Ngoài phạm vi:** chọn suất/phòng/ghế/đồ ăn, tính tiền, Zalo, mọi thông báo theo giờ (kể cả #3).
 
 **Tiêu chí hoàn thành**
-- [ ] Đi hết luồng với 3 tài khoản: mời → đề xuất giờ khác → vote → chốt người.
+- [x] Đi hết luồng với 3 tài khoản: mời → đề xuất giờ khác → vote → chốt người (chủ dự án duyệt, 2026-11-18).
 - [x] Sau khi chốt, người tạo không thêm/bớt được người; người tham gia tự rút được và người tạo nhận thông báo (test `appointment.service.test.ts`; màn hình chưa thử trên điện thoại).
 - [x] Người vote Có phương án khác phương án được chọn không nằm trong danh sách và không hiện ở bước chốt: màn chốt chỉ liệt kê người đã vote Có giờ được chọn (đổi ngày 2026-11-18 so với bản đầu "người tạo phải thêm tay"; service vẫn nhận người được mời chưa từ chối, giao diện không đưa ra).
-- [ ] Thông báo in-app đến đúng người, đúng thời điểm.
-- [ ] Web Push: bật trên Android và trên iPhone (đã cài PWA), "Gửi thử" (admin gửi từ Cài đặt quản trị tới người dùng chọn) nhận được kể cả khi đã đóng app; sự kiện mời/chốt/hủy đến đúng người.
+- [x] Thông báo in-app đến đúng người, đúng thời điểm.
+- [x] Web Push (chủ dự án duyệt Sprint 4 xong, 2026-11-18): bật trên Android và trên iPhone (đã cài PWA), "Gửi thử" (admin gửi từ Cài đặt quản trị tới người dùng chọn) nhận được kể cả khi đã đóng app; sự kiện mời/chốt/hủy đến đúng người.
 - [x] Không gửi trùng khi chạy hai worker; một thiết bị lỗi 410 thì subscription bị xóa, các thiết bị khác vẫn nhận (test `src/notifications/deliver.test.ts` với bộ gửi giả).
 - [x] Test máy trạng thái pass; test tra cứu số điện thoại bị giới hạn tần suất (`state.test.ts`, `friend.service.test.ts`).
 
@@ -396,6 +396,7 @@ Mỗi sprint xong thêm 3 đến 6 dòng: đã làm gì, còn dở gì, quyết 
 - Thêm theo yêu cầu: **thông báo kết bạn** (ngoài danh sách #1 đến #13 của thiết kế): `friend_request` gửi cho người được mời kết bạn, `friend_accepted` gửi cho người đã gửi lời mời khi được đồng ý (kể cả khi hai bên cùng gửi cho nhau); từ chối **không** báo; bấm thông báo mở `/friends`; có công tắc push riêng cho từng loại; `npm run seed:users` tạo 3 tài khoản mẫu (an, binh, chi; mật khẩu mẫu ghi trong `scripts/seed-users.ts`, **xóa trước khi lên production**) rồi kết bạn chéo mọi tài khoản người dùng; `npm run seed:friends` chỉ kết bạn chéo.
 - Thêm theo yêu cầu (giao diện lịch hẹn): người được mời **chọn hết rồi lưu một lần** (`submitResponse`, tất cả hoặc không gì cả, nút Từ chối cạnh Lưu ở thanh cuối); người tạo thấy mục "Khung giờ" và **chốt ngay trên thẻ giờ** (hộp xác nhận, mặc định chọn hết người đã vote Có, bỏ tick được; giờ chưa ai vote Có thì khóa); sau hạn trả lời khóa cứng; hạn phải trước giờ sớm nhất.
 - Còn dở: **chủ dự án cần thử trên điện thoại** (luồng 3 tài khoản; push trên Android và iPhone đã cài PWA, cần HTTPS; trang offline); chưa đo ở cỡ chữ 125% và 150%; chưa có huy hiệu số trên icon (Badging API); thông báo #3 (sắp hết hạn trả lời) để Sprint 5B.
+- Cập nhật cuối sprint (2026-11-18, theo yêu cầu): nút **Hủy lịch hẹn** và **Rút lui** cố định phía trên menu dưới (như thanh Lưu của phần trả lời); thẻ khung giờ hiện số vote Có, Không, chưa trả lời bằng ba icon kèm số (bỏ dòng tên người vote Có), hai hàng chữ căn ngang với hai nút nhắc và chốt; màn chi tiết lịch hẹn ẩn tiêu đề trên thanh quay lại (vẫn là `h1` ẩn). **Sprint 4 xong, chủ dự án duyệt 2026-11-18.**
 - File chính: `src/services/{friend,appointment,notification,push}.service.ts`, `src/lib/appointment/`, `src/notifications/`, `src/models/{friendship,friend-group,friend-lookup,appointment,notification,notification-delivery,push-subscription}.ts`, `src/actions/{friends,appointments,notifications,push}.ts`, `src/components/{friends,appointment}/`, `src/components/notification-*.tsx`, `src/app/(user)/{friends,appointments,notifications}/`, `public/sw.js`.
 
 <!-- Ví dụ:
