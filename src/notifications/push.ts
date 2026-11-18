@@ -18,12 +18,18 @@ export type PushOutcome = { status: "ok" } | { status: "gone" } | { status: "err
 
 export type PushSender = (target: PushTarget, payload: PushPayload) => Promise<PushOutcome>;
 
+/** A bare email ("a@b.com") becomes "mailto:a@b.com": push services only accept a mailto: or https: contact, and the bare form is an easy slip in .env. */
+export function normalizeVapidSubject(raw: string): string {
+  const value = raw.trim();
+  return /^[^\s@:/]+@[^\s@:/]+$/.test(value) ? `mailto:${value}` : value;
+}
+
 /** The VAPID key pair and contact live in environment variables (never in code or the database). Missing any of them means push is off. */
 export function pushConfig(): { publicKey: string; privateKey: string; subject: string } | null {
   const publicKey = process.env.VAPID_PUBLIC_KEY;
   const privateKey = process.env.VAPID_PRIVATE_KEY;
   const subject = process.env.VAPID_SUBJECT;
-  return publicKey && privateKey && subject ? { publicKey, privateKey, subject } : null;
+  return publicKey && privateKey && subject ? { publicKey, privateKey, subject: normalizeVapidSubject(subject) } : null;
 }
 
 /** Sends one push with the `web-push` library, turning its errors into outcomes. */
