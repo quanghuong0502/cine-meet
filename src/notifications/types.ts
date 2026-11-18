@@ -5,6 +5,8 @@ export const NOTIFICATION_TYPES = [
   "participants_locked", // #4  the creator locked the list
   "appointment_cancelled", // #7  the creator cancelled
   "participant_withdrew", // #13 an attendee left
+  "appointment_confirmed", // #5  the plan is confirmed: movie, time, place, my seat
+  "appointment_changed", //   #6  seat or time changed after confirming
   "poll_reminder", //         the creator nudges people who have not voted on a time
   "friend_request", //        someone asked me to be friends
   "friend_accepted", //       someone said yes to my friend request
@@ -30,6 +32,11 @@ export interface NotificationPayload {
   reason?: string;
   /** For `poll_reminder`: the time being voted on (ISO). */
   slotAt?: string;
+  /** For `appointment_confirmed` and `appointment_changed`: the recipient's seat (or none) and where it is. */
+  seatCode?: string;
+  place?: string;
+  /** For `appointment_changed`: what changed. */
+  change?: "seat" | "time";
   /** For `participants_locked`: false when the recipient was left out. */
   included?: boolean;
 }

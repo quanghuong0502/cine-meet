@@ -1008,7 +1008,9 @@
         "participant_withdrew": "Someone drops out",
         "friend_request": "Friend requests",
         "friend_accepted": "Requests accepted",
-        "poll_reminder": "Vote reminders"
+        "poll_reminder": "Vote reminders",
+        "appointment_confirmed": "Plan confirmed",
+        "appointment_changed": "Seat or time changed"
       },
       "errors": {
         "network": "Network is shaky, please try again.",
@@ -1295,7 +1297,15 @@
       "deadline_too_late": "The answer-by time has to be before the earliest viewing time.",
       "option_before_deadline": "That time is before the answer-by time, so it can't be suggested.",
       "nobody_to_remind": "Everyone has voted on this time, nobody to remind.",
-      "reminder_too_soon": "You just sent a reminder, wait a bit before the next one."
+      "reminder_too_soon": "You just sent a reminder, wait a bit before the next one.",
+      "no_showtime": "That showtime can't be picked, try another one.",
+      "seat_taken": "Someone just took that seat, pick another one.",
+      "invalid_seat": "That seat can't be used (broken, missing or already full).",
+      "needs_seat": "Someone still has no seat. Seat everyone, then confirm.",
+      "not_attendee": "That person isn't on the list going.",
+      "invalid_food": "That item isn't sold at this cinema, pick another.",
+      "too_early": "The movie hasn't started yet, so it can't be marked as watched.",
+      "invalid_amount": "That amount doesn't look right, check it again."
     },
     "new": {
       "title": "Create plan",
@@ -1474,6 +1484,24 @@
       "poll_reminder": {
         "title": "Vote reminder",
         "body": "{actorName} is waiting for your vote on {time} for {movieTitle}."
+      },
+      "appointment_confirmed": {
+        "title": "It's a plan",
+        "body": "{movieTitle} at {time}, {place}. Your seat: {seatCode}."
+      },
+      "appointment_changed": {
+        "seat": {
+          "title": "Your seat changed",
+          "body": "{actorName} put you in seat {seatCode} for {movieTitle} ({place})."
+        },
+        "seatNone": {
+          "title": "Your seat changed",
+          "body": "{actorName} is rearranging seats for {movieTitle}, you have no seat yet."
+        },
+        "time": {
+          "title": "Showtime changed",
+          "body": "{movieTitle} is now at {time}, {place}. Check your seat."
+        }
       }
     },
     "test": {

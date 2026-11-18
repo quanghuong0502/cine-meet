@@ -30,6 +30,35 @@ const participantSchema = new Schema(
   { _id: false },
 );
 
+// Who sits where. A couple seat can hold two people, so the same code may appear twice.
+const seatAssignmentSchema = new Schema(
+  {
+    userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    seatCode: { type: String, required: true },
+  },
+  { _id: false },
+);
+
+// A food or drink line, priced when it was added so later price changes do not move an estimate. No owner = shared by the group.
+const fnbLineSchema = new Schema({
+  ownerId: { type: Schema.Types.ObjectId, ref: "User" },
+  kind: { type: String, enum: ["item", "combo"], required: true },
+  refId: { type: Schema.Types.ObjectId, required: true },
+  name: { type: String, required: true },
+  unitPrice: { type: Number, required: true, min: 0 },
+  quantity: { type: Number, required: true, min: 1, max: 20 },
+});
+
+const costSchema = new Schema(
+  {
+    userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    ticket: { type: Number, required: true, min: 0 },
+    fnb: { type: Number, required: true, min: 0 },
+    other: { type: Number, required: true, min: 0, default: 0 },
+  },
+  { _id: false },
+);
+
 const appointmentSchema = new Schema(
   {
     creatorId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
@@ -40,6 +69,18 @@ const appointmentSchema = new Schema(
     chosenOptionId: { type: Schema.Types.ObjectId },
     participants: { type: [participantSchema], default: [] },
     cancelReason: { type: String, trim: true },
+    // Stage 2 (Sprint 5A).
+    showtimeId: { type: Schema.Types.ObjectId, ref: "Showtime" },
+    seats: { type: [seatAssignmentSchema], default: [] },
+    fnb: { type: [fnbLineSchema], default: [] },
+    // Per person, saved whenever seats or food change; the money of each person, as it was worked out.
+    estimate: { type: [costSchema], default: [] },
+    confirmedAt: { type: Date },
+    completedAt: { type: Date },
+    // The whole group's real cost; always the sum of everyone's `expenses` for this appointment.
+    actualCost: {
+      type: new Schema({ ticket: Number, fnb: Number, other: Number, total: Number }, { _id: false }),
+    },
   },
   // Two people voting at once must not overwrite each other: a stale save fails and the service retries.
   { timestamps: true, optimisticConcurrency: true },

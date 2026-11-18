@@ -226,7 +226,7 @@ export interface ShowtimeFilters {
   limit?: number;
 }
 
-async function loadPricing() {
+export async function loadPricing() {
   const [rules, holidays] = await Promise.all([PriceRule.find({}).lean(), Holiday.find({}, "date").lean()]);
   const info: PriceRuleInfo[] = rules.map((r) => ({
     id: r._id.toString(),

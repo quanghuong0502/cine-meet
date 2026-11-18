@@ -18,10 +18,12 @@ import { Movie } from "@/models/movie";
 import { Showtime } from "@/models/showtime";
 import { User } from "@/models/user";
 import { filterFriendIds, type PersonView } from "@/services/friend.service";
+import { SeatClaim } from "@/models/seat-claim";
+import { recomputeEstimate, releaseUnusedClaims } from "@/services/appointment-estimate";
 import { enqueueNotifications } from "@/notifications/outbox";
 import type { NotificationPayload, NotificationType } from "@/notifications/types";
 
-type Doc = HydratedDocument<AppointmentDoc>;
+export type Doc = HydratedDocument<AppointmentDoc>;
 
 const objectId = z.string().regex(/^[0-9a-fA-F]{24}$/, { error: "invalid" });
 
@@ -68,9 +70,17 @@ export type AppointmentError =
   | "deadline_passed"
   | "nobody_to_remind"
   | "reminder_too_soon"
-  | "conflict";
+  | "conflict"
+  | "no_showtime"
+  | "seat_taken"
+  | "invalid_seat"
+  | "needs_seat"
+  | "not_attendee"
+  | "invalid_food"
+  | "too_early"
+  | "invalid_amount";
 /** Tells people about something that just happened. The movie and the actor's name are read here and stored with the notification. */
-async function notifyPeople(
+export async function notifyPeople(
   appointmentId: string,
   actorId: string,
   type: NotificationType,
@@ -88,12 +98,12 @@ async function notifyPeople(
   await enqueueNotifications(recipients.map((recipientId) => ({ recipientId, type, payload })));
 }
 
-type Failure = { ok: false; error: AppointmentError };
+export type Failure = { ok: false; error: AppointmentError };
 
 const MAX_RETRIES = 4;
 
 /** Loads, changes and saves one appointment. A stale save (someone else changed it meanwhile) is retried on fresh data. */
-async function mutate<T extends { ok: boolean }>(id: string, change: (doc: Doc) => Promise<T> | T): Promise<T | Failure> {
+export async function mutate<T extends { ok: boolean }>(id: string, change: (doc: Doc) => Promise<T> | T): Promise<T | Failure> {
   if (!isValidObjectId(id)) return { ok: false, error: "not_found" };
   await connectToDatabase();
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
@@ -115,13 +125,13 @@ async function mutate<T extends { ok: boolean }>(id: string, change: (doc: Doc) 
 /** True once the answer-by time has passed: from then on invited people cannot vote, suggest a time or turn the invitation down. */
 const deadlinePassed = (doc: { responseDeadline?: Date | null }, now: Date): boolean => Boolean(doc.responseDeadline) && doc.responseDeadline!.getTime() <= now.getTime();
 
-const sameId = (a: { toString(): string } | undefined | null, b: string) => a?.toString() === b;
+export const sameId = (a: { toString(): string } | undefined | null, b: string) => a?.toString() === b;
 /** Replaces one person's vote on an option (or removes it). The whole list is rewritten so the in-memory copy is always what gets saved. */
 function setOptionVote(option: Doc["timeOptions"][number], userId: string, vote: "yes" | "no" | null): void {
   const others = option.votes.filter((v) => !sameId(v.userId, userId)).map((v) => ({ userId: v.userId, vote: v.vote }));
   option.set("votes", vote ? [...others, { userId, vote }] : others);
 }
-const participantOf = (doc: Doc, userId: string) => doc.participants.find((p) => sameId(p.userId, userId));
+export const participantOf = (doc: Doc, userId: string) => doc.participants.find((p) => sameId(p.userId, userId));
 
 /** Turns a time option from the form into a real start time, checking it against the movie and the clock. */
 async function resolveOption(movieId: string, input: OptionInput, now = new Date()): Promise<{ startAt: Date; showtimeId?: string } | null> {
@@ -412,16 +422,24 @@ export async function lockParticipants(
 
 /** An attendee leaves on their own, until the showtime. The creator is told; seats and money are settled in Sprint 5A. */
 export async function withdraw(userId: string, id: string, now = new Date()): Promise<{ ok: true; creatorId: string } | Failure> {
-  const result = await mutate(id, (doc) => {
+  const result = await mutate(id, async (doc) => {
     const me = participantOf(doc, userId);
     if (!me || me.status !== "accepted") return { ok: false as const, error: "not_found" as const };
     if (!canWithdraw(doc.status)) return { ok: false as const, error: "bad_state" as const };
     const chosen = doc.timeOptions.find((o) => sameId(o._id, doc.chosenOptionId?.toString() ?? ""));
     if (chosen && chosen.startAt.getTime() <= now.getTime()) return { ok: false as const, error: "late" as const };
     me.status = "dropped";
-    return { ok: true as const, creatorId: doc.creatorId.toString() };
+    // The seat goes back, and the money of the people still going is worked out again (shared food is split among fewer).
+    doc.set("seats", doc.seats.filter((s) => !sameId(s.userId, userId)).map((s) => ({ userId: s.userId, seatCode: s.seatCode })));
+    doc.set("fnb", doc.fnb.filter((l) => !sameId(l.ownerId, userId)).map((l) => l.toObject()));
+    await recomputeEstimate(doc);
+    return { ok: true as const, creatorId: doc.creatorId.toString(), keep: doc.seats.map((s) => s.seatCode) };
   });
-  if (result.ok) await notifyPeople(id, userId, "participant_withdrew", [result.creatorId]);
+  if (result.ok) {
+    await releaseUnusedClaims(id, result.keep);
+    await notifyPeople(id, userId, "participant_withdrew", [result.creatorId]);
+    return { ok: true, creatorId: result.creatorId };
+  }
   return result;
 }
 
@@ -437,7 +455,10 @@ export async function cancelAppointment(creatorId: string, id: string, reason?: 
     const skip: ParticipantStatus[] = ["declined", "dropped", "excluded"];
     return { ok: true as const, wasDraft, recipientIds: wasDraft ? [] : doc.participants.filter((p) => !skip.includes(p.status)).map((p) => p.userId.toString()) };
   });
-  if (result.ok) await notifyPeople(id, creatorId, "appointment_cancelled", result.recipientIds, { reason: text });
+  if (result.ok) {
+    await SeatClaim.deleteMany({ appointmentId: id });
+    await notifyPeople(id, creatorId, "appointment_cancelled", result.recipientIds, { reason: text });
+  }
   return result;
 }
 

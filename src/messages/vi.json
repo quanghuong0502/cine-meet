@@ -1008,7 +1008,9 @@
         "participant_withdrew": "Có người hủy kèo",
         "friend_request": "Có lời mời bạn bè",
         "friend_accepted": "Được chấp nhận bạn bè",
-        "poll_reminder": "Nhắc vote giờ"
+        "poll_reminder": "Nhắc vote giờ",
+        "appointment_confirmed": "Kèo đã xác nhận",
+        "appointment_changed": "Đổi ghế hoặc giờ"
       },
       "errors": {
         "network": "Mạng đang chập chờn, thử lại giúp [me] nha.",
@@ -1295,7 +1297,15 @@
       "deadline_too_late": "Hạn trả lời phải trước giờ xem sớm nhất nha.",
       "option_before_deadline": "Giờ này sớm hơn hạn trả lời nên chưa đề xuất được.",
       "nobody_to_remind": "Ai cũng vote giờ này rồi nè, không còn ai để nhắc.",
-      "reminder_too_soon": "Vừa nhắc xong, đợi một lúc rồi nhắc lại nha."
+      "reminder_too_soon": "Vừa nhắc xong, đợi một lúc rồi nhắc lại nha.",
+      "no_showtime": "Suất chiếu này không chọn được nha, thử suất khác.",
+      "seat_taken": "Ghế này vừa có người giữ rồi, chọn ghế khác nha.",
+      "invalid_seat": "Ghế này không chọn được (hỏng, không có hoặc quá số chỗ).",
+      "needs_seat": "Còn người chưa có ghế, xếp đủ ghế rồi xác nhận nha.",
+      "not_attendee": "Người này không nằm trong danh sách đi xem.",
+      "invalid_food": "Món này không có ở rạp này, chọn món khác nha.",
+      "too_early": "Phim chưa chiếu nên chưa đóng lịch hẹn được nha.",
+      "invalid_amount": "Số tiền chưa đúng, kiểm tra lại nha."
     },
     "new": {
       "title": "Tạo lịch hẹn",
@@ -1474,6 +1484,24 @@
       "poll_reminder": {
         "title": "Nhắc vote nè",
         "body": "{actorName} đang chờ [you] vote giờ {time} cho {movieTitle}."
+      },
+      "appointment_confirmed": {
+        "title": "Kèo chốt rồi nè",
+        "body": "{movieTitle} lúc {time}, {place}. Ghế của [you]: {seatCode}."
+      },
+      "appointment_changed": {
+        "seat": {
+          "title": "Ghế của [you] đổi rồi",
+          "body": "{actorName} xếp [you] ghế {seatCode} khi xem {movieTitle} ({place})."
+        },
+        "seatNone": {
+          "title": "Ghế của [you] đổi rồi",
+          "body": "{actorName} đang xếp lại ghế xem {movieTitle}, [you] chưa có ghế."
+        },
+        "time": {
+          "title": "Đổi giờ chiếu rồi",
+          "body": "{movieTitle} giờ là {time}, {place}. Xem lại ghế của [you] nha."
+        }
       }
     },
     "test": {
