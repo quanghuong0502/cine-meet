@@ -1298,5 +1298,64 @@
         "excluded": "Không tham gia"
       }
     }
+  },
+  "notifications": {
+    "title": "Thông báo",
+    "bell": "Thông báo",
+    "bellUnread": "Thông báo, {count, plural, one {# cái chưa đọc} other {# cái chưa đọc}}",
+    "emptyTitle": "Chưa có thông báo nào",
+    "emptyDescription": "Có ai rủ đi xem phim hay trả lời kèo là báo ở đây liền.",
+    "markAll": "Đọc hết",
+    "allRead": "Đã đánh dấu đọc hết",
+    "new": "Mới.",
+    "networkError": "Mạng đang chập chờn, thử lại giúp [me] nha.",
+    "types": {
+      "appointment_invited": {
+        "title": "Có kèo mới nè",
+        "body": "{actorName} rủ [you] xem {movieTitle}. Vào chọn giờ thôi!"
+      },
+      "appointment_reply": {
+        "agree": {
+          "title": "{actorName} đi nè",
+          "body": "{actorName} đã đồng ý đi xem {movieTitle}."
+        },
+        "decline": {
+          "title": "{actorName} không đi được",
+          "body": "{actorName} đã từ chối lời mời xem {movieTitle}."
+        },
+        "declineReason": {
+          "title": "{actorName} không đi được",
+          "body": "{actorName} từ chối đi xem {movieTitle}: {reason}"
+        },
+        "propose": {
+          "title": "{actorName} đề xuất giờ khác",
+          "body": "Vào xem và vote giờ mới cho {movieTitle} nha."
+        }
+      },
+      "participants_locked": {
+        "included": {
+          "title": "Đã chốt người rồi",
+          "body": "[you] có tên trong danh sách xem {movieTitle}."
+        },
+        "excluded": {
+          "title": "Đã chốt người",
+          "body": "Lần này danh sách xem {movieTitle} chưa có [you]. Hẹn kèo sau nha."
+        }
+      },
+      "appointment_cancelled": {
+        "plain": {
+          "title": "Kèo bị hủy rồi",
+          "body": "{actorName} đã hủy lịch hẹn xem {movieTitle}."
+        },
+        "reason": {
+          "title": "Kèo bị hủy rồi",
+          "body": "{actorName} đã hủy lịch hẹn xem {movieTitle}: {reason}"
+        }
+      },
+      "participant_withdrew": {
+        "title": "{actorName} rút lui",
+        "body": "{actorName} không đi xem {movieTitle} được nữa."
+      }
+    }
   }
 }

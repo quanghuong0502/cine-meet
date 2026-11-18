@@ -1298,5 +1298,64 @@
         "excluded": "Not going"
       }
     }
+  },
+  "notifications": {
+    "title": "Notifications",
+    "bell": "Notifications",
+    "bellUnread": "Notifications, {count, plural, one {# unread} other {# unread}}",
+    "emptyTitle": "No notifications yet",
+    "emptyDescription": "When someone invites you or replies to a plan, it shows up here.",
+    "markAll": "Mark all read",
+    "allRead": "All marked as read",
+    "new": "New.",
+    "networkError": "Network is shaky, please try again.",
+    "types": {
+      "appointment_invited": {
+        "title": "New plan!",
+        "body": "{actorName} invited you to watch {movieTitle}. Come pick a time!"
+      },
+      "appointment_reply": {
+        "agree": {
+          "title": "{actorName} is in",
+          "body": "{actorName} agreed to watch {movieTitle}."
+        },
+        "decline": {
+          "title": "{actorName} can't make it",
+          "body": "{actorName} turned down the invitation to watch {movieTitle}."
+        },
+        "declineReason": {
+          "title": "{actorName} can't make it",
+          "body": "{actorName} turned down {movieTitle}: {reason}"
+        },
+        "propose": {
+          "title": "{actorName} suggested another time",
+          "body": "Take a look and vote on the new time for {movieTitle}."
+        }
+      },
+      "participants_locked": {
+        "included": {
+          "title": "People are locked in",
+          "body": "You're on the list to watch {movieTitle}."
+        },
+        "excluded": {
+          "title": "People are locked in",
+          "body": "You're not on the list for {movieTitle} this time. Next time!"
+        }
+      },
+      "appointment_cancelled": {
+        "plain": {
+          "title": "Plan cancelled",
+          "body": "{actorName} cancelled the plan to watch {movieTitle}."
+        },
+        "reason": {
+          "title": "Plan cancelled",
+          "body": "{actorName} cancelled the plan to watch {movieTitle}: {reason}"
+        }
+      },
+      "participant_withdrew": {
+        "title": "{actorName} left",
+        "body": "{actorName} can't watch {movieTitle} anymore."
+      }
+    }
   }
 }

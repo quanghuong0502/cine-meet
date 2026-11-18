@@ -10,6 +10,7 @@ describe("appointment service", () => {
     Showtime: typeof import("@/models/showtime").Showtime;
     Appointment: typeof import("@/models/appointment").Appointment;
     Friendship: typeof import("@/models/friendship").Friendship;
+    Notification: typeof import("@/models/notification").Notification;
   };
   let creator: string;
   let u1: string;
@@ -29,6 +30,7 @@ describe("appointment service", () => {
       Showtime: (await import("@/models/showtime")).Showtime,
       Appointment: (await import("@/models/appointment")).Appointment,
       Friendship: (await import("@/models/friendship")).Friendship,
+      Notification: (await import("@/models/notification")).Notification,
     };
     await (await import("@/lib/db")).connectToDatabase();
     await models.Friendship.init();
@@ -274,6 +276,82 @@ describe("appointment service", () => {
       const id = await inviting();
       expect(await svc.getAppointment(stranger, id)).toBeNull();
       expect(await svc.getAppointment(creator, "nope")).toBeNull();
+    });
+  });
+
+  describe("notifications", () => {
+    const sent = async () =>
+      (await models.Notification.find({}).sort({ createdAt: 1 }).lean()).map((n) => ({
+        to: String(n.recipientId),
+        type: n.type,
+        kind: (n.payload as { kind?: string }).kind,
+        included: (n.payload as { included?: boolean }).included,
+      }));
+
+    it("#1 everyone invited is told, with the movie and the creator's name", async () => {
+      await inviting();
+      const rows = await models.Notification.find({}).lean();
+      expect(rows.map((n) => String(n.recipientId)).sort()).toEqual([u1, u2, u3].sort());
+      expect(rows.every((n) => n.type === "appointment_invited")).toBe(true);
+      expect(rows[0]?.payload).toMatchObject({ movieTitle: "Phim", actorName: "creator" });
+    });
+
+    it("a draft tells nobody until it is sent", async () => {
+      const created = await svc.createAppointment(creator, { movieId: movie, options: [{ startAt: hours(5) }], inviteeIds: [u1], send: false });
+      if (!created.ok) throw new Error();
+      expect(await sent()).toEqual([]);
+      await svc.sendInvitations(creator, created.id);
+      expect(await sent()).toEqual([{ to: u1, type: "appointment_invited", kind: undefined, included: undefined }]);
+    });
+
+    it("#2 the creator hears about the first yes, a decline and a suggestion, but not every vote change", async () => {
+      const id = await inviting();
+      await models.Notification.deleteMany({});
+      const [a, b] = (await svc.getAppointment(creator, id))!.options;
+      await svc.setVote(u1, id, a!.id, "yes");
+      await svc.setVote(u1, id, b!.id, "yes"); // already in: not news
+      await svc.setVote(u1, id, a!.id, "no");
+      await svc.declineInvitation(u2, id, "bận");
+      await svc.proposeOption(u3, id, { startAt: hours(300) });
+      expect(await sent()).toEqual([
+        { to: creator, type: "appointment_reply", kind: "agree", included: undefined },
+        { to: creator, type: "appointment_reply", kind: "decline", included: undefined },
+        { to: creator, type: "appointment_reply", kind: "propose", included: undefined },
+      ]);
+    });
+
+    it("#4 locking tells the whole group, and says who was left out", async () => {
+      const id = await inviting();
+      await models.Notification.deleteMany({});
+      const a = (await svc.getAppointment(creator, id))!.options[0]!;
+      await svc.declineInvitation(u3, id);
+      await models.Notification.deleteMany({});
+      await svc.lockParticipants(creator, id, { optionId: a.id, attendeeIds: [u1] });
+      const rows = await sent();
+      expect(rows).toHaveLength(2);
+      expect(rows.find((r) => r.to === u1)).toMatchObject({ type: "participants_locked", included: true });
+      expect(rows.find((r) => r.to === u2)).toMatchObject({ type: "participants_locked", included: false });
+    });
+
+    it("#13 leaving tells the creator, #7 cancelling tells those still in", async () => {
+      const id = await inviting();
+      const a = (await svc.getAppointment(creator, id))!.options[0]!;
+      await svc.lockParticipants(creator, id, { optionId: a.id, attendeeIds: [u1, u2] });
+      await models.Notification.deleteMany({});
+      await svc.withdraw(u1, id);
+      await svc.cancelAppointment(creator, id, "hết vé");
+      expect(await sent()).toEqual([
+        { to: creator, type: "participant_withdrew", kind: undefined, included: undefined },
+        { to: u2, type: "appointment_cancelled", kind: undefined, included: undefined },
+      ]);
+    });
+
+    it("a failed attempt tells nobody", async () => {
+      const id = await inviting();
+      await models.Notification.deleteMany({});
+      await svc.setVote(stranger, id, "6".repeat(24), "yes");
+      await svc.lockParticipants(u1, id, { optionId: "6".repeat(24), attendeeIds: [u1] });
+      expect(await sent()).toEqual([]);
     });
   });
 

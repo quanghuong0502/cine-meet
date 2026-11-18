@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { UserBottomNav } from "@/components/user-bottom-nav";
 import { requireUser } from "@/lib/auth/guards";
 import { ENABLED_NAV_ITEMS } from "@/lib/nav";
+import { countUnread } from "@/services/notification.service";
 
 export default async function UserLayout({
   children,
@@ -17,10 +18,12 @@ export default async function UserLayout({
   // Admins only have the admin area: the user app is for regular accounts.
   if (user.role === "admin") redirect("/admin");
   const hasBottomNav = ENABLED_NAV_ITEMS.length > 0;
+  // Personal, so read on every request and never cached; a failed count must not take the whole app down.
+  const unread = await countUnread(user.userId).catch(() => 0);
 
   return (
     <div data-app-shell className="mx-auto flex h-dvh w-full max-w-app flex-col overflow-hidden">
-      <AppHeader area="app" name={user.name} image={user.image} />
+      <AppHeader area="app" name={user.name} image={user.image} unread={unread} />
       <main
         data-app-scroll
         className={

@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { Logo } from "@/components/logo";
+import { NotificationBell } from "@/components/notification-bell";
 import { UserMenu } from "@/components/user-menu";
 import { isAdminTabRoot } from "@/lib/admin-nav";
 import { isUserTabRoot } from "@/lib/nav";
@@ -12,13 +13,15 @@ interface AppHeaderProps {
   area: "app" | "admin";
   name: string;
   image?: string;
+  /** Unread notifications; only the user app has a bell (admin does not get these). */
+  unread?: number;
 }
 
 /**
  * The app bar (logo and avatar). It shows only on a root screen; an inner screen has its own back bar (`PageHeader`), and
  * two bars stacked would take about 56px of a phone screen for nothing. On desktop admin the sidebar replaces it (`md:hidden`).
  */
-export function AppHeader({ area, name, image }: AppHeaderProps) {
+export function AppHeader({ area, name, image, unread }: AppHeaderProps) {
   const pathname = usePathname();
   const isRoot = area === "admin" ? isAdminTabRoot(pathname) : isUserTabRoot(pathname);
   if (!isRoot) return null;
@@ -31,7 +34,10 @@ export function AppHeader({ area, name, image }: AppHeaderProps) {
       )}
     >
       <Logo size={area === "admin" ? PX.logoCompact : PX.logo} wordmarkClassName="type-heading" />
-      <UserMenu area={area} name={name} image={image} />
+      <div className="flex items-center gap-stack">
+        {area === "app" && unread !== undefined ? <NotificationBell unread={unread} /> : null}
+        <UserMenu area={area} name={name} image={image} />
+      </div>
     </header>
   );
 }

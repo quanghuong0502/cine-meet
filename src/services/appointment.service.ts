@@ -18,6 +18,8 @@ import { Movie } from "@/models/movie";
 import { Showtime } from "@/models/showtime";
 import { User } from "@/models/user";
 import { filterFriendIds, type PersonView } from "@/services/friend.service";
+import { enqueueNotifications } from "@/notifications/outbox";
+import type { NotificationPayload, NotificationType } from "@/notifications/types";
 
 type Doc = HydratedDocument<AppointmentDoc>;
 
@@ -55,6 +57,25 @@ export type AppointmentError =
   | "needs_attendee"
   | "late"
   | "conflict";
+/** Tells people about something that just happened. The movie and the actor's name are read here and stored with the notification. */
+async function notifyPeople(
+  appointmentId: string,
+  actorId: string,
+  type: NotificationType,
+  recipientIds: string[],
+  extra: Partial<NotificationPayload> = {},
+): Promise<void> {
+  const recipients = [...new Set(recipientIds)].filter((id) => id !== actorId);
+  if (recipients.length === 0) return;
+  const appointment = await Appointment.findById(appointmentId, "movieId").lean();
+  const [movie, actor] = await Promise.all([
+    appointment ? Movie.findById(appointment.movieId, "title").lean() : null,
+    User.findById(actorId, "name").lean(),
+  ]);
+  const payload: NotificationPayload = { appointmentId, movieTitle: movie?.title ?? "", actorName: actor?.name ?? "", ...extra };
+  await enqueueNotifications(recipients.map((recipientId) => ({ recipientId, type, payload })));
+}
+
 type Failure = { ok: false; error: AppointmentError };
 
 const MAX_RETRIES = 4;
@@ -127,23 +148,26 @@ export async function createAppointment(creatorId: string, input: CreateAppointm
     timeOptions: options.map((o) => ({ ...o, proposedBy: creatorId, votes: [] })),
     participants: inviteeIds.map((userId) => ({ userId, status: "invited" })),
   });
+  if (input.send) await notifyPeople(doc._id.toString(), creatorId, "appointment_invited", inviteeIds);
   return { ok: true, id: doc._id.toString(), status: doc.status };
 }
 
 /** Sends a draft: DRAFT becomes INVITING and the invited people are told. */
 export async function sendInvitations(creatorId: string, id: string): Promise<{ ok: true; recipientIds: string[] } | Failure> {
-  return mutate(id, (doc) => {
+  const result = await mutate(id, (doc) => {
     if (!sameId(doc.creatorId, creatorId)) return { ok: false as const, error: "forbidden" as const };
     if (!canTransition(doc.status, "INVITING")) return { ok: false as const, error: "bad_state" as const };
     doc.status = "INVITING";
     return { ok: true as const, recipientIds: doc.participants.map((p) => p.userId.toString()) };
   });
+  if (result.ok) await notifyPeople(id, creatorId, "appointment_invited", result.recipientIds);
+  return result;
 }
 
 /** The invited person turns the whole invitation down (optionally saying why). They can still change their mind by voting. */
 export async function declineInvitation(userId: string, id: string, reason?: string): Promise<{ ok: true; creatorId: string } | Failure> {
   const text = reason?.trim().slice(0, MAX_DECLINE_REASON) || undefined;
-  return mutate(id, (doc) => {
+  const result = await mutate(id, (doc) => {
     const me = participantOf(doc, userId);
     if (!me) return { ok: false as const, error: "not_found" as const };
     if (!isOpenForReplies(doc.status)) return { ok: false as const, error: "bad_state" as const };
@@ -152,6 +176,8 @@ export async function declineInvitation(userId: string, id: string, reason?: str
     for (const option of doc.timeOptions) setOptionVote(option, userId, null);
     return { ok: true as const, creatorId: doc.creatorId.toString() };
   });
+  if (result.ok) await notifyPeople(id, userId, "appointment_reply", [result.creatorId], { kind: "decline", reason: text });
+  return result;
 }
 
 /** Votes yes or no on one time option (`null` takes the vote back). A yes anywhere means the person is in; no yes at all means undecided. */
@@ -161,7 +187,7 @@ export async function setVote(
   optionId: string,
   vote: "yes" | "no" | null,
 ): Promise<{ ok: true; creatorId: string; becameAccepted: boolean } | Failure> {
-  return mutate(id, (doc) => {
+  const result = await mutate(id, (doc) => {
     const me = participantOf(doc, userId);
     if (!me) return { ok: false as const, error: "not_found" as const };
     if (!isOpenForReplies(doc.status)) return { ok: false as const, error: "bad_state" as const };
@@ -174,6 +200,9 @@ export async function setVote(
     if (before === "declined") me.declineReason = undefined;
     return { ok: true as const, creatorId: doc.creatorId.toString(), becameAccepted: before !== "accepted" && me.status === "accepted" };
   });
+  // Only the moment a person goes from "not in" to "in" is news for the creator; changing votes afterwards is not.
+  if (result.ok && result.becameAccepted) await notifyPeople(id, userId, "appointment_reply", [result.creatorId], { kind: "agree" });
+  return result;
 }
 
 /** Suggests another time. It joins the poll, and the person who suggested it votes yes automatically. */
@@ -183,7 +212,7 @@ export async function proposeOption(
   input: OptionInput,
   now = new Date(),
 ): Promise<{ ok: true; creatorId: string; optionId: string } | Failure> {
-  return mutate(id, async (doc) => {
+  const result = await mutate(id, async (doc) => {
     const me = participantOf(doc, userId);
     if (!me) return { ok: false as const, error: "not_found" as const };
     if (!isOpenForReplies(doc.status)) return { ok: false as const, error: "bad_state" as const };
@@ -198,6 +227,8 @@ export async function proposeOption(
     me.declineReason = undefined;
     return { ok: true as const, creatorId: doc.creatorId.toString(), optionId: added._id.toString() };
   });
+  if (result.ok) await notifyPeople(id, userId, "appointment_reply", [result.creatorId], { kind: "propose" });
+  return result;
 }
 
 export const lockSchema = z.object({
@@ -215,7 +246,7 @@ export async function lockParticipants(
   id: string,
   input: LockInput,
 ): Promise<{ ok: true; attendeeIds: string[]; excludedIds: string[] } | Failure> {
-  return mutate(id, (doc) => {
+  const result = await mutate(id, (doc) => {
     if (!sameId(doc.creatorId, creatorId)) return { ok: false as const, error: "forbidden" as const };
     if (!canTransition(doc.status, "PARTICIPANTS_LOCKED")) return { ok: false as const, error: "bad_state" as const };
     const option = doc.timeOptions.find((o) => sameId(o._id, input.optionId));
@@ -238,11 +269,16 @@ export async function lockParticipants(
     doc.status = "PARTICIPANTS_LOCKED";
     return { ok: true as const, attendeeIds, excludedIds };
   });
+  if (result.ok) {
+    await notifyPeople(id, creatorId, "participants_locked", result.attendeeIds, { included: true });
+    await notifyPeople(id, creatorId, "participants_locked", result.excludedIds, { included: false });
+  }
+  return result;
 }
 
 /** An attendee leaves on their own, until the showtime. The creator is told; seats and money are settled in Sprint 5A. */
 export async function withdraw(userId: string, id: string, now = new Date()): Promise<{ ok: true; creatorId: string } | Failure> {
-  return mutate(id, (doc) => {
+  const result = await mutate(id, (doc) => {
     const me = participantOf(doc, userId);
     if (!me || me.status !== "accepted") return { ok: false as const, error: "not_found" as const };
     if (!canWithdraw(doc.status)) return { ok: false as const, error: "bad_state" as const };
@@ -251,12 +287,14 @@ export async function withdraw(userId: string, id: string, now = new Date()): Pr
     me.status = "dropped";
     return { ok: true as const, creatorId: doc.creatorId.toString() };
   });
+  if (result.ok) await notifyPeople(id, userId, "participant_withdrew", [result.creatorId]);
+  return result;
 }
 
 /** Only the creator cancels, at any step before it is over. Everyone who has not turned it down is told. */
 export async function cancelAppointment(creatorId: string, id: string, reason?: string): Promise<{ ok: true; recipientIds: string[]; wasDraft: boolean } | Failure> {
   const text = reason?.trim().slice(0, MAX_DECLINE_REASON) || undefined;
-  return mutate(id, (doc) => {
+  const result = await mutate(id, (doc) => {
     if (!sameId(doc.creatorId, creatorId)) return { ok: false as const, error: "forbidden" as const };
     if (!canTransition(doc.status, "CANCELLED")) return { ok: false as const, error: "bad_state" as const };
     const wasDraft = doc.status === "DRAFT";
@@ -265,6 +303,8 @@ export async function cancelAppointment(creatorId: string, id: string, reason?: 
     const skip: ParticipantStatus[] = ["declined", "dropped", "excluded"];
     return { ok: true as const, wasDraft, recipientIds: wasDraft ? [] : doc.participants.filter((p) => !skip.includes(p.status)).map((p) => p.userId.toString()) };
   });
+  if (result.ok) await notifyPeople(id, creatorId, "appointment_cancelled", result.recipientIds, { reason: text });
+  return result;
 }
 
 // ---------- reading ----------
