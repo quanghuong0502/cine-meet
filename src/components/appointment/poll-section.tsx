@@ -130,11 +130,13 @@ export function PollSection({ view, canVote, nameOf, when, declineButton, onLock
                   <span className="type-item-title tabular-nums">{when(option.startAt)}</span>
                   {option.place ? <span className="break-words type-secondary text-muted-foreground">{option.place}</span> : null}
                   {option.proposedBy ? <span className="type-secondary text-muted-foreground">{t("proposedBy", { name: option.proposedBy.name })}</span> : null}
-                  <p className="pt-stack type-secondary text-muted-foreground">
-                    {t("tally", { yes, no })}
-                    {waiting > 0 ? ` · ${t("tallyWaiting", { count: waiting })}` : ""}
-                  </p>
-                  {yesNames.length > 0 ? <p className="break-words type-secondary text-muted-foreground">{t("yesNames", { names: yesNames.join(", ") })}</p> : null}
+                  <div className="flex flex-col gap-stack pt-stack">
+                    <p className="type-secondary font-medium tabular-nums">
+                      {t("tally", { yes, no })}
+                      {waiting > 0 ? <span className="text-muted-foreground">{` · ${t("tallyWaiting", { count: waiting })}`}</span> : null}
+                    </p>
+                    {yesNames.length > 0 ? <p className="break-words type-secondary text-muted-foreground">{t("yesNames", { names: yesNames.join(", ") })}</p> : null}
+                  </div>
                 </div>
                 {/* Creator: nudge the people who have not voted on this time, or lock it in (nobody said Yes -> nobody could go, so it is off). */}
                 {onLock || onRemind ? (
