@@ -12,6 +12,7 @@
         "seed": "tsx scripts/seed.ts",
         "seed:catalog": "tsx scripts/seed-catalog.ts",
         "seed:movies": "tsx scripts/seed-movies.ts",
+        "seed:users": "tsx scripts/seed-users.ts",
         "seed:friends": "tsx scripts/seed-friends.ts",
         "rescore": "tsx scripts/rescore-layouts.ts",
         "mascots:trim": "node scripts/trim-mascots.mjs",
