@@ -132,16 +132,16 @@ export function PollSection({ view, canVote, nameOf, when, declineButton, onLock
                   {option.proposedBy ? <span className="type-secondary text-muted-foreground">{t("proposedBy", { name: option.proposedBy.name })}</span> : null}
                   <div className="flex flex-col gap-stack pt-stack">
                     <ul className="flex items-center gap-group type-secondary font-medium tabular-nums">
-                      <li className="flex items-center gap-tight text-success" aria-label={t("countYes", { count: yes })}>
+                      <li className="flex items-center gap-tight" aria-label={t("countYes", { count: yes })}>
                         <ThumbsUp className="size-icon-sm" aria-hidden />
                         <span aria-hidden>{yes}</span>
                       </li>
-                      <li className="flex items-center gap-tight text-destructive" aria-label={t("countNo", { count: no })}>
+                      <li className="flex items-center gap-tight" aria-label={t("countNo", { count: no })}>
                         <ThumbsDown className="size-icon-sm" aria-hidden />
                         <span aria-hidden>{no}</span>
                       </li>
                       {waiting > 0 ? (
-                        <li className="flex items-center gap-tight text-muted-foreground" aria-label={t("countWaiting", { count: waiting })}>
+                        <li className="flex items-center gap-tight" aria-label={t("countWaiting", { count: waiting })}>
                           <Clock className="size-icon-sm" aria-hidden />
                           <span aria-hidden>{waiting}</span>
                         </li>
