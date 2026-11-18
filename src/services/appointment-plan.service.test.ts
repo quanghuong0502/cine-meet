@@ -148,6 +148,13 @@ describe("appointment planning (stage 2)", () => {
     expect((await plan.assignSeats(creator, other, { assignments: [{ userId: creator, seatCode: "A3" }] })).ok).toBe(true);
   });
 
+  it("still opens an appointment saved before stage 2 existed (no seats, food or estimate fields)", async () => {
+    const id = await lockedAppointment();
+    await (await import("@/models/appointment")).Appointment.collection.updateOne({ _id: new mongoose.Types.ObjectId(id) }, { $unset: { seats: "", fnb: "", estimate: "" } });
+    const view = await svc.getAppointment(creator, id);
+    expect(view).toMatchObject({ seats: [], fnb: [], estimate: [] });
+  });
+
   it("frees all seats when the appointment is cancelled", async () => {
     const id = await lockedAppointment();
     await plan.beginPlanning(creator, id);

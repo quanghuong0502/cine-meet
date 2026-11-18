@@ -576,9 +576,9 @@ export async function getAppointment(userId: string, id: string, now = new Date(
     cancelReason: doc.cancelReason ?? undefined,
     showtimeId: doc.showtimeId?.toString(),
     attendees: [doc.creatorId.toString(), ...doc.participants.filter((p) => p.status === "accepted").map((p) => p.userId.toString())].map(person),
-    seats: doc.seats.map((s) => ({ userId: s.userId.toString(), seatCode: s.seatCode })),
-    fnb: doc.fnb.map((l) => ({ id: l._id.toString(), ownerId: l.ownerId?.toString(), kind: l.kind, refId: l.refId.toString(), name: l.name, unitPrice: l.unitPrice, quantity: l.quantity })),
-    estimate: doc.estimate.map((e) => ({ userId: e.userId.toString(), ticket: e.ticket, fnb: e.fnb, other: e.other })),
+    seats: (doc.seats ?? []).map((s) => ({ userId: s.userId.toString(), seatCode: s.seatCode })),
+    fnb: (doc.fnb ?? []).map((l) => ({ id: l._id.toString(), ownerId: l.ownerId?.toString(), kind: l.kind, refId: l.refId.toString(), name: l.name, unitPrice: l.unitPrice, quantity: l.quantity })),
+    estimate: (doc.estimate ?? []).map((e) => ({ userId: e.userId.toString(), ticket: e.ticket, fnb: e.fnb, other: e.other })),
     started: (() => {
       const chosen = doc.timeOptions.find((o) => o._id.toString() === doc.chosenOptionId?.toString());
       return Boolean(chosen) && chosen!.startAt.getTime() <= now.getTime();
