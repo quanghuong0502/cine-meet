@@ -35,10 +35,10 @@ export function PushTestForm({ targets, configured }: { targets: PushTarget[]; c
         toast.error(t(`errors.${result.error}`));
         return;
       }
-      const { sent, failed, removed } = result.result;
+      const { sent, failed, removed, errors } = result.result;
       if (sent + failed + removed === 0) toast.error(t("noDevice", { name: result.name }));
       else if (sent > 0) toast.success(t("sent", { name: result.name, count: sent }));
-      else toast.error(t("allFailed", { name: result.name }));
+      else toast.error(t("allFailed", { name: result.name, reason: errors.join(", ") || "?" }));
     });
   }
 

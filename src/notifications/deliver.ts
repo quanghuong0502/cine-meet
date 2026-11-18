@@ -93,6 +93,7 @@ async function deliverOne(deliveryId: string, notificationId: string, attempts: 
   const payload = await buildPushPayload(notification.type, notification.payload as NotificationPayload, user.locale ?? "vi");
   let delivered = 0;
   let temporaryFailures = 0;
+  let lastError = "";
   for (const sub of subscriptions) {
     const outcome = await sender({ endpoint: sub.endpoint, keys: { p256dh: sub.keys?.p256dh ?? "", auth: sub.keys?.auth ?? "" } }, payload);
     if (outcome.status === "ok") {
@@ -102,12 +103,13 @@ async function deliverOne(deliveryId: string, notificationId: string, attempts: 
       await PushSubscription.deleteOne({ _id: sub._id });
     } else {
       temporaryFailures++;
+      lastError = outcome.message;
     }
   }
 
   // One device got it: done (retrying would send it twice to that one). All gone: nothing to retry.
   if (delivered > 0 || temporaryFailures === 0) return finish(deliveryId, "sent");
-  if (attempts >= MAX_DELIVERY_ATTEMPTS) return finish(deliveryId, "failed", { error: "gave_up" });
+  if (attempts >= MAX_DELIVERY_ATTEMPTS) return finish(deliveryId, "failed", { error: lastError || "gave_up" });
   const wait = BACKOFF_MS[attempts - 1] ?? BACKOFF_MS[BACKOFF_MS.length - 1]!;
-  return finish(deliveryId, "pending", { nextAttemptAt: new Date(now.getTime() + wait), error: "retry" });
+  return finish(deliveryId, "pending", { nextAttemptAt: new Date(now.getTime() + wait), error: lastError || "retry" });
 }

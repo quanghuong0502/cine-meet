@@ -41,7 +41,9 @@ export const sendWebPush: PushSender = async (target, payload) => {
   } catch (error) {
     const status = (error as { statusCode?: number }).statusCode;
     if (status === 404 || status === 410) return { status: "gone" };
-    // Only the status goes on record: the error text can carry the device's endpoint address.
-    return { status: "error", message: status ? `http_${status}` : "network" };
+    // Only the status (or the library's own complaint, with any address removed) goes on record: an address can identify a device.
+    if (status) return { status: "error", message: `http_${status}` };
+    const reason = error instanceof Error ? error.message.replace(/https?:\/\/\S+/g, "<url>").slice(0, 120) : "network";
+    return { status: "error", message: reason || "network" };
   }
 };

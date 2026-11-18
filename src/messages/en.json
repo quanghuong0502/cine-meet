@@ -871,7 +871,7 @@
       "send": "Send test",
       "sent": "Sent to {name}, {count, plural, one {# device} other {# devices}}",
       "noDevice": "{name} hasn't turned push on for any device.",
-      "allFailed": "Couldn't reach {name}. Check the VAPID keys or try again later.",
+      "allFailed": "Couldn't reach {name}. Reason: {reason}. Turn notifications off and on again on that device if the VAPID keys just changed.",
       "notConfigured": "The server has no VAPID keys, so nothing can be sent. Add VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY and VAPID_SUBJECT, then restart the server.",
       "errors": {
         "pick": "Pick who to send to first.",

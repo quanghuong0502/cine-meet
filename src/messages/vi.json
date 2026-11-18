@@ -871,7 +871,7 @@
       "send": "Gửi thử",
       "sent": "Đã gửi tới {name}, {count, plural, one {# thiết bị} other {# thiết bị}}",
       "noDevice": "{name} chưa bật thông báo đẩy trên thiết bị nào.",
-      "allFailed": "Chưa gửi được tới {name}. Xem lại khóa VAPID hoặc thử lại sau.",
+      "allFailed": "Chưa gửi được tới {name}. Lý do: {reason}. Thử bật lại thông báo trên thiết bị đó nếu vừa đổi khóa VAPID.",
       "notConfigured": "Máy chủ chưa có khóa VAPID nên chưa gửi được. Thêm VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT rồi chạy lại máy chủ.",
       "errors": {
         "pick": "Chọn người nhận trước nha.",

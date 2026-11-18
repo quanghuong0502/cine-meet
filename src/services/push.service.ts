@@ -81,13 +81,15 @@ export interface TestResult {
   sent: number;
   failed: number;
   removed: number;
+  /** Why the failed ones failed (codes like http_403, or the library's own words), so the admin can fix the cause. */
+  errors: string[];
 }
 
 /** "Send a test": straight to every device of the person, so they can see push works (no retry, no outbox). */
 export async function sendTestPush(userId: string, payload: PushPayload, sender: PushSender): Promise<TestResult> {
   await connectToDatabase();
   const subscriptions = await PushSubscription.find({ userId }).lean();
-  const result: TestResult = { sent: 0, failed: 0, removed: 0 };
+  const result: TestResult = { sent: 0, failed: 0, removed: 0, errors: [] };
   for (const sub of subscriptions) {
     const outcome = await sender({ endpoint: sub.endpoint, keys: { p256dh: sub.keys?.p256dh ?? "", auth: sub.keys?.auth ?? "" } }, payload);
     if (outcome.status === "ok") {
@@ -98,6 +100,7 @@ export async function sendTestPush(userId: string, payload: PushPayload, sender:
       await PushSubscription.deleteOne({ _id: sub._id });
     } else {
       result.failed++;
+      if (!result.errors.includes(outcome.message)) result.errors.push(outcome.message);
     }
   }
   return result;

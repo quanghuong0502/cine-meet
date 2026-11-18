@@ -204,7 +204,7 @@ describe("web push delivery", () => {
       await device(1);
       await device(2);
       const { fn } = sender((endpoint) => (endpoint.endsWith("/2") ? { status: "gone" } : { status: "ok" }));
-      expect(await push.sendTestPush(user, { title: "t", body: "b", url: "/" }, fn)).toEqual({ sent: 1, failed: 0, removed: 1 });
+      expect(await push.sendTestPush(user, { title: "t", body: "b", url: "/" }, fn)).toEqual({ sent: 1, failed: 0, removed: 1, errors: [] });
       expect(await push.listDevices(user)).toHaveLength(1);
     });
   });
