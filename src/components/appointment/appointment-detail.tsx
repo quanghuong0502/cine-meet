@@ -1,11 +1,13 @@
 "use client";
 
-import { Ban, LogOut, XCircle } from "lucide-react";
+import { Ban, CheckCheck, CircleCheck, LogOut, XCircle } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import {
   cancelAppointmentAction,
+  completeAppointmentAction,
+  confirmAppointmentAction,
   declineInvitationAction,
   lockParticipantsAction,
   remindVotersAction,
@@ -16,6 +18,8 @@ import { InviteMore } from "@/components/appointment/invite-more";
 import { AppointmentStatusBadge } from "@/components/appointment/status-badge";
 import { ReasonDialog } from "@/components/appointment/reason-dialog";
 import { PollSection } from "@/components/appointment/poll-section";
+import { CostSection } from "@/components/appointment/cost-section";
+import { PlanSection } from "@/components/appointment/plan-section";
 import { PersonRow } from "@/components/friends/person-row";
 import { ListThumb } from "@/components/list-thumb";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +28,7 @@ import { canWithdraw, isFinished, isOpenForReplies } from "@/lib/appointment/sta
 import { formatDayCompact, formatDayLong, formatTime } from "@/lib/datetime";
 import { cn } from "@/lib/utils";
 import type { AppointmentView, ParticipantView } from "@/services/appointment.service";
+import type { CostView, PlanData } from "@/services/appointment-plan.service";
 
 type Dialog = "decline" | "withdraw" | "cancel" | null;
 
@@ -37,9 +42,13 @@ interface DetailProps {
   /** The creator's friends and groups, for "invite more" (empty for everyone else). */
   friends?: { id: string; name: string }[];
   groups?: { id: string; name: string; memberIds: string[] }[];
+  /** Showtimes, room and food for the creator while planning or confirmed. */
+  plan?: PlanData | null;
+  /** What it really cost each person, once the appointment is over. */
+  costs?: CostView[];
 }
 
-export function AppointmentDetail({ view, friends = [], groups = [] }: DetailProps) {
+export function AppointmentDetail({ view, friends = [], groups = [], plan = null, costs = [] }: DetailProps) {
   const t = useTranslations("appointments.detail");
   const tc = useTranslations("appointments");
   const locale = useLocale();
@@ -55,6 +64,8 @@ export function AppointmentDetail({ view, friends = [], groups = [] }: DetailPro
   const locked = view.chosenOptionId !== undefined;
   // Leave / cancel float above the menu (like the poll bar) so they stay in thumb reach while the page scrolls.
   const showWithdraw = view.myStatus === "accepted" && locked && canWithdraw(view.status);
+  const canConfirm = view.isCreator && view.status === "PLANNING";
+  const canComplete = view.isCreator && view.status === "CONFIRMED" && view.started;
   const hasFloatingAction = !finished && (showWithdraw || view.isCreator);
   const chosen = view.options.find((o) => o.id === view.chosenOptionId);
 
@@ -127,6 +138,7 @@ export function AppointmentDetail({ view, friends = [], groups = [] }: DetailPro
       ) : null}
 
       {locked && chosen ? (
+        <>
         <section aria-labelledby="appt-time" className="flex flex-col gap-item">
           <h2 id="appt-time" className="type-heading">
             {t("chosenTime")}
@@ -136,6 +148,9 @@ export function AppointmentDetail({ view, friends = [], groups = [] }: DetailPro
             {chosen.place ? <span className="break-words type-secondary text-muted-foreground">{chosen.place}</span> : null}
           </div>
         </section>
+        {view.status !== "CANCELLED" && view.myStatus !== "excluded" && view.myStatus !== "dropped" ? <PlanSection view={view} plan={plan} run={run} busy={pending} /> : null}
+        {view.status === "COMPLETED" ? <CostSection view={view} costs={costs} onSave={run} busy={pending} /> : null}
+        </>
       ) : (
         <PollSection
           // After a save the server's options and votes change, which starts the draft again from what is now saved.
@@ -189,6 +204,18 @@ export function AppointmentDetail({ view, friends = [], groups = [] }: DetailPro
       {hasFloatingAction ? (
         <div data-bottom-fixed className="pointer-events-none fixed inset-x-0 bottom-[var(--nav-clearance)] z-30 px-inset">
           <div className="mx-auto flex max-w-form flex-col gap-stack">
+            {canConfirm ? (
+              <Button type="button" size="cta" disabled={pending} onClick={() => run(() => confirmAppointmentAction(view.id), t("plan.confirmed"))} className="pointer-events-auto">
+                <CircleCheck aria-hidden />
+                {t("plan.confirm")}
+              </Button>
+            ) : null}
+            {canComplete ? (
+              <Button type="button" size="cta" disabled={pending} onClick={() => run(() => completeAppointmentAction(view.id), t("plan.completed"))} className="pointer-events-auto">
+                <CheckCheck aria-hidden />
+                {t("plan.complete")}
+              </Button>
+            ) : null}
             {showWithdraw ? (
               <Button type="button" variant="destructive" size="cta" disabled={pending} onClick={() => setDialog("withdraw")} className="pointer-events-auto">
                 <LogOut aria-hidden />
