@@ -60,7 +60,7 @@ function mapPadding(geometry: LayoutGeometry) {
 }
 const SEAT = 0.84;
 /** Zoom level from which the seat code (row and number, e.g. F12) is drawn inside the seats. */
-const LABELS_FROM_SCALE = 1.8;
+const LABELS_FROM_SCALE = 1.5;
 /** Width of the selection ring in screen pixels (`non-scaling-stroke`): it stays this thin at every zoom instead of growing with it. */
 const SELECT_RING_PX = 1.5;
 const DEFAULT_COLOR = "var(--muted-foreground)";
