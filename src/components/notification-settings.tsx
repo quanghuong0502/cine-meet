@@ -24,6 +24,7 @@ interface Props {
 
 type Support =
   | "checking"
+  | "insecure" // opened over plain http (a LAN address): browsers switch service workers and push off
   | "unsupported" // the browser has no Web Push
   | "needs_install" // iPhone and iPad only get push once the app is on the home screen
   | "ready";
@@ -54,6 +55,8 @@ export function NotificationSettings({ publicKey, devices: initialDevices, pushO
   useEffect(() => {
     let cancelled = false;
     async function check() {
+      // Service workers and push exist only on https or localhost; on http://192.168... the browser hides them entirely.
+      if (!window.isSecureContext) return setSupport("insecure");
       const hasPush = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
       const apple = /iphone|ipad/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
       const installed = window.matchMedia("(display-mode: standalone)").matches;
@@ -145,6 +148,10 @@ export function NotificationSettings({ publicKey, devices: initialDevices, pushO
         ) : support === "checking" ? null : support === "needs_install" ? (
           <p role="status" className="rounded-xl border bg-card p-inset-sm type-secondary">
             {t("needsInstall")}
+          </p>
+        ) : support === "insecure" ? (
+          <p role="status" className="rounded-xl border bg-card p-inset-sm type-secondary">
+            {t("insecure")}
           </p>
         ) : support === "unsupported" ? (
           <p role="status" className="type-secondary text-muted-foreground">

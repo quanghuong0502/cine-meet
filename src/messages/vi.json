@@ -1009,7 +1009,8 @@
         "saveFailed": "Chưa lưu được thiết bị này, thử lại nha.",
         "subscribeFailed": "Chưa bật được thông báo trên thiết bị này. Thử lại hoặc kiểm tra quyền thông báo nha.",
         "notConfigured": "Máy chủ chưa bật thông báo đẩy."
-      }
+      },
+      "insecure": "Thông báo đẩy chỉ chạy khi mở app bằng địa chỉ https hoặc localhost. Địa chỉ hiện tại là http thường nên trình duyệt đã tắt tính năng này."
     },
     "install": {
       "title": "Cài app ra màn hình chính",

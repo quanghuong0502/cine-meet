@@ -1009,7 +1009,8 @@
         "saveFailed": "Couldn't save this device, please try again.",
         "subscribeFailed": "Couldn't turn on notifications here. Try again or check the notification permission.",
         "notConfigured": "The server doesn't have push notifications turned on."
-      }
+      },
+      "insecure": "Push notifications only work when the app is opened over https or localhost. This address is plain http, so the browser has switched the feature off."
     },
     "install": {
       "title": "Install the app",
