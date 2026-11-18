@@ -241,6 +241,11 @@ describe("layoutConfigSchema", () => {
     expect(layoutConfigSchema.safeParse(defaultLayoutConfig("std")).success).toBe(true);
   });
 
+  it("accepts the recommended flag next to the other two", () => {
+    const cfg = { ...defaultLayoutConfig("std"), overrides: [{ row: "A", cols: [1], flags: ["broken", "obstructed", "recommended"] }] };
+    expect(layoutConfigSchema.safeParse(cfg).success).toBe(true);
+  });
+
   it("rejects an unknown row, an aisle after the last column and a bad override column", () => {
     const bad = {
       ...defaultLayoutConfig("std"),

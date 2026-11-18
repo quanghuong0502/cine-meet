@@ -101,7 +101,7 @@ thì dùng giá đó, bỏ qua mọi rule. Giá ước tính của lịch hẹn 
 - Lối đi ngang: nằm sau hàng nào.
 - Cửa vào/ra: trái/phải/giữa × phía trước/phía sau.
 
-**Ghi đè từng ô ghế** (chạm trên sơ đồ): đổi loại ghế; đánh dấu "không có ghế" (ô trống, cột chịu lực); ghế hỏng hoặc bị che tầm nhìn.
+**Ghi đè từng ô ghế** (chạm trên sơ đồ): đổi loại ghế; đánh dấu "không có ghế" (ô trống, cột chịu lực); ghế hỏng hoặc bị che tầm nhìn; "khuyên ngồi" (admin gợi ý ghế đẹp, chỉ là ghi chú, không đổi điểm ghế; người dùng thấy huy hiệu ngón cái lên trên sơ đồ và dòng "khuyên ngồi" khi chạm ghế).
 
 **Versioning**: sửa layout sẽ tạo phiên bản mới (`auditoriumLayouts`) thay vì ghi đè. Lịch hẹn cũ vẫn trỏ đúng phiên bản layout của chúng.
 - **Đánh dấu ghế đi theo phòng, không mất khi có version mới:** `seatMarks` lưu cả `auditoriumId`, `layoutId` (version lúc đánh dấu)

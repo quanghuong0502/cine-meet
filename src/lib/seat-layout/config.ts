@@ -18,7 +18,7 @@ export function rowLabels(rows: number): string[] {
   return Array.from({ length: rows }, (_, i) => rowLabel(i));
 }
 
-const flagSchema = z.enum(["broken", "obstructed"]);
+const flagSchema = z.enum(["broken", "obstructed", "recommended"]);
 const uniqueInts = (min: number, max: number) =>
   z
     .array(z.number().int().min(min).max(max))
@@ -57,7 +57,7 @@ export const layoutConfigSchema = z
           row: z.string().min(1).max(3),
           cols: z.array(z.number().int().min(1).max(MAX_COLS)).min(1).max(MAX_COLS),
           type: z.string().min(1).optional(),
-          flags: z.array(flagSchema).max(2).optional(),
+          flags: z.array(flagSchema).max(3).optional(),
         }),
       )
       .max(2000),

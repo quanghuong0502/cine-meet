@@ -1,6 +1,6 @@
 "use client";
 
-import { RotateCcw, ZoomIn, ZoomOut } from "lucide-react";
+import { RotateCcw, ThumbsUp, ZoomIn, ZoomOut } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { memo, useCallback, useMemo, useRef } from "react";
 import { Button } from "@/components/ui/button";
@@ -180,6 +180,7 @@ const MapLayer = memo(function MapLayer({
         const selected = selectedCodes?.has(seat.code);
         const broken = seat.flags.includes("broken");
         const obstructed = seat.flags.includes("obstructed");
+        const recommended = seat.flags.includes("recommended");
         const mark = marks?.get(seat.code);
         return (
           <g
@@ -206,6 +207,7 @@ const MapLayer = memo(function MapLayer({
                 pointerEvents="none"
               />
             ) : null}
+            {recommended ? <RecommendedBadge x={seat.x - w / 2 + 0.02} y={seat.y - SEAT / 2 + 0.02} /> : null}
             {mark ? <MarkBadge kind={mark} x={seat.x + w / 2 - 0.02} y={seat.y - SEAT / 2 + 0.02} /> : null}
             {selected ? (
               <rect x={seat.x - w / 2 - 0.03} y={seat.y - SEAT / 2 - 0.03} width={w + 0.06} height={SEAT + 0.06} rx={0.23} fill="none" stroke="var(--foreground)" strokeWidth={SELECT_RING_PX} vectorEffect="non-scaling-stroke" pointerEvents="none" />
@@ -221,6 +223,21 @@ const MapLayer = memo(function MapLayer({
     </>
   );
 });
+
+/** Top-left badge of a seat the admin recommends: a green circle with a thumbs-up (lucide "thumbs-up" paths, drawn in a 24-unit box). */
+function RecommendedBadge({ x, y }: { x: number; y: number }) {
+  const size = 0.34;
+  const k = size / 24;
+  return (
+    <g pointerEvents="none">
+      <circle cx={x} cy={y} r={0.25} fill="#16a34a" stroke="#fff" strokeWidth={0.05} />
+      <g transform={`translate(${x - size / 2} ${y - size / 2}) scale(${k})`} fill="none" stroke="#fff" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M7 10v12" />
+        <path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z" />
+      </g>
+    </g>
+  );
+}
 
 /** Corner badge of a marked seat: a gold star, or a red circle with a bar. Shape differs, so colour is not the only signal. */
 function MarkBadge({ kind, x, y }: { kind: "favorite" | "avoid"; x: number; y: number }) {
@@ -299,6 +316,7 @@ export function SeatMap({
         mark === "favorite" ? t("markFavorite") : mark === "avoid" ? t("markAvoid") : null,
         seat.flags.includes("broken") ? t("broken") : null,
         seat.flags.includes("obstructed") ? t("obstructed") : null,
+        seat.flags.includes("recommended") ? t("recommended") : null,
       ]
         .filter(Boolean)
         .join(", "),
@@ -354,6 +372,15 @@ export function SeatMap({
           </Button>
         </div>
       </div>
+
+      {seats.some((seat) => seat.flags.includes("recommended")) ? (
+        <p className="flex items-center gap-stack type-micro text-muted-foreground">
+          <span aria-hidden className="flex size-icon-sm shrink-0 items-center justify-center rounded-full bg-[#16a34a] text-white">
+            <ThumbsUp className="size-icon-xs" />
+          </span>
+          {t("recommendedLegend")}
+        </p>
+      ) : null}
 
       {showHeatmap ? (
         <div className="flex items-center gap-stack type-micro text-muted-foreground">

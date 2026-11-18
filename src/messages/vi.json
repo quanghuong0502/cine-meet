@@ -748,6 +748,7 @@
           "none": "Không có ghế",
           "broken": "Ghế hỏng",
           "obstructed": "Che tầm nhìn",
+          "recommended": "Khuyên ngồi",
           "clear": "Bỏ chọn",
           "reset": "Đặt lại ô",
           "actionGroup": "Thao tác",
@@ -977,6 +978,8 @@
     "zoomOut": "Thu nhỏ",
     "zoomReset": "Đặt lại",
     "heatLow": "Điểm thấp",
+    "recommended": "khuyên ngồi",
+    "recommendedLegend": "Ghế khuyên ngồi",
     "heatHigh": "Điểm cao",
     "doorLabel": "Cửa ra vào",
     "markFavorite": "đã đánh dấu thích",
@@ -1060,7 +1063,8 @@
       "close": "Đóng",
       "flags": {
         "broken": "ghế hỏng",
-        "obstructed": "bị che tầm nhìn"
+        "obstructed": "bị che tầm nhìn",
+        "recommended": "khuyên ngồi"
       },
       "kindLabel": "Loại đánh dấu",
       "kindRequired": "Ghế này [you] thích hay tránh nè?",

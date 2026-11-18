@@ -28,7 +28,7 @@ const seatSchema = new Schema(
     x: { type: Number, required: true },
     y: { type: Number, required: true },
     score: { type: Number, required: true },
-    flags: { type: [String], enum: ["broken", "obstructed"], default: [] },
+    flags: { type: [String], enum: ["broken", "obstructed", "recommended"], default: [] },
   },
   { _id: false },
 );

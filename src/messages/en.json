@@ -748,6 +748,7 @@
           "none": "No seat",
           "broken": "Broken",
           "obstructed": "View blocked",
+          "recommended": "Recommended",
           "clear": "Deselect",
           "reset": "Reset cells",
           "actionGroup": "Actions",
@@ -977,6 +978,8 @@
     "zoomOut": "Zoom out",
     "zoomReset": "Reset",
     "heatLow": "Low score",
+    "recommended": "recommended",
+    "recommendedLegend": "Recommended seat",
     "heatHigh": "High score",
     "doorLabel": "Entrance",
     "markFavorite": "marked as favourite",
@@ -1060,7 +1063,8 @@
       "close": "Close",
       "flags": {
         "broken": "broken",
-        "obstructed": "view blocked"
+        "obstructed": "view blocked",
+        "recommended": "recommended"
       },
       "kindLabel": "Kind of mark",
       "kindRequired": "Like this seat or skip it? Pick one!",

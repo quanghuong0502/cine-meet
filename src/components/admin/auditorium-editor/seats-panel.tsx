@@ -42,7 +42,7 @@ export function SeatsPanel({ seatTypes, selectedCount, allHaveFlag, allHaveType,
       </Section>
 
       <Section title={t("flagGroup")}>
-        {(["broken", "obstructed"] as const).map((flag) => {
+        {(["broken", "obstructed", "recommended"] as const).map((flag) => {
           const on = !idle && allHaveFlag(flag);
           return (
             <Chip key={flag} disabled={idle} selected={on} onClick={() => onFlag(flag, !on)}>

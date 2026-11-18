@@ -5,7 +5,8 @@ export type ColNumbering = "left_to_right" | "right_to_left";
 export type ScreenDistance = "near" | "medium" | "far";
 export type EntranceSide = "left" | "center" | "right";
 export type EntrancePosition = "front" | "back";
-export type SeatFlag = "broken" | "obstructed";
+/** `recommended` = a seat the admin advises sitting in; a note only, it does not change the seat score. */
+export type SeatFlag = "broken" | "obstructed" | "recommended";
 
 /** Value of an override `type` that removes the seat (empty cell, pillar). */
 export const NO_SEAT = "none";
