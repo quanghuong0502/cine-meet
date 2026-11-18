@@ -53,7 +53,7 @@ Muốn chỉnh cỡ chữ hay kích thước cho cả app thì sửa đúng ở 
 | `--inset-bottom` / `--inset-top` | `max(16, vùng an toàn)` | thanh dính đáy và đỉnh: dùng `pb-(--inset-bottom)` để chừa thanh home và tai thỏ |
 
 Icon: `size-icon-xs` 12, `size-icon-sm` 16 (cạnh chữ phụ), `size-icon` 20 (trong nút), `size-icon-lg` 24 (thanh tab, nút quay lại).
-Kích thước cố định có tên: `stepper` 32, `swatch` 80, `track` 8, `area-lg` 192, `area-max` 288 và `area-cap` 160 (ô nhiều dòng), `poster` 136, `mascot-max` 176, `fab-clear` 80, `action-clear` 88, `sidebar` 256, `sheet-gap` 96, `grabber` 100, `menu-min` 144, `switch` 52 và `switch-thumb` 28; bóng: `shadow-menu`; cộng các token cũ `target`, `control`, `control-lg`, `row`, `avatar`, `nav`.
+Kích thước cố định có tên: `stepper` 32, `thumb` 56 (ảnh nhỏ của một mục trong danh sách, user và admin dùng chung), `swatch` 80, `track` 8, `area-lg` 192, `area-max` 288 và `area-cap` 160 (ô nhiều dòng), `poster` 136, `mascot-max` 176, `fab-clear` 80, `action-clear` 88, `sidebar` 256, `sheet-gap` 96, `grabber` 100, `menu-min` 144, `switch` 52 và `switch-thumb` 28; bóng: `shadow-menu`; cộng các token cũ `target`, `control`, `control-lg`, `row`, `avatar`, `nav`.
 Cột (`max-w-*`): `app` 672 (cột người dùng), `page` 768 (trang admin), `form` 384 (thẻ form, thanh Lưu), `menu` 448, `media` 576, `hint` 320.
 
 **Cách dùng:**
@@ -110,6 +110,7 @@ Nguồn: [Apple HIG, Typography](https://developer.apple.com/design/human-interf
 | `min-h-area` | 112px | chiều cao tối thiểu của ô nhiều dòng (textarea): cao hơn ô một dòng để gõ thoải mái |
 | `min-h-row` | 64px | hàng danh sách có tiêu đề và dòng phụ |
 | `min-h-nav` | 68px | chiều cao viên thuốc điều hướng dưới (mỗi tab lấp đầy); viên thuốc cách hai bên 16px, cách đáy `--nav-bottom` (8px, hoặc trên iPhone có thanh home là vùng an toàn trừ 20px) |
+| `size-thumb` | 56px | ảnh nhỏ của một mục trong danh sách (logo, chi nhánh, poster), vuông bo góc `rounded-lg`, dùng `ListThumb`; danh sách người dùng giữ avatar tròn `size-avatar` |
 | `size-avatar` | 40px | hình tròn avatar trong nút menu tài khoản (vùng chạm vẫn 44px) |
 | `gap-field` (`--spacing-field`) | 24px | khoảng cách giữa hai trường (block) của mọi form; form mới luôn dùng class này, không viết `gap-4`/`gap-6` rời |
 | `--spacing-nav-gap` | 12px | khoảng giữ phía trên viên thuốc điều hướng nổi; nội dung chừa `--nav-clearance` = nav + gap + `--nav-bottom` |

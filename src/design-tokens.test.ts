@@ -151,8 +151,9 @@ describe("design tokens", () => {
   it("keeps the PX constants equal to their twins in globals.css", () => {
     const css = readFileSync(join(SRC, "app", "globals.css"), "utf8");
     const px = (name: string) => Number(new RegExp(`${name}:\\s*([0-9.]+)rem`).exec(css)?.[1]) * 16;
-    expect({ avatar: PX.avatar, swatch: PX.swatch, poster: PX.poster, column: PX.column }).toEqual({
+    expect({ avatar: PX.avatar, thumb: PX.thumb, swatch: PX.swatch, poster: PX.poster, column: PX.column }).toEqual({
       avatar: px("--spacing-avatar"),
+      thumb: px("--spacing-thumb"),
       swatch: px("--spacing-swatch"),
       poster: px("--spacing-poster"),
       column: px("--container-app"),

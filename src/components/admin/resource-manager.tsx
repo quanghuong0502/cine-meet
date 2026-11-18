@@ -5,9 +5,9 @@ import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
-import Image from "next/image";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/empty-state";
+import { ListThumb } from "@/components/list-thumb";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,7 +23,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { RemoveResult } from "@/lib/admin/action-result";
 import type { ResourceItem, ResourceLabels } from "./resource-types";
-import { PX } from "@/lib/ui-sizes";
 
 interface ResourceManagerProps {
   items: ResourceItem[];
@@ -38,25 +37,16 @@ interface ResourceManagerProps {
   searchLabels?: { placeholder: string; label: string };
 }
 
-/** The round marker of a card: the logo when there is one (and it loads), else the colour, with initials if given; nothing when it has none of them. */
+/** The marker of a card: a person gets their round initials; anything else gets the shared list picture (`ListThumb`), or nothing. */
 function Marker({ item }: { item: ResourceItem }) {
-  const [failed, setFailed] = useState(false);
-  const showImage = item.imageUrl && !failed;
-  // Nothing to show (no picture, colour or initials): no empty circle.
-  if (!showImage && !item.color && !item.avatarText) return null;
-  return (
-    <span
-      aria-hidden
-      className={`flex size-avatar shrink-0 items-center justify-center overflow-hidden rounded-full border type-secondary font-semibold! ${showImage ? "bg-white" : "bg-muted"}`}
-      style={!showImage && item.color ? { backgroundColor: item.color } : undefined}
-    >
-      {showImage ? (
-        <Image src={item.imageUrl as string} alt="" width={PX.avatar} height={PX.avatar} unoptimized onError={() => setFailed(true)} className="size-full object-cover" />
-      ) : (
-        item.avatarText
-      )}
-    </span>
-  );
+  if (item.avatarText && !item.imageUrl) {
+    return (
+      <span aria-hidden className="flex size-avatar shrink-0 items-center justify-center overflow-hidden rounded-full border bg-muted type-secondary font-semibold!">
+        {item.avatarText}
+      </span>
+    );
+  }
+  return <ListThumb imageUrl={item.imageUrl} color={item.color} />;
 }
 
 const CONTROL_CLASS = "h-control rounded-xl bg-card px-inset type-body";

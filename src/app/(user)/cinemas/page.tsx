@@ -1,14 +1,13 @@
 import type { Metadata } from "next";
 import { getLocale, getTranslations } from "next-intl/server";
 import { MapPin } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { EmptyState } from "@/components/empty-state";
+import { ListThumb } from "@/components/list-thumb";
 import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
 import { requireUser } from "@/lib/auth/guards";
 import { formatVnd } from "@/lib/money";
-import { PX } from "@/lib/ui-sizes";
 import { listCinemaGroups } from "@/services/cinema.service";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -34,12 +33,8 @@ export default async function CinemasPage() {
             <ul className="flex flex-col gap-stack">
               {group.branches.map((branch) => (
                 <li key={branch.id}>
-                  <Link href={`/cinemas/${branch.id}`} className="flex min-h-row items-center gap-item rounded-xl border bg-card p-inset">
-                    {branch.imageUrl ? (
-                      <div className="relative size-swatch shrink-0 overflow-hidden rounded-lg bg-muted">
-                        <Image src={branch.imageUrl} alt="" fill sizes={`${PX.swatch}px`} unoptimized className="object-cover" />
-                      </div>
-                    ) : null}
+                  <Link href={`/cinemas/${branch.id}`} className="flex min-h-row items-center gap-item rounded-xl border bg-card p-inset-sm">
+                    <ListThumb imageUrl={branch.imageUrl ?? undefined} />
                     <div className="flex min-w-0 flex-1 flex-col gap-stack">
                       <span className="type-item-title">{branch.name}</span>
                       {branch.address ? (
