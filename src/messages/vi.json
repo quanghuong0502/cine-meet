@@ -952,6 +952,64 @@
       "title": "Bảo mật",
       "description": "Mật khẩu đăng nhập của [you].",
       "changePassword": "Đổi mật khẩu"
+    },
+    "notifications": {
+      "title": "Thông báo đẩy",
+      "notConfigured": "Máy chủ chưa bật thông báo đẩy. Nhờ quản trị viên cài đặt giúp [me] nha. Thông báo trong app vẫn chạy bình thường.",
+      "needsInstall": "Trên iPhone và iPad, thông báo đẩy chỉ chạy khi app đã nằm ở màn hình chính. Làm theo hướng dẫn bên dưới, rồi mở app từ màn hình chính và quay lại đây nha.",
+      "unsupported": "Trình duyệt này chưa hỗ trợ thông báo đẩy. Thông báo trong app vẫn chạy bình thường.",
+      "denied": "[you] đang chặn thông báo của app này. Mở cài đặt của trình duyệt hoặc điện thoại để cho phép lại nha.",
+      "turnOn": "Bật thông báo trên thiết bị này",
+      "on": "Thiết bị này đang nhận thông báo đẩy, kể cả khi đã đóng app.",
+      "sendTest": "Gửi thử thông báo",
+      "turnedOn": "Đã bật thông báo trên thiết bị này",
+      "testSent": "Đã gửi rồi nè, nhìn lên màn hình xem nha",
+      "removed": "Đã tắt thông báo trên thiết bị đó",
+      "devicesTitle": "Thiết bị nhận thông báo",
+      "thisDevice": "Thiết bị này",
+      "since": "Từ {date}",
+      "removeDevice": "Tắt thông báo trên {name}",
+      "devices": {
+        "iphone": "iPhone",
+        "ipad": "iPad",
+        "android": "Điện thoại Android",
+        "mac": "Máy Mac",
+        "windows": "Máy Windows",
+        "linux": "Máy Linux",
+        "other": "Thiết bị khác"
+      },
+      "typesTitle": "Loại thông báo được đẩy",
+      "types": {
+        "appointment_invited": "Có người mời [you] xem phim",
+        "appointment_reply": "Có người trả lời lời mời",
+        "participants_locked": "Đã chốt người tham gia",
+        "appointment_cancelled": "Lịch hẹn bị hủy",
+        "participant_withdrew": "Có người rút lui"
+      },
+      "errors": {
+        "network": "Mạng đang chập chờn, thử lại giúp [me] nha.",
+        "saveFailed": "Chưa lưu được thiết bị này, thử lại nha.",
+        "subscribeFailed": "Chưa bật được thông báo trên thiết bị này. Thử lại hoặc kiểm tra quyền thông báo nha.",
+        "notConfigured": "Máy chủ chưa bật thông báo đẩy.",
+        "testFailed": "Chưa gửi được. Thử tắt rồi bật lại thông báo trên thiết bị này nha."
+      }
+    },
+    "install": {
+      "title": "Cài app ra màn hình chính",
+      "why": "Cài app thì mở nhanh như app thường và nhận được thông báo đẩy, nhất là trên iPhone.",
+      "ios": {
+        "step1": "Mở trang này bằng Safari rồi bấm nút Chia sẻ",
+        "shareIcon": "Chia sẻ",
+        "step2": "Chọn Thêm vào Màn hình chính",
+        "step3": "Bấm Thêm, rồi mở app từ màn hình chính"
+      },
+      "android": {
+        "step1": "Bấm nút menu ba chấm của trình duyệt",
+        "step2": "Chọn Cài đặt ứng dụng hoặc Thêm vào màn hình chính"
+      },
+      "other": {
+        "step1": "Tìm nút Cài đặt ứng dụng trên thanh địa chỉ của trình duyệt."
+      }
     }
   },
   "imageUpload": {
@@ -1356,6 +1414,15 @@
         "title": "{actorName} rút lui",
         "body": "{actorName} không đi xem {movieTitle} được nữa."
       }
+    },
+    "test": {
+      "title": "Thử thông báo",
+      "body": "Thông báo đẩy chạy ngon lành rồi nè!"
     }
+  },
+  "offline": {
+    "title": "Mất mạng rồi",
+    "description": "Kiểm tra Wi-Fi hoặc 4G rồi thử lại nha.",
+    "retry": "Thử lại"
   }
 }

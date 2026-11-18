@@ -45,6 +45,8 @@ const userSchema = new Schema(
     // Left unset until the user chooses, so the browser language still applies on first sign-in.
     locale: { type: String, enum: LOCALES },
     seatPreference: { type: String, enum: SEAT_PREFERENCES },
+    // Kinds of notification this person does not want pushed to their devices (in-app messages are always kept). Names are NotificationType.
+    pushOff: { type: [String], default: [] },
     // Random code in this person's friend-invite link; made the first time they open "Friends". Unique when present.
     inviteCode: { type: String, unique: true, sparse: true },
   },

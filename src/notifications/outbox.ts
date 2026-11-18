@@ -1,7 +1,8 @@
 import { connectToDatabase } from "@/lib/db";
 import { Notification } from "@/models/notification";
 import { NotificationDelivery } from "@/models/notification-delivery";
-import type { NotificationInput } from "./types";
+import { pushRecipients } from "@/services/push.service";
+import type { NotificationInput, NotificationType } from "./types";
 
 /**
  * Writes the notifications for an event. The in-app message exists as soon as the row does (nothing has to run for it), so it is
@@ -15,7 +16,19 @@ export async function enqueueNotifications(inputs: NotificationInput[]): Promise
     await connectToDatabase();
     const rows = await Notification.insertMany(items.map((i) => ({ type: i.type, recipientId: i.recipientId, payload: i.payload })));
     await NotificationDelivery.insertMany(rows.map((n) => ({ notificationId: n._id, channel: "inapp", status: "sent", attempts: 1 })));
+    await queuePush(rows.map((n) => ({ id: n._id, recipientId: n.recipientId.toString(), type: n.type })));
   } catch {
     console.error("notifications: could not write the outbox");
   }
+}
+
+/** A pending Web Push delivery for each notification whose person has a device and wants this kind pushed. The worker sends them. */
+async function queuePush(rows: { id: unknown; recipientId: string; type: NotificationType }[]): Promise<void> {
+  const byType = new Map<NotificationType, string[]>();
+  for (const row of rows) byType.set(row.type, [...(byType.get(row.type) ?? []), row.recipientId]);
+  const wanted = new Map<NotificationType, Set<string>>();
+  for (const [type, ids] of byType) wanted.set(type, await pushRecipients(ids, type));
+  const pending = rows.filter((row) => wanted.get(row.type)?.has(row.recipientId));
+  if (pending.length === 0) return;
+  await NotificationDelivery.insertMany(pending.map((row) => ({ notificationId: row.id, channel: "webpush", status: "pending" })));
 }

@@ -8,6 +8,7 @@ import { KeyboardWatcher } from "@/components/keyboard-watcher";
 import { NetworkWatcher } from "@/components/network-watcher";
 import { NoZoom } from "@/components/no-zoom";
 import { BootSplash } from "@/components/route-loading";
+import { ServiceWorkerRegister } from "@/components/service-worker-register";
 import { APP_NAME } from "@/components/wordmark";
 import splashScreens from "@/lib/splash-screens.json";
 import { getBrandTheme } from "@/services/brand-theme-cache";
@@ -84,6 +85,7 @@ export default async function RootLayout({
           <NoZoom />
           <KeyboardWatcher />
           <NetworkWatcher />
+          <ServiceWorkerRegister />
           <BootSplash />
           {children}
           <Toaster theme="dark" />
