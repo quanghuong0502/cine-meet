@@ -41,7 +41,7 @@ describe("appointment planning (stage 2)", () => {
   afterAll(stopTestDatabase);
 
   /** A locked appointment (creator + u1 + u2 going) with a showtime in a room of 3 seats in a row plus a couple seat and a broken seat. */
-  async function lockedAppointment(): Promise<string> {
+  async function lockedAppointment(fromPoll = true): Promise<string> {
     const doc = await m.Appointment!.create({
       creatorId: creator,
       movieId: movie,
@@ -52,6 +52,7 @@ describe("appointment planning (stage 2)", () => {
     const created = await svc.getAppointment(creator, String(doc._id));
     const appointment = await (await import("@/models/appointment")).Appointment.findById(doc._id);
     appointment!.chosenOptionId = appointment!.timeOptions[0]!._id;
+    appointment!.showtimeFromPoll = fromPoll;
     await appointment!.save();
     expect(created).not.toBeNull();
     return String(doc._id);
@@ -156,7 +157,7 @@ describe("appointment planning (stage 2)", () => {
   });
 
   it("only accepts a showtime on the day the group agreed on", async () => {
-    const id = await lockedAppointment();
+    const id = await lockedAppointment(false);
     await plan.beginPlanning(creator, id);
     const room = await m.Auditorium!.create({ branchId: oid(), name: "P2" });
     const otherDay = String((await m.Showtime!.create({ movieId: movie, auditoriumId: room._id, layoutId: oid(), startAt: new Date(start.getTime() + 48 * 3600_000), endAt: new Date(start.getTime() + 50 * 3600_000), formatId: oid() }))._id);
@@ -165,7 +166,7 @@ describe("appointment planning (stage 2)", () => {
   });
 
   it("does not accept a showtime earlier than the agreed time, even after moving to a later one", async () => {
-    const id = await lockedAppointment();
+    const id = await lockedAppointment(false);
     await plan.beginPlanning(creator, id);
     const doc = await (await import("@/models/appointment")).Appointment.findById(id);
     const base = doc!.timeOptions[0]!.startAt;

@@ -586,8 +586,9 @@ export async function getAppointment(userId: string, id: string, now = new Date(
       declineReason: p.declineReason ?? undefined,
     })),
     cancelReason: doc.cancelReason ?? undefined,
-    showtimeId: doc.showtimeId?.toString(),
-    showtimeFixed: doc.showtimeFromPoll === true,
+    showtimeId: (doc.showtimeId ?? doc.timeOptions.find((o) => o._id.toString() === doc.chosenOptionId?.toString())?.showtimeId)?.toString(),
+    // New appointments carry the flag. Older ones (locked before it existed) count as fixed when the chosen time points at a showtime.
+    showtimeFixed: doc.showtimeFromPoll ?? Boolean(doc.timeOptions.find((o) => o._id.toString() === doc.chosenOptionId?.toString())?.showtimeId),
     attendees: [doc.creatorId.toString(), ...doc.participants.filter((p) => p.status === "accepted").map((p) => p.userId.toString())].map(person),
     seats: (doc.seats ?? []).map((s) => ({ userId: s.userId.toString(), seatCode: s.seatCode })),
     fnb: (doc.fnb ?? []).map((l) => ({ id: l._id.toString(), ownerId: l.ownerId?.toString(), kind: l.kind, refId: l.refId.toString(), name: l.name, unitPrice: l.unitPrice, quantity: l.quantity })),
