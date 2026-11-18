@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { getLocale, getTranslations } from "next-intl/server";
-import { ChevronRight, Clock, ExternalLink, MapPin, ParkingCircle } from "lucide-react";
+import { Clock, ExternalLink, MapPin, ParkingCircle } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -92,7 +92,6 @@ export default async function CinemaPage({ params }: Props) {
                   <span className="type-item-title">{room.name}</span>
                   <span className="type-secondary text-muted-foreground">{t("seatCount", { count: room.seatCount })}</span>
                 </span>
-                <ChevronRight className="size-icon shrink-0 text-muted-foreground" aria-hidden />
               </Link>
             </li>
           ))}
