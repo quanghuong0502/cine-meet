@@ -24,6 +24,7 @@ import { PersonRow } from "@/components/friends/person-row";
 import { ListThumb } from "@/components/list-thumb";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useFixedBarClearance } from "@/lib/use-fixed-bar-clearance";
 import { canWithdraw, isFinished, isOpenForReplies } from "@/lib/appointment/state";
 import { formatDayCompact, formatDayLong, formatTime } from "@/lib/datetime";
 import type { AppointmentView, ParticipantView } from "@/services/appointment.service";
@@ -55,6 +56,8 @@ export function AppointmentDetail({ view, friends = [], groups = [], plan = null
   const [dialog, setDialog] = useState<Dialog>(null);
   // The strip at the end of the page that holds the poll's Save and Decline buttons (drawn into it by `PollSection`).
   const [barSlot, setBarSlot] = useState<HTMLDivElement | null>(null);
+  // The buttons are fixed above the menu; the page keeps only as much room at its end as they actually cover (none on a short page).
+  const { contentRef, barRef, clear } = useFixedBarClearance();
 
   const open = isOpenForReplies(view.status);
   // After the answer-by time the server refuses replies, so the controls are not offered at all.
@@ -65,7 +68,6 @@ export function AppointmentDetail({ view, friends = [], groups = [], plan = null
   const showWithdraw = view.myStatus === "accepted" && locked && canWithdraw(view.status);
   const canConfirm = view.isCreator && view.status === "PLANNING";
   const canComplete = view.isCreator && view.status === "CONFIRMED" && view.started;
-  const hasFloatingAction = !finished && (showWithdraw || view.isCreator);
   const chosen = view.options.find((o) => o.id === view.chosenOptionId);
 
   /** Runs a write, then tells the person what happened (or why not). Network trouble is said out loud. */
@@ -89,7 +91,7 @@ export function AppointmentDetail({ view, friends = [], groups = [], plan = null
   const when = (iso: string) => `${formatDayLong(iso, locale)} · ${formatTime(iso, locale)}`;
 
   return (
-    <div className="flex flex-col gap-section">
+    <div ref={contentRef} style={{ paddingBottom: clear }} className="flex flex-col gap-section">
       <section className="flex items-start gap-item">
         <ListThumb shape="poster" imageUrl={view.movie.posterUrl} />
         <div className="flex min-w-0 flex-1 flex-col gap-stack">
@@ -200,40 +202,36 @@ export function AppointmentDetail({ view, friends = [], groups = [], plan = null
         />
       ) : null}
 
-      {hasFloatingAction ? (
-        // In the flow, stuck at the bottom of the scroll area (the area already ends above the menu, so `bottom-0` is the right offset: a sticky
-        // offset is measured from inside the container's padding). A short page does not get taller to make room for it.
-        <div data-bottom-fixed className="pointer-events-none sticky bottom-0 z-30 -mt-stack">
-          <div className="mx-auto flex max-w-form flex-col gap-stack">
-            {canConfirm ? (
+      {/* Fixed above the menu, always. The poll's Save and Decline are drawn into `barSlot` (inside this same box). */}
+      <div ref={barRef} data-bottom-fixed className="pointer-events-none fixed inset-x-0 bottom-[var(--nav-clearance)] z-30 px-inset">
+        <div className="mx-auto flex max-w-form flex-col gap-stack">
+            {!finished && canConfirm ? (
               <Button type="button" size="cta" disabled={pending} onClick={() => run(() => confirmAppointmentAction(view.id), t("plan.confirmed"))} className="pointer-events-auto">
                 <CircleCheck aria-hidden />
                 {t("plan.confirm")}
               </Button>
             ) : null}
-            {canComplete ? (
+            {!finished && canComplete ? (
               <Button type="button" size="cta" disabled={pending} onClick={() => run(() => completeAppointmentAction(view.id), t("plan.completed"))} className="pointer-events-auto">
                 <CheckCheck aria-hidden />
                 {t("plan.complete")}
               </Button>
             ) : null}
-            {showWithdraw ? (
+            {!finished && showWithdraw ? (
               <Button type="button" variant="destructive" size="cta" disabled={pending} onClick={() => setDialog("withdraw")} className="pointer-events-auto">
                 <LogOut aria-hidden />
                 {t("withdraw")}
               </Button>
             ) : null}
-            {view.isCreator ? (
+            {!finished && view.isCreator ? (
               <Button type="button" variant="destructive" size="cta" disabled={pending} onClick={() => setDialog("cancel")} className="pointer-events-auto">
                 <Ban aria-hidden />
                 {t("cancel")}
               </Button>
             ) : null}
-          </div>
+          <div ref={setBarSlot} className="contents" />
         </div>
-      ) : null}
-
-      <div ref={setBarSlot} data-bottom-fixed className="pointer-events-none sticky bottom-0 z-30 -mt-stack empty:hidden" />
+      </div>
 
       <ReasonDialog
         open={dialog === "decline"}
