@@ -500,6 +500,16 @@ export interface AppointmentView {
   chosenOptionId?: string;
   participants: ParticipantView[];
   cancelReason?: string;
+  /** Stage 2: the showtime, who sits where, the food, and each person's estimated money (whole dong). */
+  showtimeId?: string;
+  /** The people going: the creator and everyone still in. */
+  attendees: PersonView[];
+  seats: { userId: string; seatCode: string }[];
+  fnb: { id: string; ownerId?: string; kind: "item" | "combo"; refId: string; name: string; unitPrice: number; quantity: number }[];
+  estimate: { userId: string; ticket: number; fnb: number; other: number }[];
+  /** The film has started: the creator may mark it as watched. */
+  started: boolean;
+  actualCost?: { ticket: number; fnb: number; other: number; total: number };
 }
 
 async function loadPeople(ids: string[]): Promise<Map<string, PersonView>> {
@@ -564,6 +574,16 @@ export async function getAppointment(userId: string, id: string, now = new Date(
       declineReason: p.declineReason ?? undefined,
     })),
     cancelReason: doc.cancelReason ?? undefined,
+    showtimeId: doc.showtimeId?.toString(),
+    attendees: [doc.creatorId.toString(), ...doc.participants.filter((p) => p.status === "accepted").map((p) => p.userId.toString())].map(person),
+    seats: doc.seats.map((s) => ({ userId: s.userId.toString(), seatCode: s.seatCode })),
+    fnb: doc.fnb.map((l) => ({ id: l._id.toString(), ownerId: l.ownerId?.toString(), kind: l.kind, refId: l.refId.toString(), name: l.name, unitPrice: l.unitPrice, quantity: l.quantity })),
+    estimate: doc.estimate.map((e) => ({ userId: e.userId.toString(), ticket: e.ticket, fnb: e.fnb, other: e.other })),
+    started: (() => {
+      const chosen = doc.timeOptions.find((o) => o._id.toString() === doc.chosenOptionId?.toString());
+      return Boolean(chosen) && chosen!.startAt.getTime() <= now.getTime();
+    })(),
+    actualCost: doc.actualCost ? { ticket: doc.actualCost.ticket ?? 0, fnb: doc.actualCost.fnb ?? 0, other: doc.actualCost.other ?? 0, total: doc.actualCost.total ?? 0 } : undefined,
   };
 }
 

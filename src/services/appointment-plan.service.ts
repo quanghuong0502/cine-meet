@@ -14,6 +14,11 @@ import { SeatClaim } from "@/models/seat-claim";
 import { Showtime } from "@/models/showtime";
 import { attendeeIdsOf, loadSeatPrices, recomputeEstimate } from "@/services/appointment-estimate";
 import { mutate, notifyPeople, sameId, type Doc, type Failure } from "@/services/appointment.service";
+import { generateGrid } from "@/lib/seat-layout/generate";
+import type { LayoutConfig, LayoutGeometry, LayoutSeat, SeatTypeInfo } from "@/lib/seat-layout/types";
+import { SeatType } from "@/models/seat-type";
+import { searchShowtimes, type ShowtimeRow } from "@/services/showtime.service";
+import { vietnamParts } from "@/services/pricing/ticket-price";
 import { comboPrice } from "@/services/pricing/combo-price";
 
 const objectId = z.string().regex(/^[0-9a-fA-F]{24}$/, { error: "invalid" });
@@ -349,6 +354,52 @@ export async function getCosts(id: string): Promise<{ perUser: CostView[]; total
   }
   const perUser = [...byUser.values()];
   return { perUser, totals: sumCosts(perUser) };
+}
+
+export interface PlanData {
+  /** Upcoming showtimes of the movie, to pick one (or change it). */
+  showtimes: ShowtimeRow[];
+  /** The room of the chosen showtime, as it was when that showtime was made. */
+  room?: { seats: LayoutSeat[]; geometry: LayoutGeometry; seatTypes: { id: string; name: string; nameEn: string | null; color: string | null }[]; taken: string[] };
+  food: { items: { id: string; name: string; price: number }[]; combos: { id: string; name: string; price: number }[] };
+}
+
+/** What the creator needs on screen to plan or edit: showtimes, the room with taken seats, and the cinema brand's food. Null for anyone else. */
+export async function getPlanData(userId: string, id: string): Promise<PlanData | null> {
+  if (!isValidObjectId(id)) return null;
+  await connectToDatabase();
+  const doc = await Appointment.findById(id, "creatorId status movieId showtimeId").lean();
+  if (!doc || !sameId(doc.creatorId, userId) || (doc.status !== "PLANNING" && doc.status !== "CONFIRMED")) return null;
+  const showtimes = await searchShowtimes({ movieId: doc.movieId.toString(), limit: 300 });
+  const data: PlanData = { showtimes, food: { items: [], combos: [] } };
+  if (!doc.showtimeId) return data;
+
+  const showtime = await Showtime.findById(doc.showtimeId, "layoutId auditoriumId startAt").lean();
+  const layout = showtime ? await AuditoriumLayout.findById(showtime.layoutId).lean() : null;
+  const room = showtime ? await Auditorium.findById(showtime.auditoriumId, "branchId").lean() : null;
+  const branch = room ? await Branch.findById(room.branchId, "brandId").lean() : null;
+  if (!showtime || !layout || !branch) return data;
+
+  const types = await SeatType.find({}).lean();
+  const infos: SeatTypeInfo[] = types.map((t) => ({ id: t._id.toString(), name: t.name, capacity: t.capacity }));
+  data.room = {
+    seats: JSON.parse(JSON.stringify(layout.seats)) as LayoutSeat[],
+    geometry: generateGrid(layout.config as LayoutConfig, infos).geometry,
+    seatTypes: types.map((t) => ({ id: t._id.toString(), name: t.name, nameEn: t.nameEn ?? null, color: t.color ?? null })),
+    taken: await takenSeatCodes(doc.showtimeId.toString(), id),
+  };
+
+  const today = vietnamParts(showtime.startAt).date;
+  const current = (r: { validFrom?: string | null; validTo?: string | null }) => (!r.validFrom || r.validFrom <= today) && (!r.validTo || r.validTo >= today);
+  const [items, combos] = await Promise.all([FnbItem.find({ brandId: branch.brandId }).sort({ name: 1 }).lean(), FnbCombo.find({ brandId: branch.brandId }).sort({ name: 1 }).lean()]);
+  const itemById = new Map(items.map((i) => [i._id.toString(), i]));
+  data.food.items = items.filter(current).map((i) => ({ id: i._id.toString(), name: [i.name, i.size].filter(Boolean).join(" "), price: i.price }));
+  data.food.combos = combos.filter(current).map((c) => ({
+    id: c._id.toString(),
+    name: c.name,
+    price: comboPrice(c.items.map((i) => ({ price: itemById.get(i.itemId.toString())?.price ?? 0, quantity: i.quantity })), { type: c.discountType ?? "amount", value: c.discountValue ?? 0 }).price,
+  }));
+  return data;
 }
 
 export { loadSeatPrices };

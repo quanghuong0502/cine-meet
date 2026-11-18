@@ -4,6 +4,18 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireUser } from "@/lib/auth/guards";
 import {
+  assignSeats,
+  assignSeatsSchema,
+  beginPlanning,
+  chooseShowtime,
+  completeAppointment,
+  confirmAppointment,
+  personCostSchema,
+  setFood,
+  setFoodSchema,
+  setPersonCost,
+} from "@/services/appointment-plan.service";
+import {
   cancelAppointment,
   createAppointment,
   createAppointmentSchema,
@@ -119,4 +131,65 @@ export async function remindVotersAction(id: string, optionId: string): Promise<
   const result = await remindVoters(user.userId, id, optionId);
   if (result.ok) refresh(id);
   return result.ok ? { ok: true, count: result.recipientIds.length } : result;
+}
+
+// ---------- stage 2 (Sprint 5A) ----------
+
+export async function beginPlanningAction(id: string): Promise<ActionResult> {
+  const user = await requireUser();
+  if (!idSchema.safeParse(id).success) return { ok: false, error: "validation" };
+  const result = await beginPlanning(user.userId, id);
+  if (result.ok) refresh(id);
+  return result.ok ? { ok: true } : result;
+}
+
+export async function chooseShowtimeAction(id: string, showtimeId: string): Promise<ActionResult> {
+  const user = await requireUser();
+  if (!idSchema.safeParse(id).success || !idSchema.safeParse(showtimeId).success) return { ok: false, error: "validation" };
+  const result = await chooseShowtime(user.userId, id, showtimeId);
+  if (result.ok) refresh(id);
+  return result.ok ? { ok: true } : result;
+}
+
+export async function assignSeatsAction(id: string, input: unknown): Promise<ActionResult> {
+  const user = await requireUser();
+  const parsed = assignSeatsSchema.safeParse(input);
+  if (!idSchema.safeParse(id).success || !parsed.success) return { ok: false, error: "validation" };
+  const result = await assignSeats(user.userId, id, parsed.data);
+  if (result.ok) refresh(id);
+  return result.ok ? { ok: true } : result;
+}
+
+export async function setFoodAction(id: string, input: unknown): Promise<ActionResult> {
+  const user = await requireUser();
+  const parsed = setFoodSchema.safeParse(input);
+  if (!idSchema.safeParse(id).success || !parsed.success) return { ok: false, error: "validation" };
+  const result = await setFood(user.userId, id, parsed.data);
+  if (result.ok) refresh(id);
+  return result.ok ? { ok: true } : result;
+}
+
+export async function confirmAppointmentAction(id: string): Promise<ActionResult> {
+  const user = await requireUser();
+  if (!idSchema.safeParse(id).success) return { ok: false, error: "validation" };
+  const result = await confirmAppointment(user.userId, id);
+  if (result.ok) refresh(id);
+  return result.ok ? { ok: true } : result;
+}
+
+export async function completeAppointmentAction(id: string): Promise<ActionResult> {
+  const user = await requireUser();
+  if (!idSchema.safeParse(id).success) return { ok: false, error: "validation" };
+  const result = await completeAppointment(user.userId, id);
+  if (result.ok) refresh(id);
+  return result.ok ? { ok: true } : result;
+}
+
+export async function setPersonCostAction(id: string, input: unknown): Promise<ActionResult> {
+  const user = await requireUser();
+  const parsed = personCostSchema.safeParse(input);
+  if (!idSchema.safeParse(id).success || !parsed.success) return { ok: false, error: "invalid_amount" };
+  const result = await setPersonCost(user.userId, id, parsed.data);
+  if (result.ok) refresh(id);
+  return result.ok ? { ok: true } : result;
 }

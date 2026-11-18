@@ -25,6 +25,10 @@ export interface SeatMapProps {
   marks?: ReadonlyMap<string, "favorite" | "avoid">;
   /** Seat codes drawn with a selection ring. */
   selectedCodes?: ReadonlySet<string>;
+  /** Seats another party already holds (planning a viewing): drawn faded, with a bar across. */
+  reservedCodes?: ReadonlySet<string>;
+  /** Seats given to people: seat code to the short text drawn on it (initials), in the brand colour. */
+  holderLabels?: ReadonlyMap<string, string>;
   onSeatTap?: (seat: LayoutSeat) => void;
   /** Tapping a row label (e.g. "D") or a column number. */
   onRowTap?: (rowLabel: string) => void;
@@ -80,6 +84,8 @@ const MapLayer = memo(function MapLayer({
   showHeatmap,
   marks,
   selectedCodes,
+  reservedCodes,
+  holderLabels,
   emptyCells,
   labels,
   interactive,
@@ -175,7 +181,9 @@ const MapLayer = memo(function MapLayer({
       {/* Seats */}
       {seats.map((seat) => {
         const type = types.get(seat.type);
-        const fill = showHeatmap ? heatColor(seat.score, min, max) : (type?.color ?? DEFAULT_COLOR);
+        const holder = holderLabels?.get(seat.code);
+        const reserved = reservedCodes?.has(seat.code) ?? false;
+        const fill = holder ? "var(--primary)" : showHeatmap ? heatColor(seat.score, min, max) : (type?.color ?? DEFAULT_COLOR);
         const w = seat.span * 1 - (1 - SEAT);
         const selected = selectedCodes?.has(seat.code);
         const broken = seat.flags.includes("broken");
@@ -192,7 +200,7 @@ const MapLayer = memo(function MapLayer({
             aria-pressed={interactive ? !!selected : undefined}
             className={cn("outline-none", interactive && "cursor-pointer")}
           >
-            <rect data-seat={seat.code} x={seat.x - w / 2} y={seat.y - SEAT / 2} width={w} height={SEAT} rx={0.2} fill={fill} opacity={broken ? 0.45 : 1} />
+            <rect data-seat={seat.code} x={seat.x - w / 2} y={seat.y - SEAT / 2} width={w} height={SEAT} rx={0.2} fill={fill} opacity={broken ? 0.45 : reserved ? 0.3 : 1} />
             {/* Seat back, on the side away from the screen */}
             <rect x={seat.x - w / 2 + 0.06} y={seat.y + SEAT / 2 - 0.2} width={w - 0.12} height={0.14} rx={0.07} fill="#000" opacity={0.22} pointerEvents="none" />
             {obstructed ? (
@@ -207,12 +215,20 @@ const MapLayer = memo(function MapLayer({
                 pointerEvents="none"
               />
             ) : null}
+            {reserved ? (
+              <line x1={seat.x - w / 2 + 0.1} y1={seat.y} x2={seat.x + w / 2 - 0.1} y2={seat.y} stroke="var(--foreground)" strokeWidth={0.1} strokeLinecap="round" pointerEvents="none" />
+            ) : null}
+            {holder ? (
+              <text x={seat.x} y={seat.y + 0.14} textAnchor="middle" fontSize={0.4} fontWeight={700} fill="#fff" pointerEvents="none">
+                {holder}
+              </text>
+            ) : null}
             {recommended ? <RecommendedBadge x={seat.x - w / 2 + 0.02} y={seat.y - SEAT / 2 + 0.02} /> : null}
             {mark ? <MarkBadge kind={mark} x={seat.x + w / 2 - 0.02} y={seat.y - SEAT / 2 + 0.02} /> : null}
             {selected ? (
               <rect x={seat.x - w / 2 - 0.03} y={seat.y - SEAT / 2 - 0.03} width={w + 0.06} height={SEAT + 0.06} rx={0.23} fill="none" stroke="var(--foreground)" strokeWidth={SELECT_RING_PX} vectorEffect="non-scaling-stroke" pointerEvents="none" />
             ) : null}
-            {labels && !broken ? (
+            {labels && !broken && !holder ? (
               <text x={seat.x} y={seat.y + 0.12} textAnchor="middle" fontSize={seat.code.length > 3 ? 0.28 : 0.34} fontWeight={600} fill={showHeatmap ? heatTextColor(seat.score, min, max) : "#fff"} pointerEvents="none" style={showHeatmap ? undefined : { textShadow: "0 0 2px rgba(0,0,0,0.6)" }}>
                 {seat.code}
               </text>
@@ -268,6 +284,8 @@ export function SeatMap({
   showHeatmap = false,
   marks,
   selectedCodes,
+  reservedCodes,
+  holderLabels,
   onSeatTap,
   onRowTap,
   onColTap,
@@ -348,6 +366,8 @@ export function SeatMap({
             showHeatmap={showHeatmap}
             marks={marks}
             selectedCodes={selectedCodes}
+            reservedCodes={reservedCodes}
+            holderLabels={holderLabels}
             emptyCells={emptyCells}
             labels={scale >= LABELS_FROM_SCALE}
             interactive={!!onSeatTap || !!onEmptyTap}
