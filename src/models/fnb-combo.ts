@@ -1,4 +1,5 @@
-import { model, models, Schema, type InferSchemaType, type Model } from "mongoose";
+import { Schema, type InferSchemaType, type Model } from "mongoose";
+import { defineModel } from "@/lib/define-model";
 import { DISCOUNT_TYPES } from "@/services/pricing/combo-price";
 
 /**
@@ -34,4 +35,4 @@ fnbComboSchema.index({ brandId: 1, name: 1 }, { unique: true, collation: { local
 export type FnbComboDoc = InferSchemaType<typeof fnbComboSchema>;
 
 export const FnbCombo: Model<FnbComboDoc> =
-  (models.FnbCombo as Model<FnbComboDoc> | undefined) ?? model<FnbComboDoc>("FnbCombo", fnbComboSchema);
+  defineModel<FnbComboDoc>("FnbCombo", fnbComboSchema);

@@ -1,4 +1,5 @@
-import { model, models, Schema, type InferSchemaType, type Model } from "mongoose";
+import { Schema, type InferSchemaType, type Model } from "mongoose";
+import { defineModel } from "@/lib/define-model";
 
 /**
  * A seat taken in a showtime by one appointment. The unique index on (showtimeId, seatCode) is what stops two appointments from
@@ -19,4 +20,4 @@ seatClaimSchema.index({ showtimeId: 1, seatCode: 1 }, { unique: true });
 export type SeatClaimDoc = InferSchemaType<typeof seatClaimSchema>;
 
 export const SeatClaim: Model<SeatClaimDoc> =
-  (models.SeatClaim as Model<SeatClaimDoc> | undefined) ?? model<SeatClaimDoc>("SeatClaim", seatClaimSchema);
+  defineModel<SeatClaimDoc>("SeatClaim", seatClaimSchema);

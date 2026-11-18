@@ -1,4 +1,5 @@
-import { model, models, Schema, type InferSchemaType, type Model } from "mongoose";
+import { Schema, type InferSchemaType, type Model } from "mongoose";
+import { defineModel } from "@/lib/define-model";
 
 import { SEAT_MARK_KINDS, SEAT_MARK_TAGS } from "./seat-mark-constants";
 
@@ -28,4 +29,4 @@ seatMarkSchema.index({ userId: 1, auditoriumId: 1, seatCode: 1 }, { unique: true
 export type SeatMarkDoc = InferSchemaType<typeof seatMarkSchema>;
 
 export const SeatMark: Model<SeatMarkDoc> =
-  (models.SeatMark as Model<SeatMarkDoc> | undefined) ?? model<SeatMarkDoc>("SeatMark", seatMarkSchema);
+  defineModel<SeatMarkDoc>("SeatMark", seatMarkSchema);

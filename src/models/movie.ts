@@ -1,4 +1,5 @@
-import { model, models, Schema, type InferSchemaType, type Model } from "mongoose";
+import { Schema, type InferSchemaType, type Model } from "mongoose";
+import { defineModel } from "@/lib/define-model";
 
 /**
  * A movie. Its status (upcoming / showing / ended) is not stored: it follows from today's date and the release and end
@@ -33,4 +34,4 @@ movieSchema.index({ title: 1 });
 
 export type MovieDoc = InferSchemaType<typeof movieSchema>;
 
-export const Movie: Model<MovieDoc> = (models.Movie as Model<MovieDoc> | undefined) ?? model<MovieDoc>("Movie", movieSchema);
+export const Movie: Model<MovieDoc> = defineModel<MovieDoc>("Movie", movieSchema);

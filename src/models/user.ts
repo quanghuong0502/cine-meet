@@ -1,4 +1,5 @@
-import { model, models, Schema, type InferSchemaType, type Model } from "mongoose";
+import { Schema, type InferSchemaType, type Model } from "mongoose";
+import { defineModel } from "@/lib/define-model";
 import { LOCALES } from "@/i18n/config";
 import {
   AUTH_PROVIDERS,
@@ -65,5 +66,4 @@ userSchema.pre("validate", function requireUsernameOrEmail() {
 export type UserDoc = InferSchemaType<typeof userSchema>;
 
 export const User: Model<UserDoc> =
-  (models.User as Model<UserDoc> | undefined) ??
-  model<UserDoc>("User", userSchema);
+  defineModel<UserDoc>("User", userSchema);

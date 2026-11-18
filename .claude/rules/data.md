@@ -9,6 +9,7 @@ paths:
 
 - Schema nằm ở `src/models`, bám theo mục 5 của `docs/movie-app-mvp-design.md`.
   Nhúng (embed) dữ liệu nhỏ gắn chặt với document cha; tham chiếu (reference) thực thể dùng chung.
+- **Mọi model đăng ký bằng `defineModel` (`src/lib/define-model.ts`), không viết `models.X ?? model(...)`**: mẫu cũ làm dev server giữ model cũ khi đổi schema, trường mới bị bỏ lặng lẽ khi lưu (đã gây lỗi nhiều vòng ở Sprint 5A). `define-model.test.ts` chặn. Đã áp dụng thì đổi schema không cần khởi động lại, nhưng dev server khởi động trước khi có `defineModel` vẫn phải chạy lại một lần.
 - Logic nghiệp vụ ở `src/services`; route handler chỉ xác thực, kiểm tra quyền, validate input (zod), gọi service.
 - Mọi truy vấn dữ liệu cá nhân phải lọc theo `userId` lấy từ session. Route `/admin/*` và `/api/admin/*` kiểm tra role.
 - Transaction cho thao tác nhiều document cần nhất quán (chốt người tham gia, xác nhận lịch hẹn, chia tiền).

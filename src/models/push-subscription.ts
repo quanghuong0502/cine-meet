@@ -1,4 +1,5 @@
-import { model, models, Schema, type InferSchemaType, type Model } from "mongoose";
+import { Schema, type InferSchemaType, type Model } from "mongoose";
+import { defineModel } from "@/lib/define-model";
 
 // One row per browser/device that turned Web Push on. The endpoint is unique: subscribing again from the same browser replaces the row.
 const pushSubscriptionSchema = new Schema(
@@ -18,4 +19,4 @@ const pushSubscriptionSchema = new Schema(
 export type PushSubscriptionDoc = InferSchemaType<typeof pushSubscriptionSchema>;
 
 export const PushSubscription: Model<PushSubscriptionDoc> =
-  (models.PushSubscription as Model<PushSubscriptionDoc> | undefined) ?? model<PushSubscriptionDoc>("PushSubscription", pushSubscriptionSchema);
+  defineModel<PushSubscriptionDoc>("PushSubscription", pushSubscriptionSchema);

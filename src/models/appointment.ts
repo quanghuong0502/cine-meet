@@ -1,4 +1,5 @@
-import { model, models, Schema, type InferSchemaType, type Model } from "mongoose";
+import { Schema, type InferSchemaType, type Model } from "mongoose";
+import { defineModel } from "@/lib/define-model";
 import { APPOINTMENT_STATUSES, PARTICIPANT_STATUSES } from "@/lib/appointment/state";
 
 const voteSchema = new Schema(
@@ -95,4 +96,4 @@ appointmentSchema.index({ "participants.userId": 1 });
 export type AppointmentDoc = InferSchemaType<typeof appointmentSchema>;
 
 export const Appointment: Model<AppointmentDoc> =
-  (models.Appointment as Model<AppointmentDoc> | undefined) ?? model<AppointmentDoc>("Appointment", appointmentSchema);
+  defineModel<AppointmentDoc>("Appointment", appointmentSchema);

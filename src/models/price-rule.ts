@@ -1,4 +1,5 @@
-import { model, models, Schema, type InferSchemaType, type Model } from "mongoose";
+import { Schema, type InferSchemaType, type Model } from "mongoose";
+import { defineModel } from "@/lib/define-model";
 import { DAY_TYPES } from "@/services/pricing/ticket-price";
 
 /** A ticket price for a brand or a branch, optionally narrowed by format, seat type, day type and start time. */
@@ -29,4 +30,4 @@ const priceRuleSchema = new Schema(
 export type PriceRuleDoc = InferSchemaType<typeof priceRuleSchema>;
 
 export const PriceRule: Model<PriceRuleDoc> =
-  (models.PriceRule as Model<PriceRuleDoc> | undefined) ?? model<PriceRuleDoc>("PriceRule", priceRuleSchema);
+  defineModel<PriceRuleDoc>("PriceRule", priceRuleSchema);

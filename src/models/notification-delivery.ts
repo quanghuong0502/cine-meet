@@ -1,4 +1,5 @@
-import { model, models, Schema, type InferSchemaType, type Model } from "mongoose";
+import { Schema, type InferSchemaType, type Model } from "mongoose";
+import { defineModel } from "@/lib/define-model";
 import { DELIVERY_STATUSES, NOTIFICATION_CHANNELS } from "@/notifications/types";
 
 // How one notification travels on one channel. `inapp` is written already `sent` (the row itself is the in-app message);
@@ -23,4 +24,4 @@ deliverySchema.index({ updatedAt: 1 }, { expireAfterSeconds: 30 * 24 * 3600, par
 export type DeliveryDoc = InferSchemaType<typeof deliverySchema>;
 
 export const NotificationDelivery: Model<DeliveryDoc> =
-  (models.NotificationDelivery as Model<DeliveryDoc> | undefined) ?? model<DeliveryDoc>("NotificationDelivery", deliverySchema);
+  defineModel<DeliveryDoc>("NotificationDelivery", deliverySchema);

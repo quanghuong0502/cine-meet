@@ -1,4 +1,5 @@
-import { model, models, Schema, type InferSchemaType, type Model } from "mongoose";
+import { Schema, type InferSchemaType, type Model } from "mongoose";
+import { defineModel } from "@/lib/define-model";
 
 const friendGroupSchema = new Schema(
   {
@@ -12,4 +13,4 @@ const friendGroupSchema = new Schema(
 export type FriendGroupDoc = InferSchemaType<typeof friendGroupSchema>;
 
 export const FriendGroup: Model<FriendGroupDoc> =
-  (models.FriendGroup as Model<FriendGroupDoc> | undefined) ?? model<FriendGroupDoc>("FriendGroup", friendGroupSchema);
+  defineModel<FriendGroupDoc>("FriendGroup", friendGroupSchema);

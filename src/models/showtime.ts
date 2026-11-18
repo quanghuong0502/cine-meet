@@ -1,4 +1,5 @@
-import { model, models, Schema, type InferSchemaType, type Model } from "mongoose";
+import { Schema, type InferSchemaType, type Model } from "mongoose";
+import { defineModel } from "@/lib/define-model";
 
 /** One screening: a movie in a room, in the layout version the room had when it was created. */
 const showtimeSchema = new Schema(
@@ -22,4 +23,4 @@ showtimeSchema.index({ auditoriumId: 1, startAt: 1 });
 export type ShowtimeDoc = InferSchemaType<typeof showtimeSchema>;
 
 export const Showtime: Model<ShowtimeDoc> =
-  (models.Showtime as Model<ShowtimeDoc> | undefined) ?? model<ShowtimeDoc>("Showtime", showtimeSchema);
+  defineModel<ShowtimeDoc>("Showtime", showtimeSchema);

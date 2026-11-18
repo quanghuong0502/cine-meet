@@ -1,4 +1,5 @@
-import { model, models, Schema, type InferSchemaType, type Model } from "mongoose";
+import { Schema, type InferSchemaType, type Model } from "mongoose";
+import { defineModel } from "@/lib/define-model";
 
 /** A screening room of a branch. Its seats live in versioned `AuditoriumLayout` documents. */
 const auditoriumSchema = new Schema(
@@ -16,4 +17,4 @@ auditoriumSchema.index({ branchId: 1, name: 1 }, { unique: true, collation: { lo
 export type AuditoriumDoc = InferSchemaType<typeof auditoriumSchema>;
 
 export const Auditorium: Model<AuditoriumDoc> =
-  (models.Auditorium as Model<AuditoriumDoc> | undefined) ?? model<AuditoriumDoc>("Auditorium", auditoriumSchema);
+  defineModel<AuditoriumDoc>("Auditorium", auditoriumSchema);

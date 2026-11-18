@@ -1,4 +1,5 @@
-import { model, models, Schema, type InferSchemaType, type Model } from "mongoose";
+import { Schema, type InferSchemaType, type Model } from "mongoose";
+import { defineModel } from "@/lib/define-model";
 
 // One row per phone lookup, only to count them: the rate limit is "N lookups per hour per person". Rows expire by themselves.
 const friendLookupSchema = new Schema({
@@ -9,4 +10,4 @@ const friendLookupSchema = new Schema({
 export type FriendLookupDoc = InferSchemaType<typeof friendLookupSchema>;
 
 export const FriendLookup: Model<FriendLookupDoc> =
-  (models.FriendLookup as Model<FriendLookupDoc> | undefined) ?? model<FriendLookupDoc>("FriendLookup", friendLookupSchema);
+  defineModel<FriendLookupDoc>("FriendLookup", friendLookupSchema);

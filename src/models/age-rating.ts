@@ -1,4 +1,5 @@
-import { model, models, Schema, type InferSchemaType, type Model } from "mongoose";
+import { Schema, type InferSchemaType, type Model } from "mongoose";
+import { defineModel } from "@/lib/define-model";
 
 /** An age rating (P, T13, T16, T18...). */
 const ageRatingSchema = new Schema(
@@ -18,4 +19,4 @@ ageRatingSchema.index({ code: 1 }, { unique: true, collation: { locale: "vi", st
 export type AgeRatingDoc = InferSchemaType<typeof ageRatingSchema>;
 
 export const AgeRating: Model<AgeRatingDoc> =
-  (models.AgeRating as Model<AgeRatingDoc> | undefined) ?? model<AgeRatingDoc>("AgeRating", ageRatingSchema);
+  defineModel<AgeRatingDoc>("AgeRating", ageRatingSchema);

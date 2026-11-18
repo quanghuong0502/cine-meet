@@ -1,4 +1,5 @@
-import { model, models, Schema, type InferSchemaType, type Model } from "mongoose";
+import { Schema, type InferSchemaType, type Model } from "mongoose";
+import { defineModel } from "@/lib/define-model";
 
 /** A cinema chain (CGV, BHD, Beta, Lotte, Galaxy...). */
 const brandSchema = new Schema(
@@ -21,4 +22,4 @@ brandSchema.index({ name: 1 }, { unique: true, collation: { locale: "vi", streng
 export type BrandDoc = InferSchemaType<typeof brandSchema>;
 
 export const Brand: Model<BrandDoc> =
-  (models.Brand as Model<BrandDoc> | undefined) ?? model<BrandDoc>("Brand", brandSchema);
+  defineModel<BrandDoc>("Brand", brandSchema);

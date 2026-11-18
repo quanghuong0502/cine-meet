@@ -1,4 +1,5 @@
-import { model, models, Schema, type Model, type Types } from "mongoose";
+import { Schema, type Model, type Types } from "mongoose";
+import { defineModel } from "@/lib/define-model";
 import type { LayoutConfig, LayoutSeat } from "@/lib/seat-layout/types";
 
 /**
@@ -49,5 +50,4 @@ const layoutSchema = new Schema<AuditoriumLayoutDoc>(
 layoutSchema.index({ auditoriumId: 1, version: -1 }, { unique: true });
 
 export const AuditoriumLayout: Model<AuditoriumLayoutDoc> =
-  (models.AuditoriumLayout as Model<AuditoriumLayoutDoc> | undefined) ??
-  model<AuditoriumLayoutDoc>("AuditoriumLayout", layoutSchema);
+  defineModel<AuditoriumLayoutDoc>("AuditoriumLayout", layoutSchema);

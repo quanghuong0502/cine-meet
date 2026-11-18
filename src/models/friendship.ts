@@ -1,4 +1,5 @@
-import { model, models, Schema, type InferSchemaType, type Model } from "mongoose";
+import { Schema, type InferSchemaType, type Model } from "mongoose";
+import { defineModel } from "@/lib/define-model";
 
 export const FRIENDSHIP_STATUSES = ["pending", "accepted"] as const;
 
@@ -17,4 +18,4 @@ const friendshipSchema = new Schema(
 export type FriendshipDoc = InferSchemaType<typeof friendshipSchema>;
 
 export const Friendship: Model<FriendshipDoc> =
-  (models.Friendship as Model<FriendshipDoc> | undefined) ?? model<FriendshipDoc>("Friendship", friendshipSchema);
+  defineModel<FriendshipDoc>("Friendship", friendshipSchema);

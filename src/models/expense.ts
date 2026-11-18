@@ -1,4 +1,5 @@
-import { model, models, Schema, type InferSchemaType, type Model } from "mongoose";
+import { Schema, type InferSchemaType, type Model } from "mongoose";
+import { defineModel } from "@/lib/define-model";
 import { EXPENSE_CATEGORIES } from "@/lib/appointment/cost";
 
 /** What a viewing cost one person, by category (design 5). The only source for the dashboard. Whole dong; no payer, no debt. */
@@ -22,4 +23,4 @@ expenseSchema.index({ appointmentId: 1, userId: 1, category: 1 }, { unique: true
 export type ExpenseDoc = InferSchemaType<typeof expenseSchema>;
 
 export const Expense: Model<ExpenseDoc> =
-  (models.Expense as Model<ExpenseDoc> | undefined) ?? model<ExpenseDoc>("Expense", expenseSchema);
+  defineModel<ExpenseDoc>("Expense", expenseSchema);

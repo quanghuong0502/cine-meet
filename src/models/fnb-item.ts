@@ -1,4 +1,5 @@
-import { model, models, Schema, type InferSchemaType, type Model } from "mongoose";
+import { Schema, type InferSchemaType, type Model } from "mongoose";
+import { defineModel } from "@/lib/define-model";
 
 /** A food or drink item sold at a brand's cinemas, in one size. Price in VND (whole dong). */
 const fnbItemSchema = new Schema(
@@ -20,4 +21,4 @@ fnbItemSchema.index({ brandId: 1, name: 1, size: 1 }, { unique: true, collation:
 export type FnbItemDoc = InferSchemaType<typeof fnbItemSchema>;
 
 export const FnbItem: Model<FnbItemDoc> =
-  (models.FnbItem as Model<FnbItemDoc> | undefined) ?? model<FnbItemDoc>("FnbItem", fnbItemSchema);
+  defineModel<FnbItemDoc>("FnbItem", fnbItemSchema);

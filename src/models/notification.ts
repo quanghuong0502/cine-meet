@@ -1,4 +1,5 @@
-import { model, models, Schema, type InferSchemaType, type Model } from "mongoose";
+import { Schema, type InferSchemaType, type Model } from "mongoose";
+import { defineModel } from "@/lib/define-model";
 import { NOTIFICATION_TYPES } from "@/notifications/types";
 
 // The outbox: one row per event per person. In-app shows these rows directly; Web Push reads their deliveries.
@@ -18,4 +19,4 @@ notificationSchema.index({ recipientId: 1, readAt: 1 });
 export type NotificationDoc = InferSchemaType<typeof notificationSchema>;
 
 export const Notification: Model<NotificationDoc> =
-  (models.Notification as Model<NotificationDoc> | undefined) ?? model<NotificationDoc>("Notification", notificationSchema);
+  defineModel<NotificationDoc>("Notification", notificationSchema);

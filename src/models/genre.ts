@@ -1,4 +1,5 @@
-import { model, models, Schema, type InferSchemaType, type Model } from "mongoose";
+import { Schema, type InferSchemaType, type Model } from "mongoose";
+import { defineModel } from "@/lib/define-model";
 
 /** A movie genre (Action, Comedy...). */
 const genreSchema = new Schema(
@@ -16,4 +17,4 @@ genreSchema.index({ name: 1 }, { unique: true, collation: { locale: "vi", streng
 export type GenreDoc = InferSchemaType<typeof genreSchema>;
 
 export const Genre: Model<GenreDoc> =
-  (models.Genre as Model<GenreDoc> | undefined) ?? model<GenreDoc>("Genre", genreSchema);
+  defineModel<GenreDoc>("Genre", genreSchema);
