@@ -41,7 +41,7 @@ Next.js (App Router, `src/`) · TypeScript strict · MongoDB Atlas + Mongoose ·
 - Không gọi SDK AI trực tiếp; luôn đi qua interface `LLMProvider` trong `src/ai`.
 - **Admin chỉ có giao diện admin** (`/admin/*`); không có lối nào sang app người dùng, và admin mở trang của người dùng sẽ bị đưa về khu quản trị. **Mọi thiết lập tài khoản (ngôn ngữ, đổi mật khẩu, thông báo...) nằm trong Cài đặt**; trang Hồ sơ của người dùng là một tab ở thanh dưới (`/profile`), không có avatar ở header; admin vẫn bấm avatar ở header để mở `/admin/profile`; từ Hồ sơ vào Cài đặt và Đăng xuất; không có menu bật lên.
 - Middleware chỉ là lớp đầu: mọi trang/API server dùng `requireUser()` / `requireAdmin()` (`src/lib/auth/guards.ts`), đọc lại status/role từ DB.
-- Chi tiêu của user = `expenses` của chính họ (phần của mình), công nợ ở `expenseShares`; không tính chi tiêu bằng số tiền họ đã ứng (thiết kế 3.4).
+- Chi tiêu của user = `expenses` của chính họ (phần của mình). App chỉ ghi mỗi buổi xem tốn bao nhiêu (vé, đồ ăn, khác): **không theo dõi ai trả tiền, không công nợ** (chủ dự án chốt 2026-11-18; thiết kế 3.4).
 - Worker (Web Push, nhắc lịch) chạy cùng tiến trình web qua `instrumentation.ts`, bật bằng `ENABLE_WORKER=true`; không Agenda, không Redis.
 - Sửa layout phòng chiếu = tạo phiên bản mới, không ghi đè.
 - API key và connection string chỉ ở biến môi trường (`.env.local`), không đưa vào code hay file docs.

@@ -33,7 +33,7 @@ Nguồn chi tiết: `docs/movie-app-mvp-design.md` (số mục ghi ở từng sp
 | 2 | Editor phòng chiếu, sơ đồ ghế, điểm ghế, versioning | 1 | Xong |
 | 3 | Phim (trailer), suất chiếu, trang rạp & lịch chiếu cho user, đánh dấu ghế cá nhân | 2 | Xong |
 | 4 | Lịch hẹn giai đoạn 1 (mời, vote, chốt người), bạn bè, thông báo in-app, worker, Web Push | 3 | Xong |
-| 5A | Lịch hẹn giai đoạn 2: chọn suất, xếp ghế, đồ ăn, chi phí, công nợ, xác nhận | 4 | Chưa bắt đầu |
+| 5A | Lịch hẹn giai đoạn 2: chọn suất, xếp ghế, đồ ăn, chi phí, xác nhận | 4 | Chưa bắt đầu |
 | 5B | Nhắc lịch và các thông báo theo giờ (#3, #8), tự hoàn thành | 5A | Chưa bắt đầu |
 | 6 | Dashboard, ngân sách, ghi lại buổi đã xem, đánh giá cá nhân | 5B | Chưa bắt đầu |
 | 7 | Chatbot AI (tầng provider, tool, lưu context) | 6 | Chưa bắt đầu |
@@ -196,29 +196,29 @@ giới hạn tra cứu, kết bạn cần chấp nhận (thiết kế mục 6 v�
 ---
 
 ## Sprint 5A: Lịch hẹn giai đoạn 2
-**Mục tiêu:** hoàn thiện lịch hẹn: chọn suất, xếp ghế, đồ ăn, chi phí, công nợ.
+**Mục tiêu:** hoàn thiện lịch hẹn: chọn suất, xếp ghế, đồ ăn, ghi chi phí mỗi buổi xem.
 **Tham chiếu:** thiết kế mục 3.4 (giai đoạn 2, sau buổi xem), 3.1 (nguyên tắc số liệu), 4.1, 5.
-**Đã chốt:** chỉ theo dõi đã trả/chưa trả, chưa làm VietQR (thiết kế mục 9, câu 6).
+**Đã chốt (2026-11-18):** chỉ ghi chi phí mỗi buổi xem là bao nhiêu (vé, đồ ăn, khoản khác); **không theo dõi ai trả tiền, không công nợ, không VietQR** (thiết kế mục 9, câu 6).
 
 **Phạm vi**
 - PLANNING → CONFIRMED → COMPLETED: chọn suất (điền sẵn nếu phương án đã chốt có `showtimeId`), xếp ghế từng người (kéo thả, ghế đôi gán
-  2 người, gợi ý dãy ghế liền nhau điểm cao), đồ ăn từng người hoặc combo chung, cách trả tiền, tính tiền từng người
+  2 người, gợi ý dãy ghế liền nhau điểm cao), đồ ăn từng người hoặc combo chung, tính tiền ước tính từng người
   (giá ước tính được lưu lại lúc tính).
 - Chống trùng ghế: chốt/đổi ghế trong transaction MongoDB, từ chối ghế đã có người, ghế hỏng hoặc không tồn tại.
 - Rút lui: trả ghế và tính lại tiền (phần còn lại của luồng rút lui từ Sprint 4).
 - Sửa sau khi CONFIRMED (đổi ghế/giờ): chỉ người tạo sửa được, gửi #6 (in-app + Web Push) cho người bị ảnh hưởng.
 - COMPLETED: người tạo bấm "Đã xem xong" sau giờ chiếu (tự động chuyển ở Sprint 5B).
-- Nhập chi phí thực tế: người tạo nhập phần của từng người và người trả; mỗi người thấy và chỉnh được phần của mình.
-  Ghi `expenses` cho từng người (phần của chính họ); một người trả hết thì tạo `expenseShares`, người nợ bấm "Tôi đã trả", người được nợ xác nhận.
+- Nhập chi phí thực tế: người tạo nhập vé, đồ ăn, khoản khác của từng người (không ghi ai trả); mỗi người thấy và chỉnh được phần của mình.
+  Ghi `expenses` cho từng người (phần của chính họ, `category`: ticket, fnb, other).
 - Thông báo #5 và các sự kiện còn lại của giai đoạn này (in-app + Web Push, dùng hạ tầng của Sprint 4).
 
-**Ngoài phạm vi:** Zalo, nhắc theo giờ (#3, #8), tự chuyển COMPLETED, nhắc trả tiền (#10), phim yêu thích sắp chiếu (#12), dashboard.
+**Ngoài phạm vi:** Zalo, nhắc theo giờ (#3, #8), tự chuyển COMPLETED, phim yêu thích sắp chiếu (#12), dashboard. Không làm: công nợ, nhắc trả tiền (#10), VietQR.
 
 **Tiêu chí hoàn thành**
 - [ ] Đi trọn vòng đời một lịch hẹn: xếp ghế, đồ ăn, xác nhận, hoàn thành, nhập chi phí.
 - [ ] Hai người cùng chọn một ghế thì chỉ một người thành công (có test với transaction).
-- [ ] Một người trả hết: tổng `expenses` của cả nhóm đúng bằng hóa đơn, công nợ đúng, luồng "Tôi đã trả" → "Đã nhận" chạy được (có test).
-- [ ] Người rút lui thì ghế được trả lại và tiền chia lại đúng.
+- [ ] Nhập chi phí một buổi: tổng `expenses` của cả nhóm đúng bằng tổng vé, đồ ăn và khoản khác đã nhập; mỗi người thấy và chỉnh được phần của mình (có test).
+- [ ] Người rút lui thì ghế được trả lại và chi phí ước tính tính lại đúng.
 
 ---
 
@@ -232,7 +232,7 @@ giới hạn tra cứu, kết bạn cần chấp nhận (thiết kế mục 6 v�
 - Thông báo #3 (sắp hết hạn phản hồi, 12 giờ trước hạn, gửi người chưa trả lời) và #8 (nhắc trước giờ chiếu: phim, giờ, rạp + phòng, ghế của người nhận, chỉ đường, gửi xe).
 - Tự chuyển COMPLETED sau giờ kết thúc suất chiếu nếu người tạo chưa bấm.
 
-**Ngoài phạm vi:** Zalo ZNS (giai đoạn sau), nhắc trả tiền (#10), phim yêu thích sắp chiếu (#12), dashboard.
+**Ngoài phạm vi:** Zalo ZNS (giai đoạn sau), phim yêu thích sắp chiếu (#12), dashboard.
 
 **Tiêu chí hoàn thành**
 - [ ] Nhắc lịch (#8) đến thiết bị (Android và iPhone đã cài PWA) đúng thời điểm theo `reminderMinutesBefore`; đổi số phút thì lịch đã tạo được tính lại.
@@ -250,7 +250,7 @@ giới hạn tra cứu, kết bạn cần chấp nhận (thiết kế mục 6 v�
 
 **Phạm vi**
 - Dashboard: chi tiêu theo ngày/tuần/tháng/năm (vé và đồ ăn) lấy từ `expenses` của chính user, thống kê thể loại/rạp/khung giờ,
-  người hay đi cùng, công nợ (từ `expenseShares`). Bật tab Tổng quan.
+  người hay đi cùng. Bật tab Tổng quan.
 - Ngân sách tháng (vé, đồ ăn), cảnh báo 80% và 100%.
 - Ghi lại buổi đã xem (xem một mình hoặc đặt ngoài app), ghi vào `expenses`.
 - Đánh giá phim, đánh giá ghế và phòng sau buổi xem (lưu cá nhân).
@@ -259,10 +259,10 @@ giới hạn tra cứu, kết bạn cần chấp nhận (thiết kế mục 6 v�
 - Báo cáo sai thông tin phòng (user gửi, admin xem).
 - Thông báo #9 (nhắc nhập chi phí/đánh giá) và #11 (ngân sách).
 
-**Ngoài phạm vi:** chatbot, nhắc trả tiền, gợi ý phim, lớp cộng đồng.
+**Ngoài phạm vi:** chatbot, gợi ý phim, lớp cộng đồng.
 
 **Tiêu chí hoàn thành**
-- [ ] Số liệu dashboard khớp với dữ liệu chi phí đã nhập, không đếm trùng khi một người trả hộ cả nhóm (có test cho các hàm tổng hợp).
+- [ ] Số liệu dashboard khớp với dữ liệu chi phí đã nhập, không đếm trùng một khoản của cả nhóm (có test cho các hàm tổng hợp).
 - [ ] Cảnh báo ngân sách hiện đúng ở 80% và 100%.
 - [ ] Đánh giá ghế sau buổi xem hiện ở lịch sử ngồi của chính user.
 - [ ] Nhóm "Thường tới" ở `/cinemas` chỉ gồm rạp user đã xem xong, đúng thứ tự (nhiều buổi trước, bằng nhau thì gần nhất trước), mỗi người chỉ thấy của mình; chưa có buổi nào thì không hiện nhóm.
