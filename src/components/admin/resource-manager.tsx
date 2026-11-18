@@ -100,17 +100,26 @@ export function ResourceManager({ items, basePath, query, labels, removeAction, 
 
   return (
     <div className="flex flex-1 flex-col gap-group">
-      <div className="relative">
-        <Search className="pointer-events-none absolute top-1/2 left-inset size-icon-sm -translate-y-1/2 text-muted-foreground" aria-hidden />
-        <Input
-          type="search"
-          enterKeyHint="search"
-          value={term}
-          onChange={(event) => setTerm(event.target.value)}
-          placeholder={searchLabels?.placeholder ?? t("searchPlaceholder")}
-          aria-label={searchLabels?.label ?? t("searchLabel")}
-          className={`${CONTROL_CLASS} pl-target`}
-        />
+      {/* Search and "add" share one row: the add button is a round icon-only "+" (the label stays for screen readers),
+          so the list needs no row or fixed bar of its own. */}
+      <div className="flex items-center gap-item">
+        <div className="relative min-w-0 flex-1">
+          <Search className="pointer-events-none absolute top-1/2 left-inset size-icon-sm -translate-y-1/2 text-muted-foreground" aria-hidden />
+          <Input
+            type="search"
+            enterKeyHint="search"
+            value={term}
+            onChange={(event) => setTerm(event.target.value)}
+            placeholder={searchLabels?.placeholder ?? t("searchPlaceholder")}
+            aria-label={searchLabels?.label ?? t("searchLabel")}
+            className={`${CONTROL_CLASS} pl-target`}
+          />
+        </div>
+        <Button asChild size="icon" className="size-control shrink-0 rounded-full">
+          <Link href={withBack(`${base}/new`)} aria-label={labels.addButton}>
+            <Plus aria-hidden />
+          </Link>
+        </Button>
       </div>
 
       {items.length === 0 ? (
@@ -158,19 +167,6 @@ export function ResourceManager({ items, basePath, query, labels, removeAction, 
           </ul>
         </>
       )}
-
-      {/* Room for the floating button below, so the last item can scroll clear of it. */}
-      <div aria-hidden className="h-fab-clear shrink-0" />
-
-      {/* Primary action: a round icon-only "+" fixed at the bottom right, above the bottom menu, within thumb reach and
-          out of the way of the list. The label stays for screen readers. On wide screens it starts after the sidebar. */}
-      <div data-bottom-fixed className="pointer-events-none fixed inset-x-0 bottom-[var(--bottom-nav-h,0px)] z-30 flex justify-end p-inset md:left-sidebar">
-        <Button asChild size="icon" className="pointer-events-auto size-control-lg rounded-full shadow-menu">
-          <Link href={withBack(`${base}/new`)} aria-label={labels.addButton}>
-            <Plus aria-hidden className="size-icon-lg" />
-          </Link>
-        </Button>
-      </div>
 
       <AlertDialog open={pendingDelete !== null} onOpenChange={(open) => (open ? undefined : setPendingDelete(null))}>
         <AlertDialogContent>
