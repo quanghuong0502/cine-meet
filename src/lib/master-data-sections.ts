@@ -1,5 +1,5 @@
 import {
-  Armchair, Building2, CalendarHeart, Clapperboard, Film, MapPin, ShieldAlert, Tag, Ticket, UtensilsCrossed, type LucideIcon,
+  Armchair, Building2, CalendarHeart, Clapperboard, Film, MapPin, Shapes, ShieldAlert, Tag, Ticket, UtensilsCrossed, type LucideIcon,
 } from "lucide-react";
 
 /** Tabs of the Catalog page. Keys of `admin.masterData.sections.*` in src/messages/*.json. Add one per master-data type. */
@@ -11,6 +11,7 @@ export type MasterDataSectionKey =
   | "ageRatings"
   | "seatTypes"
   | "holidays"
+  | "fnbCategories"
   | "fnbItems"
   | "fnbCombos"
   | "priceRules";
@@ -32,6 +33,7 @@ export const MASTER_DATA_SECTIONS: MasterDataSection[] = [
   { key: "seatTypes", slug: "seat-types", href: "/admin/master-data/seat-types", icon: Armchair },
   { key: "priceRules", slug: "price-rules", href: "/admin/master-data/price-rules", icon: Ticket },
   { key: "holidays", slug: "holidays", href: "/admin/master-data/holidays", icon: CalendarHeart },
+  { key: "fnbCategories", slug: "fnb-categories", href: "/admin/master-data/fnb-categories", icon: Shapes },
   { key: "fnbItems", slug: "fnb-items", href: "/admin/master-data/fnb-items", icon: UtensilsCrossed },
   { key: "fnbCombos", slug: "fnb-combos", href: "/admin/master-data/fnb-combos", icon: Tag },
 ];

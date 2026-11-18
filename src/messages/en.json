@@ -159,7 +159,27 @@
           "title": "Holidays",
           "description": "Days priced as holidays."
         },
-        "fnbItems": {
+        "fnbCategories": {
+          "title": "Food types",
+          "description": "Popcorn, drinks, snacks..."
+        },
+        "fnbCategories": {
+      "title": "Food types",
+      "createTitle": "Add type",
+      "editTitle": "Edit type",
+      "addButton": "Add type",
+      "emptyTitle": "No types yet",
+      "emptyDescription": "Add types like Popcorn or Drinks to filter items when picking food.",
+      "fields": {
+        "name": {
+          "label": "Name"
+        },
+        "nameEn": {
+          "label": "English name"
+        }
+      }
+    },
+    "fnbItems": {
           "title": "Food & drinks",
           "description": "Popcorn and drinks by brand."
         },
@@ -187,6 +207,10 @@
       "emptyTitle": "No brands yet",
       "emptyDescription": "Add cinema chains like CGV, BHD or Beta to get started.",
       "fields": {
+        "categoryId": {
+          "label": "Type",
+          "placeholder": "Pick a type"
+        },
         "name": {
           "label": "Name"
         },
@@ -1422,6 +1446,10 @@
         "noSeat": "No seat yet",
         "seatsSaved": "Seating saved",
         "roomFailed": "Couldn't load that room, try picking the showtime again",
+        "foodFilter": "Filter by type",
+        "foodAll": "All",
+        "foodCombos": "Combos",
+        "foodOther": "Other",
         "layerScore": "Seat score",
         "seatTakenByOthers": "Another plan already holds this seat.",
         "seatBroken": "That seat is broken, pick another.",

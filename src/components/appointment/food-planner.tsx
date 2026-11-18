@@ -22,6 +22,9 @@ interface Props {
 }
 
 const SHARED = "shared";
+const ALL = "all";
+const COMBOS = "combos";
+const OTHER = "other";
 const key = (owner: string, kind: string, refId: string) => `${owner}|${kind}|${refId}`;
 
 /** Food and drinks: pick whose they are (the whole group's, or one person's), then set how many of each. Saved with one button. */
@@ -29,6 +32,8 @@ export function FoodPlanner({ view, food, onSave, busy, onDraft, initialLines }:
   const t = useTranslations("appointments.detail.plan");
   const locale = useLocale();
   const [owner, setOwner] = useState(SHARED);
+  // Which kind is listed: everything, one category, combos, or the items that have no category.
+  const [filter, setFilter] = useState<string>(ALL);
   const [qty, setQty] = useState(() => new Map((initialLines ?? view.fnb).map((l) => [key(l.ownerId ?? SHARED, l.kind, l.refId), l.quantity])));
   const [dirty, setDirty] = useState(false);
 
@@ -59,9 +64,18 @@ export function FoodPlanner({ view, food, onSave, busy, onDraft, initialLines }:
   }
 
   const rows = [
-    ...food.combos.map((c) => ({ kind: "combo" as const, ...c })),
+    ...food.combos.map((c) => ({ kind: "combo" as const, categoryId: undefined as string | undefined, ...c })),
     ...food.items.map((i) => ({ kind: "item" as const, ...i })),
   ];
+  const known = new Set(food.categories.map((c) => c.id));
+  const hasOther = food.items.some((i) => !i.categoryId || !known.has(i.categoryId));
+  const shown = rows.filter((row) => {
+    if (filter === ALL) return true;
+    if (filter === COMBOS) return row.kind === "combo";
+    if (row.kind === "combo") return false;
+    if (filter === OTHER) return !row.categoryId || !known.has(row.categoryId);
+    return row.categoryId === filter;
+  });
 
   return (
     <section aria-labelledby="appt-food" className="flex flex-col gap-item">
@@ -78,11 +92,33 @@ export function FoodPlanner({ view, food, onSave, busy, onDraft, initialLines }:
           </Chip>
         ))}
       </div>
+      {food.categories.length > 0 || food.combos.length > 0 ? (
+        <div role="group" aria-label={t("foodFilter")} className="scroll-strip flex gap-stack pb-tight">
+          <Chip selected={filter === ALL} onClick={() => setFilter(ALL)}>
+            {t("foodAll")}
+          </Chip>
+          {food.categories.map((c) => (
+            <Chip key={c.id} selected={filter === c.id} onClick={() => setFilter(c.id)}>
+              {locale === "en" && c.nameEn ? c.nameEn : c.name}
+            </Chip>
+          ))}
+          {food.combos.length > 0 ? (
+            <Chip selected={filter === COMBOS} onClick={() => setFilter(COMBOS)}>
+              {t("foodCombos")}
+            </Chip>
+          ) : null}
+          {hasOther && food.categories.length > 0 ? (
+            <Chip selected={filter === OTHER} onClick={() => setFilter(OTHER)}>
+              {t("foodOther")}
+            </Chip>
+          ) : null}
+        </div>
+      ) : null}
       {rows.length === 0 ? (
         <p className="py-inset text-center type-secondary text-muted-foreground">{t("noFood")}</p>
       ) : (
         <ul className="flex flex-col gap-stack">
-          {rows.map((row) => {
+          {shown.map((row) => {
             const n = count(row.kind, row.id);
             return (
               <li key={`${row.kind}-${row.id}`} className="flex items-center gap-item rounded-xl border bg-card p-inset-sm">

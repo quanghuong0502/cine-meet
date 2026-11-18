@@ -15,6 +15,7 @@ import { defaultRatingColor } from "@/lib/age-rating-color";
 import { AgeRating } from "@/models/age-rating";
 import { Branch } from "@/models/branch";
 import { Brand } from "@/models/brand";
+import { FnbCategory } from "@/models/fnb-category";
 import { FnbCombo } from "@/models/fnb-combo";
 import { FnbItem } from "@/models/fnb-item";
 import { Format } from "@/models/format";
@@ -145,16 +146,22 @@ const HOLIDAYS = [
 ];
 
 // Sample food and drinks (the same set for every brand). A combo names its items as "name|size".
+const FNB_CATEGORIES = [
+  { key: "popcorn", name: "Bắp rang", nameEn: "Popcorn" },
+  { key: "drink", name: "Nước uống", nameEn: "Drinks" },
+  { key: "snack", name: "Đồ ăn vặt", nameEn: "Snacks" },
+] as const;
+
 const SAMPLE_ITEMS = [
-  { name: "Bắp ngọt", nameEn: "Sweet popcorn", size: "Vừa", price: 49000 },
-  { name: "Bắp ngọt", nameEn: "Sweet popcorn", size: "Lớn", price: 59000 },
-  { name: "Bắp phô mai", nameEn: "Cheese popcorn", size: "Lớn", price: 69000 },
-  { name: "Bắp caramel", nameEn: "Caramel popcorn", size: "Lớn", price: 69000 },
-  { name: "Nước ngọt", nameEn: "Soft drink", size: "Vừa", price: 35000 },
-  { name: "Nước ngọt", nameEn: "Soft drink", size: "Lớn", price: 45000 },
-  { name: "Trà đào", nameEn: "Peach tea", size: "Vừa", price: 45000 },
-  { name: "Nước suối", nameEn: "Bottled water", size: undefined, price: 25000 },
-  { name: "Xúc xích nướng", nameEn: "Grilled sausage", size: undefined, price: 39000 },
+  { category: "popcorn", name: "Bắp ngọt", nameEn: "Sweet popcorn", size: "Vừa", price: 49000 },
+  { category: "popcorn", name: "Bắp ngọt", nameEn: "Sweet popcorn", size: "Lớn", price: 59000 },
+  { category: "popcorn", name: "Bắp phô mai", nameEn: "Cheese popcorn", size: "Lớn", price: 69000 },
+  { category: "popcorn", name: "Bắp caramel", nameEn: "Caramel popcorn", size: "Lớn", price: 69000 },
+  { category: "drink", name: "Nước ngọt", nameEn: "Soft drink", size: "Vừa", price: 35000 },
+  { category: "drink", name: "Nước ngọt", nameEn: "Soft drink", size: "Lớn", price: 45000 },
+  { category: "drink", name: "Trà đào", nameEn: "Peach tea", size: "Vừa", price: 45000 },
+  { category: "drink", name: "Nước suối", nameEn: "Bottled water", size: undefined, price: 25000 },
+  { category: "snack", name: "Xúc xích nướng", nameEn: "Grilled sausage", size: undefined, price: 39000 },
 ] as const;
 
 const SAMPLE_COMBOS = [
@@ -221,7 +228,7 @@ async function seedCatalog(): Promise<void> {
   }
 
   await connectToDatabase();
-  const models = [Brand, Branch, Genre, Format, AgeRating, SeatType, Holiday, FnbItem, FnbCombo, PriceRule];
+  const models = [Brand, Branch, Genre, Format, AgeRating, SeatType, Holiday, FnbCategory, FnbItem, FnbCombo, PriceRule];
   await Promise.all(models.map((model) => model.init()));
 
   const added: Record<string, number> = {};
@@ -239,6 +246,15 @@ async function seedCatalog(): Promise<void> {
       await Genre.create({ name, nameEn });
       added.genres = (added.genres ?? 0) + 1;
     }
+  }
+  const categoryIds = new Map<string, mongoose.Types.ObjectId>();
+  for (const category of FNB_CATEGORIES) {
+    let doc = await FnbCategory.findOne(byName(category.name)).collation(collation).lean();
+    if (!doc) {
+      doc = (await FnbCategory.create({ name: category.name, nameEn: category.nameEn })).toObject();
+      added.fnbCategories = (added.fnbCategories ?? 0) + 1;
+    }
+    categoryIds.set(category.key, doc._id);
   }
   for (const name of FORMATS) {
     if (!(await Format.exists(byName(name)).collation(collation))) {
@@ -288,9 +304,11 @@ async function seedCatalog(): Promise<void> {
       const filter = { brandId, name, ...(sample.size ? { size: sample.size } : {}) };
       let item = await FnbItem.findOne(filter).collation(collation).lean();
       if (!item) {
-        item = (await FnbItem.create({ brandId, name, nameEn: `${sample.nameEn} ${SAMPLE}`, size: sample.size, price: sample.price })).toObject();
+        item = (await FnbItem.create({ brandId, categoryId: categoryIds.get(sample.category), name, nameEn: `${sample.nameEn} ${SAMPLE}`, size: sample.size, price: sample.price })).toObject();
         added.fnbItems = (added.fnbItems ?? 0) + 1;
       }
+      // An item made before categories existed gets its category now; one an admin already categorised is left alone.
+      if (!item.categoryId) await FnbItem.updateOne({ _id: item._id, categoryId: { $exists: false } }, { categoryId: categoryIds.get(sample.category) });
       itemIds.set(`${sample.name}|${sample.size ?? ""}`, item._id);
     }
 

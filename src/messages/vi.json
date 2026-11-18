@@ -159,7 +159,27 @@
           "title": "Ngày lễ",
           "description": "Ngày giá vé theo mức ngày lễ."
         },
-        "fnbItems": {
+        "fnbCategories": {
+          "title": "Loại đồ ăn",
+          "description": "Bắp rang, nước uống, đồ ăn vặt..."
+        },
+        "fnbCategories": {
+      "title": "Loại đồ ăn",
+      "createTitle": "Thêm loại",
+      "editTitle": "Sửa loại",
+      "addButton": "Thêm loại",
+      "emptyTitle": "Chưa có loại nào",
+      "emptyDescription": "Thêm loại như Bắp rang, Nước uống để lọc món khi chọn đồ ăn.",
+      "fields": {
+        "name": {
+          "label": "Tên"
+        },
+        "nameEn": {
+          "label": "Tên tiếng Anh"
+        }
+      }
+    },
+    "fnbItems": {
           "title": "Đồ ăn",
           "description": "Bắp, nước theo từng thương hiệu."
         },
@@ -187,6 +207,10 @@
       "emptyTitle": "Chưa có thương hiệu",
       "emptyDescription": "Thêm cụm rạp như CGV, BHD, Beta để bắt đầu.",
       "fields": {
+        "categoryId": {
+          "label": "Loại",
+          "placeholder": "Chọn loại"
+        },
         "name": {
           "label": "Tên"
         },
@@ -1422,6 +1446,10 @@
         "noSeat": "Chưa có ghế",
         "seatsSaved": "Đã lưu chỗ ngồi",
         "roomFailed": "Chưa tải được phòng chiếu này, thử chọn lại suất nha",
+        "foodFilter": "Lọc theo loại",
+        "foodAll": "Tất cả",
+        "foodCombos": "Combo",
+        "foodOther": "Khác",
         "layerScore": "Điểm ghế",
         "seatTakenByOthers": "Ghế này có kèo khác giữ rồi nè.",
         "seatBroken": "Ghế này đang hỏng, chọn ghế khác nha.",

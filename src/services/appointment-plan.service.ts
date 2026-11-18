@@ -8,6 +8,7 @@ import { Auditorium } from "@/models/auditorium";
 import { AuditoriumLayout } from "@/models/auditorium-layout";
 import { Branch } from "@/models/branch";
 import { Expense } from "@/models/expense";
+import { FnbCategory } from "@/models/fnb-category";
 import { FnbCombo } from "@/models/fnb-combo";
 import { FnbItem } from "@/models/fnb-item";
 import { SeatClaim } from "@/models/seat-claim";
@@ -392,7 +393,13 @@ export interface PlanData {
   showtimes: ShowtimeRow[];
   /** The room of the chosen showtime, as it was when that showtime was made. */
   room?: { seats: LayoutSeat[]; geometry: LayoutGeometry; seatTypes: { id: string; name: string; nameEn: string | null; color: string | null }[]; taken: string[] };
-  food: { items: { id: string; name: string; price: number }[]; combos: { id: string; name: string; price: number }[] };
+  food: {
+    /** `categoryId` is missing for items made before categories existed. */
+    items: { id: string; name: string; price: number; categoryId?: string }[];
+    combos: { id: string; name: string; price: number }[];
+    /** The categories that have at least one offered item, for the filter chips. */
+    categories: { id: string; name: string; nameEn: string | null }[];
+  };
 }
 
 /** What the creator needs on screen to plan or edit: showtimes, the room with taken seats, and the cinema brand's food. Null for anyone else. */
@@ -408,7 +415,7 @@ export async function getPlanData(userId: string, id: string, roomOf?: string): 
   // `roomOf` = the room and food of a showtime the creator is trying on screen (not saved yet), so the list of showtimes is not needed.
   const found = roomOf ? [] : await searchShowtimes({ movieId: doc.movieId.toString(), date: day, limit: 300 });
   const showtimes = agreedAt ? found.filter((s) => new Date(s.startAt).getTime() >= agreedAt.getTime()) : found;
-  const data: PlanData = { showtimes, food: { items: [], combos: [] } };
+  const data: PlanData = { showtimes, food: { items: [], combos: [], categories: [] } };
   const showtimeId = roomOf ?? doc.showtimeId?.toString();
   if (!showtimeId) return data;
 
@@ -431,7 +438,10 @@ export async function getPlanData(userId: string, id: string, roomOf?: string): 
   const current = (r: { validFrom?: string | null; validTo?: string | null }) => (!r.validFrom || r.validFrom <= today) && (!r.validTo || r.validTo >= today);
   const [items, combos] = await Promise.all([FnbItem.find({ brandId: branch.brandId }).sort({ name: 1 }).lean(), FnbCombo.find({ brandId: branch.brandId }).sort({ name: 1 }).lean()]);
   const itemById = new Map(items.map((i) => [i._id.toString(), i]));
-  data.food.items = items.filter(current).map((i) => ({ id: i._id.toString(), name: [i.name, i.size].filter(Boolean).join(" "), price: i.price }));
+  data.food.items = items.filter(current).map((i) => ({ id: i._id.toString(), name: [i.name, i.size].filter(Boolean).join(" "), price: i.price, categoryId: i.categoryId?.toString() }));
+  const usedCategories = new Set(data.food.items.map((i) => i.categoryId).filter(Boolean));
+  const categories = usedCategories.size > 0 ? await FnbCategory.find({ _id: { $in: [...usedCategories] } }).sort({ name: 1 }).lean() : [];
+  data.food.categories = categories.map((c) => ({ id: c._id.toString(), name: c.name, nameEn: c.nameEn ?? null }));
   data.food.combos = combos.filter(current).map((c) => ({
     id: c._id.toString(),
     name: c.name,

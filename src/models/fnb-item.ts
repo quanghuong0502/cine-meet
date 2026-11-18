@@ -5,6 +5,8 @@ import { defineModel } from "@/lib/define-model";
 const fnbItemSchema = new Schema(
   {
     brandId: { type: Schema.Types.ObjectId, ref: "Brand", required: true, index: true },
+    // Optional: items made before categories existed have none and are listed under "Other".
+    categoryId: { type: Schema.Types.ObjectId, ref: "FnbCategory", index: true },
     name: { type: String, required: true, trim: true },
     nameEn: { type: String, trim: true },
     size: { type: String, trim: true },
