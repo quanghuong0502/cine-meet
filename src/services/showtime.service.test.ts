@@ -141,6 +141,25 @@ describe("switched-off master data", () => {
   });
 });
 
+describe("listMovieIdsWithShowtimes", () => {
+  it("lists only movies with a showtime still to come in a switched-on cinema and format", async () => {
+    const other = (await models.Movie.create({ title: "Khác", durationMin: 90, releaseDate: "2026-11-01" }))._id.toString();
+    const past = (await models.Movie.create({ title: "Cũ", durationMin: 90, releaseDate: "2026-11-01" }))._id.toString();
+    await svc.createShowtimesBulk(bulk({ dates: ["2099-12-01"], times: ["10:00"] }), ACTOR);
+    await svc.createShowtimesBulk(bulk({ movieId: past, dates: ["2099-12-01"], times: ["15:00"] }), ACTOR);
+    await models.Showtime.updateOne({ movieId: past }, { startAt: new Date("2020-01-01T03:00:00Z"), endAt: new Date("2020-01-01T05:00:00Z") });
+    expect([...(await svc.listMovieIdsWithShowtimes())]).toEqual([movieId]);
+    expect((await svc.listMovieIdsWithShowtimes()).has(other)).toBe(false);
+
+    await models.Format.updateOne({ _id: formatId }, { active: false });
+    expect((await svc.listMovieIdsWithShowtimes()).size).toBe(0);
+    await models.Format.updateOne({ _id: formatId }, { active: true });
+    const branch = await models.Branch.findOne({});
+    await models.Branch.updateOne({ _id: branch?._id }, { active: false });
+    expect((await svc.listMovieIdsWithShowtimes()).size).toBe(0);
+  });
+});
+
 describe("time slots from the settings", () => {
   it("filters by the admin's own slots; an id that no longer exists filters nothing", async () => {
     await svc.createShowtimesBulk(bulk({ dates: ["2099-12-01"], times: ["09:30", "13:00", "20:00"] }), ACTOR);

@@ -397,3 +397,37 @@ export async function searchShowtimes(filters: ShowtimeFilters = {}): Promise<Sh
   }
   return result;
 }
+
+/**
+ * Movies a person could actually watch: at least one showtime that has not started, in a cinema and format that are switched on
+ * (the same rule `searchShowtimes` uses for users). A movie with none is left out of lists where picking it would lead nowhere.
+ */
+export async function listMovieIdsWithShowtimes(): Promise<Set<string>> {
+  await connectToDatabase();
+  const upcoming = await Showtime.find({ startAt: { $gte: new Date() } }, "movieId auditoriumId formatId").lean();
+  if (upcoming.length === 0) return new Set();
+
+  const uniq = (values: Types.ObjectId[]) => [...new Set(values.map((v) => v.toString()))];
+  const [rooms, formats] = await Promise.all([
+    Auditorium.find({ _id: { $in: uniq(upcoming.map((s) => s.auditoriumId)) } }, "branchId").lean(),
+    Format.find({ _id: { $in: uniq(upcoming.map((s) => s.formatId)) } }, "active").lean(),
+  ]);
+  const branches = await Branch.find({ _id: { $in: uniq(rooms.map((r) => r.branchId)) } }, "brandId active").lean();
+  const brands = await Brand.find({ _id: { $in: uniq(branches.map((b) => b.brandId)) } }, "active").lean();
+
+  // A record with no value (made before the switch existed) counts as on.
+  const on = (doc: { active?: boolean | null } | undefined) => doc !== undefined && doc.active !== false;
+  const roomById = new Map(rooms.map((r) => [r._id.toString(), r]));
+  const formatById = new Map(formats.map((f) => [f._id.toString(), f]));
+  const branchById = new Map(branches.map((b) => [b._id.toString(), b]));
+  const brandById = new Map(brands.map((b) => [b._id.toString(), b]));
+
+  const ids = new Set<string>();
+  for (const s of upcoming) {
+    const room = roomById.get(s.auditoriumId.toString());
+    const branch = room && branchById.get(room.branchId.toString());
+    if (!branch || !on(formatById.get(s.formatId.toString())) || !on(branch) || !on(brandById.get(branch.brandId.toString()))) continue;
+    ids.add(s.movieId.toString());
+  }
+  return ids;
+}

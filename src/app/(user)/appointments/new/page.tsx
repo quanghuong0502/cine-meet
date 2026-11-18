@@ -5,7 +5,7 @@ import { PageHeader } from "@/components/page-header";
 import { requireUser } from "@/lib/auth/guards";
 import { getFriendOverview, listGroups } from "@/services/friend.service";
 import { listFilterMovies } from "@/services/movie.service";
-import { searchShowtimes } from "@/services/showtime.service";
+import { listMovieIdsWithShowtimes, searchShowtimes } from "@/services/showtime.service";
 import { Showtime } from "@/models/showtime";
 import { connectToDatabase } from "@/lib/db";
 import { isValidObjectId } from "mongoose";
@@ -33,12 +33,15 @@ export default async function NewAppointmentPage({ searchParams }: { searchParam
     else showtimeId = undefined;
   }
 
-  const [movies, overview, groups, rows] = await Promise.all([
+  const [allMovies, withShowtimes, overview, groups, rows] = await Promise.all([
     listFilterMovies(),
+    listMovieIdsWithShowtimes(),
     getFriendOverview(user.userId),
     listGroups(user.userId),
     movieId && isValidObjectId(movieId) ? searchShowtimes({ movieId }) : Promise.resolve([]),
   ]);
+  // Only movies that can actually be watched: one with no showtime to come would be a dead end in the list.
+  const movies = allMovies.filter((m) => withShowtimes.has(m._id.toString()));
   if (movieId && !movies.some((m) => m._id.toString() === movieId)) movieId = undefined;
 
   const showtimes: ShowtimeChoice[] = rows.slice(0, 60).map((row) => ({
