@@ -1,7 +1,7 @@
 import { Error as MongooseError, isValidObjectId, type HydratedDocument } from "mongoose";
 import { z } from "zod";
 import { connectToDatabase } from "@/lib/db";
-import { MAX_DECLINE_REASON, MAX_INVITEES, MAX_TIME_OPTIONS } from "@/lib/appointment/limits";
+import { MAX_DECLINE_REASON, MAX_INVITEES, MAX_TIME_OPTIONS, REMINDER_COOLDOWN_MINUTES } from "@/lib/appointment/limits";
 import {
   canTransition,
   canWithdraw,
@@ -66,6 +66,8 @@ export type AppointmentError =
   | "needs_attendee"
   | "late"
   | "deadline_passed"
+  | "nobody_to_remind"
+  | "reminder_too_soon"
   | "conflict";
 /** Tells people about something that just happened. The movie and the actor's name are read here and stored with the notification. */
 async function notifyPeople(
@@ -209,6 +211,38 @@ export async function inviteMore(creatorId: string, id: string, inviteeIds: stri
   // A draft has told nobody yet; everyone on it is told when it is sent.
   if (result.ok && !result.wasDraft) await notifyPeople(id, creatorId, "appointment_invited", result.addedIds);
   return result.ok ? { ok: true, addedIds: result.addedIds } : result;
+}
+
+/** People still in the poll (invited, or already saying yes somewhere) who have not voted Yes or No on this time. */
+function nonVotersOf(doc: Doc, option: Doc["timeOptions"][number]): string[] {
+  const voted = new Set(option.votes.map((v) => v.userId.toString()));
+  return doc.participants.filter((p) => (p.status === "invited" || p.status === "accepted") && !voted.has(p.userId.toString())).map((p) => p.userId.toString());
+}
+
+/**
+ * The creator nudges the people who have not voted on one time. They get a notification (in-app, and push if they have it on). It is
+ * limited to once per time per hour so it cannot become spam, and it is pointless after the answer-by time (nobody can vote then).
+ */
+export async function remindVoters(
+  creatorId: string,
+  id: string,
+  optionId: string,
+  now = new Date(),
+): Promise<{ ok: true; recipientIds: string[]; slotAt: string } | Failure> {
+  const result = await mutate(id, (doc) => {
+    if (!sameId(doc.creatorId, creatorId)) return { ok: false as const, error: "forbidden" as const };
+    if (!isOpenForReplies(doc.status)) return { ok: false as const, error: "bad_state" as const };
+    if (deadlinePassed(doc, now)) return { ok: false as const, error: "deadline_passed" as const };
+    const option = doc.timeOptions.find((o) => sameId(o._id, optionId));
+    if (!option) return { ok: false as const, error: "invalid_option" as const };
+    const recipientIds = nonVotersOf(doc, option);
+    if (recipientIds.length === 0) return { ok: false as const, error: "nobody_to_remind" as const };
+    if (option.lastRemindedAt && now.getTime() - option.lastRemindedAt.getTime() < REMINDER_COOLDOWN_MINUTES * 60_000) return { ok: false as const, error: "reminder_too_soon" as const };
+    option.lastRemindedAt = now;
+    return { ok: true as const, recipientIds, slotAt: option.startAt.toISOString() };
+  });
+  if (result.ok) await notifyPeople(id, creatorId, "poll_reminder", result.recipientIds, { slotAt: result.slotAt });
+  return result;
 }
 
 /** The invited person turns the whole invitation down (optionally saying why). They can still change their mind by voting. */
@@ -415,6 +449,9 @@ export interface OptionView {
   showtimeId?: string;
   /** "Branch · Room" of the showtime this time points at. */
   place?: string;
+  /** For the creator: how many people have not voted on this time, and whether a reminder went out too recently to send another. */
+  waitingCount: number;
+  recentlyReminded: boolean;
   proposedBy?: PersonView;
   votes: { userId: string; vote: "yes" | "no" }[];
   myVote?: "yes" | "no";
@@ -492,6 +529,8 @@ export async function getAppointment(userId: string, id: string, now = new Date(
       startAt: o.startAt.toISOString(),
       showtimeId: o.showtimeId?.toString(),
       place: o.showtimeId ? places.get(o.showtimeId.toString()) : undefined,
+      waitingCount: isCreator ? doc.participants.filter((p) => (p.status === "invited" || p.status === "accepted") && !o.votes.some((v) => v.userId.toString() === p.userId.toString())).length : 0,
+      recentlyReminded: Boolean(o.lastRemindedAt) && now.getTime() - o.lastRemindedAt!.getTime() < REMINDER_COOLDOWN_MINUTES * 60_000,
       proposedBy: o.proposedBy.toString() === doc.creatorId.toString() ? undefined : person(o.proposedBy.toString()),
       votes: o.votes.map((v) => ({ userId: v.userId.toString(), vote: v.vote })),
       myVote: o.votes.find((v) => v.userId.toString() === userId)?.vote,

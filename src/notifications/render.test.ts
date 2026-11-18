@@ -27,6 +27,17 @@ describe("notificationKey", () => {
     expect(renderNotification(t, "appointment_invited", base).url).toBe("/appointments/a");
   });
 
+  it("a vote reminder writes the time in the receiver's language", () => {
+    const t = (key: string, values?: Record<string, string>) => `${key}|${values?.time}`;
+    const slot = { ...base, slotAt: "2099-12-05T12:30:00Z" };
+    const vi = renderNotification(t, "poll_reminder", slot, "vi");
+    const en = renderNotification(t, "poll_reminder", slot, "en");
+    expect(vi.body).toContain("19:30");
+    expect(vi.body).toContain("05/12");
+    expect(en.body).toContain("19:30");
+    expect(vi.url).toBe("/appointments/a");
+  });
+
   it("other types use their own name", () => {
     expect(notificationKey("appointment_invited", base)).toBe("appointment_invited");
     expect(notificationKey("participant_withdrew", base)).toBe("participant_withdrew");

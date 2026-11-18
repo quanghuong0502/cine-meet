@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { EmptyState } from "@/components/empty-state";
 import { NotificationList } from "@/components/notification-list";
 import { PageHeader } from "@/components/page-header";
@@ -16,12 +16,12 @@ export default async function NotificationsPage() {
   const user = await requireUser();
   const t = await getTranslations("notifications");
   const types = await getTranslations("notifications.types");
-  const rows = await listNotifications(user.userId);
+  const [rows, locale] = [await listNotifications(user.userId), await getLocale()];
   const items = rows.map((row) => ({
     id: row.id,
     createdAt: row.createdAt,
     read: row.read,
-    ...renderNotification((key, values) => types(key as never, values as never), row.type, row.payload),
+    ...renderNotification((key, values) => types(key as never, values as never), row.type, row.payload, locale),
   }));
 
   return (

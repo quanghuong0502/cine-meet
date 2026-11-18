@@ -1007,7 +1007,8 @@
         "appointment_cancelled": "Kèo bị hủy",
         "participant_withdrew": "Có người hủy kèo",
         "friend_request": "Có lời mời bạn bè",
-        "friend_accepted": "Được chấp nhận bạn bè"
+        "friend_accepted": "Được chấp nhận bạn bè",
+        "poll_reminder": "Nhắc vote giờ"
       },
       "errors": {
         "network": "Mạng đang chập chờn, thử lại giúp [me] nha.",
@@ -1292,7 +1293,9 @@
       "conflict": "Nhiều người cùng sửa một lúc, thử lại giúp [me] nha.",
       "deadline_passed": "Đã hết hạn trả lời rồi nên không thay đổi được nữa.",
       "deadline_too_late": "Hạn trả lời phải trước giờ xem sớm nhất nha.",
-      "option_before_deadline": "Giờ này sớm hơn hạn trả lời nên chưa đề xuất được."
+      "option_before_deadline": "Giờ này sớm hơn hạn trả lời nên chưa đề xuất được.",
+      "nobody_to_remind": "Ai cũng vote giờ này rồi nè, không còn ai để nhắc.",
+      "reminder_too_soon": "Vừa nhắc xong, đợi một lúc rồi nhắc lại nha."
     },
     "new": {
       "title": "Tạo lịch hẹn",
@@ -1388,7 +1391,9 @@
       "declineShort": "Từ chối",
       "timesCreator": "Khung giờ",
       "lockThisTime": "Chốt giờ này",
-      "lockDialogDescription": "Chốt xong không đổi người được nữa."
+      "lockDialogDescription": "Chốt xong không đổi người được nữa.",
+      "remindThisTime": "Nhắc người chưa vote giờ này",
+      "reminded": "Đã nhắc {count, plural, one {# người} other {# người}}"
     },
     "invite": {
       "title": "Mời thêm",
@@ -1463,6 +1468,10 @@
       "friend_accepted": {
         "title": "{actorName} đã đồng ý",
         "body": "[you] và {actorName} đã là bạn bè rồi. Rủ đi xem phim thôi!"
+      },
+      "poll_reminder": {
+        "title": "Nhắc vote nè",
+        "body": "{actorName} đang chờ [you] vote giờ {time} cho {movieTitle}."
       }
     },
     "test": {

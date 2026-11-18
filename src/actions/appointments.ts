@@ -13,6 +13,7 @@ import {
   lockParticipants,
   lockSchema,
   proposeOption,
+  remindVoters,
   proposeOptionSchema,
   setVote,
   submitResponse,
@@ -109,4 +110,13 @@ export async function submitResponseAction(id: string, input: unknown): Promise<
   const result = await submitResponse(user.userId, id, parsed.data);
   if (result.ok) refresh(id);
   return result.ok ? { ok: true } : result;
+}
+
+/** The creator nudges people who have not voted on a time; `count` is how many were told. */
+export async function remindVotersAction(id: string, optionId: string): Promise<ActionResult<{ count: number }>> {
+  const user = await requireUser();
+  if (!idSchema.safeParse(id).success || !idSchema.safeParse(optionId).success) return { ok: false, error: "validation" };
+  const result = await remindVoters(user.userId, id, optionId);
+  if (result.ok) refresh(id);
+  return result.ok ? { ok: true, count: result.recipientIds.length } : result;
 }

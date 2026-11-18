@@ -14,6 +14,8 @@ const timeOptionSchema = new Schema({
   startAt: { type: Date, required: true },
   showtimeId: { type: Schema.Types.ObjectId, ref: "Showtime" },
   proposedBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
+  // When the creator last nudged the people who had not voted on this time (limits how often they can).
+  lastRemindedAt: { type: Date },
   votes: { type: [voteSchema], default: [] },
 });
 

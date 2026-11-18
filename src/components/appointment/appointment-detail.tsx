@@ -8,6 +8,7 @@ import {
   cancelAppointmentAction,
   declineInvitationAction,
   lockParticipantsAction,
+  remindVotersAction,
   withdrawAction,
   type ActionResult,
 } from "@/actions/appointments";
@@ -53,7 +54,7 @@ export function AppointmentDetail({ view, friends = [], groups = [] }: DetailPro
   const nameOf = new Map(view.participants.map((p) => [p.id, p.name]));
 
   /** Runs a write, then tells the person what happened (or why not). Network trouble is said out loud. */
-  function run(action: () => Promise<ActionResult>, done: string, after?: () => void) {
+  function run(action: () => Promise<ActionResult<{ count?: number }>>, done: string | ((count?: number) => string), after?: () => void) {
     start(async () => {
       const result = await action().catch(() => null);
       setDialog(null);
@@ -65,7 +66,7 @@ export function AppointmentDetail({ view, friends = [], groups = [] }: DetailPro
         toast.error(tc(`errors.${result.error}`));
         return;
       }
-      toast.success(done);
+      toast.success(typeof done === "function" ? done((result as { count?: number }).count) : done);
       after?.();
     });
   }
@@ -141,6 +142,7 @@ export function AppointmentDetail({ view, friends = [], groups = [] }: DetailPro
           busy={pending}
           // The creator locks a time straight from its card (the dialog there asks first and lets them untick people).
           onLock={view.isCreator && open ? (optionId, attendeeIds) => run(() => lockParticipantsAction(view.id, { optionId, attendeeIds }), t("locked", { count: attendeeIds.length })) : undefined}
+          onRemind={view.isCreator && open && !view.deadlinePassed ? (optionId) => run(() => remindVotersAction(view.id, optionId), (count) => t("reminded", { count: count ?? 0 })) : undefined}
           // Turning the invitation down sits in the bottom bar beside "Save answers": both are ways to finish answering.
           declineButton={
             canVote && view.myStatus !== "declined" ? (
@@ -159,7 +161,7 @@ export function AppointmentDetail({ view, friends = [], groups = [] }: DetailPro
         </h2>
         <ul className="flex flex-col gap-stack">
           <PersonRow name={view.creator.name} avatar={view.creator.avatar}>
-            <Badge variant="secondary" className="h-auto py-hair type-tag">
+            <Badge variant="secondary">
               {t("creator")}
             </Badge>
           </PersonRow>
@@ -241,7 +243,7 @@ function ParticipantBadge({ participant }: { participant: ParticipantView }) {
   const t = useTranslations("appointments.detail.participant");
   const key = participant.status === "invited" && participant.overdue ? "overdue" : participant.status;
   return (
-    <Badge variant={participant.status === "accepted" ? "default" : "secondary"} className="h-auto py-hair type-tag">
+    <Badge variant={participant.status === "accepted" ? "default" : "secondary"}>
       {t(key)}
     </Badge>
   );

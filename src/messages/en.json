@@ -1007,7 +1007,8 @@
         "appointment_cancelled": "Plan cancelled",
         "participant_withdrew": "Someone drops out",
         "friend_request": "Friend requests",
-        "friend_accepted": "Requests accepted"
+        "friend_accepted": "Requests accepted",
+        "poll_reminder": "Vote reminders"
       },
       "errors": {
         "network": "Network is shaky, please try again.",
@@ -1292,7 +1293,9 @@
       "conflict": "Several people edited at once, please try again.",
       "deadline_passed": "The answer-by time has passed, so this can't change anymore.",
       "deadline_too_late": "The answer-by time has to be before the earliest viewing time.",
-      "option_before_deadline": "That time is before the answer-by time, so it can't be suggested."
+      "option_before_deadline": "That time is before the answer-by time, so it can't be suggested.",
+      "nobody_to_remind": "Everyone has voted on this time, nobody to remind.",
+      "reminder_too_soon": "You just sent a reminder, wait a bit before the next one."
     },
     "new": {
       "title": "Create plan",
@@ -1388,7 +1391,9 @@
       "declineShort": "Decline",
       "timesCreator": "Time slots",
       "lockThisTime": "Lock in this time",
-      "lockDialogDescription": "Once locked, the list can't change."
+      "lockDialogDescription": "Once locked, the list can't change.",
+      "remindThisTime": "Remind people who haven't voted on this time",
+      "reminded": "Reminded {count, plural, one {# person} other {# people}}"
     },
     "invite": {
       "title": "Invite more",
@@ -1463,6 +1468,10 @@
       "friend_accepted": {
         "title": "{actorName} accepted",
         "body": "You and {actorName} are friends now. Time to plan a movie night!"
+      },
+      "poll_reminder": {
+        "title": "Vote reminder",
+        "body": "{actorName} is waiting for your vote on {time} for {movieTitle}."
       }
     },
     "test": {

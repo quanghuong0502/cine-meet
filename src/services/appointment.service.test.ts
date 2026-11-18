@@ -465,6 +465,68 @@ describe("appointment service", () => {
     });
   });
 
+  describe("reminding people who have not voted on a time", () => {
+    const notes = async () => (await models.Notification.find({ type: "poll_reminder" }).lean()).map((n) => [String(n.recipientId), (n.payload as { slotAt?: string }).slotAt]);
+
+    it("tells only people who have not voted Yes or No on that time", async () => {
+      const id = await inviting();
+      const [a, b] = (await svc.getAppointment(creator, id))!.options;
+      await svc.setVote(u1, id, a!.id, "yes");
+      await svc.setVote(u2, id, a!.id, "no");
+      await models.Notification.deleteMany({});
+      const result = await svc.remindVoters(creator, id, a!.id);
+      expect(result).toMatchObject({ ok: true, recipientIds: [u3] });
+      expect(await notes()).toEqual([[u3, a!.startAt]]);
+      // On the other time nobody has voted: all three are waiting.
+      expect(await svc.remindVoters(creator, id, b!.id)).toMatchObject({ ok: true });
+      expect((await notes()).filter(([, at]) => at === b!.startAt).map(([r]) => r).sort()).toEqual([u1, u2, u3].sort());
+    });
+
+    it("leaves out people who declined, left or were not chosen", async () => {
+      const id = await inviting();
+      const a = (await svc.getAppointment(creator, id))!.options[0]!;
+      await svc.declineInvitation(u1, id);
+      await models.Notification.deleteMany({});
+      const result = await svc.remindVoters(creator, id, a.id);
+      expect(result).toMatchObject({ ok: true });
+      if (result.ok) expect(result.recipientIds.sort()).toEqual([u2, u3].sort());
+    });
+
+    it("once per time per hour", async () => {
+      const id = await inviting();
+      const a = (await svc.getAppointment(creator, id))!.options[0]!;
+      const t0 = new Date();
+      expect(await svc.remindVoters(creator, id, a.id, t0)).toMatchObject({ ok: true });
+      expect(await svc.remindVoters(creator, id, a.id, new Date(t0.getTime() + 30 * 60_000))).toEqual({ ok: false, error: "reminder_too_soon" });
+      expect((await svc.getAppointment(creator, id, new Date(t0.getTime() + 30 * 60_000)))?.options[0]?.recentlyReminded).toBe(true);
+      expect(await svc.remindVoters(creator, id, a.id, new Date(t0.getTime() + 61 * 60_000))).toMatchObject({ ok: true });
+    });
+
+    it("nobody to remind when everyone has voted", async () => {
+      const id = await inviting();
+      const a = (await svc.getAppointment(creator, id))!.options[0]!;
+      for (const u of [u1, u2, u3]) await svc.setVote(u, id, a.id, "no");
+      expect(await svc.remindVoters(creator, id, a.id)).toEqual({ ok: false, error: "nobody_to_remind" });
+      expect((await svc.getAppointment(creator, id))?.options[0]?.waitingCount).toBe(0);
+    });
+
+    it("only the creator, only while inviting, not after the answer-by time, known time only", async () => {
+      const id = await inviting();
+      const a = (await svc.getAppointment(creator, id))!.options[0]!;
+      expect(await svc.remindVoters(u1, id, a.id)).toEqual({ ok: false, error: "forbidden" });
+      expect(await svc.remindVoters(creator, id, "6".repeat(24))).toEqual({ ok: false, error: "invalid_option" });
+      // Participants do not see how many are waiting.
+      expect((await svc.getAppointment(u1, id))?.options[0]?.waitingCount).toBe(0);
+      await svc.lockParticipants(creator, id, { optionId: a.id, attendeeIds: [u1] });
+      expect(await svc.remindVoters(creator, id, a.id)).toEqual({ ok: false, error: "bad_state" });
+
+      const timed = await svc.createAppointment(creator, { movieId: movie, options: [{ startAt: hours(48) }], inviteeIds: [u1], responseDeadline: hours(1), send: true });
+      if (!timed.ok) throw new Error();
+      const t = (await svc.getAppointment(creator, timed.id))!.options[0]!;
+      expect(await svc.remindVoters(creator, timed.id, t.id, new Date(Date.now() + 2 * 3600_000))).toEqual({ ok: false, error: "deadline_passed" });
+    });
+  });
+
   describe("lists", () => {
     it("split into current and finished, and flag what needs this person's answer", async () => {
       const first = await inviting();

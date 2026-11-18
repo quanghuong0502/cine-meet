@@ -5,6 +5,7 @@ export const NOTIFICATION_TYPES = [
   "participants_locked", // #4  the creator locked the list
   "appointment_cancelled", // #7  the creator cancelled
   "participant_withdrew", // #13 an attendee left
+  "poll_reminder", //         the creator nudges people who have not voted on a time
   "friend_request", //        someone asked me to be friends
   "friend_accepted", //       someone said yes to my friend request
 ] as const;
@@ -27,6 +28,8 @@ export interface NotificationPayload {
   kind?: ReplyKind;
   /** Decline or cancel reason the person typed. */
   reason?: string;
+  /** For `poll_reminder`: the time being voted on (ISO). */
+  slotAt?: string;
   /** For `participants_locked`: false when the recipient was left out. */
   included?: boolean;
 }

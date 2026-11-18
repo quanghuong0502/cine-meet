@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarClock, LoaderCircle, Plus, Save, ThumbsDown, ThumbsUp, Undo2, UserLock, X } from "lucide-react";
+import { BellRing, CalendarClock, LoaderCircle, Plus, Save, ThumbsDown, ThumbsUp, Undo2, UserLock, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -27,6 +27,8 @@ interface Props {
   declineButton?: React.ReactNode;
   /** For the creator while people can still answer: locks this time in with the chosen people. Without it there is no lock button. */
   onLock?: (optionId: string, attendeeIds: string[]) => void;
+  /** For the creator while people can still answer: nudges the people who have not voted on this time. */
+  onRemind?: (optionId: string) => void;
   /** A write is running (the lock, in the creator's case). */
   busy?: boolean;
 }
@@ -37,7 +39,7 @@ interface Props {
  * at once. The counts and names show the person's own draft straight away. The parent gives this a `key` that changes after a save,
  * so it starts again from what the server now has.
  */
-export function PollSection({ view, canVote, nameOf, when, declineButton, onLock, busy = false }: Props) {
+export function PollSection({ view, canVote, nameOf, when, declineButton, onLock, onRemind, busy = false }: Props) {
   const t = useTranslations("appointments.detail");
   const tc = useTranslations("appointments");
   const [pending, start] = useTransition();
@@ -118,11 +120,20 @@ export function PollSection({ view, canVote, nameOf, when, declineButton, onLock
                   {option.place ? <span className="break-words type-secondary text-muted-foreground">{option.place}</span> : null}
                   {option.proposedBy ? <span className="type-secondary text-muted-foreground">{t("proposedBy", { name: option.proposedBy.name })}</span> : null}
                 </div>
-                {/* Creator: lock this time in. Nobody said Yes to it -> nobody could go, so it is off. */}
-                {onLock ? (
-                  <Button type="button" variant="outline" size="icon" disabled={busy || votersOf(option.id).length === 0} aria-label={t("lockThisTime")} onClick={() => setLocking(option.id)} className="shrink-0">
-                    <UserLock aria-hidden />
-                  </Button>
+                {/* Creator: nudge the people who have not voted on this time, or lock it in (nobody said Yes -> nobody could go, so it is off). */}
+                {onLock || onRemind ? (
+                  <div className="flex shrink-0 gap-stack">
+                    {onRemind ? (
+                      <Button type="button" variant="outline" size="icon" disabled={busy || option.waitingCount === 0 || option.recentlyReminded} aria-label={t("remindThisTime")} onClick={() => onRemind(option.id)}>
+                        <BellRing aria-hidden />
+                      </Button>
+                    ) : null}
+                    {onLock ? (
+                      <Button type="button" variant="outline" size="icon" disabled={busy || votersOf(option.id).length === 0} aria-label={t("lockThisTime")} onClick={() => setLocking(option.id)}>
+                        <UserLock aria-hidden />
+                      </Button>
+                    ) : null}
+                  </div>
                 ) : null}
               </div>
               <p className="type-secondary text-muted-foreground">
@@ -150,7 +161,7 @@ export function PollSection({ view, canVote, nameOf, when, declineButton, onLock
             <div className="flex min-w-0 flex-1 flex-col gap-stack">
               <span className="type-item-title tabular-nums">{when(iso)}</span>
               <span className="flex flex-wrap items-center gap-stack">
-                <Badge variant="secondary" className="h-auto py-hair type-tag">
+                <Badge variant="secondary">
                   {t("unsaved")}
                 </Badge>
                 <span className="type-secondary text-muted-foreground">{t("proposedYes")}</span>

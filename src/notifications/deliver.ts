@@ -34,7 +34,7 @@ async function currentPronouns(): Promise<Pronouns> {
 export async function buildPushPayload(type: NotificationType, payload: NotificationPayload, locale: "vi" | "en"): Promise<PushPayload> {
   const messages = await loadMessages(locale, await currentPronouns());
   const t = createTranslator({ locale, messages: messages as never, namespace: "notifications.types" as never }) as unknown as (key: string, values?: Record<string, string>) => string;
-  return renderNotification(t, type, payload);
+  return renderNotification(t, type, payload, locale);
 }
 
 /** The "send a test" push, in the person's language. */

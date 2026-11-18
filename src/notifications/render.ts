@@ -1,3 +1,4 @@
+import { formatDayCompact, formatTime } from "@/lib/datetime";
 import type { NotificationPayload, NotificationType } from "./types";
 
 /** What a notification says, as plain strings: used for the in-app list and for the push. */
@@ -29,9 +30,11 @@ export function notificationKey(type: NotificationType, payload: NotificationPay
 }
 
 /** `t` is a translator scoped to `notifications.types` (title and body live under each key). */
-export function renderNotification(t: Translate, type: NotificationType, payload: NotificationPayload): RenderedNotification {
+export function renderNotification(t: Translate, type: NotificationType, payload: NotificationPayload, locale = "vi"): RenderedNotification {
   const key = notificationKey(type, payload);
-  const values = { actorName: payload.actorName, movieTitle: payload.movieTitle ?? "", reason: payload.reason ?? "" };
+  // A time is written out here, in the language of the person it is for.
+  const time = payload.slotAt ? `${formatDayCompact(payload.slotAt, locale, new Date(), { midSentence: true })} · ${formatTime(payload.slotAt, locale)}` : "";
+  const values = { actorName: payload.actorName, movieTitle: payload.movieTitle ?? "", reason: payload.reason ?? "", time };
   // Appointment news opens that appointment; friend news opens the Friends screen.
   const url = payload.appointmentId ? `/appointments/${payload.appointmentId}` : "/friends";
   return { title: t(`${key}.title`, values), body: t(`${key}.body`, values), url };
