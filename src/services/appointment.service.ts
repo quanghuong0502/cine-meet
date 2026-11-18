@@ -4,6 +4,7 @@ import { connectToDatabase } from "@/lib/db";
 import { MAX_DECLINE_REASON, MAX_INVITEES, MAX_TIME_OPTIONS, REMINDER_COOLDOWN_MINUTES } from "@/lib/appointment/limits";
 import {
   canTransition,
+  compareForList,
   canWithdraw,
   isFinished,
   isOpenForReplies,
@@ -601,6 +602,8 @@ export interface AppointmentSummary {
   isCreator: boolean;
   /** This person has not answered yet and the poll is open: shown as "needs your answer". */
   needsReply: boolean;
+  /** When the appointment was made (ISO): the order inside a group of the same status. */
+  createdAt: string;
   creatorName: string;
   movie: { title: string; posterUrl?: string };
   /** The chosen time once locked, otherwise the earliest candidate. */
@@ -613,7 +616,7 @@ export interface AppointmentSummary {
 }
 
 /** The signed-in person's appointments, split into current and finished (watched or cancelled). */
-export async function listAppointments(userId: string): Promise<{ active: AppointmentSummary[]; past: AppointmentSummary[] }> {
+export async function listAppointments(userId: string, now = new Date()): Promise<{ active: AppointmentSummary[]; past: AppointmentSummary[] }> {
   await connectToDatabase();
   const docs = await Appointment.find({
     $or: [{ creatorId: userId }, { "participants.userId": userId, status: { $ne: "DRAFT" } }],
@@ -634,7 +637,9 @@ export async function listAppointments(userId: string): Promise<{ active: Appoin
       id: doc._id.toString(),
       status: doc.status,
       isCreator: doc.creatorId.toString() === userId,
-      needsReply: doc.status === "INVITING" && me?.status === "invited",
+      // Waiting for this person's answer, and the answer-by time has not passed.
+      needsReply: doc.status === "INVITING" && me?.status === "invited" && !deadlinePassed(doc, now),
+      createdAt: ((doc as unknown as { createdAt?: Date }).createdAt ?? new Date(0)).toISOString(),
       creatorName: people.get(doc.creatorId.toString())?.name ?? "",
       movie: { title: movie?.title ?? "", posterUrl: movie?.posterUrl ?? undefined },
       startAt: (chosen?.startAt ?? new Date(Math.min(...times))).toISOString(),
@@ -646,7 +651,7 @@ export async function listAppointments(userId: string): Promise<{ active: Appoin
   });
   const byTime = (a: AppointmentSummary, b: AppointmentSummary) => a.startAt.localeCompare(b.startAt);
   return {
-    active: summaries.filter((s) => !isFinished(s.status)).sort(byTime),
+    active: summaries.filter((s) => !isFinished(s.status)).sort(compareForList),
     past: summaries.filter((s) => isFinished(s.status)).sort((a, b) => byTime(b, a)),
   };
 }

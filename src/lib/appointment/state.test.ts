@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { APPOINTMENT_STATUSES, canTransition, canWithdraw, isOverdue, yesVoterIds, type AppointmentStatus } from "./state";
+import { APPOINTMENT_STATUSES, canTransition, compareForList, canWithdraw, isOverdue, yesVoterIds, type AppointmentStatus } from "./state";
 
 describe("appointment state machine", () => {
   const forward: [AppointmentStatus, AppointmentStatus][] = [
@@ -52,5 +52,19 @@ describe("appointment state machine", () => {
     expect(isOverdue(past, "declined", now)).toBe(false);
     expect(isOverdue(new Date("2026-11-21T10:00:00Z"), "invited", now)).toBe(false);
     expect(isOverdue(undefined, "invited", now)).toBe(false);
+  });
+});
+
+describe("compareForList", () => {
+  const row = (status: AppointmentStatus, extra: Partial<{ needsReply: boolean; startAt: string; createdAt: string }> = {}) => ({ status, needsReply: false, startAt: "2026-11-20T10:00:00Z", createdAt: "2026-11-01T00:00:00Z", ...extra });
+  it("puts waiting-for-me first, then confirmed, planning, locked, inviting, draft", () => {
+    const list = [row("DRAFT"), row("INVITING"), row("PARTICIPANTS_LOCKED"), row("PLANNING"), row("CONFIRMED"), row("INVITING", { needsReply: true })];
+    expect(list.sort(compareForList).map((r) => `${r.status}${r.needsReply ? "!" : ""}`)).toEqual(["INVITING!", "CONFIRMED", "PLANNING", "PARTICIPANTS_LOCKED", "INVITING", "DRAFT"]);
+  });
+  it("orders confirmed ones by showtime and the rest by when they were made, earliest first", () => {
+    const confirmed = [row("CONFIRMED", { startAt: "2026-11-22T10:00:00Z" }), row("CONFIRMED", { startAt: "2026-11-19T10:00:00Z" })];
+    expect(confirmed.sort(compareForList).map((r) => r.startAt)).toEqual(["2026-11-19T10:00:00Z", "2026-11-22T10:00:00Z"]);
+    const planning = [row("PLANNING", { createdAt: "2026-11-05T00:00:00Z" }), row("PLANNING", { createdAt: "2026-11-02T00:00:00Z" })];
+    expect(planning.sort(compareForList).map((r) => r.createdAt)).toEqual(["2026-11-02T00:00:00Z", "2026-11-05T00:00:00Z"]);
   });
 });

@@ -50,3 +50,34 @@ export function yesVoterIds(votes: VoteLike[]): string[] {
 export function isOverdue(deadline: Date | null | undefined, participantStatus: ParticipantStatus, now = new Date()): boolean {
   return Boolean(deadline) && participantStatus === "invited" && deadline!.getTime() < now.getTime();
 }
+
+/**
+ * Where an appointment sits in the current list, lowest first: the ones waiting for this person's answer, then confirmed, planning,
+ * people locked, still inviting, and drafts last. Within one rank: confirmed ones by showtime (soonest first), the others by the
+ * time they were made (earliest first).
+ */
+export function listRank(status: AppointmentStatus, needsReply: boolean): number {
+  if (needsReply) return 0;
+  switch (status) {
+    case "CONFIRMED":
+      return 1;
+    case "PLANNING":
+      return 2;
+    case "PARTICIPANTS_LOCKED":
+      return 3;
+    case "INVITING":
+      return 4;
+    default:
+      return 5;
+  }
+}
+
+export function compareForList(
+  a: { status: AppointmentStatus; needsReply: boolean; startAt: string; createdAt: string },
+  b: { status: AppointmentStatus; needsReply: boolean; startAt: string; createdAt: string },
+): number {
+  const rank = listRank(a.status, a.needsReply) - listRank(b.status, b.needsReply);
+  if (rank !== 0) return rank;
+  if (listRank(a.status, a.needsReply) === 1) return a.startAt.localeCompare(b.startAt);
+  return a.createdAt.localeCompare(b.createdAt);
+}
