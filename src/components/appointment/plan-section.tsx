@@ -97,8 +97,8 @@ export function PlanSection({ view, plan, run, busy }: Props) {
         </section>
       ) : null}
 
-      {editable && plan.room ? <SeatPlanner key={view.seats.map((s) => `${s.userId}:${s.seatCode}`).join("|")} view={view} room={plan.room} onSave={run} busy={busy} /> : null}
-      {editable && plan.room ? <FoodPlanner key={view.fnb.map((l) => `${l.id}`).join("|")} view={view} food={plan.food} onSave={run} busy={busy} /> : null}
+      {editable && plan.room ? <SeatPlanner key={`seats:${view.seats.map((s) => `${s.userId}:${s.seatCode}`).join("|")}`} view={view} room={plan.room} onSave={run} busy={busy} /> : null}
+      {editable && plan.room ? <FoodPlanner key={`food:${view.fnb.map((l) => `${l.id}`).join("|")}`} view={view} food={plan.food} onSave={run} busy={busy} /> : null}
 
       {!editable ? (
         <section aria-labelledby="appt-where" className="flex flex-col gap-item">
