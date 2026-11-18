@@ -1340,7 +1340,6 @@
       "countYes": "{count} voted yes",
       "countNo": "{count} voted no",
       "countWaiting": "{count} not answered",
-      "yesNames": "Yes: {names}",
       "yourVote": "Your vote",
       "yes": "Yes",
       "no": "No",

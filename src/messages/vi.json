@@ -1340,7 +1340,6 @@
       "countYes": "{count} người vote Có",
       "countNo": "{count} người vote Không",
       "countWaiting": "{count} người chưa trả lời",
-      "yesNames": "Có: {names}",
       "yourVote": "[you] vote",
       "yes": "Có",
       "no": "Không",

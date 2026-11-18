@@ -57,7 +57,6 @@ export function AppointmentDetail({ view, friends = [], groups = [] }: DetailPro
   const showWithdraw = view.myStatus === "accepted" && locked && canWithdraw(view.status);
   const hasFloatingAction = !finished && (showWithdraw || view.isCreator);
   const chosen = view.options.find((o) => o.id === view.chosenOptionId);
-  const nameOf = new Map(view.participants.map((p) => [p.id, p.name]));
 
   /** Runs a write, then tells the person what happened (or why not). Network trouble is said out loud. */
   function run(action: () => Promise<ActionResult<{ count?: number }>>, done: string | ((count?: number) => string), after?: () => void) {
@@ -143,7 +142,6 @@ export function AppointmentDetail({ view, friends = [], groups = [] }: DetailPro
           key={view.options.map((o) => `${o.id}:${o.myVote ?? ""}`).join("|")}
           view={view}
           canVote={canVote}
-          nameOf={nameOf}
           when={when}
           busy={pending}
           onBarVisibleChange={setBarVisible}

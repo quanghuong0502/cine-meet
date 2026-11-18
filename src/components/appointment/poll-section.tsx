@@ -21,7 +21,6 @@ interface Props {
   view: AppointmentView;
   /** The person may still answer (invited, poll open, before the answer-by time). */
   canVote: boolean;
-  nameOf: Map<string, string>;
   when: (iso: string) => string;
   /** The "turn the invitation down" button (built by the screen, which owns its confirmation); it shares the bottom bar with Save. */
   declineButton?: React.ReactNode;
@@ -41,7 +40,7 @@ interface Props {
  * at once. The counts and names show the person's own draft straight away. The parent gives this a `key` that changes after a save,
  * so it starts again from what the server now has.
  */
-export function PollSection({ view, canVote, nameOf, when, declineButton, onLock, onRemind, onBarVisibleChange, busy = false }: Props) {
+export function PollSection({ view, canVote, when, declineButton, onLock, onRemind, onBarVisibleChange, busy = false }: Props) {
   const t = useTranslations("appointments.detail");
   const tc = useTranslations("appointments");
   const [pending, start] = useTransition();
@@ -97,7 +96,6 @@ export function PollSection({ view, canVote, nameOf, when, declineButton, onLock
     });
   }
 
-  const myName = nameOf.get(view.viewerId);
   /** People who said Yes to a time and are still in (have not turned the invitation down). */
   const votersOf = (optionId: string) => {
     const option = view.options.find((o) => o.id === optionId);
@@ -116,7 +114,6 @@ export function PollSection({ view, canVote, nameOf, when, declineButton, onLock
           const mine = draft[option.id] ?? null;
           // Everyone else's saved votes, plus this person's draft in place of their saved one.
           const others = option.votes.filter((v) => v.userId !== view.viewerId);
-          const yesNames = [...others.filter((v) => v.vote === "yes").map((v) => nameOf.get(v.userId) ?? view.creator.name), ...(mine === "yes" && myName ? [myName] : [])];
           const yes = others.filter((v) => v.vote === "yes").length + (mine === "yes" ? 1 : 0);
           const no = others.filter((v) => v.vote === "no").length + (mine === "no" ? 1 : 0);
           // Who has not answered this time yet (this person's unsaved pick counts as an answer).
@@ -147,7 +144,6 @@ export function PollSection({ view, canVote, nameOf, when, declineButton, onLock
                         </li>
                       ) : null}
                     </ul>
-                    {yesNames.length > 0 ? <p className="break-words type-secondary text-muted-foreground">{t("yesNames", { names: yesNames.join(", ") })}</p> : null}
                   </div>
                 </div>
                 {/* Creator: nudge the people who have not voted on this time, or lock it in (nobody said Yes -> nobody could go, so it is off). */}
