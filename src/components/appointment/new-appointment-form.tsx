@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { createAppointmentAction } from "@/actions/appointments";
 import { Chip } from "@/components/admin/auditorium-editor/chips";
 import { LoadingState } from "@/components/loading-state";
+import { ShowtimePicker, type ShowtimeChoice } from "@/components/appointment/showtime-picker";
 import { RequiredMark } from "@/components/required-mark";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,14 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { vietnamToIso } from "@/lib/appointment/datetime";
 import { MAX_TIME_OPTIONS } from "@/lib/appointment/limits";
-import { formatDayLong, formatTime } from "@/lib/datetime";
-
-export interface ShowtimeChoice {
-  id: string;
-  startAt: string;
-  /** "Branch · Room · Format". */
-  label: string;
-}
+import { formatDayLong, formatTime, vietnamDayKey } from "@/lib/datetime";
 
 interface Props {
   movies: { id: string; title: string }[];
@@ -169,25 +163,12 @@ export function NewAppointmentForm({ movies, movieId, showtimes, initialShowtime
         {loadingMovie ? (
           <LoadingState compact />
         ) : showtimes.length > 0 ? (
-          <div role="group" aria-labelledby="appointment-times" className="flex flex-col gap-stack">
-            {showtimes.map((showtime) => {
-              const chosen = showtimeIds.includes(showtime.id);
-              return (
-                <button
-                  key={showtime.id}
-                  type="button"
-                  aria-pressed={chosen}
-                  onClick={() => (chosen || total < MAX_TIME_OPTIONS ? setShowtimeIds(toggle(showtimeIds, showtime.id)) : setErrors((e) => ({ ...e, times: t("errors.tooManyTimes", { max: MAX_TIME_OPTIONS }) })))}
-                  className={`flex min-h-target flex-col items-start gap-tight rounded-xl border p-inset-sm text-left transition-colors ${chosen ? "border-transparent bg-primary text-primary-foreground" : "bg-card"}`}
-                >
-                  <span className="type-item-title tabular-nums">
-                    {formatDayLong(showtime.startAt, locale)} · {formatTime(showtime.startAt, locale)}
-                  </span>
-                  <span className={`break-words type-secondary ${chosen ? "" : "text-muted-foreground"}`}>{showtime.label}</span>
-                </button>
-              );
-            })}
-          </div>
+          <ShowtimePicker
+            showtimes={showtimes}
+            selectedIds={showtimeIds}
+            initialDay={initialShowtimeId ? vietnamDayKey(showtimes.find((s) => s.id === initialShowtimeId)?.startAt ?? "") : undefined}
+            onToggle={(id) => (showtimeIds.includes(id) || total < MAX_TIME_OPTIONS ? setShowtimeIds(toggle(showtimeIds, id)) : setErrors((e) => ({ ...e, times: t("errors.tooManyTimes", { max: MAX_TIME_OPTIONS }) })))}
+          />
         ) : movieId ? (
           <p className="type-secondary text-muted-foreground">{t("noShowtimes")}</p>
         ) : null}

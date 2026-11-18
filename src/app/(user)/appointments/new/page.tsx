@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
-import { NewAppointmentForm, type ShowtimeChoice } from "@/components/appointment/new-appointment-form";
+import { NewAppointmentForm } from "@/components/appointment/new-appointment-form";
+import type { ShowtimeChoice } from "@/components/appointment/showtime-picker";
 import { PageHeader } from "@/components/page-header";
 import { requireUser } from "@/lib/auth/guards";
 import { getFriendOverview, listGroups } from "@/services/friend.service";
@@ -44,12 +45,13 @@ export default async function NewAppointmentPage({ searchParams }: { searchParam
   const movies = allMovies.filter((m) => withShowtimes.has(m._id.toString()));
   if (movieId && !movies.some((m) => m._id.toString() === movieId)) movieId = undefined;
 
-  const showtimes: ShowtimeChoice[] = rows.slice(0, 60).map((row) => ({
+  const showtimes: ShowtimeChoice[] = rows.map((row) => ({
     id: row.id,
     startAt: row.startAt,
-    label: [row.branch.brandName, row.branch.name, row.auditorium.name, row.format.name].filter(Boolean).join(" · "),
+    branchId: row.branch.id,
+    branchName: [row.branch.brandName, row.branch.name].filter(Boolean).join(" · "),
+    label: [row.auditorium.name, row.format.name].filter(Boolean).join(" · "),
   }));
-  // A showtime that is not in the first page of the list is still shown when it is the one the person came from.
   if (showtimeId && !showtimes.some((s) => s.id === showtimeId)) showtimeId = undefined;
 
   return (
