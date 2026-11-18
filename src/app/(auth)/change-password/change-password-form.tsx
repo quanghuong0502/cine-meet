@@ -29,7 +29,7 @@ export function ChangePasswordForm() {
           autoComplete="current-password"
           enterKeyHint="next"
           required
-          className="h-control rounded-xl bg-card px-4 text-base"
+          className="h-control rounded-xl bg-card px-4 type-body"
         />
       </div>
       <div className="flex flex-col gap-3">
@@ -42,7 +42,7 @@ export function ChangePasswordForm() {
           enterKeyHint="next"
           minLength={MIN_PASSWORD_LENGTH}
           required
-          className="h-control rounded-xl bg-card px-4 text-base"
+          className="h-control rounded-xl bg-card px-4 type-body"
         />
       </div>
       <div className="flex flex-col gap-3">
@@ -54,12 +54,12 @@ export function ChangePasswordForm() {
           autoComplete="new-password"
           enterKeyHint="done"
           required
-          className="h-control rounded-xl bg-card px-4 text-base"
+          className="h-control rounded-xl bg-card px-4 type-body"
         />
       </div>
 
       {state.error ? (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="type-secondary text-destructive">
           {state.error}
         </p>
       ) : null}

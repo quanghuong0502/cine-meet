@@ -38,11 +38,11 @@ export async function ProfileOverview({ name, identity, role, avatar, phone, sea
         <CardHeader className="flex-row items-center gap-4">
           <UserAvatar name={name} image={avatar} size={64} />
           <div className="flex min-w-0 flex-col gap-1">
-            <CardTitle className="break-words">{name}</CardTitle>
+            <CardTitle className="type-heading break-words">{name}</CardTitle>
             <CardDescription className="break-words">{identity}</CardDescription>
           </div>
         </CardHeader>
-        <CardContent className="flex flex-col gap-3 text-sm">
+        <CardContent className="flex flex-col gap-3 type-secondary">
           <dl className="grid gap-2">
             <div className="flex justify-between gap-4">
               <dt className="text-muted-foreground">{t("fields.phone.label")}</dt>

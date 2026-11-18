@@ -31,7 +31,7 @@ function isValidationCode(code: string): code is ValidationCode {
   return VALIDATION_CODES.some((known) => known === code);
 }
 
-const CONTROL_CLASS = "h-control rounded-xl bg-card px-4 text-base";
+const CONTROL_CLASS = "h-control rounded-xl bg-card px-4 type-body";
 
 /** Pick any number of options (chips); the choice travels as one comma-separated hidden field. */
 function MultiSelectField({ name, label, options, initial }: { name: string; label: string; options: { value: string; label: string }[]; initial: string }) {
@@ -71,7 +71,7 @@ function FieldControl({ field, value, invalid, last, onSelect, selected, sibling
 
   switch (field.kind) {
     case "textarea":
-      return <Textarea {...common} defaultValue={value} maxLength={field.maxLength} rows={3} placeholder={field.placeholder} className="max-h-40 resize-none overflow-y-auto rounded-xl bg-card px-4 py-3 text-base" />;
+      return <Textarea {...common} defaultValue={value} maxLength={field.maxLength} rows={3} placeholder={field.placeholder} className="max-h-40 resize-none overflow-y-auto rounded-xl bg-card px-4 py-3 type-body" />;
     case "color":
       return (
         <input
@@ -233,7 +233,7 @@ export function ResourceForm({ itemId, fields, values, backHref, saveAction, del
               discountError={field.kind === "comboItems" && fieldErrors.discountValue ? tv(isValidationCode(fieldErrors.discountValue) ? fieldErrors.discountValue : "invalid") : undefined}
             />
             {code ? (
-              <p role="alert" className="-mt-1 text-sm text-destructive">
+              <p role="alert" className="-mt-1 type-secondary text-destructive">
                 {tv(isValidationCode(code) ? code : "invalid")}
               </p>
             ) : null}
@@ -242,7 +242,7 @@ export function ResourceForm({ itemId, fields, values, backHref, saveAction, del
       })}
 
       {formError ? (
-        <p role="alert" className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+        <p role="alert" className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 type-secondary text-destructive">
           {t(`errors.${formError}`)}
         </p>
       ) : null}

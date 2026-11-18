@@ -60,12 +60,12 @@ export function MovieShowtimes({ rows }: { rows: ShowtimeRow[] }) {
                   onClick={() => setDay(key)}
                   aria-pressed={selected}
                   className={cn(
-                    "flex min-h-row min-w-16 flex-col items-center justify-center gap-0.5 rounded-2xl border px-4 py-2 text-xs leading-tight outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
+                    "flex min-h-row min-w-16 flex-col items-center justify-center gap-0.5 rounded-2xl border px-4 py-2 type-micro leading-tight! outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
                     selected ? "border-transparent bg-primary text-primary-foreground" : "bg-card text-muted-foreground",
                   )}
                 >
                   <span>{key === today ? t("today") : weekday.format(date)}</span>
-                  <span className="text-base font-semibold">{Number(key.slice(8))}</span>
+                  <span className="type-item-title">{Number(key.slice(8))}</span>
                 </button>
               </li>
             );
@@ -77,7 +77,7 @@ export function MovieShowtimes({ rows }: { rows: ShowtimeRow[] }) {
       {choices(t("filters.labels.format"), formats, format, setFormat)}
 
       {shown.length === 0 ? (
-        <p className="py-6 text-center text-sm text-muted-foreground">{tm("noMatch")}</p>
+        <p className="py-6 text-center type-secondary text-muted-foreground">{tm("noMatch")}</p>
       ) : (
         <ul className="flex flex-col gap-3">
           {shown.map((row) => (

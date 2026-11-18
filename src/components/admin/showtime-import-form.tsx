@@ -62,7 +62,7 @@ export function ShowtimeImportForm({ backHref, action }: Props) {
           autoCorrect="off"
           spellCheck={false}
           placeholder={"movie,branch,auditorium,start,format,price\nMai,CGV Vincom,Phòng 1,2026-12-01 19:30,2D,90000"}
-          className="max-h-72 min-h-48 resize-y rounded-xl bg-card px-4 py-3 font-mono text-base"
+          className="max-h-72 min-h-48 resize-y rounded-xl bg-card px-4 py-3 font-mono type-body"
         />
         <input ref={fileRef} type="file" accept=".csv,text/csv,text/plain" className="sr-only" tabIndex={-1} aria-hidden onChange={(e) => void readFile(e.target.files?.[0])} />
         <Button type="button" variant="secondary" size="cta" onClick={() => fileRef.current?.click()}>
@@ -72,7 +72,7 @@ export function ShowtimeImportForm({ backHref, action }: Props) {
       </div>
 
       {state.status === "error" ? (
-        <div role="alert" className="flex flex-col gap-2 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+        <div role="alert" className="flex flex-col gap-2 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 type-secondary text-destructive">
           <p className="font-semibold">{t("errorsTitle", { count: state.errors.length })}</p>
           <ul className="flex flex-col gap-1">
             {state.errors.slice(0, 50).map((error) => (

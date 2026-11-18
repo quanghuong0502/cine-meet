@@ -70,7 +70,7 @@ export function LoginForm({ callbackUrl, initialError }: LoginFormProps) {
             autoCorrect="off"
             spellCheck={false}
             required
-            className="h-control rounded-xl bg-card px-4 text-base"
+            className="h-control rounded-xl bg-card px-4 type-body"
           />
         </div>
 
@@ -89,7 +89,7 @@ export function LoginForm({ callbackUrl, initialError }: LoginFormProps) {
               autoComplete="current-password"
               enterKeyHint="go"
               required
-              className="h-control rounded-xl bg-card pr-12 pl-4 text-base"
+              className="h-control rounded-xl bg-card pr-12 pl-4 type-body"
             />
             <Button
               type="button"
@@ -108,7 +108,7 @@ export function LoginForm({ callbackUrl, initialError }: LoginFormProps) {
         {errorMessage ? (
           <p
             role="alert"
-            className="flex items-start gap-2 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+            className="flex items-start gap-2 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 type-secondary text-destructive"
           >
             <CircleAlert className="mt-0.5 size-4 shrink-0" aria-hidden />
             {errorMessage}
@@ -131,7 +131,7 @@ export function LoginForm({ callbackUrl, initialError }: LoginFormProps) {
         </Button>
       </form>
 
-      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+      <div className="flex items-center gap-4 type-secondary text-muted-foreground">
         <span className="h-px flex-1 bg-border" />
         {t("or")}
         <span className="h-px flex-1 bg-border" />
@@ -142,7 +142,7 @@ export function LoginForm({ callbackUrl, initialError }: LoginFormProps) {
         <GoogleButton />
       </form>
 
-      <p className="text-center text-xs text-muted-foreground">
+      <p className="text-center type-micro text-muted-foreground">
         {t.rich("help", {
           highlight: (chunks) => <span className="text-primary-text">{chunks}</span>,
         })}

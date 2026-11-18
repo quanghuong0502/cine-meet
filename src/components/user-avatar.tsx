@@ -25,7 +25,7 @@ export function UserAvatar({ name, image, size, className }: UserAvatarProps) {
       style={{ width: size, height: size }}
       className={cn(
         "flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary font-semibold text-primary-foreground",
-        size >= 64 ? "text-xl" : "text-sm",
+        size >= 64 ? "type-heading" : "type-secondary font-semibold!",
         className,
       )}
     >

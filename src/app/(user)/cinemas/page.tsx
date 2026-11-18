@@ -28,24 +28,24 @@ export default async function CinemasPage() {
       ) : (
         groups.map((group) => (
           <section key={group.brand.id} className="flex flex-col gap-2">
-            <h2 className="text-xl font-semibold">{group.brand.name}</h2>
+            <h2 className="type-heading">{group.brand.name}</h2>
             <ul className="flex flex-col gap-2">
               {group.branches.map((branch) => (
                 <li key={branch.id}>
                   <Link href={`/cinemas/${branch.id}`} className="flex min-h-row flex-col gap-1.5 rounded-xl border bg-card p-4">
-                    <span className="text-base font-semibold">{branch.name}</span>
+                    <span className="type-item-title">{branch.name}</span>
                     {branch.address ? (
-                      <span className="flex items-start gap-1.5 text-sm text-muted-foreground">
+                      <span className="flex items-start gap-1.5 type-secondary text-muted-foreground">
                         <MapPin className="mt-0.5 size-4 shrink-0" aria-hidden />
                         {branch.address}
                       </span>
                     ) : null}
                     <span className="flex flex-wrap gap-2">
-                      <Badge variant="secondary" className="h-auto py-0.5 text-xs font-medium">
+                      <Badge variant="secondary" className="h-auto py-0.5 type-tag">
                         {t("roomCount", { count: branch.roomCount })}
                       </Badge>
                       {branch.parkingFee !== null ? (
-                        <Badge variant="outline" className="h-auto py-0.5 text-xs font-medium">
+                        <Badge variant="outline" className="h-auto py-0.5 type-tag">
                           {t("parkingFee", { fee: formatVnd(branch.parkingFee, locale) })}
                         </Badge>
                       ) : null}

@@ -27,7 +27,7 @@ export function LoadingState({ fullScreen = false, compact = false, className }:
       )}
     >
       <Mascot pose="bubu-sleepy" size={compact ? 80 : 112} decorative priority />
-      <p className="text-sm text-muted-foreground">{t("loading")}</p>
+      <p className="type-secondary text-muted-foreground">{t("loading")}</p>
     </div>
   );
 }

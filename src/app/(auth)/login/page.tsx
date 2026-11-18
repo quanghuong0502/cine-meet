@@ -36,12 +36,12 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             className="max-h-[175px]"
           />
         </div>
-        <Wordmark className="text-3xl" />
+        <Wordmark className="type-display" />
       </header>
 
       <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
-        <p className="text-sm text-muted-foreground [@media(max-height:640px)]:hidden">
+        <h1 className="type-title">{t("title")}</h1>
+        <p className="type-secondary text-muted-foreground [@media(max-height:640px)]:hidden">
           {t("subtitle")}
         </p>
       </div>

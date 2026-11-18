@@ -73,7 +73,7 @@ export function UserActions({ id, name, locked, isSelf, canResetPassword, resetH
       <AlertDialog open={confirming} onOpenChange={setConfirming}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t(locked ? "unlockTitle" : "lockTitle", { name })}</AlertDialogTitle>
+            <AlertDialogTitle className="type-item-title">{t(locked ? "unlockTitle" : "lockTitle", { name })}</AlertDialogTitle>
             <AlertDialogDescription>{t(locked ? "unlockDescription" : "lockDescription")}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

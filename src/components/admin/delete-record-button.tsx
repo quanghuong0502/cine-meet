@@ -67,7 +67,7 @@ export function DeleteRecordButton({ id, name, backHref, removeAction }: DeleteR
       <AlertDialog open={open} onOpenChange={setOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t("deleteTitle", { name })}</AlertDialogTitle>
+            <AlertDialogTitle className="type-item-title">{t("deleteTitle", { name })}</AlertDialogTitle>
             <AlertDialogDescription>{t("deleteDescription")}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

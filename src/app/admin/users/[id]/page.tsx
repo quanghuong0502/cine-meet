@@ -46,7 +46,7 @@ export default async function EditUserPage({
     <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-4 p-4">
       <PageHeader title={user.name} backHref={backHref} />
 
-      <dl className="grid gap-3 rounded-xl border bg-card p-4 text-sm">
+      <dl className="grid gap-3 rounded-xl border bg-card p-4 type-secondary">
         {info
           .filter(([, value]) => value)
           .map(([label, value]) => (

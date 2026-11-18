@@ -91,7 +91,7 @@ export default async function ShowtimesPage({ searchParams }: { searchParams: Pr
                     ) : null}
                     {movie.posterUrl ? <Image src={movie.posterUrl} alt="" fill sizes="128px" unoptimized className="object-cover" /> : null}
                   </span>
-                  <span className="line-clamp-2 text-sm leading-snug">{movie.title}</span>
+                  <span className="line-clamp-2 type-secondary leading-snug!">{movie.title}</span>
                 </Link>
               </li>
             ))}
@@ -111,12 +111,12 @@ export default async function ShowtimesPage({ searchParams }: { searchParams: Pr
                   scroll={false}
                   aria-current={selected ? "date" : undefined}
                   className={cn(
-                    "flex min-h-row min-w-16 flex-col items-center justify-center gap-0.5 rounded-2xl border px-4 py-2 text-xs leading-tight",
+                    "flex min-h-row min-w-16 flex-col items-center justify-center gap-0.5 rounded-2xl border px-4 py-2 type-micro leading-tight!",
                     selected ? "border-transparent bg-primary text-primary-foreground" : "bg-card text-muted-foreground",
                   )}
                 >
                   <span>{day === today ? t("today") : dayLabel.format(new Date(`${day}T00:00:00Z`))}</span>
-                  <span className="text-base font-semibold">{Number(day.slice(8))}</span>
+                  <span className="type-item-title">{Number(day.slice(8))}</span>
                 </Link>
               </li>
             );
@@ -144,7 +144,7 @@ async function Results({ date, values }: { date: string; values: FilterValues })
     <div className="flex flex-col gap-6">
       {[...byMovie.values()].map((group) => (
         <section key={group[0].movie.id} className="flex flex-col gap-3">
-          <Link href={`/movies/${group[0].movie.id}`} className="text-base font-semibold">
+          <Link href={`/movies/${group[0].movie.id}`} className="type-heading">
             {group[0].movie.title}
           </Link>
           <ul className="flex flex-col gap-3">

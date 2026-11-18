@@ -46,7 +46,7 @@ function Marker({ item }: { item: ResourceItem }) {
   return (
     <span
       aria-hidden
-      className={`flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full border text-sm font-semibold ${showImage ? "bg-white" : "bg-muted"}`}
+      className={`flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full border type-secondary font-semibold! ${showImage ? "bg-white" : "bg-muted"}`}
       style={!showImage && item.color ? { backgroundColor: item.color } : undefined}
     >
       {showImage ? (
@@ -58,7 +58,7 @@ function Marker({ item }: { item: ResourceItem }) {
   );
 }
 
-const CONTROL_CLASS = "h-control rounded-xl bg-card px-4 text-base";
+const CONTROL_CLASS = "h-control rounded-xl bg-card px-4 type-body";
 
 /**
  * Admin list for one master-data type: search, cards, delete with confirmation. Opening a card or "Add" goes to a
@@ -130,19 +130,19 @@ export function ResourceManager({ items, basePath, query, labels, removeAction, 
         />
       ) : (
         <>
-          <p className="text-sm text-muted-foreground">{t("itemCount", { count: items.length })}</p>
+          <p className="type-secondary text-muted-foreground">{t("itemCount", { count: items.length })}</p>
           <ul className="grid gap-3 md:grid-cols-2">
             {items.map((item) => (
               <li key={item.id} className="flex min-w-0 items-center rounded-xl border bg-card pr-2">
                 <Link href={withBack(`${base}/${item.id}`)} className="flex min-h-row min-w-0 flex-1 items-center gap-3 rounded-xl py-3 pr-0 pl-3 text-left">
                   <Marker item={item} />
                   <span className="flex min-w-0 flex-1 flex-col gap-1">
-                    <span className="truncate text-base font-semibold">{item.title}</span>
-                    {item.subtitle ? <span className="line-clamp-2 break-words text-sm text-muted-foreground">{item.subtitle}</span> : null}
+                    <span className="truncate type-item-title">{item.title}</span>
+                    {item.subtitle ? <span className="line-clamp-2 break-words type-secondary text-muted-foreground">{item.subtitle}</span> : null}
                     {item.meta?.length ? (
                       <span className="flex flex-wrap gap-1">
                         {item.meta.map((entry) => (
-                          <Badge key={entry} variant="secondary" className="h-auto max-w-full whitespace-normal py-0.5 text-left text-xs font-medium">
+                          <Badge key={entry} variant="secondary" className="h-auto max-w-full whitespace-normal py-0.5 text-left type-tag">
                             {entry}
                           </Badge>
                         ))}
@@ -185,7 +185,7 @@ export function ResourceManager({ items, basePath, query, labels, removeAction, 
       <AlertDialog open={pendingDelete !== null} onOpenChange={(open) => (open ? undefined : setPendingDelete(null))}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t("deleteTitle", { name: pendingDelete?.title ?? "" })}</AlertDialogTitle>
+            <AlertDialogTitle className="type-item-title">{t("deleteTitle", { name: pendingDelete?.title ?? "" })}</AlertDialogTitle>
             <AlertDialogDescription>{t("deleteDescription")}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

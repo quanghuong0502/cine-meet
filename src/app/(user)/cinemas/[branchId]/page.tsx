@@ -43,22 +43,22 @@ export default async function CinemaPage({ params }: Props) {
       ) : null}
 
       <section className="flex flex-col gap-3">
-        <p className="text-sm text-muted-foreground">{brand.name}</p>
+        <p className="type-secondary text-muted-foreground">{brand.name}</p>
         {branch.address ? (
-          <p className="flex items-start gap-2 text-base">
+          <p className="flex items-start gap-2 type-body">
             <MapPin className="mt-1 size-4 shrink-0 text-muted-foreground" aria-hidden />
             {branch.address}
             {branch.floor ? ` · ${branch.floor}` : ""}
           </p>
         ) : null}
         {branch.openingHours ? (
-          <p className="flex items-start gap-2 text-base">
+          <p className="flex items-start gap-2 type-body">
             <Clock className="mt-1 size-4 shrink-0 text-muted-foreground" aria-hidden />
             {branch.openingHours}
           </p>
         ) : null}
         {parking.length > 0 ? (
-          <div className="flex items-start gap-2 text-base">
+          <div className="flex items-start gap-2 type-body">
             <ParkingCircle className="mt-1 size-4 shrink-0 text-muted-foreground" aria-hidden />
             <ul className="flex flex-col gap-1">
               {parking.map((line) => (
@@ -79,14 +79,14 @@ export default async function CinemaPage({ params }: Props) {
       </section>
 
       <section className="flex flex-col gap-2">
-        <h2 className="text-xl font-semibold">{t("rooms")}</h2>
+        <h2 className="type-heading">{t("rooms")}</h2>
         <ul className="flex flex-col gap-2">
           {rooms.map((room) => (
             <li key={room.id}>
               <Link href={`/cinemas/${branch.id}/${room.id}`} className="flex min-h-row items-center gap-3 rounded-xl border bg-card px-4 py-3">
                 <span className="flex min-w-0 flex-1 flex-col">
-                  <span className="text-base font-semibold">{room.name}</span>
-                  <span className="text-sm text-muted-foreground">{t("seatCount", { count: room.seatCount })}</span>
+                  <span className="type-item-title">{room.name}</span>
+                  <span className="type-secondary text-muted-foreground">{t("seatCount", { count: room.seatCount })}</span>
                 </span>
                 <ChevronRight className="size-5 shrink-0 text-muted-foreground" aria-hidden />
               </Link>

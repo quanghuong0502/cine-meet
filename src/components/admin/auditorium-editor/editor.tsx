@@ -185,7 +185,7 @@ export function AuditoriumEditor({ auditorium, branches, seatTypes, initialConfi
             aria-selected={tab === key}
             onClick={() => setTab(key)}
             className={cn(
-              "h-target flex-1 rounded-full border px-3 text-sm font-medium outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
+              "h-target flex-1 rounded-full border px-3 type-label outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
               tab === key ? "border-transparent bg-primary text-primary-foreground" : "bg-card text-muted-foreground",
             )}
           >

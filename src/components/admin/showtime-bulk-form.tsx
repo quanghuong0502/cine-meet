@@ -31,7 +31,7 @@ interface Props {
   maxShowtimes: number;
 }
 
-const CONTROL_CLASS = "h-control rounded-xl bg-card px-4 text-base";
+const CONTROL_CLASS = "h-control rounded-xl bg-card px-4 type-body";
 const isCode = (code: string): code is ValidationCode => VALIDATION_CODES.some((known) => known === code);
 
 /** One movie x rooms x a range of days x start times. The lists travel as comma-separated hidden fields. */
@@ -66,7 +66,7 @@ export function ShowtimeBulkForm({ movies, formats, rooms, backHref, action, tod
 
   const error = (name: string) =>
     errors[name] ? (
-      <p role="alert" className="-mt-1 text-sm text-destructive">
+      <p role="alert" className="-mt-1 type-secondary text-destructive">
         {tv(isCode(errors[name]) ? errors[name] : "invalid")}
       </p>
     ) : null;
@@ -185,12 +185,12 @@ export function ShowtimeBulkForm({ movies, formats, rooms, backHref, action, tod
         {error("priceOverride")}
       </div>
 
-      <p className="text-sm text-muted-foreground" aria-live="polite">
+      <p className="type-secondary text-muted-foreground" aria-live="polite">
         {t("summary", { count: total })}
       </p>
 
       {state.status === "error" && state.error !== "validation" ? (
-        <p role="alert" className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+        <p role="alert" className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 type-secondary text-destructive">
           {t(`errors.${state.error}`, { max: maxShowtimes })}
         </p>
       ) : null}

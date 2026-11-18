@@ -10,7 +10,7 @@ export async function AppearanceSettingsCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">{t("title")}</CardTitle>
+        <CardTitle className="type-item-title">{t("title")}</CardTitle>
         <CardDescription>{t("cardDescription")}</CardDescription>
       </CardHeader>
       <CardContent>

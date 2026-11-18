@@ -11,7 +11,7 @@ export function PlaceholderPage({ title, description }: PlaceholderPageProps) {
   const t = useTranslations("states");
   return (
     <div className="flex flex-col gap-2 p-4">
-      <h1 className="text-2xl font-semibold">{title}</h1>
+      <h1 className="type-title">{title}</h1>
       <EmptyState title={t("comingSoon")} description={description} mascot="bubu-sleepy" />
     </div>
   );

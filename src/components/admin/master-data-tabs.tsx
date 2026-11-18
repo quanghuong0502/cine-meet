@@ -44,7 +44,7 @@ export function MasterDataTabs({ label, labels, activeKey }: MasterDataTabsProps
                 aria-current={selected ? "page" : undefined}
                 onClick={() => setPending({ key, from: activeKey })}
                 className={cn(
-                  "flex h-target items-center gap-2 rounded-full border px-4 text-sm font-medium",
+                  "flex h-target items-center gap-2 rounded-full border px-4 type-label",
                   selected ? "border-transparent bg-primary text-primary-foreground" : "bg-card text-muted-foreground",
                 )}
               >

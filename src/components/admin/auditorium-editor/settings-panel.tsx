@@ -15,7 +15,7 @@ import type { EditorSeatType } from "./types";
 
 const SIDES: EntranceSide[] = ["left", "center", "right"];
 const POSITIONS: EntrancePosition[] = ["front", "back"];
-const CONTROL = "h-control rounded-xl bg-card px-4 text-base";
+const CONTROL = "h-control rounded-xl bg-card px-4 type-body";
 
 interface Props {
   name: string;
@@ -65,7 +65,7 @@ export function SettingsPanel({ name, onName, branchId, onBranch, branchLocked, 
           onChange={(event) => onName(event.target.value)}
           className={CONTROL}
         />
-        {errors.name ? <p role="alert" className="-mt-1 text-sm text-destructive">{err(errors.name)}</p> : null}
+        {errors.name ? <p role="alert" className="-mt-1 type-secondary text-destructive">{err(errors.name)}</p> : null}
       </div>
 
       <div className="flex flex-col gap-3">
@@ -87,7 +87,7 @@ export function SettingsPanel({ name, onName, branchId, onBranch, branchLocked, 
             ))}
           </SelectContent>
         </Select>
-        {errors.branchId ? <p role="alert" className="-mt-1 text-sm text-destructive">{err(errors.branchId)}</p> : null}
+        {errors.branchId ? <p role="alert" className="-mt-1 type-secondary text-destructive">{err(errors.branchId)}</p> : null}
       </div>
 
       <div className="grid grid-cols-2 gap-4">
@@ -112,7 +112,7 @@ export function SettingsPanel({ name, onName, branchId, onBranch, branchLocked, 
       </div>
 
       <div className="flex flex-col gap-3">
-        <span className="text-sm leading-none font-medium text-muted-foreground">{t("fields.rowLabelOrder.label")}</span>
+        <span className="type-label leading-none! text-muted-foreground">{t("fields.rowLabelOrder.label")}</span>
         <ChoiceGroup
           label={t("fields.rowLabelOrder.label")}
           value={config.rowLabelOrder}
@@ -125,7 +125,7 @@ export function SettingsPanel({ name, onName, branchId, onBranch, branchLocked, 
       </div>
 
       <div className="flex flex-col gap-3">
-        <span className="text-sm leading-none font-medium text-muted-foreground">{t("fields.colNumbering.label")}</span>
+        <span className="type-label leading-none! text-muted-foreground">{t("fields.colNumbering.label")}</span>
         <ChoiceGroup
           label={t("fields.colNumbering.label")}
           value={config.colNumbering}
@@ -163,7 +163,7 @@ export function SettingsPanel({ name, onName, branchId, onBranch, branchLocked, 
           <Label htmlFor="aud-screen-pos" className="text-muted-foreground">
             {t("fields.screenPosition.label")}
           </Label>
-          <span className="text-sm font-medium tabular-nums">{Math.round(config.screen.positionPct)}</span>
+          <span className="type-label tabular-nums">{Math.round(config.screen.positionPct)}</span>
         </div>
         <Slider
           id="aud-screen-pos"
@@ -181,7 +181,7 @@ export function SettingsPanel({ name, onName, branchId, onBranch, branchLocked, 
           <Label htmlFor="aud-screen-width" className="text-muted-foreground">
             {t("fields.screenWidth.label")}
           </Label>
-          <span className="text-sm font-medium tabular-nums">{Math.round(config.screen.widthPct)}</span>
+          <span className="type-label tabular-nums">{Math.round(config.screen.widthPct)}</span>
         </div>
         <Slider
           id="aud-screen-width"
@@ -195,7 +195,7 @@ export function SettingsPanel({ name, onName, branchId, onBranch, branchLocked, 
       </div>
 
       <div className="flex flex-col gap-3">
-        <span className="text-sm leading-none font-medium text-muted-foreground">{t("fields.screenDistance.label")}</span>
+        <span className="type-label leading-none! text-muted-foreground">{t("fields.screenDistance.label")}</span>
         <ChoiceGroup
           label={t("fields.screenDistance.label")}
           value={config.screen.distance}
@@ -224,7 +224,7 @@ export function SettingsPanel({ name, onName, branchId, onBranch, branchLocked, 
       </div>
 
       <div className="flex flex-col gap-3">
-        <span className="text-sm leading-none font-medium text-muted-foreground">{t("fields.verticalAisles.label")}</span>
+        <span className="type-label leading-none! text-muted-foreground">{t("fields.verticalAisles.label")}</span>
         <div className="flex flex-wrap gap-2">
           {Array.from({ length: config.cols - 1 }, (_, i) => i + 1).map((n) => (
             <Chip
@@ -240,7 +240,7 @@ export function SettingsPanel({ name, onName, branchId, onBranch, branchLocked, 
       </div>
 
       <div className="flex flex-col gap-3">
-        <span className="text-sm leading-none font-medium text-muted-foreground">{t("fields.horizontalAisles.label")}</span>
+        <span className="type-label leading-none! text-muted-foreground">{t("fields.horizontalAisles.label")}</span>
         <div className="flex flex-wrap gap-2">
           {Array.from({ length: config.rows - 1 }, (_, i) => i + 1).map((n) => (
             <Chip
@@ -255,7 +255,7 @@ export function SettingsPanel({ name, onName, branchId, onBranch, branchLocked, 
       </div>
 
       <div className="flex flex-col gap-3">
-        <span className="text-sm leading-none font-medium text-muted-foreground">{t("fields.entrances.label")}</span>
+        <span className="type-label leading-none! text-muted-foreground">{t("fields.entrances.label")}</span>
         <div className="flex flex-wrap gap-2">
           {POSITIONS.flatMap((position) => SIDES.map((side) => ({ side, position }))).map(({ side, position }) => {
             const on = config.entrances.some((e) => e.side === side && e.position === position);

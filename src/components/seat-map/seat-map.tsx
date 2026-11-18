@@ -356,7 +356,7 @@ export function SeatMap({
       </div>
 
       {showHeatmap ? (
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <div className="flex items-center gap-2 type-micro text-muted-foreground">
           <span>{t("heatLow")}</span>
           <div
             className="h-2 flex-1 rounded-full"

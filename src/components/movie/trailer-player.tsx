@@ -20,7 +20,7 @@ export function TrailerPlayer({ videoId, title }: { videoId: string; title: stri
   return (
     <Dialog.Root>
       <Dialog.Trigger asChild>
-        <Button type="button" variant="outline" size="pill" className="h-target self-start px-4 text-sm" aria-label={t("play", { title })}>
+        <Button type="button" variant="outline" size="pill" className="h-target self-start px-4 type-label" aria-label={t("play", { title })}>
           <Play aria-hidden className="fill-current" />
           {t("watch")}
         </Button>
@@ -265,7 +265,7 @@ function Player({ videoId, title }: { videoId: string; title: string }) {
               <Button type="button" variant="ghost" size="icon" onClick={toggle} aria-label={playing ? t("pause") : t("resume")} className="shrink-0 rounded-full text-white hover:bg-white/15 hover:text-white">
                 {playing ? <Pause aria-hidden className="size-6 fill-current" /> : <Play aria-hidden className="size-6 fill-current" />}
               </Button>
-              <span className="w-10 shrink-0 text-right text-xs text-white tabular-nums">{clock(time.current)}</span>
+              <span className="w-10 shrink-0 text-right type-micro text-white tabular-nums">{clock(time.current)}</span>
               <Slider
                 aria-label={t("seek")}
                 min={0}
@@ -282,7 +282,7 @@ function Player({ videoId, title }: { videoId: string; title: string }) {
                 }}
                 className="min-w-0 flex-1"
               />
-              <span className="w-10 shrink-0 text-xs text-white/70 tabular-nums">{clock(time.duration)}</span>
+              <span className="w-10 shrink-0 type-micro text-white/70 tabular-nums">{clock(time.duration)}</span>
               <Button type="button" variant="ghost" size="icon" onClick={toggleFullscreen} aria-label={fullscreen ? t("exitFullscreen") : t("fullscreen")} className="shrink-0 rounded-full text-white hover:bg-white/15 hover:text-white">
                 {fullscreen ? <Minimize aria-hidden className="size-6" /> : <Maximize aria-hidden className="size-6" />}
               </Button>

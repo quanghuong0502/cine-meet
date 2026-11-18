@@ -101,7 +101,7 @@ export function ShowtimeFilters({ date, values, options, records }: Props) {
               {activeKeys.length > 0 ? (
                 <span
                   aria-hidden
-                  className="absolute -top-1 -right-1 flex size-5 items-center justify-center rounded-full bg-foreground text-xs font-semibold text-background tabular-nums"
+                  className="absolute -top-1 -right-1 flex size-5 items-center justify-center rounded-full bg-foreground type-tag font-semibold! text-background tabular-nums"
                 >
                   {activeKeys.length}
                 </span>
@@ -127,12 +127,12 @@ export function ShowtimeFilters({ date, values, options, records }: Props) {
       <Drawer open={open} onOpenChange={onOpenChange}>
         <DrawerContent aria-describedby={undefined}>
           <DrawerHeader>
-            <DrawerTitle className="text-xl font-semibold">{t("title")}</DrawerTitle>
+            <DrawerTitle className="type-heading">{t("title")}</DrawerTitle>
           </DrawerHeader>
           <div className="flex min-h-0 flex-col gap-4 overflow-y-auto overscroll-contain px-4 pb-4">
             {groups.map((key) => (
               <div key={key} role="group" aria-label={t(`labels.${key}`)} className="flex flex-col gap-2">
-                <span className="text-sm text-muted-foreground">{t(`labels.${key}`)}</span>
+                <span className="type-secondary text-muted-foreground">{t(`labels.${key}`)}</span>
                 <div className="flex flex-wrap gap-2">
                   <Chip selected={!draft[key]} onClick={() => setDraft({ ...draft, [key]: undefined })}>
                     {t("all")}

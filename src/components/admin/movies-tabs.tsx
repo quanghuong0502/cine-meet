@@ -17,7 +17,7 @@ export async function MoviesTabs({ active }: { active: "movies" | "showtimes" })
           href={tab.href}
           aria-current={tab.key === active ? "page" : undefined}
           className={cn(
-            "flex h-target items-center rounded-full border px-4 text-sm font-medium",
+            "flex h-target items-center rounded-full border px-4 type-label",
             tab.key === active ? "border-transparent bg-primary text-primary-foreground" : "bg-card text-muted-foreground",
           )}
         >

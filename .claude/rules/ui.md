@@ -101,7 +101,7 @@ cả hai ngôn ngữ, có và không có khung lỗi.
 - Không bọc trong thẻ; nhãn phía trên ô nhập (`text-muted-foreground`); ô nhập nền `card`, `h-control rounded-xl text-base`; ô mật khẩu có nút hiện/ẩn (vùng chạm 44px, `aria-pressed`); lỗi hiện trong khung `destructive` nhạt kèm biểu tượng; nút gửi `size="cta"`, đang xử lý thì hiện spinner (`motion-safe:`);
   đăng nhập bằng nhà cung cấp ngoài là nút viền `rounded-full` bên dưới dòng phân cách "hoặc".
 
-**Chữ (thang cỡ cố định, dùng đúng vai trò, không tự chọn cỡ khác). Giá trị nằm ở một chỗ duy nhất là khối `@theme` trong `globals.css`; chi tiết và nguồn tham khảo ở `.claude/rules/design-tokens.md`:**
+**Chữ: mọi chữ chọn một vai trò `type-*` (không viết rời `text-xl font-semibold`). Bảng vai trò, cỡ, nguồn Apple và Material và cách dùng nằm ở mục "Cỡ chữ theo vai trò" trong `.claude/rules/design-tokens.md`; giá trị của thang nằm ở khối `@theme` và các `@utility type-*` trong `globals.css`. Bảng dưới là bản cũ theo cỡ, giữ để đối chiếu:**
 
 | Vai trò | Class | Cỡ / dòng | Độ đậm | Tham chiếu |
 |---|---|---|---|---|

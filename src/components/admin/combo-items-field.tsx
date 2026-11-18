@@ -82,8 +82,8 @@ export function ComboItemsField({ config, brandId, initialItems, initialDiscount
               <li key={line.itemId} className="flex flex-col gap-2 rounded-xl border bg-card p-3">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex min-w-0 flex-col">
-                    <span className="text-base font-semibold break-words">{label(item)}</span>
-                    <span className="text-sm text-muted-foreground tabular-nums">{formatVnd(item.price, locale)}</span>
+                    <span className="type-item-title break-words">{label(item)}</span>
+                    <span className="type-secondary text-muted-foreground tabular-nums">{formatVnd(item.price, locale)}</span>
                   </div>
                   <Button
                     type="button"
@@ -109,7 +109,7 @@ export function ComboItemsField({ config, brandId, initialItems, initialDiscount
                     >
                       <Minus aria-hidden />
                     </Button>
-                    <span className="min-w-8 text-center text-base font-semibold tabular-nums" aria-live="polite">
+                    <span className="min-w-8 text-center type-item-title tabular-nums" aria-live="polite">
                       {line.quantity}
                     </span>
                     <Button
@@ -124,14 +124,14 @@ export function ComboItemsField({ config, brandId, initialItems, initialDiscount
                       <Plus aria-hidden />
                     </Button>
                   </div>
-                  <span className="text-base font-medium tabular-nums">{formatVnd(item.price * line.quantity, locale)}</span>
+                  <span className="type-body font-medium! tabular-nums">{formatVnd(item.price * line.quantity, locale)}</span>
                 </div>
               </li>
             );
           })}
         </ul>
       ) : (
-        <p className={`rounded-xl border border-dashed px-4 py-3 text-sm ${invalid ? "border-destructive text-destructive" : "text-muted-foreground"}`}>
+        <p className={`rounded-xl border border-dashed px-4 py-3 type-secondary ${invalid ? "border-destructive text-destructive" : "text-muted-foreground"}`}>
           {brandId ? labels.empty : labels.chooseBrand}
         </p>
       )}
@@ -145,7 +145,7 @@ export function ComboItemsField({ config, brandId, initialItems, initialDiscount
           setAdding((n) => n + 1);
         }}
       >
-        <SelectTrigger aria-label={labels.add} className="h-control w-full rounded-xl bg-card px-4 text-base">
+        <SelectTrigger aria-label={labels.add} className="h-control w-full rounded-xl bg-card px-4 type-body">
           <SelectValue placeholder={brandId && addable.length === 0 ? labels.allAdded : labels.addPlaceholder} />
         </SelectTrigger>
         <SelectContent>
@@ -159,7 +159,7 @@ export function ComboItemsField({ config, brandId, initialItems, initialDiscount
 
       <div className="flex gap-2">
         <Select name="discountType" value={type} onValueChange={(next) => setType(next === "percent" ? "percent" : "amount")}>
-          <SelectTrigger aria-label={labels.discountType} className="h-control w-1/2 rounded-xl bg-card px-4 text-base">
+          <SelectTrigger aria-label={labels.discountType} className="h-control w-1/2 rounded-xl bg-card px-4 type-body">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -180,16 +180,16 @@ export function ComboItemsField({ config, brandId, initialItems, initialDiscount
           autoComplete="off"
           value={value}
           onChange={(event) => setValue(event.target.value)}
-          className="h-control w-1/2 rounded-xl bg-card px-4 text-base tabular-nums"
+          className="h-control w-1/2 rounded-xl bg-card px-4 type-body tabular-nums"
         />
       </div>
       {discountError ? (
-        <p role="alert" className="-mt-2 text-sm text-destructive">
+        <p role="alert" className="-mt-2 type-secondary text-destructive">
           {discountError}
         </p>
       ) : null}
 
-      <dl className="flex flex-col gap-1 rounded-xl border bg-card p-4 text-base tabular-nums">
+      <dl className="flex flex-col gap-1 rounded-xl border bg-card p-4 type-body tabular-nums">
         <div className="flex justify-between gap-3">
           <dt className="text-muted-foreground">{labels.subtotal}</dt>
           <dd>{formatVnd(result.subtotal, locale)}</dd>

@@ -29,7 +29,7 @@ export function AppHeader({ area, name, image }: AppHeaderProps) {
         area === "admin" && "bg-background/95 backdrop-blur md:hidden",
       )}
     >
-      <Logo size={area === "admin" ? 44 : 48} wordmarkClassName="text-xl" />
+      <Logo size={area === "admin" ? 44 : 48} wordmarkClassName="type-heading" />
       <UserMenu area={area} name={name} image={image} />
     </header>
   );

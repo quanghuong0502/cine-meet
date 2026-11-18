@@ -25,7 +25,7 @@ export function SeatsPanel({ seatTypes, selectedCount, allHaveFlag, allHaveType,
 
   return (
     <div className="flex flex-col gap-4" role="tabpanel">
-      <p role="status" className="text-sm text-muted-foreground">
+      <p role="status" className="type-secondary text-muted-foreground">
         {t("selected", { count: selectedCount })}
       </p>
 

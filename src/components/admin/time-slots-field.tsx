@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MAX_TIME_SLOTS, type TimeSlot } from "@/lib/showtime/slots";
 
-const CONTROL_CLASS = "h-control rounded-xl bg-card px-4 text-base";
+const CONTROL_CLASS = "h-control rounded-xl bg-card px-4 type-body";
 
 function parse(initial: string): TimeSlot[] {
   try {
@@ -31,7 +31,7 @@ export function TimeSlotsField({ name, initial, invalid }: { name: string; initi
   return (
     <div className="flex flex-col gap-3" aria-invalid={invalid || undefined}>
       <input type="hidden" name={name} value={JSON.stringify(slots)} />
-      {slots.length === 0 ? <p className="text-sm text-muted-foreground">{t("empty")}</p> : null}
+      {slots.length === 0 ? <p className="type-secondary text-muted-foreground">{t("empty")}</p> : null}
       {slots.map((slot, index) => (
         <fieldset key={slot.id} className="flex min-w-0 flex-col gap-3 rounded-xl border bg-card/50 p-3">
           <legend className="sr-only">{t("slotNumber", { number: index + 1 })}</legend>

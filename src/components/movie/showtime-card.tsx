@@ -23,23 +23,23 @@ export function ShowtimeCard({ row, showMovie = false }: { row: ShowtimeRow; sho
   return (
     <li className="flex min-w-0 items-start gap-4 rounded-xl border bg-card p-4">
       <div className="flex w-16 shrink-0 flex-col gap-0.5">
-        <span className="text-xl leading-6 font-semibold tabular-nums">{formatTime(row.startAt, locale)}</span>
-        <span className="text-sm text-muted-foreground tabular-nums">{t("until", { time: formatTime(row.endAt, locale) })}</span>
+        <span className="type-heading leading-6! tabular-nums">{formatTime(row.startAt, locale)}</span>
+        <span className="type-secondary text-muted-foreground tabular-nums">{t("until", { time: formatTime(row.endAt, locale) })}</span>
       </div>
       <div className="flex min-w-0 flex-1 flex-col gap-2">
         {showMovie ? (
-          <Link href={`/movies/${row.movie.id}`} className="truncate text-base font-semibold">
+          <Link href={`/movies/${row.movie.id}`} className="truncate type-item-title">
             {row.movie.title}
           </Link>
         ) : null}
-        <span className="break-words text-base">{[row.branch.brandName, row.branch.name].filter(Boolean).join(" · ")}</span>
+        <span className="break-words type-body">{[row.branch.brandName, row.branch.name].filter(Boolean).join(" · ")}</span>
         <span className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-          <span className="text-sm text-muted-foreground">{row.auditorium.name}</span>
-          <Badge variant="secondary" className="h-auto py-0.5 text-xs font-medium">
+          <span className="type-secondary text-muted-foreground">{row.auditorium.name}</span>
+          <Badge variant="secondary" className="h-auto py-0.5 type-tag">
             {row.format.name}
           </Badge>
         </span>
-        <span className="text-sm">{priceText}</span>
+        <span className="type-secondary">{priceText}</span>
       </div>
     </li>
   );

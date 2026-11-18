@@ -18,8 +18,8 @@ export function PageHeader({ title, backHref, description }: PageHeaderProps) {
   if (!backHref) {
     return (
       <header className="sr-only">
-        {title ? <h1>{title}</h1> : null}
-        {description ? <p>{description}</p> : null}
+        {title ? <h1 className="sr-only">{title}</h1> : null}
+        {description ? <p className="sr-only">{description}</p> : null}
       </header>
     );
   }
@@ -28,8 +28,8 @@ export function PageHeader({ title, backHref, description }: PageHeaderProps) {
       <BackButton href={backHref} />
       {title ? (
         <div className="flex min-w-0 flex-col gap-0.5">
-          <h1 className="truncate text-xl font-semibold">{title}</h1>
-          {description ? <p className="text-sm text-muted-foreground">{description}</p> : null}
+          <h1 className="truncate type-heading">{title}</h1>
+          {description ? <p className="type-secondary text-muted-foreground">{description}</p> : null}
         </div>
       ) : null}
     </header>

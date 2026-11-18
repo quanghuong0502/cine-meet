@@ -55,8 +55,8 @@ export function BottomNav({ label, items, className }: BottomNavProps) {
                 onClick={() => markPending(item.href)}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex min-h-nav flex-col items-center justify-center gap-1 rounded-full text-xs",
-                  active ? "font-semibold text-primary-text" : "font-medium text-muted-foreground",
+                  "flex min-h-nav flex-col items-center justify-center gap-1 rounded-full type-tag",
+                  active ? "font-semibold! text-primary-text" : "text-muted-foreground",
                 )}
               >
                 {/* Active: filled with the tab colour; the bar colour as stroke carves the icon's details out of the fill. */}

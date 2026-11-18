@@ -61,6 +61,31 @@ describe("design tokens", () => {
     expect(offenders(/\btext-(2xs|lg|4xl|5xl|6xl|7xl|8xl|9xl)\b/)).toEqual([]);
   });
 
+  // Type roles (docs: .claude/rules/design-tokens.md, "Cỡ chữ theo vai trò"): text takes a role, never a loose size.
+  const ROLES = ["display", "title", "heading", "item-title", "body", "secondary", "label", "caption", "micro", "tag"];
+
+  it("defines every type role in globals.css", () => {
+    const css = readFileSync(join(SRC, "app", "globals.css"), "utf8");
+    expect(ROLES.filter((role) => !css.includes(`@utility type-${role} {`))).toEqual([]);
+  });
+
+  it("sets text size only through a type role, outside the shadcn components", () => {
+    expect(offenders(/(^|[\s"'`:])text-(3xl|2xl|xl|base|sm|footnote|xs)(?![\w-])/)).toEqual([]);
+  });
+
+  it("only uses type roles that exist", () => {
+    const used = appFiles.flatMap((path) => [...read(path).matchAll(/(?<![\w-])type-([a-z]+(?:-[a-z]+)*)/g)].map((match) => `${relative(SRC, path)}: type-${match[1]}`));
+    expect(used.filter((entry) => !ROLES.includes(entry.split("type-")[1] ?? ""))).toEqual([]);
+  });
+
+  it("gives every heading and every title component a type role", () => {
+    const pattern = /<(h[1-4]|CardTitle|DrawerTitle|SheetTitle|DialogTitle|AlertDialogTitle)\b[^>]*>/g;
+    const bad = appFiles.flatMap((path) =>
+      [...read(path).matchAll(pattern)].filter((match) => !/type-|sr-only/.test(match[0])).map((match) => `${relative(SRC, path)}: ${match[0].slice(0, 60)}`),
+    );
+    expect(bad).toEqual([]);
+  });
+
   it("uses size tokens, not loose numbers, for things you touch", () => {
     expect(offenders(/\b(?:h-11|h-12|size-11|min-h-11|min-h-14|min-h-16)\b/)).toEqual([]);
   });

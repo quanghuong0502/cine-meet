@@ -60,28 +60,28 @@ export default async function MovieDetailPage({ params }: Props) {
           {movie.posterUrl ? <Image src={movie.posterUrl} alt={t("posterAlt", { title: movie.title })} fill sizes="136px" unoptimized className="object-cover" priority /> : null}
         </div>
         <div className="flex min-w-0 flex-1 flex-col gap-2">
-          <h1 className="text-xl font-semibold tracking-tight">{movie.title}</h1>
-          {movie.originalTitle ? <p className="text-sm text-muted-foreground">{movie.originalTitle}</p> : null}
+          <h1 className="type-heading">{movie.title}</h1>
+          {movie.originalTitle ? <p className="type-secondary text-muted-foreground">{movie.originalTitle}</p> : null}
           <div className="flex flex-wrap gap-2">
-            <Badge variant={movie.status === "showing" ? "default" : "secondary"} className="h-auto py-0.5 text-xs font-medium">
+            <Badge variant={movie.status === "showing" ? "default" : "secondary"} className="h-auto py-0.5 type-tag">
               {t(`status.${movie.status}`)}
             </Badge>
             {rating ? <AgeRatingBadge rating={rating} /> : null}
           </div>
-          <p className="text-sm">{t("duration", { minutes: movie.durationMin })}</p>
-          <p className="text-sm text-muted-foreground">{t("releaseOn", { date: formatDay(movie.releaseDate, locale) })}</p>
+          <p className="type-secondary">{t("duration", { minutes: movie.durationMin })}</p>
+          <p className="type-secondary text-muted-foreground">{t("releaseOn", { date: formatDay(movie.releaseDate, locale) })}</p>
           {genreNames.length > 0 || formatNames.length > 0 ? (
             <div className="flex flex-wrap gap-1.5">
               <span role="group" aria-label={t("genres")} className="contents">
                 {genreNames.map((name) => (
-                  <Badge key={name} variant="secondary" className="h-auto py-0.5 text-xs font-medium">
+                  <Badge key={name} variant="secondary" className="h-auto py-0.5 type-tag">
                     {name}
                   </Badge>
                 ))}
               </span>
               <span role="group" aria-label={t("formats")} className="contents">
                 {formatNames.map((name) => (
-                  <Badge key={name} variant="secondary" className="h-auto py-0.5 text-xs font-medium">
+                  <Badge key={name} variant="secondary" className="h-auto py-0.5 type-tag">
                     {name}
                   </Badge>
                 ))}
@@ -92,13 +92,13 @@ export default async function MovieDetailPage({ params }: Props) {
         </div>
       </section>
 
-      <dl className="flex flex-col gap-3 text-sm">
+      <dl className="flex flex-col gap-3 type-secondary">
         {facts
           .filter((fact): fact is [string, string] => Boolean(fact[1]))
           .map(([label, value]) => (
             <div key={label} className="flex flex-col gap-1.5">
               <dt className="text-muted-foreground">{label}</dt>
-              <dd className="text-base whitespace-pre-line">{value}</dd>
+              <dd className="type-body whitespace-pre-line">{value}</dd>
             </div>
           ))}
       </dl>
@@ -106,7 +106,7 @@ export default async function MovieDetailPage({ params }: Props) {
       {/* No showtimes yet: the whole section is left out (a heading over an empty state only filled the screen). */}
       {showtimes.length > 0 ? (
         <section className="flex flex-col gap-3">
-          <h2 className="text-xl font-semibold">{t("showtimes")}</h2>
+          <h2 className="type-heading">{t("showtimes")}</h2>
           <MovieShowtimes rows={showtimes} />
         </section>
       ) : null}

@@ -109,24 +109,24 @@ export function RoomSeatView({ view, marks: serverMarks, saveAction, removeActio
             onClose={() => setSelected(null)}
           />
         ) : (
-          <p className="text-sm text-muted-foreground">{t("tapSeat")}</p>
+          <p className="type-secondary text-muted-foreground">{t("tapSeat")}</p>
         )}
       </div>
 
       {marks.old.length > 0 ? (
         <section aria-label={t("oldMarks")} className="flex flex-col gap-2">
-          <h2 className="text-xl font-semibold">{t("oldMarks")}</h2>
-          <p className="text-sm text-muted-foreground">{t("oldMarksDescription")}</p>
+          <h2 className="type-heading">{t("oldMarks")}</h2>
+          <p className="type-secondary text-muted-foreground">{t("oldMarksDescription")}</p>
           <ul className="flex flex-col gap-2">
             {marks.old.map((mark) => (
               <li key={mark.seatCode} className="flex min-w-0 items-center rounded-xl border bg-card pr-2">
                 <div className="flex min-h-row min-w-0 flex-1 flex-col justify-center gap-0.5 py-3 pl-4">
-                  <span className="flex items-center gap-2 text-base font-semibold">
+                  <span className="flex items-center gap-2 type-item-title">
                     {mark.kind === "favorite" ? <Star className="size-4 text-yellow-500" aria-hidden /> : <Ban className="size-4 text-destructive" aria-hidden />}
                     {mark.seatCode}
-                    <span className="text-sm font-normal text-muted-foreground">{t(mark.kind === "favorite" ? "favorite" : "avoid")}</span>
+                    <span className="type-secondary text-muted-foreground">{t(mark.kind === "favorite" ? "favorite" : "avoid")}</span>
                   </span>
-                  {mark.note ? <span className="break-words text-sm text-muted-foreground">{mark.note}</span> : null}
+                  {mark.note ? <span className="break-words type-secondary text-muted-foreground">{mark.note}</span> : null}
                 </div>
                 <Button type="button" variant="ghost" size="icon" onClick={() => remove(mark.seatCode)} aria-label={`${tc("delete")}: ${mark.seatCode}`} className="size-target shrink-0 text-muted-foreground">
                   <Trash2 aria-hidden />
@@ -160,8 +160,8 @@ function SeatPanel({ seat, typeName, existing, onSave, onRemove, onClose }: Pane
     <section aria-label={t("seatTitle", { code: seat.code })} className="flex flex-col gap-4 rounded-xl border bg-card p-4">
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 flex-col gap-0.5">
-          <h2 className="text-xl font-semibold">{t("seatTitle", { code: seat.code })}</h2>
-          <p className="text-sm text-muted-foreground">{[typeName, t("score", { score: seat.score }), ...flags].filter(Boolean).join(" · ")}</p>
+          <h2 className="type-heading">{t("seatTitle", { code: seat.code })}</h2>
+          <p className="type-secondary text-muted-foreground">{[typeName, t("score", { score: seat.score }), ...flags].filter(Boolean).join(" · ")}</p>
         </div>
         <Button type="button" variant="ghost" size="sm" onClick={onClose} className="h-target shrink-0">
           {t("close")}
@@ -195,7 +195,7 @@ function SeatPanel({ seat, typeName, existing, onSave, onRemove, onClose }: Pane
         aria-label={t("noteLabel")}
         autoComplete="off"
         enterKeyHint="done"
-        className="h-control rounded-xl bg-background px-4 text-base"
+        className="h-control rounded-xl bg-background px-4 type-body"
       />
 
       <div className="flex gap-2">

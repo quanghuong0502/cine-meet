@@ -6,7 +6,7 @@ interface LogoProps {
   /** Width of the duo illustration in px (the picture is cropped tight, so it is about 1.35x wider than tall). */
   size?: number;
   className?: string;
-  /** Text size class for the wordmark, e.g. "text-xl". */
+  /** Text size class for the wordmark, e.g. "type-heading". */
   wordmarkClassName?: string;
 }
 

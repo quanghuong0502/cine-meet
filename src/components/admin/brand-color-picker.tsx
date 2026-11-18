@@ -74,7 +74,7 @@ export function BrandColorPicker({
       <input type="hidden" name="color" value={hex} />
 
       <div className="flex flex-col gap-3">
-        <label htmlFor="brand-hex" className="text-sm font-medium text-muted-foreground">
+        <label htmlFor="brand-hex" className="type-label text-muted-foreground">
           {label}
         </label>
         <div className="flex items-center gap-3">
@@ -96,11 +96,11 @@ export function BrandColorPicker({
             spellCheck={false}
             autoComplete="off"
             aria-invalid={!derived.ok || undefined}
-            className="h-control rounded-xl bg-card px-4 text-base tabular-nums"
+            className="h-control rounded-xl bg-card px-4 type-body tabular-nums"
           />
         </div>
         {!derived.ok ? (
-          <p role="alert" className="-mt-1 text-sm text-destructive">
+          <p role="alert" className="-mt-1 type-secondary text-destructive">
             {tv(derived.error)}
           </p>
         ) : null}
@@ -118,7 +118,7 @@ export function BrandColorPicker({
         <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>{t("resetTitle")}</AlertDialogTitle>
+              <AlertDialogTitle className="type-item-title">{t("resetTitle")}</AlertDialogTitle>
               <AlertDialogDescription>{t("resetDescription")}</AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -139,14 +139,14 @@ export function BrandColorPicker({
       </div>
 
       <div className="flex flex-col gap-3" aria-hidden>
-        <span className="text-sm font-medium text-muted-foreground">{t("preview.label")}</span>
+        <span className="type-label text-muted-foreground">{t("preview.label")}</span>
         <div className="dark flex flex-col gap-4 rounded-xl border bg-background p-4 text-foreground" style={previewStyle}>
           <div className="flex items-center justify-between gap-3 rounded-xl border bg-card p-4">
-            <span className="text-base font-semibold">{t("preview.heading")}</span>
-            <span className="rounded-full bg-accent px-3 py-1 text-sm font-medium text-accent-foreground">{t("preview.seats")}</span>
+            <span className="type-item-title">{t("preview.heading")}</span>
+            <span className="rounded-full bg-accent px-3 py-1 type-label text-accent-foreground">{t("preview.seats")}</span>
           </div>
-          <span className="text-base font-medium text-primary-text">{t("preview.link")}</span>
-          <div className="flex h-control items-center justify-center rounded-full bg-primary px-8 text-base font-semibold text-primary-foreground">{t("preview.button")}</div>
+          <span className="type-body font-medium! text-primary-text">{t("preview.link")}</span>
+          <div className="flex h-control items-center justify-center rounded-full bg-primary px-8 type-item-title text-primary-foreground">{t("preview.button")}</div>
         </div>
       </div>
     </div>

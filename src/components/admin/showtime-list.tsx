@@ -44,18 +44,18 @@ export function AdminShowtimeList({ rows, removeAction }: { rows: ShowtimeRow[];
       <div className="flex flex-col gap-4">
         {[...days.entries()].map(([day, items]) => (
           <section key={day} className="flex flex-col gap-2">
-            <h2 className="text-sm font-semibold text-muted-foreground">{formatDayKey(day, locale)}</h2>
+            <h2 className="type-heading">{formatDayKey(day, locale)}</h2>
             <ul className="flex flex-col gap-2">
               {items.map((row) => (
                 <li key={row.id} className="flex min-w-0 items-center rounded-xl border bg-card pr-2">
                   <div className="flex min-h-row min-w-0 flex-1 flex-col justify-center gap-0.5 py-3 pl-4">
-                    <span className="truncate text-base font-semibold">
+                    <span className="truncate type-item-title">
                       {formatTime(row.startAt, locale)}–{formatTime(row.endAt, locale)} · {row.movie.title}
                     </span>
-                    <span className="break-words text-sm text-muted-foreground">
+                    <span className="break-words type-secondary text-muted-foreground">
                       {[row.branch.brandName, row.branch.name, row.auditorium.name, row.format.name].filter(Boolean).join(" · ")}
                     </span>
-                    <span className="text-sm text-muted-foreground">{row.price === null ? t("noPrice") : formatVnd(row.price, locale)}</span>
+                    <span className="type-secondary text-muted-foreground">{row.price === null ? t("noPrice") : formatVnd(row.price, locale)}</span>
                   </div>
                   <Button type="button" variant="ghost" size="icon" onClick={() => setPending(row)} aria-label={`${tc("delete")}: ${row.movie.title} ${formatTime(row.startAt, locale)}`} className="size-target shrink-0 text-muted-foreground">
                     <Trash2 aria-hidden />
@@ -70,7 +70,7 @@ export function AdminShowtimeList({ rows, removeAction }: { rows: ShowtimeRow[];
       <AlertDialog open={pending !== null} onOpenChange={(open) => (open ? undefined : setPending(null))}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t("deleteTitle", { movie: pending?.movie.title ?? "", time: pending ? formatTime(pending.startAt, locale) : "" })}</AlertDialogTitle>
+            <AlertDialogTitle className="type-item-title">{t("deleteTitle", { movie: pending?.movie.title ?? "", time: pending ? formatTime(pending.startAt, locale) : "" })}</AlertDialogTitle>
             <AlertDialogDescription>{tc("deleteDescription")}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

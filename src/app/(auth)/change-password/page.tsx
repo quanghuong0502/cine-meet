@@ -33,7 +33,7 @@ export default async function ChangePasswordPage() {
       <Mascot pose="duo-watching" size={144} decorative priority />
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle className="text-2xl">{t("title")}</CardTitle>
+          <CardTitle className="type-title">{t("title")}</CardTitle>
           <CardDescription>
             {user.mustChangePassword ? t("descriptionRequired") : t("description")}
           </CardDescription>

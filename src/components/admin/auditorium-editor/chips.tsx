@@ -19,7 +19,7 @@ export function Chip({ selected, onClick, role, className, children, ...props }:
       aria-checked={role ? selected : undefined}
       onClick={onClick}
       className={cn(
-        "inline-flex h-target min-w-target max-w-full shrink-0 items-center justify-center gap-2 rounded-full border px-4 text-sm font-medium whitespace-nowrap transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:translate-y-px disabled:pointer-events-none disabled:opacity-50",
+        "inline-flex h-target min-w-target max-w-full shrink-0 items-center justify-center gap-2 rounded-full border px-4 type-label whitespace-nowrap transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:translate-y-px disabled:pointer-events-none disabled:opacity-50",
         selected ? "border-transparent bg-primary text-primary-foreground" : "bg-card text-muted-foreground",
         className,
       )}

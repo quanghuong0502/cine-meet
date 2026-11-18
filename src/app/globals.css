@@ -349,3 +349,75 @@ html[data-keyboard="open"]:has([data-slot="drawer-content"]) body {
     display: none;
   }
 }
+
+/*
+ * Type roles. Every piece of text in the app takes ONE of these, by what it is, never a loose size + weight. The same role is the same
+ * size, weight and line height on every screen, so a title cannot be big here and small there. Colour stays a separate class
+ * (`text-muted-foreground`...), and so does `tabular-nums`. The sizes come from the scale in @theme above, which follows Apple's
+ * Dynamic Type styles and the Material 3 type scale (table and sources in .claude/rules/design-tokens.md).
+ * The roles are `!important` so that a role always wins over a size a shadcn component has by default (a DrawerTitle is 20px because it
+ * says `type-heading`, whatever it was before); a rare exception says so with `!` on the other class (`font-semibold!`, `leading-6!`).
+ *
+ *   display     30 semibold  big numbers, the wordmark on the auth screens          (iOS Large Title, M3 headline medium)
+ *   title       24 semibold  a screen's own title on a screen without a back bar     (iOS Title 2, M3 headline small)
+ *   heading     20 semibold  a section or a group of cards, sheet titles, the back bar, a time of day   (iOS Title 3, M3 title large)
+ *   item-title  16 semibold  the name on a card or a list row                       (iOS Headline, M3 title medium)
+ *   body        16           running text, the value in a detail row                (iOS Body, M3 body large)
+ *   secondary   15           the second line of a row, a description                (iOS Subheadline, M3 body medium)
+ *   label       15 medium    the name of a field or of a value (above the value)    (iOS Subheadline, M3 label large)
+ *   caption     13           a small note                                           (iOS Footnote)
+ *   micro       12           the smallest text that is allowed                      (iOS Caption 1, M3 label medium)
+ *   tag         12 medium    badges, chips, tab labels                              (iOS Caption 1 emphasised, M3 label medium)
+ */
+@utility type-display {
+  font-size: var(--text-3xl) !important;
+  line-height: var(--text-3xl--line-height) !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.025em !important;
+}
+@utility type-title {
+  font-size: var(--text-2xl) !important;
+  line-height: var(--text-2xl--line-height) !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.025em !important;
+}
+@utility type-heading {
+  font-size: var(--text-xl) !important;
+  line-height: var(--text-xl--line-height) !important;
+  font-weight: 600 !important;
+}
+@utility type-item-title {
+  font-size: var(--text-base) !important;
+  line-height: var(--text-base--line-height) !important;
+  font-weight: 600 !important;
+}
+@utility type-body {
+  font-size: var(--text-base) !important;
+  line-height: var(--text-base--line-height) !important;
+  font-weight: 400 !important;
+}
+@utility type-secondary {
+  font-size: var(--text-sm) !important;
+  line-height: var(--text-sm--line-height) !important;
+  font-weight: 400 !important;
+}
+@utility type-label {
+  font-size: var(--text-sm) !important;
+  line-height: var(--text-sm--line-height) !important;
+  font-weight: 500 !important;
+}
+@utility type-caption {
+  font-size: var(--text-footnote) !important;
+  line-height: var(--text-footnote--line-height) !important;
+  font-weight: 400 !important;
+}
+@utility type-micro {
+  font-size: var(--text-xs) !important;
+  line-height: var(--text-xs--line-height) !important;
+  font-weight: 400 !important;
+}
+@utility type-tag {
+  font-size: var(--text-xs) !important;
+  line-height: var(--text-xs--line-height) !important;
+  font-weight: 500 !important;
+}
