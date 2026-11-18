@@ -1042,6 +1042,7 @@
     "emptyDescription": "Rạp sẽ hiện ở đây khi quản trị viên thêm chi nhánh và phòng chiếu.",
     "roomCount": "{count, plural, other {# phòng}}",
     "seatCount": "{count, plural, other {# ghế}}",
+    "markedSeats": "{count, plural, other {# ghế đã đánh dấu}}",
     "parkingFee": "Gửi xe {fee}",
     "directions": "Chỉ đường",
     "rooms": "Phòng chiếu",

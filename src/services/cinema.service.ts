@@ -1,4 +1,4 @@
-import { isValidObjectId } from "mongoose";
+import { isValidObjectId, Types } from "mongoose";
 import { connectToDatabase } from "@/lib/db";
 import { generateGrid } from "@/lib/seat-layout/generate";
 import type { LayoutConfig, LayoutGeometry, LayoutSeat, SeatTypeInfo } from "@/lib/seat-layout/types";
@@ -6,6 +6,9 @@ import { Auditorium } from "@/models/auditorium";
 import { AuditoriumLayout } from "@/models/auditorium-layout";
 import { Branch } from "@/models/branch";
 import { Brand } from "@/models/brand";
+import { Format } from "@/models/format";
+import { SeatMark } from "@/models/seat-mark";
+import { Showtime } from "@/models/showtime";
 import { SeatType } from "@/models/seat-type";
 
 /** Plain objects only (strings, numbers): they go straight to client components. */
@@ -78,7 +81,20 @@ export async function listCinemaGroups(): Promise<CinemaGroup[]> {
     .filter((group) => group.branches.length > 0);
 }
 
-export async function getCinema(branchId: string) {
+export interface CinemaRoom {
+  id: string;
+  name: string;
+  seatCount: number;
+  /** Seat types used in the room with how many seats of each, most seats first (the first is the room's ordinary seat). */
+  seatTypes: { name: string; nameEn: string | null; count: number }[];
+  /** Formats the room has upcoming showtimes in, by name. */
+  formats: string[];
+  /** How many seats of this room the signed-in person has marked. */
+  markCount: number;
+}
+
+/** A branch with its brand and its rooms. `userId` (from the session) adds the person's own seat-mark count to each room; without it the counts are 0. */
+export async function getCinema(branchId: string, userId?: string) {
   if (!isValidObjectId(branchId)) return null;
   await connectToDatabase();
   const branch = await Branch.findOne({ _id: branchId, ...ACTIVE }).lean();
@@ -87,16 +103,54 @@ export async function getCinema(branchId: string) {
     Brand.findOne({ _id: branch.brandId, ...ACTIVE }).lean(),
     Auditorium.find({ branchId, currentLayoutId: { $exists: true } }).sort({ name: 1 }).lean(),
   ]);
-  const layouts = await AuditoriumLayout.aggregate<{ _id: { toString(): string }; seatCount: number }>([
-    { $match: { _id: { $in: rooms.map((r) => r.currentLayoutId) } } },
-    { $project: { seatCount: { $size: "$seats" } } },
-  ]);
-  const seatCount = new Map(layouts.map((l) => [l._id.toString(), l.seatCount]));
   if (!brand) return null;
+  const roomIds = rooms.map((r) => r._id);
+  const [layouts, types, upcoming, marks] = await Promise.all([
+    AuditoriumLayout.aggregate<{ _id: { toString(): string }; seatCount: number; types: string[] }>([
+      { $match: { _id: { $in: rooms.map((r) => r.currentLayoutId) } } },
+      { $project: { seatCount: { $size: "$seats" }, types: "$seats.type" } },
+    ]),
+    SeatType.find({}).lean(),
+    Showtime.aggregate<{ _id: { room: { toString(): string }; format: { toString(): string } } }>([
+      { $match: { auditoriumId: { $in: roomIds }, startAt: { $gte: new Date() } } },
+      { $group: { _id: { room: "$auditoriumId", format: "$formatId" } } },
+    ]),
+    userId
+      ? SeatMark.aggregate<{ _id: { toString(): string }; count: number }>([
+          { $match: { userId: new Types.ObjectId(userId), auditoriumId: { $in: roomIds } } },
+          { $group: { _id: "$auditoriumId", count: { $sum: 1 } } },
+        ])
+      : Promise.resolve([]),
+  ]);
+  const formats = await Format.find({ _id: { $in: upcoming.map((u) => u._id.format) }, ...ACTIVE }, "name").lean();
+  const formatName = new Map(formats.map((f) => [f._id.toString(), f.name]));
+  const typeById = new Map(types.map((t) => [t._id.toString(), t]));
+  const layoutById = new Map(layouts.map((l) => [l._id.toString(), l]));
+  const markCount = new Map(marks.map((m) => [m._id.toString(), m.count]));
+
   return {
     brand: { id: brand._id.toString(), name: brand.name, logoUrl: brand.logoUrl ?? null },
     branch: toBranch(branch),
-    rooms: rooms.map((r) => ({ id: r._id.toString(), name: r.name, seatCount: seatCount.get(r.currentLayoutId?.toString() ?? "") ?? 0 })),
+    rooms: rooms.map((r): CinemaRoom => {
+      const layout = layoutById.get(r.currentLayoutId?.toString() ?? "");
+      const counts = new Map<string, number>();
+      for (const type of layout?.types ?? []) counts.set(type, (counts.get(type) ?? 0) + 1);
+      return {
+        id: r._id.toString(),
+        name: r.name,
+        seatCount: layout?.seatCount ?? 0,
+        seatTypes: [...counts.entries()]
+          .flatMap(([id, count]) => {
+            const type = typeById.get(id);
+            return type ? [{ name: type.name, nameEn: type.nameEn ?? null, count }] : [];
+          })
+          .sort((a, b) => b.count - a.count),
+        formats: [
+          ...new Set(upcoming.filter((u) => u._id.room.toString() === r._id.toString()).flatMap((u) => formatName.get(u._id.format.toString()) ?? [])),
+        ].sort((a, b) => a.localeCompare(b, "en", { numeric: true })),
+        markCount: markCount.get(r._id.toString()) ?? 0,
+      };
+    }),
   };
 }
 

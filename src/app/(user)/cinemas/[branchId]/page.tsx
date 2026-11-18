@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { getLocale, getTranslations } from "next-intl/server";
-import { Clock, ExternalLink, MapPin, ParkingCircle } from "lucide-react";
+import { Clock, ExternalLink, MapPin, ParkingCircle, Star } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -8,8 +8,9 @@ import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { requireUser } from "@/lib/auth/guards";
 import { formatVnd } from "@/lib/money";
-import { getCinema } from "@/services/cinema.service";
+import { getCinema, type CinemaRoom } from "@/services/cinema.service";
 import { PX } from "@/lib/ui-sizes";
+import { Badge } from "@/components/ui/badge";
 
 type Props = { params: Promise<{ branchId: string }> };
 
@@ -20,9 +21,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function CinemaPage({ params }: Props) {
-  await requireUser();
+  const user = await requireUser();
   const { branchId } = await params;
-  const cinema = await getCinema(branchId);
+  const cinema = await getCinema(branchId, user.userId);
   if (!cinema) notFound();
   const t = await getTranslations("cinemas");
   const locale = await getLocale();
@@ -88,9 +89,12 @@ export default async function CinemaPage({ params }: Props) {
           {rooms.map((room) => (
             <li key={room.id}>
               <Link href={`/cinemas/${branch.id}/${room.id}`} className="flex min-h-row items-center gap-item rounded-xl border bg-card px-inset py-inset-sm">
-                <span className="flex min-w-0 flex-1 flex-col">
-                  <span className="type-item-title">{room.name}</span>
-                  <span className="type-secondary text-muted-foreground">{t("seatCount", { count: room.seatCount })}</span>
+                <span className="flex min-w-0 flex-1 flex-col gap-stack">
+                  <span className="flex flex-col">
+                    <span className="type-item-title">{room.name}</span>
+                    <span className="type-secondary text-muted-foreground">{t("seatCount", { count: room.seatCount })}</span>
+                  </span>
+                  <RoomTags room={room} locale={locale} />
                 </span>
               </Link>
             </li>
@@ -98,5 +102,32 @@ export default async function CinemaPage({ params }: Props) {
         </ul>
       </section>
     </div>
+  );
+}
+
+/** What sets a room apart, as small tags: its special seat types (all but the ordinary one), the formats it shows, and the seats the person marked. */
+async function RoomTags({ room, locale }: { room: CinemaRoom; locale: string }) {
+  const t = await getTranslations("cinemas");
+  const special = room.seatTypes.slice(1).map((type) => (locale === "en" && type.nameEn ? type.nameEn : type.name));
+  if (special.length === 0 && room.formats.length === 0 && room.markCount === 0) return null;
+  return (
+    <span className="flex flex-wrap gap-stack">
+      {room.formats.map((format) => (
+        <Badge key={`f-${format}`} variant="outline" className="h-auto py-hair type-tag">
+          {format}
+        </Badge>
+      ))}
+      {special.map((name) => (
+        <Badge key={`t-${name}`} variant="secondary" className="h-auto py-hair type-tag">
+          {name}
+        </Badge>
+      ))}
+      {room.markCount > 0 ? (
+        <Badge variant="secondary" className="h-auto py-hair type-tag">
+          <Star aria-hidden />
+          {t("markedSeats", { count: room.markCount })}
+        </Badge>
+      ) : null}
+    </span>
   );
 }

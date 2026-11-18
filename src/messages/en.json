@@ -1042,6 +1042,7 @@
     "emptyDescription": "Cinemas show up here once an admin adds branches and auditoriums.",
     "roomCount": "{count, plural, one {# auditorium} other {# auditoriums}}",
     "seatCount": "{count, plural, one {# seat} other {# seats}}",
+    "markedSeats": "{count, plural, one {# seat marked} other {# seats marked}}",
     "parkingFee": "Parking {fee}",
     "directions": "Get directions",
     "rooms": "Auditoriums",
