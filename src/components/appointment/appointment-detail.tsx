@@ -14,6 +14,7 @@ import {
   type ActionResult,
 } from "@/actions/appointments";
 import { Chip } from "@/components/admin/auditorium-editor/chips";
+import { DateTimeField } from "@/components/date-time-field";
 import { InviteMore } from "@/components/appointment/invite-more";
 import { AppointmentStatusBadge } from "@/components/appointment/status-badge";
 import { ReasonDialog } from "@/components/appointment/reason-dialog";
@@ -21,14 +22,11 @@ import { PersonRow } from "@/components/friends/person-row";
 import { ListThumb } from "@/components/list-thumb";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { vietnamToIso } from "@/lib/appointment/datetime";
 import { canWithdraw, isFinished, isOpenForReplies, yesVoterIds } from "@/lib/appointment/state";
 import { formatDayLong, formatTime } from "@/lib/datetime";
-import { cn } from "@/lib/utils";
 import type { AppointmentView, OptionView, ParticipantView } from "@/services/appointment.service";
 
-const CONTROL = "h-control rounded-xl bg-card px-inset type-body";
 type Dialog = "decline" | "withdraw" | "cancel" | null;
 
 /**
@@ -317,8 +315,8 @@ function PollSection({ view, canVote, pending, nameOf, when, onVote, onPropose }
             {t("proposeLabel")}
           </span>
           <div className="flex gap-stack">
-            <Input type="date" aria-label={t("proposeDate")} value={date} onChange={(e) => setDate(e.target.value)} className={cn(CONTROL, "min-w-0 flex-1 text-left [&::-webkit-date-and-time-value]:text-left")} />
-            <Input type="time" aria-label={t("proposeTime")} value={time} onChange={(e) => setTime(e.target.value)} className={cn(CONTROL, "w-auto text-left [&::-webkit-date-and-time-value]:text-left")} />
+            <DateTimeField kind="date" label={t("proposeDate")} value={date} onChange={setDate} className="min-w-0 flex-1" />
+            <DateTimeField kind="time" label={t("proposeTime")} value={time} onChange={setTime} className="w-time-field" />
             <Button type="button" variant="outline" size="icon" className="size-control shrink-0" disabled={pending} aria-label={t("proposeButton")} onClick={propose}>
               {pending ? <LoaderCircle className="motion-safe:animate-spin" aria-hidden /> : <Plus aria-hidden />}
             </Button>

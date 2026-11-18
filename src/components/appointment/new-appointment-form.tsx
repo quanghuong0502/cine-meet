@@ -7,11 +7,11 @@ import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { createAppointmentAction } from "@/actions/appointments";
 import { Chip } from "@/components/admin/auditorium-editor/chips";
+import { DateTimeField } from "@/components/date-time-field";
 import { LoadingState } from "@/components/loading-state";
 import { ShowtimePicker, type ShowtimeChoice } from "@/components/appointment/showtime-picker";
 import { RequiredMark } from "@/components/required-mark";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { vietnamToIso } from "@/lib/appointment/datetime";
@@ -187,8 +187,8 @@ export function NewAppointmentForm({ movies, movieId, showtimes, initialShowtime
         <div className="flex flex-col gap-stack">
           <span className="type-secondary text-muted-foreground">{t("customLabel")}</span>
           <div className="flex gap-stack">
-            <Input type="date" aria-label={t("customDate")} value={date} onChange={(e) => setDate(e.target.value)} className={`${CONTROL} min-w-0 flex-1 text-left [&::-webkit-date-and-time-value]:text-left`} />
-            <Input type="time" aria-label={t("customTime")} value={time} onChange={(e) => setTime(e.target.value)} className={`${CONTROL} w-auto text-left [&::-webkit-date-and-time-value]:text-left`} />
+            <DateTimeField kind="date" label={t("customDate")} value={date} onChange={setDate} className="min-w-0 flex-1" />
+            <DateTimeField kind="time" label={t("customTime")} value={time} onChange={setTime} className="w-time-field" />
             <Button type="button" variant="outline" size="icon" className="size-control shrink-0" aria-label={t("addTime")} onClick={addCustom}>
               <Plus aria-hidden />
             </Button>
@@ -229,8 +229,8 @@ export function NewAppointmentForm({ movies, movieId, showtimes, initialShowtime
       <div className="flex flex-col gap-item">
         <span className="type-label text-muted-foreground">{t("deadlineLabel")}</span>
         <div className="flex gap-stack">
-          <Input type="date" aria-label={t("deadlineDate")} value={deadlineDate} onChange={(e) => setDeadlineDate(e.target.value)} className={`${CONTROL} min-w-0 flex-1 text-left [&::-webkit-date-and-time-value]:text-left`} />
-          <Input type="time" aria-label={t("deadlineTime")} value={deadlineTime} onChange={(e) => setDeadlineTime(e.target.value)} className={`${CONTROL} w-auto text-left [&::-webkit-date-and-time-value]:text-left`} />
+          <DateTimeField kind="date" label={t("deadlineDate")} value={deadlineDate} onChange={setDeadlineDate} className="min-w-0 flex-1" />
+          <DateTimeField kind="time" label={t("deadlineTime")} value={deadlineTime} onChange={setDeadlineTime} className="w-time-field" />
         </div>
         {fieldError("deadline")}
       </div>

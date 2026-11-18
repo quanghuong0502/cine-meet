@@ -1452,5 +1452,9 @@
     "title": "Mất mạng rồi",
     "description": "Kiểm tra Wi-Fi hoặc 4G rồi thử lại nha.",
     "retry": "Thử lại"
+  },
+  "dateTimeField": {
+    "pickDate": "Chọn ngày",
+    "pickTime": "Chọn giờ"
   }
 }

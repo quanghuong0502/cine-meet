@@ -1452,5 +1452,9 @@
     "title": "You're offline",
     "description": "Check your Wi-Fi or mobile data and try again.",
     "retry": "Try again"
+  },
+  "dateTimeField": {
+    "pickDate": "Pick date",
+    "pickTime": "Pick time"
   }
 }
