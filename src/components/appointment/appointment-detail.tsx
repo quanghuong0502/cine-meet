@@ -3,6 +3,7 @@
 import { Ban, CheckCheck, CircleCheck, LogOut, XCircle } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
   cancelAppointmentAction,
@@ -55,6 +56,7 @@ export function AppointmentDetail({ view, friends = [], groups = [], plan = null
   const locale = useLocale();
   const [pending, start] = useTransition();
   const [dialog, setDialog] = useState<Dialog>(null);
+  const router = useRouter();
   const draft = usePlanDraft(view, plan);
   // The strip at the end of the page that holds the poll's Save and Decline buttons (drawn into it by `PollSection`).
   const [barSlot, setBarSlot] = useState<HTMLDivElement | null>(null);
@@ -211,7 +213,7 @@ export function AppointmentDetail({ view, friends = [], groups = [], plan = null
       <div ref={barRef} data-bottom-fixed className="pointer-events-none fixed inset-x-0 bottom-[var(--nav-clearance)] z-30 px-inset">
         <div className="mx-auto flex max-w-form flex-row gap-stack">
             {!finished && canConfirm ? (
-              <Button type="button" size="cta" disabled={pending || draft.loading} onClick={() => run(() => confirmPlanAction(view.id, draft.payload()), t("plan.confirmed"))} className="pointer-events-auto min-w-0 flex-1">
+              <Button type="button" size="cta" disabled={pending || draft.loading} onClick={() => run(() => confirmPlanAction(view.id, draft.payload()), t("plan.confirmed"), () => router.push("/appointments"))} className="pointer-events-auto min-w-0 flex-1">
                 <CircleCheck aria-hidden />
                 {t("plan.confirm")}
               </Button>
