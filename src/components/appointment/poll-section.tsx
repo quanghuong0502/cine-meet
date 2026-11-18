@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { vietnamToIso } from "@/lib/appointment/datetime";
 import { MAX_TIME_OPTIONS } from "@/lib/appointment/limits";
 import { yesVoterIds } from "@/lib/appointment/state";
+import { cn } from "@/lib/utils";
 import type { AppointmentView } from "@/services/appointment.service";
 
 type Vote = "yes" | "no" | null;
@@ -122,12 +123,16 @@ export function PollSection({ view, canVote, when, declineButton, onLock, onRemi
           ).length;
           return (
             <li key={option.id} className="flex flex-col gap-stack rounded-xl border bg-card p-inset-sm">
-              <div className="flex items-start gap-stack">
-                <div className="flex min-w-0 flex-1 flex-col gap-tight">
-                  <span className="type-item-title tabular-nums">{when(option.startAt)}</span>
-                  {option.place ? <span className="break-words type-secondary text-muted-foreground">{option.place}</span> : null}
-                  {option.proposedBy ? <span className="type-secondary text-muted-foreground">{t("proposedBy", { name: option.proposedBy.name })}</span> : null}
-                  <div className="flex flex-col gap-stack pt-stack">
+              <div className="flex items-stretch gap-stack">
+                {/* With the buttons beside it, the text splits into two rows that line up with the two buttons: the time and place level with
+                    the top one, the counts centred on the bottom one. */}
+                <div className="flex min-w-0 flex-1 flex-col justify-between gap-tight">
+                  <div className="flex flex-col gap-tight">
+                    <span className="type-item-title tabular-nums">{when(option.startAt)}</span>
+                    {option.place ? <span className="break-words type-secondary text-muted-foreground">{option.place}</span> : null}
+                    {option.proposedBy ? <span className="type-secondary text-muted-foreground">{t("proposedBy", { name: option.proposedBy.name })}</span> : null}
+                  </div>
+                  <div className={cn("flex items-center", onLock || onRemind ? "h-control" : "pt-stack")}>
                     <ul className="flex items-center gap-group type-secondary font-medium tabular-nums">
                       <li className="flex items-center gap-tight" aria-label={t("countYes", { count: yes })}>
                         <ThumbsUp className="size-icon-sm" aria-hidden />
