@@ -1001,10 +1001,10 @@
       },
       "typesTitle": "Loại thông báo được đẩy",
       "types": {
-        "appointment_invited": "Có người mời [you] xem phim",
-        "appointment_reply": "Có người trả lời lời mời",
-        "participants_locked": "Đã chốt người tham gia",
-        "appointment_cancelled": "Lịch hẹn bị hủy",
+        "appointment_invited": "Có người rủ [you] đi xem",
+        "appointment_reply": "Bạn bè trả lời kèo",
+        "participants_locked": "Đã chốt người",
+        "appointment_cancelled": "Kèo bị hủy",
         "participant_withdrew": "Có người rút lui"
       },
       "errors": {

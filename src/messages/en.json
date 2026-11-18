@@ -1001,11 +1001,11 @@
       },
       "typesTitle": "Kinds of notification to push",
       "types": {
-        "appointment_invited": "Someone invites you to a movie",
-        "appointment_reply": "Someone replies to an invitation",
-        "participants_locked": "Attendees locked in",
-        "appointment_cancelled": "A plan is cancelled",
-        "participant_withdrew": "Someone leaves a plan"
+        "appointment_invited": "Invited to a plan",
+        "appointment_reply": "Replies to your plan",
+        "participants_locked": "Guest list final",
+        "appointment_cancelled": "Plan cancelled",
+        "participant_withdrew": "Someone drops out"
       },
       "errors": {
         "network": "Network is shaky, please try again.",
