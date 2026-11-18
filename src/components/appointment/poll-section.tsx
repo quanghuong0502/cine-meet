@@ -1,6 +1,6 @@
 "use client";
 
-import { BellRing, CalendarClock, LoaderCircle, Plus, Save, ThumbsDown, ThumbsUp, Undo2, UserLock, X } from "lucide-react";
+import { BellRing, CalendarClock, Clock, LoaderCircle, Plus, Save, ThumbsDown, ThumbsUp, Undo2, UserLock, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -131,10 +131,22 @@ export function PollSection({ view, canVote, nameOf, when, declineButton, onLock
                   {option.place ? <span className="break-words type-secondary text-muted-foreground">{option.place}</span> : null}
                   {option.proposedBy ? <span className="type-secondary text-muted-foreground">{t("proposedBy", { name: option.proposedBy.name })}</span> : null}
                   <div className="flex flex-col gap-stack pt-stack">
-                    <p className="type-secondary font-medium tabular-nums">
-                      {t("tally", { yes, no })}
-                      {waiting > 0 ? <span className="text-muted-foreground">{` · ${t("tallyWaiting", { count: waiting })}`}</span> : null}
-                    </p>
+                    <ul className="flex items-center gap-group type-secondary font-medium tabular-nums">
+                      <li className="flex items-center gap-tight text-success" aria-label={t("countYes", { count: yes })}>
+                        <ThumbsUp className="size-icon-sm" aria-hidden />
+                        <span aria-hidden>{yes}</span>
+                      </li>
+                      <li className="flex items-center gap-tight text-destructive" aria-label={t("countNo", { count: no })}>
+                        <ThumbsDown className="size-icon-sm" aria-hidden />
+                        <span aria-hidden>{no}</span>
+                      </li>
+                      {waiting > 0 ? (
+                        <li className="flex items-center gap-tight text-muted-foreground" aria-label={t("countWaiting", { count: waiting })}>
+                          <Clock className="size-icon-sm" aria-hidden />
+                          <span aria-hidden>{waiting}</span>
+                        </li>
+                      ) : null}
+                    </ul>
                     {yesNames.length > 0 ? <p className="break-words type-secondary text-muted-foreground">{t("yesNames", { names: yesNames.join(", ") })}</p> : null}
                   </div>
                 </div>
