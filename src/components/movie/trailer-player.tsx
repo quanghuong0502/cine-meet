@@ -20,7 +20,7 @@ export function TrailerPlayer({ videoId, title }: { videoId: string; title: stri
   return (
     <Dialog.Root>
       <Dialog.Trigger asChild>
-        <Button type="button" variant="outline" size="pill" className="h-target self-start px-4 type-label" aria-label={t("play", { title })}>
+        <Button type="button" variant="outline" size="pill" className="h-target self-start px-inset type-label" aria-label={t("play", { title })}>
           <Play aria-hidden className="fill-current" />
           {t("watch")}
         </Button>
@@ -29,7 +29,7 @@ export function TrailerPlayer({ videoId, title }: { videoId: string; title: stri
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/75 supports-backdrop-filter:backdrop-blur-xs" />
         <Dialog.Content
           aria-describedby={undefined}
-          className="fixed inset-0 z-50 m-auto flex h-fit max-h-[calc(100dvh-2rem)] w-[calc(100%-3rem)] max-w-xl flex-col gap-3 text-white outline-none"
+          className="fixed inset-0 z-50 m-auto flex h-fit max-h-[calc(100dvh-2*var(--spacing-inset))] w-[calc(100%-2*var(--spacing-inset-lg))] max-w-media flex-col gap-item text-white outline-none"
         >
           {/* Not drawn (the video says what it is); a dialog still needs a name for screen readers. */}
           <Dialog.Title className="sr-only">{t("playerTitle", { title })}</Dialog.Title>
@@ -258,14 +258,14 @@ function Player({ videoId, title }: { videoId: string; title: string }) {
             <div
               onPointerDownCapture={showBarForAWhile}
               className={cn(
-                "absolute inset-x-0 bottom-0 flex items-center gap-1 bg-gradient-to-t from-black/80 to-transparent px-1 pt-6 transition-opacity duration-200 motion-reduce:transition-none",
+                "absolute inset-x-0 bottom-0 flex items-center gap-tight bg-gradient-to-t from-black/80 to-transparent px-tight pt-inset-lg transition-opacity duration-200 motion-reduce:transition-none",
                 !showBar && "pointer-events-none opacity-0",
               )}
             >
               <Button type="button" variant="ghost" size="icon" onClick={toggle} aria-label={playing ? t("pause") : t("resume")} className="shrink-0 rounded-full text-white hover:bg-white/15 hover:text-white">
-                {playing ? <Pause aria-hidden className="size-6 fill-current" /> : <Play aria-hidden className="size-6 fill-current" />}
+                {playing ? <Pause aria-hidden className="size-icon-lg fill-current" /> : <Play aria-hidden className="size-icon-lg fill-current" />}
               </Button>
-              <span className="w-10 shrink-0 text-right type-micro text-white tabular-nums">{clock(time.current)}</span>
+              <span className="w-target shrink-0 text-right type-micro text-white tabular-nums">{clock(time.current)}</span>
               <Slider
                 aria-label={t("seek")}
                 min={0}
@@ -282,12 +282,12 @@ function Player({ videoId, title }: { videoId: string; title: string }) {
                 }}
                 className="min-w-0 flex-1"
               />
-              <span className="w-10 shrink-0 type-micro text-white/70 tabular-nums">{clock(time.duration)}</span>
+              <span className="w-target shrink-0 type-micro text-white/70 tabular-nums">{clock(time.duration)}</span>
               <Button type="button" variant="ghost" size="icon" onClick={toggleFullscreen} aria-label={fullscreen ? t("exitFullscreen") : t("fullscreen")} className="shrink-0 rounded-full text-white hover:bg-white/15 hover:text-white">
-                {fullscreen ? <Minimize aria-hidden className="size-6" /> : <Maximize aria-hidden className="size-6" />}
+                {fullscreen ? <Minimize aria-hidden className="size-icon-lg" /> : <Maximize aria-hidden className="size-icon-lg" />}
               </Button>
               <Button type="button" variant="ghost" size="icon" onClick={toggleMute} aria-label={muted ? t("unmute") : t("mute")} className="shrink-0 rounded-full text-white hover:bg-white/15 hover:text-white">
-                {muted ? <VolumeX aria-hidden className="size-6" /> : <Volume2 aria-hidden className="size-6" />}
+                {muted ? <VolumeX aria-hidden className="size-icon-lg" /> : <Volume2 aria-hidden className="size-icon-lg" />}
               </Button>
             </div>
           </>

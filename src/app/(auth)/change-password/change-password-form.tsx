@@ -20,7 +20,7 @@ export function ChangePasswordForm() {
 
   return (
     <form action={formAction} className="flex flex-col gap-field">
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-item">
         <Label htmlFor="currentPassword"><span>{t("currentLabel")}<RequiredMark /></span></Label>
         <Input
           id="currentPassword"
@@ -29,10 +29,10 @@ export function ChangePasswordForm() {
           autoComplete="current-password"
           enterKeyHint="next"
           required
-          className="h-control rounded-xl bg-card px-4 type-body"
+          className="h-control rounded-xl bg-card px-inset type-body"
         />
       </div>
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-item">
         <Label htmlFor="newPassword"><span>{t("newLabel")}<RequiredMark /></span></Label>
         <Input
           id="newPassword"
@@ -42,10 +42,10 @@ export function ChangePasswordForm() {
           enterKeyHint="next"
           minLength={MIN_PASSWORD_LENGTH}
           required
-          className="h-control rounded-xl bg-card px-4 type-body"
+          className="h-control rounded-xl bg-card px-inset type-body"
         />
       </div>
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-item">
         <Label htmlFor="confirmPassword"><span>{t("confirmLabel")}<RequiredMark /></span></Label>
         <Input
           id="confirmPassword"
@@ -54,7 +54,7 @@ export function ChangePasswordForm() {
           autoComplete="new-password"
           enterKeyHint="done"
           required
-          className="h-control rounded-xl bg-card px-4 type-body"
+          className="h-control rounded-xl bg-card px-inset type-body"
         />
       </div>
 

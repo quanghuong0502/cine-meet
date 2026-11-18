@@ -38,7 +38,7 @@ export default async function BulkShowtimesPage({ searchParams }: { searchParams
 
   if (movies.length === 0 || formats.every((f) => f.active === false) || roomsReady.length === 0) {
     return (
-      <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-4 p-4">
+      <div className="mx-auto flex w-full max-w-page flex-1 flex-col gap-section p-inset">
         <PageHeader title={t("title")} backHref={backHref} />
         <EmptyState
           title={t("needSetup.title")}
@@ -57,7 +57,7 @@ export default async function BulkShowtimesPage({ searchParams }: { searchParams
   const branchName = new Map(branches.map((b) => [b._id.toString(), [brandName.get(b.brandId.toString()), b.name].filter(Boolean).join(" · ")]));
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-4 p-4">
+    <div className="mx-auto flex w-full max-w-page flex-1 flex-col gap-section p-inset">
       <PageHeader title={t("title")} backHref={backHref} />
       <ShowtimeBulkForm
         movies={movies.filter((m) => m.status !== "ended").map((m) => ({ value: m._id.toString(), label: m.title }))}

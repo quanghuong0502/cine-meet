@@ -28,7 +28,7 @@ export async function AuditoriumEditorScreen({ id, back }: Props) {
   const [branches, brands, types] = await Promise.all([branchService.list({}), getBrandOptions(), seatTypeService.list({})]);
   if (branches.length === 0 || types.length === 0) {
     return (
-      <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-4 p-4">
+      <div className="mx-auto flex w-full max-w-page flex-1 flex-col gap-section p-inset">
         <PageHeader title={t("newTitle")} backHref={backHref} />
         <EmptyState
           title={t("needSetup.title")}
@@ -60,7 +60,7 @@ export async function AuditoriumEditorScreen({ id, back }: Props) {
   if (id === null) {
     const defaultType = seatTypes.find((s) => s.capacity === 1) ?? seatTypes[0];
     return (
-      <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-4 p-4">
+      <div className="mx-auto flex w-full max-w-page flex-1 flex-col gap-section p-inset">
         <PageHeader title={t("newTitle")} backHref={backHref} />
         <AuditoriumEditor
           auditorium={null}
@@ -79,7 +79,7 @@ export async function AuditoriumEditorScreen({ id, back }: Props) {
   if (!current) notFound();
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-4 p-4">
+    <div className="mx-auto flex w-full max-w-page flex-1 flex-col gap-section p-inset">
       <PageHeader title={room.name} backHref={backHref} />
       <AuditoriumEditor
         // Another room: start the editor's state from scratch.

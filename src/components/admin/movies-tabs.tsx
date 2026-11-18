@@ -10,14 +10,14 @@ export async function MoviesTabs({ active }: { active: "movies" | "showtimes" })
     { key: "showtimes", href: "/admin/movies/showtimes", label: t("tabs.showtimes") },
   ] as const;
   return (
-    <nav aria-label={t("tabs.label")} className="flex gap-2">
+    <nav aria-label={t("tabs.label")} className="flex gap-stack">
       {tabs.map((tab) => (
         <Link
           key={tab.key}
           href={tab.href}
           aria-current={tab.key === active ? "page" : undefined}
           className={cn(
-            "flex h-target items-center rounded-full border px-4 type-label",
+            "flex h-target items-center rounded-full border px-inset type-label",
             tab.key === active ? "border-transparent bg-primary text-primary-foreground" : "bg-card text-muted-foreground",
           )}
         >

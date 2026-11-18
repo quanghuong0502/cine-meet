@@ -46,7 +46,7 @@ function Marker({ item }: { item: ResourceItem }) {
   return (
     <span
       aria-hidden
-      className={`flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full border type-secondary font-semibold! ${showImage ? "bg-white" : "bg-muted"}`}
+      className={`flex size-avatar shrink-0 items-center justify-center overflow-hidden rounded-full border type-secondary font-semibold! ${showImage ? "bg-white" : "bg-muted"}`}
       style={!showImage && item.color ? { backgroundColor: item.color } : undefined}
     >
       {showImage ? (
@@ -58,7 +58,7 @@ function Marker({ item }: { item: ResourceItem }) {
   );
 }
 
-const CONTROL_CLASS = "h-control rounded-xl bg-card px-4 type-body";
+const CONTROL_CLASS = "h-control rounded-xl bg-card px-inset type-body";
 
 /**
  * Admin list for one master-data type: search, cards, delete with confirmation. Opening a card or "Add" goes to a
@@ -108,9 +108,9 @@ export function ResourceManager({ items, basePath, query, labels, removeAction, 
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-4">
+    <div className="flex flex-1 flex-col gap-group">
       <div className="relative">
-        <Search className="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
+        <Search className="pointer-events-none absolute top-1/2 left-4 size-icon-sm -translate-y-1/2 text-muted-foreground" aria-hidden />
         <Input
           type="search"
           enterKeyHint="search"
@@ -118,7 +118,7 @@ export function ResourceManager({ items, basePath, query, labels, removeAction, 
           onChange={(event) => setTerm(event.target.value)}
           placeholder={searchLabels?.placeholder ?? t("searchPlaceholder")}
           aria-label={searchLabels?.label ?? t("searchLabel")}
-          className={`${CONTROL_CLASS} pl-11`}
+          className={`${CONTROL_CLASS} pl-target`}
         />
       </div>
 
@@ -131,18 +131,18 @@ export function ResourceManager({ items, basePath, query, labels, removeAction, 
       ) : (
         <>
           <p className="type-secondary text-muted-foreground">{t("itemCount", { count: items.length })}</p>
-          <ul className="grid gap-3 md:grid-cols-2">
+          <ul className="grid gap-item md:grid-cols-2">
             {items.map((item) => (
-              <li key={item.id} className="flex min-w-0 items-center rounded-xl border bg-card pr-2">
-                <Link href={withBack(`${base}/${item.id}`)} className="flex min-h-row min-w-0 flex-1 items-center gap-3 rounded-xl py-3 pr-0 pl-3 text-left">
+              <li key={item.id} className="flex min-w-0 items-center rounded-xl border bg-card pr-inset-xs">
+                <Link href={withBack(`${base}/${item.id}`)} className="flex min-h-row min-w-0 flex-1 items-center gap-item rounded-xl py-inset-sm pr-0 pl-inset-sm text-left">
                   <Marker item={item} />
-                  <span className="flex min-w-0 flex-1 flex-col gap-1">
+                  <span className="flex min-w-0 flex-1 flex-col gap-tight">
                     <span className="truncate type-item-title">{item.title}</span>
                     {item.subtitle ? <span className="line-clamp-2 break-words type-secondary text-muted-foreground">{item.subtitle}</span> : null}
                     {item.meta?.length ? (
-                      <span className="flex flex-wrap gap-1">
+                      <span className="flex flex-wrap gap-tight">
                         {item.meta.map((entry) => (
-                          <Badge key={entry} variant="secondary" className="h-auto max-w-full whitespace-normal py-0.5 text-left type-tag">
+                          <Badge key={entry} variant="secondary" className="h-auto max-w-full whitespace-normal py-hair text-left type-tag">
                             {entry}
                           </Badge>
                         ))}
@@ -169,12 +169,12 @@ export function ResourceManager({ items, basePath, query, labels, removeAction, 
       )}
 
       {/* Room for the fixed button below, so the last item can scroll clear of it. */}
-      <div aria-hidden className="h-[calc(var(--spacing-control)+2.5rem)] shrink-0" />
+      <div aria-hidden className="h-action-clear shrink-0" />
 
       {/* Primary action: fixed above the bottom menu (not inside the flow), so it stays in thumb reach, at the same
           place whether the list is empty, short or long. On wide screens it starts after the sidebar. */}
-      <div data-bottom-fixed className="pointer-events-none fixed inset-x-0 bottom-[var(--bottom-nav-h,0px)] z-30 px-4 md:left-64">
-        <Button asChild size="cta" className="pointer-events-auto mx-auto flex max-w-sm">
+      <div data-bottom-fixed className="pointer-events-none fixed inset-x-0 bottom-[var(--bottom-nav-h,0px)] z-30 px-inset md:left-64">
+        <Button asChild size="cta" className="pointer-events-auto mx-auto flex max-w-form">
           <Link href={withBack(`${base}/new`)}>
             <Plus aria-hidden />
             {labels.addButton}

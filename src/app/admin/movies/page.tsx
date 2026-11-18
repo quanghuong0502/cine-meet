@@ -22,7 +22,7 @@ export default async function AdminMoviesPage({ searchParams }: { searchParams: 
   const genreName = new Map(genres.map((g) => [g._id.toString(), locale === "en" && g.nameEn ? g.nameEn : g.name]));
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-4 p-4">
+    <div className="mx-auto flex w-full max-w-page flex-1 flex-col gap-section p-inset">
       <PageHeader title={t("title")} description={t("description")} />
       <MoviesTabs active="movies" />
       <ResourceManager

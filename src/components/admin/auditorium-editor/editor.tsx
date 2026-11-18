@@ -143,11 +143,11 @@ export function AuditoriumEditor({ auditorium, branches, seatTypes, initialConfi
   ];
 
   return (
-    <div className="flex flex-1 flex-col gap-4">
+    <div className="flex flex-1 flex-col gap-group">
       {/* The map stays under the title bar while the controls scroll beneath it. */}
       {/* transform-gpu: its own compositor layer, so on iOS the browser only moves it while scrolling instead of repainting the
           whole map at every new position (a sticky block without one lags and jumps behind the scroll). */}
-      <div data-scroll-probe className="sticky top-[4.25rem] z-10 -mx-4 flex transform-gpu flex-col gap-1 bg-background px-4 pb-2">
+      <div data-scroll-probe className="sticky top-target z-10 -mx-inset flex transform-gpu flex-col gap-tight bg-background px-inset pb-inset-xs">
         <SeatMap
           geometry={built.geometry}
           seats={built.seats}
@@ -168,7 +168,7 @@ export function AuditoriumEditor({ auditorium, branches, seatTypes, initialConfi
           onRowTap={inSeatsTab ? (row) => toggleCells(cellsOfRow(row)) : undefined}
           onColTap={inSeatsTab ? (col) => toggleCells(cellsOfCol(col)) : undefined}
         />
-        <div className="flex min-h-target items-center justify-between gap-4">
+        <div className="flex min-h-target items-center justify-between gap-group">
           <Label htmlFor="aud-heat" className="text-muted-foreground">
             {t("heatmap")}
           </Label>
@@ -176,7 +176,7 @@ export function AuditoriumEditor({ auditorium, branches, seatTypes, initialConfi
         </div>
       </div>
 
-      <div role="tablist" aria-label={t("tabsLabel")} className="flex gap-2">
+      <div role="tablist" aria-label={t("tabsLabel")} className="flex gap-stack">
         {tabs.map(({ key, label }) => (
           <button
             key={key}
@@ -185,7 +185,7 @@ export function AuditoriumEditor({ auditorium, branches, seatTypes, initialConfi
             aria-selected={tab === key}
             onClick={() => setTab(key)}
             className={cn(
-              "h-target flex-1 rounded-full border px-3 type-label outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
+              "h-target flex-1 rounded-full border px-inset-sm type-label outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
               tab === key ? "border-transparent bg-primary text-primary-foreground" : "bg-card text-muted-foreground",
             )}
           >
@@ -233,10 +233,10 @@ export function AuditoriumEditor({ auditorium, branches, seatTypes, initialConfi
       ) : null}
 
       {/* Room for the fixed bar, so the last control can scroll clear of it. */}
-      <div aria-hidden className="h-[calc(var(--spacing-control)+2.5rem)] shrink-0" />
+      <div aria-hidden className="h-action-clear shrink-0" />
 
-      <div data-save-bar className="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] md:left-64">
-        <div className="mx-auto flex max-w-sm items-center gap-2">
+      <div data-save-bar className="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-inset pb-(--inset-bottom) md:left-64">
+        <div className="mx-auto flex max-w-form items-center gap-stack">
           {auditorium ? <DeleteRecordButton id={auditorium.id} name={auditorium.name} backHref={backHref} removeAction={removeAuditoriumAction} /> : null}
           <Button type="button" size="cta" disabled={pending} onClick={save} className="pointer-events-auto min-w-0 flex-1">
             {pending ? (

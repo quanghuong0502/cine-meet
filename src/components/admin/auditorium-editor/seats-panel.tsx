@@ -24,15 +24,15 @@ export function SeatsPanel({ seatTypes, selectedCount, allHaveFlag, allHaveType,
   const idle = selectedCount === 0;
 
   return (
-    <div className="flex flex-col gap-4" role="tabpanel">
+    <div className="flex flex-col gap-group" role="tabpanel">
       <p role="status" className="type-secondary text-muted-foreground">
         {t("selected", { count: selectedCount })}
       </p>
 
-      <div role="group" aria-label={t("typeGroup")} className="flex flex-wrap gap-2">
+      <div role="group" aria-label={t("typeGroup")} className="flex flex-wrap gap-stack">
         {seatTypes.map((type) => (
           <Chip key={type.id} disabled={idle} selected={!idle && allHaveType(type.id)} onClick={() => onType(type.id)}>
-            <span aria-hidden className="size-3 shrink-0 rounded-sm border border-foreground/20" style={{ backgroundColor: type.color ?? undefined }} />
+            <span aria-hidden className="size-icon-xs shrink-0 rounded-sm border border-foreground/20" style={{ backgroundColor: type.color ?? undefined }} />
             {type.name}
           </Chip>
         ))}
@@ -41,7 +41,7 @@ export function SeatsPanel({ seatTypes, selectedCount, allHaveFlag, allHaveType,
         </Chip>
       </div>
 
-      <div role="group" aria-label={t("flagGroup")} className="flex flex-wrap gap-2">
+      <div role="group" aria-label={t("flagGroup")} className="flex flex-wrap gap-stack">
         {(["broken", "obstructed"] as const).map((flag) => {
           const on = !idle && allHaveFlag(flag);
           return (
@@ -52,13 +52,13 @@ export function SeatsPanel({ seatTypes, selectedCount, allHaveFlag, allHaveType,
         })}
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-stack">
         <Chip selected={false} disabled={idle} onClick={onReset}>
-          <RotateCcw className="size-4" aria-hidden />
+          <RotateCcw className="size-icon-sm" aria-hidden />
           {t("reset")}
         </Chip>
         <Chip selected={false} disabled={idle} onClick={onClear}>
-          <X className="size-4" aria-hidden />
+          <X className="size-icon-sm" aria-hidden />
           {t("clear")}
         </Chip>
       </div>

@@ -31,14 +31,14 @@ function isValidationCode(code: string): code is ValidationCode {
   return VALIDATION_CODES.some((known) => known === code);
 }
 
-const CONTROL_CLASS = "h-control rounded-xl bg-card px-4 type-body";
+const CONTROL_CLASS = "h-control rounded-xl bg-card px-inset type-body";
 
 /** Pick any number of options (chips); the choice travels as one comma-separated hidden field. */
 function MultiSelectField({ name, label, options, initial }: { name: string; label: string; options: { value: string; label: string }[]; initial: string }) {
   const [chosen, setChosen] = useState<string[]>(() => initial.split(",").filter(Boolean));
   const toggle = (value: string) => setChosen((current) => (current.includes(value) ? current.filter((v) => v !== value) : [...current, value]));
   return (
-    <div role="group" aria-label={label} className="flex flex-wrap gap-2">
+    <div role="group" aria-label={label} className="flex flex-wrap gap-stack">
       <input type="hidden" name={name} value={chosen.join(",")} />
       {options.map((option) => (
         <Chip key={option.value} selected={chosen.includes(option.value)} onClick={() => toggle(option.value)}>
@@ -71,14 +71,14 @@ function FieldControl({ field, value, invalid, last, onSelect, selected, sibling
 
   switch (field.kind) {
     case "textarea":
-      return <Textarea {...common} defaultValue={value} maxLength={field.maxLength} rows={3} placeholder={field.placeholder} className="max-h-40 resize-none overflow-y-auto rounded-xl bg-card px-4 py-3 type-body" />;
+      return <Textarea {...common} defaultValue={value} maxLength={field.maxLength} rows={3} placeholder={field.placeholder} className="resize-none overflow-y-auto rounded-xl bg-card px-inset py-inset-sm type-body" />;
     case "color":
       return (
         <input
           {...common}
           type="color"
           defaultValue={value || "#c61583"}
-          className="h-control w-20 cursor-pointer rounded-xl border bg-card p-1"
+          className="h-control w-swatch cursor-pointer rounded-xl border bg-card p-tight"
         />
       );
     case "comboItems":
@@ -100,8 +100,8 @@ function FieldControl({ field, value, invalid, last, onSelect, selected, sibling
           initialUrl={value || undefined}
           getTicket={field.uploadTicket ?? (async () => ({ ok: false, error: "not_configured" }))}
           preview={(url) => (
-            <span aria-hidden className="flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-xl border bg-card">
-              {url ? <Image src={url} alt="" width={80} height={80} unoptimized className="size-full object-cover" /> : <ImageIcon className="size-6 text-muted-foreground" />}
+            <span aria-hidden className="flex size-swatch shrink-0 items-center justify-center overflow-hidden rounded-xl border bg-card">
+              {url ? <Image src={url} alt="" width={80} height={80} unoptimized className="size-full object-cover" /> : <ImageIcon className="size-icon-lg text-muted-foreground" />}
             </span>
           )}
         />
@@ -211,8 +211,8 @@ export function ResourceForm({ itemId, fields, values, backHref, saveAction, del
         const code = fieldErrors[field.name];
         const horizontal = field.kind === "switch";
         return (
-          <div key={field.name} className={horizontal ? "flex min-h-target items-center justify-between gap-4" : "flex min-w-0 flex-col gap-3"}>
-            <div className="flex flex-col gap-0.5">
+          <div key={field.name} className={horizontal ? "flex min-h-target items-center justify-between gap-group" : "flex min-w-0 flex-col gap-item"}>
+            <div className="flex flex-col gap-tight">
               <Label htmlFor={field.name} className="text-muted-foreground">
                 <span>
                   {field.label}
@@ -233,7 +233,7 @@ export function ResourceForm({ itemId, fields, values, backHref, saveAction, del
               discountError={field.kind === "comboItems" && fieldErrors.discountValue ? tv(isValidationCode(fieldErrors.discountValue) ? fieldErrors.discountValue : "invalid") : undefined}
             />
             {code ? (
-              <p role="alert" className="-mt-1 type-secondary text-destructive">
+              <p role="alert" className="-mt-tight type-secondary text-destructive">
                 {tv(isValidationCode(code) ? code : "invalid")}
               </p>
             ) : null}
@@ -242,18 +242,18 @@ export function ResourceForm({ itemId, fields, values, backHref, saveAction, del
       })}
 
       {formError ? (
-        <p role="alert" className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 type-secondary text-destructive">
+        <p role="alert" className="rounded-xl border border-destructive/30 bg-destructive/10 px-inset py-inset-sm type-secondary text-destructive">
           {t(`errors.${formError}`)}
         </p>
       ) : null}
 
       {/* Room for the fixed Save button, so the last field can scroll clear of it. */}
-      <div aria-hidden className="h-[calc(var(--spacing-control)+2.5rem)] shrink-0" />
+      <div aria-hidden className="h-action-clear shrink-0" />
 
       {/* Fixed to the bottom, in thumb reach. It stays while the keyboard is open: on the installed app the keyboard shrinks the page, so
           the bar rides just above it and Save is always reachable while typing (unlike the menu and the list's Add button, which hide). */}
-      <div data-save-bar className="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] md:left-64">
-        <div className="mx-auto flex max-w-sm items-center gap-2">
+      <div data-save-bar className="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-inset pb-(--inset-bottom) md:left-64">
+        <div className="mx-auto flex max-w-form items-center gap-stack">
           {deleteItem ? <DeleteRecordButton id={deleteItem.id} name={deleteItem.name} backHref={backHref} removeAction={deleteItem.removeAction} /> : null}
           <Button type="submit" size="cta" disabled={isPending} className="pointer-events-auto min-w-0 flex-1">
             {isPending ? (

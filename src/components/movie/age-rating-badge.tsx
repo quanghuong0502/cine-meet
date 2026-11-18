@@ -12,7 +12,7 @@ export function AgeRatingBadge({ rating, className }: AgeRatingBadgeProps) {
   return (
     <span
       style={{ backgroundColor: color, color: inkOn(color) }}
-      className={cn("inline-flex h-auto items-center rounded-md px-2 py-0.5 type-tag font-semibold! shadow-sm", className)}
+      className={cn("inline-flex h-auto items-center rounded-md px-inset-xs py-hair type-tag font-semibold! shadow-sm", className)}
     >
       {rating.code}
     </span>

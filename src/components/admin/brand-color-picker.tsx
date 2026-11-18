@@ -73,17 +73,17 @@ export function BrandColorPicker({
     <div className="flex flex-col gap-field">
       <input type="hidden" name="color" value={hex} />
 
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-item">
         <label htmlFor="brand-hex" className="type-label text-muted-foreground">
           {label}
         </label>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-item">
           <input
             type="color"
             aria-label={t("pickColor")}
             value={pickerValue}
             onChange={(event) => setHex(event.target.value.toUpperCase())}
-            className="h-control w-20 shrink-0 cursor-pointer rounded-xl border bg-card p-1"
+            className="h-control w-swatch shrink-0 cursor-pointer rounded-xl border bg-card p-tight"
           />
           <Input
             id="brand-hex"
@@ -96,11 +96,11 @@ export function BrandColorPicker({
             spellCheck={false}
             autoComplete="off"
             aria-invalid={!derived.ok || undefined}
-            className="h-control rounded-xl bg-card px-4 type-body tabular-nums"
+            className="h-control rounded-xl bg-card px-inset type-body tabular-nums"
           />
         </div>
         {!derived.ok ? (
-          <p role="alert" className="-mt-1 type-secondary text-destructive">
+          <p role="alert" className="-mt-tight type-secondary text-destructive">
             {tv(derived.error)}
           </p>
         ) : null}
@@ -108,7 +108,7 @@ export function BrandColorPicker({
           type="button"
           variant="outline"
           size="cta-sm"
-          className="w-auto self-start px-4"
+          className="w-auto self-start px-inset"
           disabled={hex === DEFAULT_BRAND_HEX && savedHex === DEFAULT_BRAND_HEX}
           onClick={() => setConfirmOpen(true)}
         >
@@ -138,15 +138,15 @@ export function BrandColorPicker({
         </AlertDialog>
       </div>
 
-      <div className="flex flex-col gap-3" aria-hidden>
+      <div className="flex flex-col gap-item" aria-hidden>
         <span className="type-label text-muted-foreground">{t("preview.label")}</span>
-        <div className="dark flex flex-col gap-4 rounded-xl border bg-background p-4 text-foreground" style={previewStyle}>
-          <div className="flex items-center justify-between gap-3 rounded-xl border bg-card p-4">
+        <div className="dark flex flex-col gap-group rounded-xl border bg-background p-inset text-foreground" style={previewStyle}>
+          <div className="flex items-center justify-between gap-item rounded-xl border bg-card p-inset">
             <span className="type-item-title">{t("preview.heading")}</span>
-            <span className="rounded-full bg-accent px-3 py-1 type-label text-accent-foreground">{t("preview.seats")}</span>
+            <span className="rounded-full bg-accent px-inset-sm py-tight type-label text-accent-foreground">{t("preview.seats")}</span>
           </div>
           <span className="type-body font-medium! text-primary-text">{t("preview.link")}</span>
-          <div className="flex h-control items-center justify-center rounded-full bg-primary px-8 type-item-title text-primary-foreground">{t("preview.button")}</div>
+          <div className="flex h-control items-center justify-center rounded-full bg-primary px-inset-xl type-item-title text-primary-foreground">{t("preview.button")}</div>
         </div>
       </div>
     </div>

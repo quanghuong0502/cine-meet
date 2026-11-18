@@ -75,13 +75,13 @@ export function RoomSeatView({ view, marks: serverMarks, saveAction, removeActio
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <div role="group" aria-label={t("layers")} className="flex flex-wrap gap-2">
+    <div className="flex flex-col gap-group">
+      <div role="group" aria-label={t("layers")} className="flex flex-wrap gap-stack">
         <Chip selected={heat} onClick={() => setHeat((v) => !v)}>
           {t("layerScore")}
         </Chip>
         <Chip selected={showMine} onClick={() => setShowMine((v) => !v)}>
-          <Star className="size-4" aria-hidden />
+          <Star className="size-icon-sm" aria-hidden />
           {t("layerMine")}
         </Chip>
       </div>
@@ -114,15 +114,15 @@ export function RoomSeatView({ view, marks: serverMarks, saveAction, removeActio
       </div>
 
       {marks.old.length > 0 ? (
-        <section aria-label={t("oldMarks")} className="flex flex-col gap-2">
+        <section aria-label={t("oldMarks")} className="flex flex-col gap-stack">
           <h2 className="type-heading">{t("oldMarks")}</h2>
           <p className="type-secondary text-muted-foreground">{t("oldMarksDescription")}</p>
-          <ul className="flex flex-col gap-2">
+          <ul className="flex flex-col gap-stack">
             {marks.old.map((mark) => (
-              <li key={mark.seatCode} className="flex min-w-0 items-center rounded-xl border bg-card pr-2">
-                <div className="flex min-h-row min-w-0 flex-1 flex-col justify-center gap-0.5 py-3 pl-4">
-                  <span className="flex items-center gap-2 type-item-title">
-                    {mark.kind === "favorite" ? <Star className="size-4 text-yellow-500" aria-hidden /> : <Ban className="size-4 text-destructive" aria-hidden />}
+              <li key={mark.seatCode} className="flex min-w-0 items-center rounded-xl border bg-card pr-inset-xs">
+                <div className="flex min-h-row min-w-0 flex-1 flex-col justify-center gap-tight py-inset-sm pl-inset">
+                  <span className="flex items-center gap-stack type-item-title">
+                    {mark.kind === "favorite" ? <Star className="size-icon-sm text-yellow-500" aria-hidden /> : <Ban className="size-icon-sm text-destructive" aria-hidden />}
                     {mark.seatCode}
                     <span className="type-secondary text-muted-foreground">{t(mark.kind === "favorite" ? "favorite" : "avoid")}</span>
                   </span>
@@ -157,9 +157,9 @@ function SeatPanel({ seat, typeName, existing, onSave, onRemove, onClose }: Pane
   const flags = seat.flags.map((flag) => t(`flags.${flag}`));
 
   return (
-    <section aria-label={t("seatTitle", { code: seat.code })} className="flex flex-col gap-4 rounded-xl border bg-card p-4">
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex min-w-0 flex-col gap-0.5">
+    <section aria-label={t("seatTitle", { code: seat.code })} className="flex flex-col gap-group rounded-xl border bg-card p-inset">
+      <div className="flex items-start justify-between gap-stack">
+        <div className="flex min-w-0 flex-col gap-tight">
           <h2 className="type-heading">{t("seatTitle", { code: seat.code })}</h2>
           <p className="type-secondary text-muted-foreground">{[typeName, t("score", { score: seat.score }), ...flags].filter(Boolean).join(" · ")}</p>
         </div>
@@ -168,18 +168,18 @@ function SeatPanel({ seat, typeName, existing, onSave, onRemove, onClose }: Pane
         </Button>
       </div>
 
-      <div role="radiogroup" aria-label={t("kindLabel")} className="flex gap-2">
-        <Chip role="radio" selected={kind === "favorite"} onClick={() => setKind("favorite")} className="min-w-0 flex-1 px-2">
-          <Star className="size-4" aria-hidden />
+      <div role="radiogroup" aria-label={t("kindLabel")} className="flex gap-stack">
+        <Chip role="radio" selected={kind === "favorite"} onClick={() => setKind("favorite")} className="min-w-0 flex-1 px-inset-xs">
+          <Star className="size-icon-sm" aria-hidden />
           {t("favorite")}
         </Chip>
-        <Chip role="radio" selected={kind === "avoid"} onClick={() => setKind("avoid")} className="min-w-0 flex-1 px-2">
-          <Ban className="size-4" aria-hidden />
+        <Chip role="radio" selected={kind === "avoid"} onClick={() => setKind("avoid")} className="min-w-0 flex-1 px-inset-xs">
+          <Ban className="size-icon-sm" aria-hidden />
           {t("avoid")}
         </Chip>
       </div>
 
-      <div role="group" aria-label={t("tagsLabel")} className="flex flex-wrap gap-2">
+      <div role="group" aria-label={t("tagsLabel")} className="flex flex-wrap gap-stack">
         {SEAT_MARK_TAGS.map((tag) => (
           <Chip key={tag} selected={tags.includes(tag)} onClick={() => setTags((c) => (c.includes(tag) ? c.filter((x) => x !== tag) : [...c, tag]))}>
             {t(`tags.${tag}`)}
@@ -195,10 +195,10 @@ function SeatPanel({ seat, typeName, existing, onSave, onRemove, onClose }: Pane
         aria-label={t("noteLabel")}
         autoComplete="off"
         enterKeyHint="done"
-        className="h-control rounded-xl bg-background px-4 type-body"
+        className="h-control rounded-xl bg-background px-inset type-body"
       />
 
-      <div className="flex gap-2">
+      <div className="flex gap-stack">
         {existing ? (
           <Button type="button" variant="outline" size="cta" onClick={onRemove} className="w-auto shrink-0 border-destructive/40 text-destructive">
             <Trash2 aria-hidden />

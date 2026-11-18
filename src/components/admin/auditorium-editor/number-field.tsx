@@ -50,7 +50,7 @@ export function NumberField({ id, value, min, max, optional, placeholder, invali
       }}
       onBlur={() => setFocused(false)}
       onChange={(event) => change(event.target.value)}
-      className="h-control rounded-xl bg-card px-4 type-body"
+      className="h-control rounded-xl bg-card px-inset type-body"
     />
   );
 }

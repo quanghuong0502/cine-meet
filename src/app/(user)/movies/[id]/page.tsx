@@ -52,18 +52,18 @@ export default async function MovieDetailPage({ params }: Props) {
   ];
 
   return (
-    <div className="flex flex-1 flex-col gap-6 p-4">
+    <div className="flex flex-1 flex-col gap-section p-inset">
       <PageHeader backHref="/showtimes" />
 
-      <section className="flex gap-4">
-        <div className="relative aspect-[2/3] w-[8.5rem] shrink-0 overflow-hidden rounded-xl border bg-muted">
+      <section className="flex gap-group">
+        <div className="relative aspect-[2/3] w-poster shrink-0 overflow-hidden rounded-xl border bg-muted">
           {movie.posterUrl ? <Image src={movie.posterUrl} alt={t("posterAlt", { title: movie.title })} fill sizes="136px" unoptimized className="object-cover" priority /> : null}
         </div>
-        <div className="flex min-w-0 flex-1 flex-col gap-2">
+        <div className="flex min-w-0 flex-1 flex-col gap-stack">
           <h1 className="type-heading">{movie.title}</h1>
           {movie.originalTitle ? <p className="type-secondary text-muted-foreground">{movie.originalTitle}</p> : null}
-          <div className="flex flex-wrap gap-2">
-            <Badge variant={movie.status === "showing" ? "default" : "secondary"} className="h-auto py-0.5 type-tag">
+          <div className="flex flex-wrap gap-stack">
+            <Badge variant={movie.status === "showing" ? "default" : "secondary"} className="h-auto py-hair type-tag">
               {t(`status.${movie.status}`)}
             </Badge>
             {rating ? <AgeRatingBadge rating={rating} /> : null}
@@ -71,17 +71,17 @@ export default async function MovieDetailPage({ params }: Props) {
           <p className="type-secondary">{t("duration", { minutes: movie.durationMin })}</p>
           <p className="type-secondary text-muted-foreground">{t("releaseOn", { date: formatDay(movie.releaseDate, locale) })}</p>
           {genreNames.length > 0 || formatNames.length > 0 ? (
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap gap-stack">
               <span role="group" aria-label={t("genres")} className="contents">
                 {genreNames.map((name) => (
-                  <Badge key={name} variant="secondary" className="h-auto py-0.5 type-tag">
+                  <Badge key={name} variant="secondary" className="h-auto py-hair type-tag">
                     {name}
                   </Badge>
                 ))}
               </span>
               <span role="group" aria-label={t("formats")} className="contents">
                 {formatNames.map((name) => (
-                  <Badge key={name} variant="secondary" className="h-auto py-0.5 type-tag">
+                  <Badge key={name} variant="secondary" className="h-auto py-hair type-tag">
                     {name}
                   </Badge>
                 ))}
@@ -92,11 +92,11 @@ export default async function MovieDetailPage({ params }: Props) {
         </div>
       </section>
 
-      <dl className="flex flex-col gap-3 type-secondary">
+      <dl className="flex flex-col gap-item type-secondary">
         {facts
           .filter((fact): fact is [string, string] => Boolean(fact[1]))
           .map(([label, value]) => (
-            <div key={label} className="flex flex-col gap-1.5">
+            <div key={label} className="flex flex-col gap-stack">
               <dt className="text-muted-foreground">{label}</dt>
               <dd className="type-body whitespace-pre-line">{value}</dd>
             </div>
@@ -105,7 +105,7 @@ export default async function MovieDetailPage({ params }: Props) {
 
       {/* No showtimes yet: the whole section is left out (a heading over an empty state only filled the screen). */}
       {showtimes.length > 0 ? (
-        <section className="flex flex-col gap-3">
+        <section className="flex flex-col gap-item">
           <h2 className="type-heading">{t("showtimes")}</h2>
           <MovieShowtimes rows={showtimes} />
         </section>

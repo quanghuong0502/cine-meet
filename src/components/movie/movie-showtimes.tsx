@@ -34,7 +34,7 @@ export function MovieShowtimes({ rows }: { rows: ShowtimeRow[] }) {
 
   const choices = (label: string, items: [string, string][], value: string | null, set: (next: string | null) => void) =>
     items.length > 1 ? (
-      <div role="group" aria-label={label} className="scroll-strip flex gap-2 pb-1">
+      <div role="group" aria-label={label} className="scroll-strip flex gap-stack pb-tight">
         <Chip selected={value === null} onClick={() => set(null)}>
           {t("filters.all")}
         </Chip>
@@ -47,9 +47,9 @@ export function MovieShowtimes({ rows }: { rows: ShowtimeRow[] }) {
     ) : null;
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-group">
       <nav aria-label={t("dayStrip")}>
-        <ul className="scroll-strip flex gap-2 pb-1">
+        <ul className="scroll-strip flex gap-stack pb-tight">
           {days.map((key) => {
             const date = new Date(`${key}T00:00:00Z`);
             const selected = key === day;
@@ -60,7 +60,7 @@ export function MovieShowtimes({ rows }: { rows: ShowtimeRow[] }) {
                   onClick={() => setDay(key)}
                   aria-pressed={selected}
                   className={cn(
-                    "flex min-h-row min-w-16 flex-col items-center justify-center gap-0.5 rounded-2xl border px-4 py-2 type-micro leading-tight! outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
+                    "flex min-h-row min-w-row flex-col items-center justify-center gap-tight rounded-2xl border px-inset py-inset-xs type-micro leading-tight! outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
                     selected ? "border-transparent bg-primary text-primary-foreground" : "bg-card text-muted-foreground",
                   )}
                 >
@@ -77,9 +77,9 @@ export function MovieShowtimes({ rows }: { rows: ShowtimeRow[] }) {
       {choices(t("filters.labels.format"), formats, format, setFormat)}
 
       {shown.length === 0 ? (
-        <p className="py-6 text-center type-secondary text-muted-foreground">{tm("noMatch")}</p>
+        <p className="py-inset-lg text-center type-secondary text-muted-foreground">{tm("noMatch")}</p>
       ) : (
-        <ul className="flex flex-col gap-3">
+        <ul className="flex flex-col gap-item">
           {shown.map((row) => (
             <ShowtimeCard key={row.id} row={row} />
           ))}

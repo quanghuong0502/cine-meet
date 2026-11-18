@@ -43,14 +43,14 @@ export default async function EditUserPage({
   ];
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-4 p-4">
+    <div className="mx-auto flex w-full max-w-page flex-1 flex-col gap-section p-inset">
       <PageHeader title={user.name} backHref={backHref} />
 
-      <dl className="grid gap-3 rounded-xl border bg-card p-4 type-secondary">
+      <dl className="grid gap-item rounded-xl border bg-card p-inset type-secondary">
         {info
           .filter(([, value]) => value)
           .map(([label, value]) => (
-            <div key={label} className="flex justify-between gap-4">
+            <div key={label} className="flex justify-between gap-group">
               <dt className="text-muted-foreground">{label}</dt>
               <dd className="min-w-0 break-words text-right font-medium">{value}</dd>
             </div>

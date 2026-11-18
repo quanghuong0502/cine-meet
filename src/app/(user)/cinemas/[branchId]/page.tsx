@@ -33,7 +33,7 @@ export default async function CinemaPage({ params }: Props) {
   ].filter(Boolean);
 
   return (
-    <div className="flex flex-1 flex-col gap-6 p-4">
+    <div className="flex flex-1 flex-col gap-section p-inset">
       <PageHeader title={branch.name} backHref="/cinemas" />
 
       {branch.imageUrl ? (
@@ -42,25 +42,25 @@ export default async function CinemaPage({ params }: Props) {
         </div>
       ) : null}
 
-      <section className="flex flex-col gap-3">
+      <section className="flex flex-col gap-item">
         <p className="type-secondary text-muted-foreground">{brand.name}</p>
         {branch.address ? (
-          <p className="flex items-start gap-2 type-body">
-            <MapPin className="mt-1 size-4 shrink-0 text-muted-foreground" aria-hidden />
+          <p className="flex items-start gap-stack type-body">
+            <MapPin className="mt-tight size-icon-sm shrink-0 text-muted-foreground" aria-hidden />
             {branch.address}
             {branch.floor ? ` · ${branch.floor}` : ""}
           </p>
         ) : null}
         {branch.openingHours ? (
-          <p className="flex items-start gap-2 type-body">
-            <Clock className="mt-1 size-4 shrink-0 text-muted-foreground" aria-hidden />
+          <p className="flex items-start gap-stack type-body">
+            <Clock className="mt-tight size-icon-sm shrink-0 text-muted-foreground" aria-hidden />
             {branch.openingHours}
           </p>
         ) : null}
         {parking.length > 0 ? (
-          <div className="flex items-start gap-2 type-body">
-            <ParkingCircle className="mt-1 size-4 shrink-0 text-muted-foreground" aria-hidden />
-            <ul className="flex flex-col gap-1">
+          <div className="flex items-start gap-stack type-body">
+            <ParkingCircle className="mt-tight size-icon-sm shrink-0 text-muted-foreground" aria-hidden />
+            <ul className="flex flex-col gap-tight">
               {parking.map((line) => (
                 <li key={line}>{line}</li>
               ))}
@@ -78,17 +78,17 @@ export default async function CinemaPage({ params }: Props) {
         ) : null}
       </section>
 
-      <section className="flex flex-col gap-2">
+      <section className="flex flex-col gap-stack">
         <h2 className="type-heading">{t("rooms")}</h2>
-        <ul className="flex flex-col gap-2">
+        <ul className="flex flex-col gap-stack">
           {rooms.map((room) => (
             <li key={room.id}>
-              <Link href={`/cinemas/${branch.id}/${room.id}`} className="flex min-h-row items-center gap-3 rounded-xl border bg-card px-4 py-3">
+              <Link href={`/cinemas/${branch.id}/${room.id}`} className="flex min-h-row items-center gap-item rounded-xl border bg-card px-inset py-inset-sm">
                 <span className="flex min-w-0 flex-1 flex-col">
                   <span className="type-item-title">{room.name}</span>
                   <span className="type-secondary text-muted-foreground">{t("seatCount", { count: room.seatCount })}</span>
                 </span>
-                <ChevronRight className="size-5 shrink-0 text-muted-foreground" aria-hidden />
+                <ChevronRight className="size-icon shrink-0 text-muted-foreground" aria-hidden />
               </Link>
             </li>
           ))}

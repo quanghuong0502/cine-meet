@@ -76,15 +76,15 @@ export default async function ShowtimesPage({ searchParams }: { searchParams: Pr
   const dayLabel = new Intl.DateTimeFormat(en ? "en-GB" : "vi-VN", { timeZone: "UTC", weekday: "short" });
 
   return (
-    <div className="flex flex-1 flex-col gap-6 p-4 pb-20">
+    <div className="flex flex-1 flex-col gap-section p-inset pb-fab-clear">
       <PageHeader title={t("title")} />
 
       {nowShowing.length > 0 ? (
         <section aria-label={t("movies")}>
-          <ul className="scroll-strip flex gap-3 pb-1">
+          <ul className="scroll-strip flex gap-item pb-tight">
             {nowShowing.map((movie) => (
-              <li key={movie._id.toString()} className="w-[calc((100%-1.5rem)/3)] shrink-0">
-                <Link href={`/movies/${movie._id.toString()}`} className="flex flex-col gap-1.5">
+              <li key={movie._id.toString()} className="w-[calc((100%-2*var(--spacing-item))/3)] shrink-0">
+                <Link href={`/movies/${movie._id.toString()}`} className="flex flex-col gap-stack">
                   <span className="relative block aspect-[2/3] overflow-hidden rounded-lg border bg-muted">
                     {movie.ageRatingId && ratingById.get(movie.ageRatingId.toString()) ? (
                       <AgeRatingBadge rating={ratingById.get(movie.ageRatingId.toString())!} className="absolute top-1.5 left-1.5 z-10" />
@@ -100,7 +100,7 @@ export default async function ShowtimesPage({ searchParams }: { searchParams: Pr
       ) : null}
 
       <nav aria-label={t("dayStrip")}>
-        <ul className="scroll-strip flex gap-2 pb-1">
+        <ul className="scroll-strip flex gap-stack pb-tight">
           {days.map((day) => {
             const selected = day === date;
             return (
@@ -111,7 +111,7 @@ export default async function ShowtimesPage({ searchParams }: { searchParams: Pr
                   scroll={false}
                   aria-current={selected ? "date" : undefined}
                   className={cn(
-                    "flex min-h-row min-w-16 flex-col items-center justify-center gap-0.5 rounded-2xl border px-4 py-2 type-micro leading-tight!",
+                    "flex min-h-row min-w-row flex-col items-center justify-center gap-tight rounded-2xl border px-inset py-inset-xs type-micro leading-tight!",
                     selected ? "border-transparent bg-primary text-primary-foreground" : "bg-card text-muted-foreground",
                   )}
                 >
@@ -141,13 +141,13 @@ async function Results({ date, values }: { date: string; values: FilterValues })
   const byMovie = new Map<string, typeof rows>();
   for (const row of rows) byMovie.set(row.movie.id, [...(byMovie.get(row.movie.id) ?? []), row]);
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-section">
       {[...byMovie.values()].map((group) => (
-        <section key={group[0].movie.id} className="flex flex-col gap-3">
+        <section key={group[0].movie.id} className="flex flex-col gap-item">
           <Link href={`/movies/${group[0].movie.id}`} className="type-heading">
             {group[0].movie.title}
           </Link>
-          <ul className="flex flex-col gap-3">
+          <ul className="flex flex-col gap-item">
             {group.map((row) => (
               <ShowtimeCard key={row.id} row={row} />
             ))}

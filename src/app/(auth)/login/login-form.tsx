@@ -27,12 +27,12 @@ function GoogleButton() {
       variant="outline"
       size="cta"
       disabled={pending}
-      className="gap-3 bg-card"
+      className="gap-item bg-card"
     >
       {pending ? (
-        <LoaderCircle className="size-5 motion-safe:animate-spin" aria-hidden />
+        <LoaderCircle className="size-icon motion-safe:animate-spin" aria-hidden />
       ) : (
-        <GoogleIcon className="size-5" />
+        <GoogleIcon className="size-icon" />
       )}
       {t("google")}
     </Button>
@@ -49,11 +49,11 @@ export function LoginForm({ callbackUrl, initialError }: LoginFormProps) {
   const errorMessage = state.error ?? initialError;
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-group">
       <form action={formAction} className="flex flex-col gap-field">
         <input type="hidden" name="callbackUrl" value={callbackUrl} />
 
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-item">
           <Label htmlFor="identifier" className="text-muted-foreground">
             <span>
               {t("identifierLabel")}
@@ -70,11 +70,11 @@ export function LoginForm({ callbackUrl, initialError }: LoginFormProps) {
             autoCorrect="off"
             spellCheck={false}
             required
-            className="h-control rounded-xl bg-card px-4 type-body"
+            className="h-control rounded-xl bg-card px-inset type-body"
           />
         </div>
 
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-item">
           <Label htmlFor="password" className="text-muted-foreground">
             <span>
               {t("passwordLabel")}
@@ -89,7 +89,7 @@ export function LoginForm({ callbackUrl, initialError }: LoginFormProps) {
               autoComplete="current-password"
               enterKeyHint="go"
               required
-              className="h-control rounded-xl bg-card pr-12 pl-4 type-body"
+              className="h-control rounded-xl bg-card pr-control pl-inset type-body"
             />
             <Button
               type="button"
@@ -108,9 +108,9 @@ export function LoginForm({ callbackUrl, initialError }: LoginFormProps) {
         {errorMessage ? (
           <p
             role="alert"
-            className="flex items-start gap-2 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 type-secondary text-destructive"
+            className="flex items-start gap-stack rounded-xl border border-destructive/30 bg-destructive/10 px-inset py-inset-sm type-secondary text-destructive"
           >
-            <CircleAlert className="mt-0.5 size-4 shrink-0" aria-hidden />
+            <CircleAlert className="mt-hair size-icon-sm shrink-0" aria-hidden />
             {errorMessage}
           </p>
         ) : null}
@@ -131,7 +131,7 @@ export function LoginForm({ callbackUrl, initialError }: LoginFormProps) {
         </Button>
       </form>
 
-      <div className="flex items-center gap-4 type-secondary text-muted-foreground">
+      <div className="flex items-center gap-group type-secondary text-muted-foreground">
         <span className="h-px flex-1 bg-border" />
         {t("or")}
         <span className="h-px flex-1 bg-border" />

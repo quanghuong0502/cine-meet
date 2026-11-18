@@ -20,7 +20,7 @@ export default async function AdminShowtimesPage() {
   const rows = await searchShowtimes({ admin: true, limit: 300 });
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-4 p-4">
+    <div className="mx-auto flex w-full max-w-page flex-1 flex-col gap-section p-inset">
       <PageHeader title={t("title")} description={t("description")} />
       <MoviesTabs active="showtimes" />
       {rows.length === 0 ? (
@@ -29,9 +29,9 @@ export default async function AdminShowtimesPage() {
         <AdminShowtimeList rows={rows} removeAction={removeShowtimeAction} />
       )}
 
-      <div aria-hidden className="h-[calc(var(--spacing-control)+2.5rem)] shrink-0" />
-      <div data-bottom-fixed className="pointer-events-none fixed inset-x-0 bottom-[var(--bottom-nav-h,0px)] z-30 px-4 md:left-64">
-        <div className="mx-auto flex max-w-md gap-2">
+      <div aria-hidden className="h-action-clear shrink-0" />
+      <div data-bottom-fixed className="pointer-events-none fixed inset-x-0 bottom-[var(--bottom-nav-h,0px)] z-30 px-inset md:left-64">
+        <div className="mx-auto flex max-w-nav gap-stack">
           <Button asChild size="cta" className="pointer-events-auto min-w-0 flex-1">
             <Link href="/admin/movies/showtimes/bulk?back=/admin/movies/showtimes">
               <CalendarPlus aria-hidden />

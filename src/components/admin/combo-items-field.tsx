@@ -70,17 +70,17 @@ export function ComboItemsField({ config, brandId, initialItems, initialDiscount
   const label = (item: { name: string; size?: string }) => (item.size ? `${item.name} (${item.size})` : item.name);
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-group">
       <input type="hidden" name="items" value={JSON.stringify(visible)} />
 
       {visible.length > 0 ? (
-        <ul className="flex flex-col gap-2">
+        <ul className="flex flex-col gap-stack">
           {visible.map((line) => {
             const item = byId.get(line.itemId);
             if (!item) return null;
             return (
-              <li key={line.itemId} className="flex flex-col gap-2 rounded-xl border bg-card p-3">
-                <div className="flex items-start justify-between gap-2">
+              <li key={line.itemId} className="flex flex-col gap-stack rounded-xl border bg-card p-inset-sm">
+                <div className="flex items-start justify-between gap-stack">
                   <div className="flex min-w-0 flex-col">
                     <span className="type-item-title break-words">{label(item)}</span>
                     <span className="type-secondary text-muted-foreground tabular-nums">{formatVnd(item.price, locale)}</span>
@@ -90,14 +90,14 @@ export function ComboItemsField({ config, brandId, initialItems, initialDiscount
                     variant="ghost"
                     size="icon"
                     aria-label={`${labels.remove}: ${label(item)}`}
-                    className="-mt-1 -mr-1 size-target shrink-0 text-muted-foreground"
+                    className="-mt-tight -mr-tight size-target shrink-0 text-muted-foreground"
                     onClick={() => setLines((current) => current.filter((entry) => entry.itemId !== line.itemId))}
                   >
                     <Trash2 aria-hidden />
                   </Button>
                 </div>
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
+                <div className="flex items-center justify-between gap-stack">
+                  <div className="flex items-center gap-stack">
                     <Button
                       type="button"
                       variant="outline"
@@ -109,7 +109,7 @@ export function ComboItemsField({ config, brandId, initialItems, initialDiscount
                     >
                       <Minus aria-hidden />
                     </Button>
-                    <span className="min-w-8 text-center type-item-title tabular-nums" aria-live="polite">
+                    <span className="min-w-stepper text-center type-item-title tabular-nums" aria-live="polite">
                       {line.quantity}
                     </span>
                     <Button
@@ -131,7 +131,7 @@ export function ComboItemsField({ config, brandId, initialItems, initialDiscount
           })}
         </ul>
       ) : (
-        <p className={`rounded-xl border border-dashed px-4 py-3 type-secondary ${invalid ? "border-destructive text-destructive" : "text-muted-foreground"}`}>
+        <p className={`rounded-xl border border-dashed px-inset py-inset-sm type-secondary ${invalid ? "border-destructive text-destructive" : "text-muted-foreground"}`}>
           {brandId ? labels.empty : labels.chooseBrand}
         </p>
       )}
@@ -145,7 +145,7 @@ export function ComboItemsField({ config, brandId, initialItems, initialDiscount
           setAdding((n) => n + 1);
         }}
       >
-        <SelectTrigger aria-label={labels.add} className="h-control w-full rounded-xl bg-card px-4 type-body">
+        <SelectTrigger aria-label={labels.add} className="h-control w-full rounded-xl bg-card px-inset type-body">
           <SelectValue placeholder={brandId && addable.length === 0 ? labels.allAdded : labels.addPlaceholder} />
         </SelectTrigger>
         <SelectContent>
@@ -157,9 +157,9 @@ export function ComboItemsField({ config, brandId, initialItems, initialDiscount
         </SelectContent>
       </Select>
 
-      <div className="flex gap-2">
+      <div className="flex gap-stack">
         <Select name="discountType" value={type} onValueChange={(next) => setType(next === "percent" ? "percent" : "amount")}>
-          <SelectTrigger aria-label={labels.discountType} className="h-control w-1/2 rounded-xl bg-card px-4 type-body">
+          <SelectTrigger aria-label={labels.discountType} className="h-control w-1/2 rounded-xl bg-card px-inset type-body">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -180,25 +180,25 @@ export function ComboItemsField({ config, brandId, initialItems, initialDiscount
           autoComplete="off"
           value={value}
           onChange={(event) => setValue(event.target.value)}
-          className="h-control w-1/2 rounded-xl bg-card px-4 type-body tabular-nums"
+          className="h-control w-1/2 rounded-xl bg-card px-inset type-body tabular-nums"
         />
       </div>
       {discountError ? (
-        <p role="alert" className="-mt-2 type-secondary text-destructive">
+        <p role="alert" className="-mt-stack type-secondary text-destructive">
           {discountError}
         </p>
       ) : null}
 
-      <dl className="flex flex-col gap-1 rounded-xl border bg-card p-4 type-body tabular-nums">
-        <div className="flex justify-between gap-3">
+      <dl className="flex flex-col gap-tight rounded-xl border bg-card p-inset type-body tabular-nums">
+        <div className="flex justify-between gap-item">
           <dt className="text-muted-foreground">{labels.subtotal}</dt>
           <dd>{formatVnd(result.subtotal, locale)}</dd>
         </div>
-        <div className="flex justify-between gap-3">
+        <div className="flex justify-between gap-item">
           <dt className="text-muted-foreground">{labels.discount}</dt>
           <dd>{result.discount > 0 ? `−${formatVnd(result.discount, locale)}` : formatVnd(0, locale)}</dd>
         </div>
-        <div className="flex justify-between gap-3 font-semibold">
+        <div className="flex justify-between gap-item font-semibold">
           <dt>{labels.price}</dt>
           <dd className="text-primary-text">{formatVnd(result.price, locale)}</dd>
         </div>

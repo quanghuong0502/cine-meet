@@ -94,6 +94,53 @@
   --spacing-field: 1.5rem; /* 24px: gap between two fields (blocks) of a form, in every form of the app */
   --spacing-nav-gap: 0.75rem; /* 12px: space kept above the floating pill; content clears the pill by `--nav-clearance` */
 
+  /*
+   * SPACING ROLES: every gap, margin and padding in the app takes one of these names, never a loose number (`gap-3`, `px-4`, `mt-1`...).
+   * Same role, same space on every screen; change a value here and the whole app follows. All are multiples of 4 (the 4/8 grid of
+   * iOS and Material; steps 8 / 16 / 24 are the common ones). Between things (gap, margin):
+   *   section  24  between the blocks of a page, and between two form fields' groups (`field` is the same 24 for form fields)
+   *   group    16  between related parts inside one block or card
+   *   item     12  between two cards or rows of a list; a label and its control
+   *   stack     8  things that sit next to each other: chips, two buttons, an icon and its text
+   *   tight     4  two lines of one thing (a name and its second line)
+   *   hair      2  the smallest nudge (a badge's vertical padding)
+   * Inside things (padding): inset-xs 8, inset-sm 12, inset 16 (the page margin and the card padding), inset-lg 24, inset-xl 32.
+   */
+  --spacing-section: 1.5rem;
+  --spacing-group: 1rem;
+  --spacing-item: 0.75rem;
+  --spacing-stack: 0.5rem;
+  --spacing-tight: 0.25rem;
+  --spacing-hair: 0.125rem;
+  --spacing-inset-xs: 0.5rem;
+  --spacing-inset-sm: 0.75rem;
+  --spacing-inset: 1rem;
+  --spacing-inset-lg: 1.5rem;
+  --spacing-inset-xl: 2rem;
+
+  /* SIZE ROLES for icons (the 4px steps of the icon sizes in design-tokens.md) and for the few fixed-size parts. */
+  --spacing-icon-xs: 0.75rem; /* 12: a colour dot */
+  --spacing-icon-sm: 1rem; /* 16: icon next to small text */
+  --spacing-icon: 1.25rem; /* 20: icon in a button, a count badge */
+  --spacing-icon-lg: 1.5rem; /* 24: icon on the tab bar and the back button */
+  --spacing-stepper: 2rem; /* 32: width of the quantity between the + and - buttons */
+  --spacing-swatch: 5rem; /* 80: a colour input, an image preview */
+  --spacing-track: 0.5rem; /* 8: thickness of a slider or heat bar */
+  --spacing-area-lg: 12rem; /* 192: minimum height of a big text area (pasting CSV) */
+  --spacing-area-max: 18rem; /* 288: maximum height of that text area */
+  --spacing-poster: 8.5rem; /* 136: poster on the movie page */
+  --spacing-mascot-max: 11rem; /* 176: tallest the mascot may be on a screen that must fit */
+  --spacing-fab-clear: 5rem; /* 80: room at the page end under the floating filter button */
+  --spacing-action-clear: calc(var(--spacing-control) + var(--spacing-inset-xl) + var(--spacing-stack)); /* 88: room under the fixed Add button */
+
+  /* WIDTH ROLES (max-w-*) of the columns a page is made of. */
+  --container-app: 42rem; /* 672: the user app column */
+  --container-page: 48rem; /* 768: an admin page */
+  --container-form: 24rem; /* 384: a form card, the save bar, the auth card */
+  --container-nav: 28rem; /* 448: the bottom menu pill */
+  --container-media: 36rem; /* 576: the trailer */
+  --container-hint: 20rem; /* 320: a short explanation under a picture */
+
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -126,6 +173,9 @@
    * pill reaches down into the home-bar zone, the way the iOS tab bar does). Content and fixed buttons clear it by `--nav-clearance`.
    */
   --nav-bottom: max(0.5rem, calc(env(safe-area-inset-bottom) - 1.25rem));
+  /* Bottom and top padding that also clears the iPhone home bar and notch (use `pb-(--inset-bottom)`, `pt-(--inset-top)`). */
+  --inset-bottom: max(var(--spacing-inset), env(safe-area-inset-bottom));
+  --inset-top: max(var(--spacing-inset), env(safe-area-inset-top));
   --nav-clearance: calc(var(--spacing-nav) + var(--spacing-nav-gap) + var(--nav-bottom));
   /* Where toasts sit on phones: above the floating bottom menu and the fixed "Add" button, never on top of them. */
   --toast-offset: calc(var(--nav-clearance) + var(--spacing-control) + 1.5rem);

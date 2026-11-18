@@ -18,7 +18,7 @@ export default async function AdminSettingsPage() {
   const states = await getTranslations("states");
   const admin = await requireAdmin();
   return (
-    <div className="flex flex-col gap-4 p-4">
+    <div className="flex flex-col gap-group p-inset">
       <PageHeader title={t("title")} backHref="/admin/profile" />
       <LanguageSetting />
       <SystemSettingsCard />

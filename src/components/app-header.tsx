@@ -25,7 +25,7 @@ export function AppHeader({ area, name, image }: AppHeaderProps) {
   return (
     <header
       className={cn(
-        "z-30 flex shrink-0 items-center justify-between gap-2 border-b px-4 py-1",
+        "z-30 flex shrink-0 items-center justify-between gap-stack border-b px-inset py-tight",
         area === "admin" && "bg-background/95 backdrop-blur md:hidden",
       )}
     >

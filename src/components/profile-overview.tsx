@@ -32,27 +32,27 @@ export async function ProfileOverview({ name, identity, role, avatar, phone, sea
   const account = await getTranslations("account");
 
   return (
-    <div className="flex w-full flex-col gap-4 p-4">
+    <div className="flex w-full flex-col gap-group p-inset">
       <PageHeader title={t("title")} backHref={backHref} />
       <Card>
-        <CardHeader className="flex-row items-center gap-4">
+        <CardHeader className="flex-row items-center gap-group">
           <UserAvatar name={name} image={avatar} size={64} />
-          <div className="flex min-w-0 flex-col gap-1">
+          <div className="flex min-w-0 flex-col gap-tight">
             <CardTitle className="type-heading break-words">{name}</CardTitle>
             <CardDescription className="break-words">{identity}</CardDescription>
           </div>
         </CardHeader>
-        <CardContent className="flex flex-col gap-3 type-secondary">
-          <dl className="grid gap-2">
-            <div className="flex justify-between gap-4">
+        <CardContent className="flex flex-col gap-item type-secondary">
+          <dl className="grid gap-stack">
+            <div className="flex justify-between gap-group">
               <dt className="text-muted-foreground">{t("fields.phone.label")}</dt>
               <dd className="font-medium">{phone ? formatVietnamPhone(phone) : t("notSet")}</dd>
             </div>
-            <div className="flex justify-between gap-4">
+            <div className="flex justify-between gap-group">
               <dt className="text-muted-foreground">{t("fields.seatPreference.label")}</dt>
               <dd className="font-medium">{seatPreference ? t(`seat.${seatPreference}`) : t("notSet")}</dd>
             </div>
-            <div className="flex justify-between gap-4">
+            <div className="flex justify-between gap-group">
               <dt className="text-muted-foreground">{t("roleLabel")}</dt>
               <dd className="font-medium">{t(`roles.${role}`)}</dd>
             </div>
@@ -65,8 +65,8 @@ export async function ProfileOverview({ name, identity, role, avatar, phone, sea
           </Button>
         </CardContent>
       </Card>
-      <nav aria-label={account("menuLabel")} className="flex flex-col gap-2">
-        <Button asChild variant="ghost" className="h-target justify-start gap-2">
+      <nav aria-label={account("menuLabel")} className="flex flex-col gap-stack">
+        <Button asChild variant="ghost" className="h-target justify-start gap-stack">
           <Link href={settingsHref}>
             <Settings aria-hidden />
             {account("settings")}

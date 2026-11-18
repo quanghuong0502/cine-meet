@@ -19,7 +19,7 @@ export default async function UserLayout({
   const hasBottomNav = ENABLED_NAV_ITEMS.length > 0;
 
   return (
-    <div data-app-shell className="mx-auto flex h-dvh w-full max-w-2xl flex-col overflow-hidden">
+    <div data-app-shell className="mx-auto flex h-dvh w-full max-w-app flex-col overflow-hidden">
       <AppHeader area="app" name={user.name} image={user.image} />
       <main
         data-app-scroll

@@ -31,7 +31,7 @@ interface Props {
   maxShowtimes: number;
 }
 
-const CONTROL_CLASS = "h-control rounded-xl bg-card px-4 type-body";
+const CONTROL_CLASS = "h-control rounded-xl bg-card px-inset type-body";
 const isCode = (code: string): code is ValidationCode => VALIDATION_CODES.some((known) => known === code);
 
 /** One movie x rooms x a range of days x start times. The lists travel as comma-separated hidden fields. */
@@ -66,7 +66,7 @@ export function ShowtimeBulkForm({ movies, formats, rooms, backHref, action, tod
 
   const error = (name: string) =>
     errors[name] ? (
-      <p role="alert" className="-mt-1 type-secondary text-destructive">
+      <p role="alert" className="-mt-tight type-secondary text-destructive">
         {tv(isCode(errors[name]) ? errors[name] : "invalid")}
       </p>
     ) : null;
@@ -82,7 +82,7 @@ export function ShowtimeBulkForm({ movies, formats, rooms, backHref, action, tod
 
   return (
     <form action={formAction} noValidate className="flex flex-1 flex-col gap-field">
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-item">
         {label("movieId", t("movie"), true)}
         <Select name="movieId" defaultValue={typed?.movieId || undefined}>
           <SelectTrigger id="movieId" aria-invalid={Boolean(errors.movieId) || undefined} className={`${CONTROL_CLASS} w-full`}>
@@ -97,7 +97,7 @@ export function ShowtimeBulkForm({ movies, formats, rooms, backHref, action, tod
         {error("movieId")}
       </div>
 
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-item">
         {label("formatId", t("format"), true)}
         <Select name="formatId" defaultValue={typed?.formatId || undefined}>
           <SelectTrigger id="formatId" aria-invalid={Boolean(errors.formatId) || undefined} className={`${CONTROL_CLASS} w-full`}>
@@ -112,9 +112,9 @@ export function ShowtimeBulkForm({ movies, formats, rooms, backHref, action, tod
         {error("formatId")}
       </div>
 
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-item">
         {label("rooms", t("rooms"), true)}
-        <div role="group" aria-label={t("rooms")} className="flex flex-wrap gap-2">
+        <div role="group" aria-label={t("rooms")} className="flex flex-wrap gap-stack">
           <input type="hidden" name="auditoriumIds" value={chosenRooms.join(",")} />
           {rooms.map((room) => (
             <Chip
@@ -129,12 +129,12 @@ export function ShowtimeBulkForm({ movies, formats, rooms, backHref, action, tod
         {error("auditoriumIds")}
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <div className="flex min-w-0 flex-col gap-3">
+      <div className="grid grid-cols-2 gap-item">
+        <div className="flex min-w-0 flex-col gap-item">
           {label("from", t("from"), true)}
           <Input id="from" type="date" value={from} onChange={(e) => setFrom(e.target.value)} className={`${CONTROL_CLASS} text-left [&::-webkit-date-and-time-value]:text-left`} />
         </div>
-        <div className="flex min-w-0 flex-col gap-3">
+        <div className="flex min-w-0 flex-col gap-item">
           {label("to", t("to"), true)}
           <Input id="to" type="date" value={to} min={from} onChange={(e) => setTo(e.target.value)} className={`${CONTROL_CLASS} text-left [&::-webkit-date-and-time-value]:text-left`} />
         </div>
@@ -142,9 +142,9 @@ export function ShowtimeBulkForm({ movies, formats, rooms, backHref, action, tod
         {error("dates")}
       </div>
 
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-item">
         {label("time", t("times"), true)}
-        <div className="flex gap-2">
+        <div className="flex gap-stack">
           <Input
             id="time"
             type="time"
@@ -165,12 +165,12 @@ export function ShowtimeBulkForm({ movies, formats, rooms, backHref, action, tod
         </div>
         <input type="hidden" name="times" value={times.join(",")} />
         {times.length > 0 ? (
-          <ul className="flex flex-wrap gap-2">
+          <ul className="flex flex-wrap gap-stack">
             {times.map((time) => (
               <li key={time}>
                 <Chip selected onClick={() => setTimes((c) => c.filter((v) => v !== time))} aria-label={t("removeTime", { time })}>
                   {time}
-                  <X className="size-4" aria-hidden />
+                  <X className="size-icon-sm" aria-hidden />
                 </Chip>
               </li>
             ))}
@@ -179,7 +179,7 @@ export function ShowtimeBulkForm({ movies, formats, rooms, backHref, action, tod
         {error("times")}
       </div>
 
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-item">
         {label("priceOverride", t("price"))}
         <Input id="priceOverride" name="priceOverride" type="number" inputMode="numeric" step="1" min={0} placeholder="90000" autoComplete="off" defaultValue={typed?.priceOverride} className={CONTROL_CLASS} />
         {error("priceOverride")}
@@ -190,14 +190,14 @@ export function ShowtimeBulkForm({ movies, formats, rooms, backHref, action, tod
       </p>
 
       {state.status === "error" && state.error !== "validation" ? (
-        <p role="alert" className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 type-secondary text-destructive">
+        <p role="alert" className="rounded-xl border border-destructive/30 bg-destructive/10 px-inset py-inset-sm type-secondary text-destructive">
           {t(`errors.${state.error}`, { max: maxShowtimes })}
         </p>
       ) : null}
 
-      <div aria-hidden className="h-[calc(var(--spacing-control)+2.5rem)] shrink-0" />
-      <div data-save-bar className="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] md:left-64">
-        <div className="mx-auto flex max-w-sm">
+      <div aria-hidden className="h-action-clear shrink-0" />
+      <div data-save-bar className="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-inset pb-(--inset-bottom) md:left-64">
+        <div className="mx-auto flex max-w-form">
           <Button type="submit" size="cta" disabled={isPending || total > maxShowtimes} className="pointer-events-auto min-w-0 flex-1">
             {isPending ? (
               <>

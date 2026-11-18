@@ -21,8 +21,8 @@ export function LoadingState({ fullScreen = false, compact = false, className }:
       role="status"
       aria-live="polite"
       className={cn(
-        "flex flex-col items-center justify-center gap-3",
-        fullScreen ? "min-h-dvh" : "min-h-48 flex-1",
+        "flex flex-col items-center justify-center gap-item",
+        fullScreen ? "min-h-dvh" : "min-h-area-lg flex-1",
         className,
       )}
     >

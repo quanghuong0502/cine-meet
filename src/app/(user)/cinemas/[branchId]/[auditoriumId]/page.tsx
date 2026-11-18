@@ -26,7 +26,7 @@ export default async function RoomPage({ params }: Props) {
   const marks = await getSeatMarks(user.userId, auditoriumId, view.layoutId);
 
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4">
+    <div className="flex flex-1 flex-col gap-section p-inset">
       <PageHeader title={view.auditorium.name} backHref={`/cinemas/${branchId}`} description={[view.branch.brandName, view.branch.name].filter(Boolean).join(" · ") || t("subtitle")} />
       <RoomSeatView view={view} marks={marks} saveAction={saveSeatMarkAction} removeAction={removeSeatMarkAction} />
     </div>

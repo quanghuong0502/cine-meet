@@ -15,7 +15,7 @@ import type { EditorSeatType } from "./types";
 
 const SIDES: EntranceSide[] = ["left", "center", "right"];
 const POSITIONS: EntrancePosition[] = ["front", "back"];
-const CONTROL = "h-control rounded-xl bg-card px-4 type-body";
+const CONTROL = "h-control rounded-xl bg-card px-inset type-body";
 
 interface Props {
   name: string;
@@ -46,7 +46,7 @@ export function SettingsPanel({ name, onName, branchId, onBranch, branchLocked, 
 
   return (
     <div className="flex flex-col gap-field" role="tabpanel">
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-item">
         <Label htmlFor="aud-name" className="text-muted-foreground">
           <span>
             {t("fields.name.label")}
@@ -65,10 +65,10 @@ export function SettingsPanel({ name, onName, branchId, onBranch, branchLocked, 
           onChange={(event) => onName(event.target.value)}
           className={CONTROL}
         />
-        {errors.name ? <p role="alert" className="-mt-1 type-secondary text-destructive">{err(errors.name)}</p> : null}
+        {errors.name ? <p role="alert" className="-mt-tight type-secondary text-destructive">{err(errors.name)}</p> : null}
       </div>
 
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-item">
         <Label htmlFor="aud-branch" className="text-muted-foreground">
           <span>
             {t("fields.branch.label")}
@@ -87,11 +87,11 @@ export function SettingsPanel({ name, onName, branchId, onBranch, branchLocked, 
             ))}
           </SelectContent>
         </Select>
-        {errors.branchId ? <p role="alert" className="-mt-1 type-secondary text-destructive">{err(errors.branchId)}</p> : null}
+        {errors.branchId ? <p role="alert" className="-mt-tight type-secondary text-destructive">{err(errors.branchId)}</p> : null}
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div className="flex flex-col gap-3">
+      <div className="grid grid-cols-2 gap-group">
+        <div className="flex flex-col gap-item">
           <Label htmlFor="aud-rows" className="text-muted-foreground">
             <span>
               {t("fields.rows.label")}
@@ -100,7 +100,7 @@ export function SettingsPanel({ name, onName, branchId, onBranch, branchLocked, 
           </Label>
           <NumberField id="aud-rows" value={config.rows} min={1} max={MAX_ROWS} onChange={(n) => n !== null && resize({ rows: n })} />
         </div>
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-item">
           <Label htmlFor="aud-cols" className="text-muted-foreground">
             <span>
               {t("fields.cols.label")}
@@ -111,7 +111,7 @@ export function SettingsPanel({ name, onName, branchId, onBranch, branchLocked, 
         </div>
       </div>
 
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-item">
         <span className="type-label leading-none! text-muted-foreground">{t("fields.rowLabelOrder.label")}</span>
         <ChoiceGroup
           label={t("fields.rowLabelOrder.label")}
@@ -124,7 +124,7 @@ export function SettingsPanel({ name, onName, branchId, onBranch, branchLocked, 
         />
       </div>
 
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-item">
         <span className="type-label leading-none! text-muted-foreground">{t("fields.colNumbering.label")}</span>
         <ChoiceGroup
           label={t("fields.colNumbering.label")}
@@ -137,7 +137,7 @@ export function SettingsPanel({ name, onName, branchId, onBranch, branchLocked, 
         />
       </div>
 
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-item">
         <Label htmlFor="aud-default-type" className="text-muted-foreground">
           <span>
             {t("fields.defaultSeatType.label")}
@@ -158,8 +158,8 @@ export function SettingsPanel({ name, onName, branchId, onBranch, branchLocked, 
         </Select>
       </div>
 
-      <div className="flex flex-col gap-1">
-        <div className="flex items-baseline justify-between gap-4">
+      <div className="flex flex-col gap-tight">
+        <div className="flex items-baseline justify-between gap-group">
           <Label htmlFor="aud-screen-pos" className="text-muted-foreground">
             {t("fields.screenPosition.label")}
           </Label>
@@ -176,8 +176,8 @@ export function SettingsPanel({ name, onName, branchId, onBranch, branchLocked, 
         />
       </div>
 
-      <div className="flex flex-col gap-1">
-        <div className="flex items-baseline justify-between gap-4">
+      <div className="flex flex-col gap-tight">
+        <div className="flex items-baseline justify-between gap-group">
           <Label htmlFor="aud-screen-width" className="text-muted-foreground">
             {t("fields.screenWidth.label")}
           </Label>
@@ -194,7 +194,7 @@ export function SettingsPanel({ name, onName, branchId, onBranch, branchLocked, 
         />
       </div>
 
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-item">
         <span className="type-label leading-none! text-muted-foreground">{t("fields.screenDistance.label")}</span>
         <ChoiceGroup
           label={t("fields.screenDistance.label")}
@@ -208,7 +208,7 @@ export function SettingsPanel({ name, onName, branchId, onBranch, branchLocked, 
         />
       </div>
 
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-item">
         <Label htmlFor="aud-stadium" className="text-muted-foreground">
           {t("fields.stadiumFromRow.label")}
         </Label>
@@ -223,9 +223,9 @@ export function SettingsPanel({ name, onName, branchId, onBranch, branchLocked, 
         />
       </div>
 
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-item">
         <span className="type-label leading-none! text-muted-foreground">{t("fields.verticalAisles.label")}</span>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-stack">
           {Array.from({ length: config.cols - 1 }, (_, i) => i + 1).map((n) => (
             <Chip
               key={n}
@@ -239,9 +239,9 @@ export function SettingsPanel({ name, onName, branchId, onBranch, branchLocked, 
         </div>
       </div>
 
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-item">
         <span className="type-label leading-none! text-muted-foreground">{t("fields.horizontalAisles.label")}</span>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-stack">
           {Array.from({ length: config.rows - 1 }, (_, i) => i + 1).map((n) => (
             <Chip
               key={n}
@@ -254,9 +254,9 @@ export function SettingsPanel({ name, onName, branchId, onBranch, branchLocked, 
         </div>
       </div>
 
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-item">
         <span className="type-label leading-none! text-muted-foreground">{t("fields.entrances.label")}</span>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-stack">
           {POSITIONS.flatMap((position) => SIDES.map((side) => ({ side, position }))).map(({ side, position }) => {
             const on = config.entrances.some((e) => e.side === side && e.position === position);
             return (

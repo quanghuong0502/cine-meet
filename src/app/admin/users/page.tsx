@@ -25,7 +25,7 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
   const users = await listUsers({ q });
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-4 p-4">
+    <div className="mx-auto flex w-full max-w-page flex-1 flex-col gap-section p-inset">
       <PageHeader title={t("title")} description={t("description")} />
       <ResourceManager
         basePath="/admin/users"

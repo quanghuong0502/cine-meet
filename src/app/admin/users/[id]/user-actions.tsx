@@ -54,7 +54,7 @@ export function UserActions({ id, name, locked, isSelf, canResetPassword, resetH
   if (!canToggle && !canResetPassword) return null;
 
   return (
-    <div className="grid gap-2">
+    <div className="grid gap-stack">
       {canResetPassword ? (
         <Button asChild variant="outline" size="cta-sm">
           <Link href={resetHref}>

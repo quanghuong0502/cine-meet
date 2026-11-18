@@ -306,7 +306,7 @@ export function SeatMap({
   );
 
   return (
-    <div className={cn("flex flex-col gap-2", className)}>
+    <div className={cn("flex flex-col gap-stack", className)}>
       <div
         ref={containerRef}
         {...handlers}
@@ -342,24 +342,24 @@ export function SeatMap({
           />
         </svg>
 
-        <div className="absolute right-2 bottom-2 flex gap-2" data-no-pan>
+        <div className="absolute right-2 bottom-2 flex gap-stack" data-no-pan>
           <Button type="button" variant="secondary" size="icon" aria-label={t("zoomOut")} disabled={scale <= MIN_SCALE} onClick={zoomOut} onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()}>
-            <ZoomOut className="size-5" />
+            <ZoomOut className="size-icon" />
           </Button>
           <Button type="button" variant="secondary" size="icon" aria-label={t("zoomIn")} disabled={scale >= MAX_SCALE} onClick={zoomIn} onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()}>
-            <ZoomIn className="size-5" />
+            <ZoomIn className="size-icon" />
           </Button>
           <Button type="button" variant="secondary" size="icon" aria-label={t("zoomReset")} disabled={scale <= MIN_SCALE} onClick={reset} onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()}>
-            <RotateCcw className="size-5" />
+            <RotateCcw className="size-icon" />
           </Button>
         </div>
       </div>
 
       {showHeatmap ? (
-        <div className="flex items-center gap-2 type-micro text-muted-foreground">
+        <div className="flex items-center gap-stack type-micro text-muted-foreground">
           <span>{t("heatLow")}</span>
           <div
-            className="h-2 flex-1 rounded-full"
+            className="h-track flex-1 rounded-full"
             style={{ background: `linear-gradient(in oklch to right, ${[0, 0.25, 0.5, 0.75, 1].map((t) => heatColor(t, 0, 1)).join(", ")})` }}
             aria-hidden
           />

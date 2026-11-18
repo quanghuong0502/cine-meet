@@ -15,7 +15,7 @@ export default async function SettingsPage() {
   const t = await getTranslations("settings");
   const user = await requireUser();
   return (
-    <div className="flex flex-col gap-4 p-4">
+    <div className="flex flex-col gap-group p-inset">
       <PageHeader title={t("title")} backHref="/profile" />
       <LanguageSetting />
       <SecuritySetting hasPassword={user.hasPassword} />

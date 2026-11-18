@@ -19,8 +19,8 @@ export default async function AdminLayout({
 
   return (
     <div data-app-shell className="h-dvh overflow-hidden md:grid md:grid-cols-[16rem_1fr] md:grid-rows-1">
-      <aside className="sticky top-0 hidden h-dvh flex-col gap-4 border-r p-4 md:flex">
-        <span className="px-3 py-2">
+      <aside className="sticky top-0 hidden h-dvh flex-col gap-group border-r p-inset md:flex">
+        <span className="px-inset-sm py-inset-xs">
           <Logo size={44} wordmarkClassName="type-heading" />
         </span>
         <AdminNav />

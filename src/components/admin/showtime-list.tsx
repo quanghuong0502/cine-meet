@@ -41,14 +41,14 @@ export function AdminShowtimeList({ rows, removeAction }: { rows: ShowtimeRow[];
 
   return (
     <>
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-group">
         {[...days.entries()].map(([day, items]) => (
-          <section key={day} className="flex flex-col gap-2">
+          <section key={day} className="flex flex-col gap-stack">
             <h2 className="type-heading">{formatDayKey(day, locale)}</h2>
-            <ul className="flex flex-col gap-2">
+            <ul className="flex flex-col gap-stack">
               {items.map((row) => (
-                <li key={row.id} className="flex min-w-0 items-center rounded-xl border bg-card pr-2">
-                  <div className="flex min-h-row min-w-0 flex-1 flex-col justify-center gap-0.5 py-3 pl-4">
+                <li key={row.id} className="flex min-w-0 items-center rounded-xl border bg-card pr-inset-xs">
+                  <div className="flex min-h-row min-w-0 flex-1 flex-col justify-center gap-tight py-inset-sm pl-inset">
                     <span className="truncate type-item-title">
                       {formatTime(row.startAt, locale)}–{formatTime(row.endAt, locale)} · {row.movie.title}
                     </span>

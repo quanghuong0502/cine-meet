@@ -37,12 +37,12 @@ export function BottomNav({ label, items, className }: BottomNavProps) {
       aria-label={label}
       data-bottom-fixed
       className={cn(
-        "pointer-events-none fixed inset-x-0 bottom-0 z-40 px-4 pb-[var(--nav-bottom)]",
+        "pointer-events-none fixed inset-x-0 bottom-0 z-40 px-inset pb-[var(--nav-bottom)]",
         className,
       )}
     >
       <ul
-        className="pointer-events-auto mx-auto grid max-w-md rounded-full border border-white/15 bg-card/70 px-2 shadow-[0_8px_32px_-8px_rgb(0_0_0/0.6),inset_0_1px_0_rgb(255_255_255/0.12)] backdrop-blur-xl backdrop-saturate-150"
+        className="pointer-events-auto mx-auto grid max-w-nav rounded-full border border-white/15 bg-card/70 px-inset-xs shadow-[0_8px_32px_-8px_rgb(0_0_0/0.6),inset_0_1px_0_rgb(255_255_255/0.12)] backdrop-blur-xl backdrop-saturate-150"
         style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}
       >
         {items.map((item) => {
@@ -55,13 +55,13 @@ export function BottomNav({ label, items, className }: BottomNavProps) {
                 onClick={() => markPending(item.href)}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex min-h-nav flex-col items-center justify-center gap-1 rounded-full type-tag",
+                  "flex min-h-nav flex-col items-center justify-center gap-tight rounded-full type-tag",
                   active ? "font-semibold! text-primary-text" : "text-muted-foreground",
                 )}
               >
                 {/* Active: filled with the tab colour; the bar colour as stroke carves the icon's details out of the fill. */}
-                <Icon className={cn("size-6", active && "fill-current stroke-card")} aria-hidden />
-                <span className="max-w-full truncate px-0.5">{item.label}</span>
+                <Icon className={cn("size-icon-lg", active && "fill-current stroke-card")} aria-hidden />
+                <span className="max-w-full truncate px-hair">{item.label}</span>
               </Link>
             </li>
           );
