@@ -140,8 +140,8 @@
   --spacing-switch: 3.25rem; /* 52: width of a switch (its height is `stepper`) */
   --spacing-switch-thumb: 1.75rem; /* 28: the knob of a switch */
   --spacing-sidebar: 16rem; /* 256: the admin sidebar on a wide screen (fixed bars start after it) */
-  --spacing-fab-clear: 5rem; /* 80: room at the page end under the floating filter button */
-  --spacing-action-clear: calc(var(--spacing-control) + var(--spacing-inset-xl) + var(--spacing-stack)); /* 88: room under the fixed Add button */
+  --spacing-action-clear: calc(var(--spacing-control) + var(--spacing-inset-xl) + var(--spacing-stack)); /* 88: room at the page end under a button floating above the menu (filter button, poll bar, admin Add button) */
+  --spacing-save-clear: calc(var(--spacing-control) + var(--inset-bottom) + var(--spacing-group)); /* 48 + home-bar gap + 16: room at the page end under a Save bar fixed to the screen bottom (bar height plus 16 of air) */
 
   /* WIDTH ROLES (max-w-*) of the columns a page is made of. */
   --container-app: 42rem; /* 672: the user app column */

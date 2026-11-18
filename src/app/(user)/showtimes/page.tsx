@@ -77,7 +77,7 @@ export default async function ShowtimesPage({ searchParams }: { searchParams: Pr
   const dayLabel = new Intl.DateTimeFormat(en ? "en-GB" : "vi-VN", { timeZone: "UTC", weekday: "short" });
 
   return (
-    <div className="flex flex-1 flex-col gap-section p-inset pb-fab-clear">
+    <div className="flex flex-1 flex-col gap-section p-inset pb-action-clear">
       <PageHeader title={t("title")} />
 
       {nowShowing.length > 0 ? (

@@ -238,7 +238,7 @@ export function NewAppointmentForm({ movies, movieId, showtimes, initialShowtime
         {fieldError("deadline")}
       </div>
 
-      <div aria-hidden className="h-action-clear shrink-0" />
+      <div aria-hidden className="h-save-clear shrink-0" />
       <div data-save-bar className="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-inset pb-(--inset-bottom)">
         <div className="mx-auto flex max-w-form items-center">
           <Button type="submit" size="cta" disabled={pending} className="pointer-events-auto min-w-0 flex-1">

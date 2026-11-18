@@ -233,7 +233,7 @@ export function AuditoriumEditor({ auditorium, branches, seatTypes, initialConfi
       ) : null}
 
       {/* Room for the fixed bar, so the last control can scroll clear of it. */}
-      <div aria-hidden className="h-action-clear shrink-0" />
+      <div aria-hidden className="h-save-clear shrink-0" />
 
       <div data-save-bar className="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-inset pb-(--inset-bottom) md:left-sidebar">
         <div className="mx-auto flex max-w-form items-center gap-stack">

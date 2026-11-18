@@ -195,7 +195,7 @@ export function ShowtimeBulkForm({ movies, formats, rooms, backHref, action, tod
         </p>
       ) : null}
 
-      <div aria-hidden className="h-action-clear shrink-0" />
+      <div aria-hidden className="h-save-clear shrink-0" />
       <div data-save-bar className="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-inset pb-(--inset-bottom) md:left-sidebar">
         <div className="mx-auto flex max-w-form">
           <Button type="submit" size="cta" disabled={isPending || total > maxShowtimes} className="pointer-events-auto min-w-0 flex-1">

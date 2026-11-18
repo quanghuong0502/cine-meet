@@ -250,7 +250,7 @@ export function ResourceForm({ itemId, fields, values, backHref, saveAction, del
       ) : null}
 
       {/* Room for the fixed Save button, so the last field can scroll clear of it. */}
-      <div aria-hidden className="h-action-clear shrink-0" />
+      <div aria-hidden className="h-save-clear shrink-0" />
 
       {/* Fixed to the bottom, in thumb reach. It stays while the keyboard is open: on the installed app the keyboard shrinks the page, so
           the bar rides just above it and Save is always reachable while typing (unlike the menu and the list's Add button, which hide). */}

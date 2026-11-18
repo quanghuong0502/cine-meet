@@ -2,6 +2,7 @@ import { AppOpenedMarker } from "@/components/route-loading";
 import { AppHeader } from "@/components/app-header";
 import { redirect } from "next/navigation";
 import { UserBottomNav } from "@/components/user-bottom-nav";
+import { UserMain } from "@/components/user-main";
 import { requireUser } from "@/lib/auth/guards";
 import { ENABLED_NAV_ITEMS } from "@/lib/nav";
 import { countUnread } from "@/services/notification.service";
@@ -24,16 +25,7 @@ export default async function UserLayout({
   return (
     <div data-app-shell className="mx-auto flex h-dvh w-full max-w-app flex-col overflow-hidden">
       <AppHeader area="app" name={user.name} image={user.image} unread={unread} />
-      <main
-        data-app-scroll
-        className={
-          hasBottomNav
-            ? "flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto overscroll-contain pb-[var(--nav-clearance)]"
-            : "flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto overscroll-contain"
-        }
-      >
-        {children}
-      </main>
+      <UserMain hasBottomNav={hasBottomNav}>{children}</UserMain>
       <UserBottomNav />
       <AppOpenedMarker />
     </div>
