@@ -702,11 +702,12 @@
             "label": "Màn hình cách hàng đầu"
           },
           "stadiumFromRow": {
-            "label": "Bậc thang từ hàng thứ (tính từ màn hình, trống nếu phòng phẳng)",
+            "label": "Bậc bắt đầu từ hàng",
             "placeholder": "vd. 3"
           },
           "stepsPerRow": {
-            "label": "Số bậc giữa hai hàng"
+            "label": "Số bậc giữa hai hàng",
+            "flat": "Phẳng"
           },
           "verticalAisles": {
             "label": "Lối đi dọc (sau cột)"

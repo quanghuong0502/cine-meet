@@ -209,30 +209,36 @@ export function SettingsPanel({ name, onName, branchId, onBranch, branchLocked, 
       </div>
 
       <div className="flex flex-col gap-item">
-        <Label htmlFor="aud-stadium" className="text-muted-foreground">
-          {t("fields.stadiumFromRow.label")}
-        </Label>
-        <NumberField
-          id="aud-stadium"
-          optional
-          value={config.stadiumFromRow}
-          min={1}
-          max={config.rows}
-          placeholder={t("fields.stadiumFromRow.placeholder")}
-          onChange={(stadiumFromRow) => set({ stadiumFromRow })}
-        />
-      </div>
-
-      <div className="flex flex-col gap-item">
         <span className="type-label leading-none! text-muted-foreground">{t("fields.stepsPerRow.label")}</span>
         <ChoiceGroup
           label={t("fields.stepsPerRow.label")}
-          value={String(config.stepsPerRow)}
-          options={Array.from({ length: MAX_STEPS_PER_ROW - MIN_STEPS_PER_ROW + 1 }, (_, i) => String(MIN_STEPS_PER_ROW + i)).map((n) => ({ value: n, label: n }))}
-          onChange={(n) => set({ stepsPerRow: Number(n) })}
-          disabled={config.stadiumFromRow === null}
+          value={config.stadiumFromRow === null ? "0" : String(config.stepsPerRow)}
+          options={[
+            { value: "0", label: t("fields.stepsPerRow.flat") },
+            ...Array.from({ length: MAX_STEPS_PER_ROW - MIN_STEPS_PER_ROW + 1 }, (_, i) => String(MIN_STEPS_PER_ROW + i)).map((n) => ({ value: n, label: n })),
+          ]}
+          onChange={(n) =>
+            // 0 = flat room: no stadium row. Any steps count turns the stadium on, from the front row unless a row was already set.
+            set(n === "0" ? { stadiumFromRow: null } : { stepsPerRow: Number(n), stadiumFromRow: config.stadiumFromRow ?? 1 })
+          }
         />
       </div>
+
+      {config.stadiumFromRow !== null ? (
+        <div className="flex flex-col gap-item">
+          <Label htmlFor="aud-stadium" className="text-muted-foreground">
+            {t("fields.stadiumFromRow.label")}
+          </Label>
+          <NumberField
+            id="aud-stadium"
+            value={config.stadiumFromRow}
+            min={1}
+            max={config.rows}
+            placeholder={t("fields.stadiumFromRow.placeholder")}
+            onChange={(stadiumFromRow) => set({ stadiumFromRow: stadiumFromRow ?? 1 })}
+          />
+        </div>
+      ) : null}
 
       <div className="flex flex-col gap-item">
         <span className="type-label leading-none! text-muted-foreground">{t("fields.verticalAisles.label")}</span>

@@ -702,11 +702,12 @@
             "label": "Screen to front row"
           },
           "stadiumFromRow": {
-            "label": "Stadium starts at row (from the screen, empty if flat)",
+            "label": "Steps start at row",
             "placeholder": "e.g. 3"
           },
           "stepsPerRow": {
-            "label": "Steps between two rows"
+            "label": "Steps between two rows",
+            "flat": "Flat"
           },
           "verticalAisles": {
             "label": "Vertical aisles (after column)"
