@@ -1,6 +1,9 @@
 "use server";
 
-import { requireUser } from "@/lib/auth/guards";
+import { isValidObjectId } from "mongoose";
+import { requireAdmin, requireUser } from "@/lib/auth/guards";
+import { connectToDatabase } from "@/lib/db";
+import { User } from "@/models/user";
 import { buildTestPayload } from "@/notifications/deliver";
 import { pushConfig, sendWebPush } from "@/notifications/push";
 import { NOTIFICATION_TYPES, type NotificationType } from "@/notifications/types";
@@ -27,9 +30,16 @@ export async function setPushPreferenceAction(type: string, enabled: boolean): P
   return { ok: await setPushPreference(user.userId, type as NotificationType, enabled === true) };
 }
 
-export async function sendTestPushAction(): Promise<{ ok: true; result: TestResult } | { ok: false; error: "not_configured" }> {
-  const user = await requireUser();
+/** Admin only: sends a test push to the chosen person's devices, in that person's language. */
+export async function sendTestPushAction(
+  targetId: string,
+): Promise<{ ok: true; name: string; result: TestResult } | { ok: false; error: "not_configured" | "not_found" }> {
+  await requireAdmin();
   if (!pushConfig()) return { ok: false, error: "not_configured" };
-  const payload = await buildTestPayload(user.locale ?? "vi");
-  return { ok: true, result: await sendTestPush(user.userId, payload, sendWebPush) };
+  if (typeof targetId !== "string" || !isValidObjectId(targetId)) return { ok: false, error: "not_found" };
+  await connectToDatabase();
+  const target = await User.findOne({ _id: targetId, role: "user", status: "active" }, "name locale").lean();
+  if (!target) return { ok: false, error: "not_found" };
+  const payload = await buildTestPayload(target.locale ?? "vi");
+  return { ok: true, name: target.name, result: await sendTestPush(targetId, payload, sendWebPush) };
 }

@@ -102,3 +102,21 @@ export async function sendTestPush(userId: string, payload: PushPayload, sender:
   }
   return result;
 }
+
+export interface PushTarget {
+  id: string;
+  name: string;
+  deviceCount: number;
+}
+
+/** Active regular accounts with how many devices each has push turned on: the list the admin picks from to send a test. */
+export async function listPushTargets(): Promise<PushTarget[]> {
+  await connectToDatabase();
+  const users = await User.find({ role: "user", status: "active" }, "name").sort({ name: 1 }).lean();
+  const counts = await PushSubscription.aggregate<{ _id: unknown; count: number }>([
+    { $match: { userId: { $in: users.map((u) => u._id) } } },
+    { $group: { _id: "$userId", count: { $sum: 1 } } },
+  ]);
+  const byUser = new Map(counts.map((c) => [String(c._id), c.count]));
+  return users.map((u) => ({ id: u._id.toString(), name: u.name, deviceCount: byUser.get(u._id.toString()) ?? 0 }));
+}

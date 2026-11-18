@@ -1,10 +1,10 @@
 "use client";
 
-import { Bell, BellOff, LoaderCircle, Send, Smartphone, Trash2 } from "lucide-react";
+import { Bell, BellOff, LoaderCircle, Smartphone, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { removePushDeviceAction, savePushSubscriptionAction, sendTestPushAction, setPushPreferenceAction } from "@/actions/push";
+import { removePushDeviceAction, savePushSubscriptionAction, setPushPreferenceAction } from "@/actions/push";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -118,22 +118,6 @@ export function NotificationSettings({ publicKey, devices: initialDevices, pushO
     });
   }
 
-  function sendTest() {
-    start(async () => {
-      const result = await sendTestPushAction().catch(() => null);
-      if (!result) {
-        toast.error(t("errors.network"));
-        return;
-      }
-      if (!result.ok) {
-        toast.error(t("errors.notConfigured"));
-        return;
-      }
-      if (result.result.sent > 0) toast.success(t("testSent"));
-      else toast.error(t("errors.testFailed"));
-    });
-  }
-
   function toggleType(type: NotificationType, enabled: boolean) {
     const before = off;
     setOff(enabled ? off.filter((o) => o !== type) : [...off, type]);
@@ -172,13 +156,7 @@ export function NotificationSettings({ publicKey, devices: initialDevices, pushO
             {t("denied")}
           </p>
         ) : thisDevice ? (
-          <div className="flex flex-col gap-stack">
-            <p className="type-secondary text-muted-foreground">{t("on")}</p>
-            <Button type="button" variant="outline" size="pill" disabled={pending} onClick={sendTest}>
-              {pending ? <LoaderCircle className="motion-safe:animate-spin" aria-hidden /> : <Send aria-hidden />}
-              {t("sendTest")}
-            </Button>
-          </div>
+          <p className="type-secondary text-muted-foreground">{t("on")}</p>
         ) : (
           <Button type="button" size="pill" disabled={pending} onClick={turnOn}>
             {pending ? <LoaderCircle className="motion-safe:animate-spin" aria-hidden /> : <Bell aria-hidden />}

@@ -859,6 +859,25 @@
           "too_many": "Tối đa 500 dòng mỗi lần nhập."
         }
       }
+    },
+    "pushTest": {
+      "title": "Thử thông báo đẩy",
+      "cardDescription": "Gửi một thông báo thử tới thiết bị của một người dùng để kiểm tra push.",
+      "open": "Mở",
+      "targetLabel": "Gửi tới",
+      "targetPlaceholder": "Chọn người dùng",
+      "targetOption": "{name} ({count, plural, =0 {chưa bật thiết bị nào} other {# thiết bị}})",
+      "send": "Gửi thử",
+      "sent": "Đã gửi tới {name}, {count, plural, one {# thiết bị} other {# thiết bị}}",
+      "noDevice": "{name} chưa bật thông báo đẩy trên thiết bị nào.",
+      "allFailed": "Chưa gửi được tới {name}. Xem lại khóa VAPID hoặc thử lại sau.",
+      "notConfigured": "Máy chủ chưa có khóa VAPID nên chưa gửi được. Thêm VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT rồi chạy lại máy chủ.",
+      "errors": {
+        "pick": "Chọn người nhận trước nha.",
+        "network": "Mạng đang chập chờn, thử lại giúp [me] nha.",
+        "not_configured": "Máy chủ chưa có khóa VAPID.",
+        "not_found": "Không tìm thấy người dùng này."
+      }
     }
   },
   "placeholders": {
@@ -961,9 +980,7 @@
       "denied": "[you] đang chặn thông báo của app này. Mở cài đặt của trình duyệt hoặc điện thoại để cho phép lại nha.",
       "turnOn": "Bật thông báo trên thiết bị này",
       "on": "Thiết bị này đang nhận thông báo đẩy, kể cả khi đã đóng app.",
-      "sendTest": "Gửi thử thông báo",
       "turnedOn": "Đã bật thông báo trên thiết bị này",
-      "testSent": "Đã gửi rồi nè, nhìn lên màn hình xem nha",
       "removed": "Đã tắt thông báo trên thiết bị đó",
       "devicesTitle": "Thiết bị nhận thông báo",
       "thisDevice": "Thiết bị này",
@@ -990,8 +1007,7 @@
         "network": "Mạng đang chập chờn, thử lại giúp [me] nha.",
         "saveFailed": "Chưa lưu được thiết bị này, thử lại nha.",
         "subscribeFailed": "Chưa bật được thông báo trên thiết bị này. Thử lại hoặc kiểm tra quyền thông báo nha.",
-        "notConfigured": "Máy chủ chưa bật thông báo đẩy.",
-        "testFailed": "Chưa gửi được. Thử tắt rồi bật lại thông báo trên thiết bị này nha."
+        "notConfigured": "Máy chủ chưa bật thông báo đẩy."
       }
     },
     "install": {

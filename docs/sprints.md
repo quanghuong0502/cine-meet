@@ -188,7 +188,7 @@ giới hạn tra cứu, kết bạn cần chấp nhận (thiết kế mục 6 v�
 - [x] Sau khi chốt, người tạo không thêm/bớt được người; người tham gia tự rút được và người tạo nhận thông báo (test `appointment.service.test.ts`; màn hình chưa thử trên điện thoại).
 - [x] Người vote Có phương án khác phương án được chọn không tự động nằm trong danh sách (người tạo phải thêm tay) (test service; màn hình chưa thử trên điện thoại).
 - [ ] Thông báo in-app đến đúng người, đúng thời điểm.
-- [ ] Web Push: bật trên Android và trên iPhone (đã cài PWA), "Gửi thử" nhận được kể cả khi đã đóng app; sự kiện mời/chốt/hủy đến đúng người.
+- [ ] Web Push: bật trên Android và trên iPhone (đã cài PWA), "Gửi thử" (admin gửi từ Cài đặt quản trị tới người dùng chọn) nhận được kể cả khi đã đóng app; sự kiện mời/chốt/hủy đến đúng người.
 - [x] Không gửi trùng khi chạy hai worker; một thiết bị lỗi 410 thì subscription bị xóa, các thiết bị khác vẫn nhận (test `src/notifications/deliver.test.ts` với bộ gửi giả).
 - [x] Test máy trạng thái pass; test tra cứu số điện thoại bị giới hạn tần suất (`state.test.ts`, `friend.service.test.ts`).
 
@@ -360,7 +360,7 @@ Mỗi sprint xong thêm 3 đến 6 dòng: đã làm gì, còn dở gì, quyết 
   **Bạn bè** (`friendships`, `friendGroups`, `friendLookups`, `users.inviteCode`; kết bạn bằng số điện thoại hoặc link mời `/friends/invite/[code]`, lời mời cần chấp nhận, hai bên cùng gửi thì thành bạn, nhóm bạn; tra cứu số trả lời giống nhau dù số có tài khoản hay không, 10 lần mỗi giờ).
   **Lịch hẹn giai đoạn 1** (`appointments`; `src/lib/appointment/state.ts` là máy trạng thái thuần có test; `appointment.service.ts`: tạo, gửi, vote, đề xuất giờ, từ chối, chốt, rút lui, hủy; lưu bằng optimistic concurrency và thử lại); màn `/appointments`, `/appointments/new`, `/appointments/[id]`; tab Lịch hẹn bật; nút "Tạo lịch hẹn từ suất này" trên thẻ suất chiếu.
   **Thông báo** (`notifications`, `notificationDeliveries`, `pushSubscriptions`; sự kiện #1, #2, #4, #7, #13; chuông và badge ở header, `/notifications`).
-  **Web Push** (`web-push`, VAPID, `public/sw.js`, `/offline`, worker `src/notifications/worker.ts` qua `src/instrumentation.ts`; Cài đặt: bật theo thiết bị, gửi thử, tắt từng thiết bị, bật/tắt từng loại, hướng dẫn cài app).
+  **Web Push** (`web-push`, VAPID, `public/sw.js`, `/offline`, worker `src/notifications/worker.ts` qua `src/instrumentation.ts`; Cài đặt người dùng: bật theo thiết bị, tắt từng thiết bị, bật/tắt từng loại, hướng dẫn cài app; **nút Gửi thử nằm ở Admin > Cài đặt > Thử thông báo đẩy, admin chọn người nhận**).
 - Quyết định: **thông báo trong app luôn ghi** (khớp thiết kế 4.1), công tắc từng loại trong Cài đặt chỉ điều khiển **push**; nội dung thông báo không lưu câu chữ mà lưu id và dữ kiện, dựng chữ khi hiển thị hoặc khi đẩy theo ngôn ngữ người nhận (có thay cặp xưng hô); ghi thông báo lỗi chỉ log, không làm hỏng thao tác lịch hẹn;
   trạng thái người tham gia thêm `excluded` (người tạo không xếp vào danh sách khi chốt) ngoài bốn giá trị trong thiết kế; vote Có ở bất kỳ phương án nào là đồng ý, bỏ hết vote Có thì về "chưa trả lời"; người tạo chỉ nhận thông báo "đồng ý" lần đầu một người chuyển sang đồng ý, không nhận mỗi lần đổi vote;
   worker nhận việc bằng `findOneAndUpdate` (lấy lại việc kẹt quá 2 phút), thử tối đa 3 lần cách 1 và 5 phút; một thiết bị lỗi tạm thời mà thiết bị khác nhận được thì tính là đã gửi; **người tạo lịch hẹn không sửa được lịch hẹn nháp** (service có `send: false`, `sendInvitations`, nhưng giao diện chỉ có "Gửi lời mời"); đề xuất giờ khác chỉ nhập giờ tay (service cũng nhận `showtimeId`).

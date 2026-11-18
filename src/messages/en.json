@@ -859,6 +859,25 @@
           "too_many": "At most 500 lines per import."
         }
       }
+    },
+    "pushTest": {
+      "title": "Test push",
+      "cardDescription": "Send a test notification to a user's devices to check push works.",
+      "open": "Open",
+      "targetLabel": "Send to",
+      "targetPlaceholder": "Pick a user",
+      "targetOption": "{name} ({count, plural, =0 {no devices on} other {# devices}})",
+      "send": "Send test",
+      "sent": "Sent to {name}, {count, plural, one {# device} other {# devices}}",
+      "noDevice": "{name} hasn't turned push on for any device.",
+      "allFailed": "Couldn't reach {name}. Check the VAPID keys or try again later.",
+      "notConfigured": "The server has no VAPID keys, so nothing can be sent. Add VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY and VAPID_SUBJECT, then restart the server.",
+      "errors": {
+        "pick": "Pick who to send to first.",
+        "network": "Network is shaky, please try again.",
+        "not_configured": "The server has no VAPID keys.",
+        "not_found": "Couldn't find this user."
+      }
     }
   },
   "placeholders": {
@@ -961,9 +980,7 @@
       "denied": "You're blocking notifications for this app. Allow them again in your browser or phone settings.",
       "turnOn": "Turn on for this device",
       "on": "This device gets push notifications, even when the app is closed.",
-      "sendTest": "Send a test",
       "turnedOn": "Notifications are on for this device",
-      "testSent": "Sent! Check your screen",
       "removed": "Notifications turned off on that device",
       "devicesTitle": "Devices that get notifications",
       "thisDevice": "This device",
@@ -990,8 +1007,7 @@
         "network": "Network is shaky, please try again.",
         "saveFailed": "Couldn't save this device, please try again.",
         "subscribeFailed": "Couldn't turn on notifications here. Try again or check the notification permission.",
-        "notConfigured": "The server doesn't have push notifications turned on.",
-        "testFailed": "Couldn't send it. Try turning notifications off and on again on this device."
+        "notConfigured": "The server doesn't have push notifications turned on."
       }
     },
     "install": {
