@@ -1335,13 +1335,11 @@
       "yourVote": "Your vote",
       "yes": "Yes",
       "no": "No",
-      "voteSaved": "Your choice is saved",
       "proposeLabel": "Suggest another time",
       "proposeDate": "Suggested date",
       "proposeTime": "Suggested time",
       "proposeButton": "Add suggested time",
       "proposeInvalid": "Fill in a date and a time that hasn't passed.",
-      "proposed": "New time added, and you voted Yes on it",
       "youDeclined": "You turned this invitation down. Changed your mind? Vote Yes on any time to join back.",
       "youExcluded": "The organizer didn't put you on the list this time.",
       "youLeft": "You left this plan.",
@@ -1369,7 +1367,7 @@
       "lockTitle": "Lock in attendees",
       "lockPickTime": "Pick the time to lock",
       "lockPickPeople": "Who's going",
-      "lockNobody": "Nobody to lock in yet, wait for replies.",
+      "lockNobody": "Nobody has voted Yes for this time yet. Pick another time or wait for replies.",
       "lockButton": "{count, plural, one {Lock in # person} other {Lock in # people}}",
       "locked": "Locked in {count, plural, one {# person} other {# people}}",
       "participant": {
@@ -1380,7 +1378,13 @@
         "dropped": "Left",
         "excluded": "Not going"
       },
-      "deadlinePassed": "The answer-by time has passed. Wait for the organizer to lock it in."
+      "deadlinePassed": "The answer-by time has passed. Wait for the organizer to lock it in.",
+      "save": "Save answers",
+      "discard": "Discard changes",
+      "saved": "Your answers are saved",
+      "unsaved": "Not saved",
+      "proposedYes": "You vote Yes on this time",
+      "removeProposal": "Remove this suggested time"
     },
     "invite": {
       "title": "Invite more",

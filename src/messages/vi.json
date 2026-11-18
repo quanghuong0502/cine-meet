@@ -1335,13 +1335,11 @@
       "yourVote": "[you] vote",
       "yes": "Có",
       "no": "Không",
-      "voteSaved": "Đã lưu lựa chọn của [you]",
       "proposeLabel": "Đề xuất giờ khác",
       "proposeDate": "Ngày đề xuất",
       "proposeTime": "Giờ đề xuất",
       "proposeButton": "Thêm giờ đề xuất",
       "proposeInvalid": "Nhập đủ ngày và giờ chưa qua nha.",
-      "proposed": "Đã thêm giờ mới và [you] vote Có luôn rồi",
       "youDeclined": "[you] đã từ chối lời mời này. Đổi ý thì vote Có một giờ nào đó là vào lại nha.",
       "youExcluded": "Lần này người tạo chưa xếp [you] vào danh sách.",
       "youLeft": "[you] đã rút lui khỏi lịch hẹn này.",
@@ -1369,7 +1367,7 @@
       "lockTitle": "Chốt người tham gia",
       "lockPickTime": "Chọn giờ chốt",
       "lockPickPeople": "Ai đi nè",
-      "lockNobody": "Chưa có ai để chốt, chờ mọi người trả lời nha.",
+      "lockNobody": "Chưa ai vote Có giờ này. Chọn giờ khác hoặc chờ mọi người trả lời nha.",
       "lockButton": "{count, plural, one {Chốt # người} other {Chốt # người}}",
       "locked": "Đã chốt {count, plural, one {# người} other {# người}} tham gia",
       "participant": {
@@ -1380,7 +1378,13 @@
         "dropped": "Đã rút",
         "excluded": "Không tham gia"
       },
-      "deadlinePassed": "Đã hết hạn trả lời. Chờ người tạo chốt nha."
+      "deadlinePassed": "Đã hết hạn trả lời. Chờ người tạo chốt nha.",
+      "save": "Lưu trả lời",
+      "discard": "Bỏ thay đổi",
+      "saved": "Đã lưu trả lời của [you]",
+      "unsaved": "Chưa lưu",
+      "proposedYes": "[you] vote Có giờ này",
+      "removeProposal": "Bỏ giờ đề xuất này"
     },
     "invite": {
       "title": "Mời thêm",

@@ -171,6 +171,87 @@ describe("appointment service", () => {
     });
   });
 
+  describe("submit response (one save)", () => {
+    it("saves all votes and suggestions in one go; the creator hears once", async () => {
+      const id = await inviting();
+      const [a, b] = (await svc.getAppointment(creator, id))!.options;
+      await models.Notification.deleteMany({});
+      const result = await svc.submitResponse(u1, id, { votes: [{ optionId: a!.id, vote: "yes" }, { optionId: b!.id, vote: "no" }], proposals: [{ startAt: hours(100) }, { startAt: hours(120) }] });
+      expect(result).toEqual({ ok: true, creatorId: creator, becameAccepted: true, proposedCount: 2 });
+      const view = await svc.getAppointment(u1, id);
+      expect(view?.options.map((o) => o.myVote)).toEqual(["yes", "no", "yes", "yes"]);
+      expect(view?.myStatus).toBe("accepted");
+      expect(view?.options.slice(2).every((o) => o.proposedBy?.id === u1)).toBe(true);
+      const notes = await models.Notification.find({}).lean();
+      expect(notes.map((n) => [String(n.recipientId), n.type, (n.payload as { kind?: string }).kind])).toEqual([[creator, "appointment_reply", "propose"]]);
+    });
+
+    it("votes only: tells the creator about the first yes, not about later changes", async () => {
+      const id = await inviting();
+      const [a, b] = (await svc.getAppointment(creator, id))!.options;
+      await models.Notification.deleteMany({});
+      await svc.submitResponse(u1, id, { votes: [{ optionId: a!.id, vote: "yes" }], proposals: [] });
+      await svc.submitResponse(u1, id, { votes: [{ optionId: b!.id, vote: "yes" }, { optionId: a!.id, vote: "no" }], proposals: [] });
+      const notes = await models.Notification.find({}).lean();
+      expect(notes.map((n) => (n.payload as { kind?: string }).kind)).toEqual(["agree"]);
+    });
+
+    it("taking back the only yes returns the person to undecided", async () => {
+      const id = await inviting();
+      const a = (await svc.getAppointment(creator, id))!.options[0]!;
+      await svc.submitResponse(u1, id, { votes: [{ optionId: a.id, vote: "yes" }], proposals: [] });
+      await svc.submitResponse(u1, id, { votes: [{ optionId: a.id, vote: null }], proposals: [] });
+      expect((await svc.getAppointment(u1, id))?.myStatus).toBe("invited");
+    });
+
+    it("all or nothing: one bad part saves nothing", async () => {
+      const id = await inviting();
+      const a = (await svc.getAppointment(creator, id))!.options[0]!;
+      const before = await svc.getAppointment(u1, id);
+      expect(await svc.submitResponse(u1, id, { votes: [{ optionId: a.id, vote: "yes" }], proposals: [{ startAt: hours(-5) }] })).toEqual({ ok: false, error: "invalid_option" });
+      expect(await svc.submitResponse(u1, id, { votes: [{ optionId: "6".repeat(24), vote: "yes" }], proposals: [] })).toEqual({ ok: false, error: "invalid_option" });
+      expect(await svc.submitResponse(u1, id, { votes: [], proposals: [{ startAt: hours(100) }, { startAt: hours(100) }] })).toEqual({ ok: false, error: "duplicate" });
+      expect(await svc.submitResponse(u1, id, { votes: [], proposals: [{ startAt: new Date(a.startAt) }] })).toEqual({ ok: false, error: "duplicate" });
+      const many = Array.from({ length: 9 }, (_, i) => ({ startAt: hours(200 + i) }));
+      expect(await svc.submitResponse(u1, id, { votes: [], proposals: many })).toEqual({ ok: false, error: "limit" });
+      expect(await svc.getAppointment(u1, id)).toEqual(before);
+    });
+
+    it("only an invited person, while inviting, before the answer-by time", async () => {
+      const id = await inviting();
+      const a = (await svc.getAppointment(creator, id))!.options[0]!;
+      const vote = { votes: [{ optionId: a.id, vote: "yes" as const }], proposals: [] };
+      expect(await svc.submitResponse(stranger, id, vote)).toEqual({ ok: false, error: "not_found" });
+      expect(await svc.submitResponse(creator, id, vote)).toEqual({ ok: false, error: "not_found" });
+      await svc.lockParticipants(creator, id, { optionId: a.id, attendeeIds: [u1] });
+      expect(await svc.submitResponse(u2, id, vote)).toEqual({ ok: false, error: "bad_state" });
+
+      const timed = await svc.createAppointment(creator, { movieId: movie, options: [{ startAt: hours(48) }], inviteeIds: [u1], responseDeadline: hours(1), send: true });
+      if (!timed.ok) throw new Error();
+      const t = (await svc.getAppointment(creator, timed.id))!.options[0]!;
+      const later = new Date(Date.now() + 2 * 3600_000);
+      expect(await svc.submitResponse(u1, timed.id, { votes: [{ optionId: t.id, vote: "yes" }], proposals: [] }, later)).toEqual({ ok: false, error: "deadline_passed" });
+    });
+
+    it("saving nothing changes nothing, even for someone who declined", async () => {
+      const id = await inviting();
+      await svc.declineInvitation(u1, id, "bận");
+      await models.Notification.deleteMany({});
+      expect(await svc.submitResponse(u1, id, { votes: [], proposals: [] })).toMatchObject({ ok: true, becameAccepted: false, proposedCount: 0 });
+      expect((await svc.getAppointment(u1, id))?.myStatus).toBe("declined");
+      expect(await models.Notification.countDocuments()).toBe(0);
+    });
+
+    it("a declined person who answers again is back in", async () => {
+      const id = await inviting();
+      const a = (await svc.getAppointment(creator, id))!.options[0]!;
+      await svc.declineInvitation(u1, id, "bận");
+      await svc.submitResponse(u1, id, { votes: [{ optionId: a.id, vote: "yes" }], proposals: [] });
+      const me = (await svc.getAppointment(creator, id))?.participants.find((p) => p.id === u1);
+      expect(me).toMatchObject({ status: "accepted", declineReason: undefined });
+    });
+  });
+
   describe("answer-by time", () => {
     it("after it, nobody can vote, suggest a time, decline or be invited; the creator can still lock", async () => {
       const created = await svc.createAppointment(creator, { movieId: movie, options: [{ startAt: hours(48) }], inviteeIds: [u1, u2], responseDeadline: hours(1), send: true });

@@ -1,6 +1,6 @@
 "use client";
 
-import { Ban, CalendarClock, LoaderCircle, LogOut, Plus, ThumbsDown, ThumbsUp, UserLock, XCircle } from "lucide-react";
+import { Ban, LoaderCircle, LogOut, UserLock, XCircle } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -8,24 +8,21 @@ import {
   cancelAppointmentAction,
   declineInvitationAction,
   lockParticipantsAction,
-  proposeOptionAction,
-  setVoteAction,
   withdrawAction,
   type ActionResult,
 } from "@/actions/appointments";
 import { Chip } from "@/components/admin/auditorium-editor/chips";
-import { DateTimeField } from "@/components/date-time-field";
 import { InviteMore } from "@/components/appointment/invite-more";
 import { AppointmentStatusBadge } from "@/components/appointment/status-badge";
 import { ReasonDialog } from "@/components/appointment/reason-dialog";
+import { PollSection } from "@/components/appointment/poll-section";
 import { PersonRow } from "@/components/friends/person-row";
 import { ListThumb } from "@/components/list-thumb";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { vietnamToIso } from "@/lib/appointment/datetime";
 import { canWithdraw, isFinished, isOpenForReplies, yesVoterIds } from "@/lib/appointment/state";
 import { formatDayCompact, formatDayLong, formatTime } from "@/lib/datetime";
-import type { AppointmentView, OptionView, ParticipantView } from "@/services/appointment.service";
+import type { AppointmentView, ParticipantView } from "@/services/appointment.service";
 
 type Dialog = "decline" | "withdraw" | "cancel" | null;
 
@@ -136,13 +133,12 @@ export function AppointmentDetail({ view, friends = [], groups = [] }: DetailPro
         </section>
       ) : (
         <PollSection
+          // After a save the server's options and votes change, which starts the draft again from what is now saved.
+          key={view.options.map((o) => `${o.id}:${o.myVote ?? ""}`).join("|")}
           view={view}
           canVote={canVote}
-          pending={pending}
           nameOf={nameOf}
           when={when}
-          onVote={(option, vote) => run(() => setVoteAction(view.id, option.id, vote), t("voteSaved"))}
-          onPropose={(iso) => run(() => proposeOptionAction(view.id, { startAt: iso }), t("proposed"))}
         />
       )}
 
@@ -250,106 +246,20 @@ function ParticipantBadge({ participant }: { participant: ParticipantView }) {
   );
 }
 
-interface PollProps {
-  view: AppointmentView;
-  canVote: boolean;
-  pending: boolean;
-  nameOf: Map<string, string>;
-  when: (iso: string) => string;
-  onVote: (option: OptionView, vote: "yes" | "no" | null) => void;
-  onPropose: (iso: string) => void;
-}
-
-/** The candidate times with how people voted; a person who may still answer gets Yes and No on each, and can suggest another time. */
-function PollSection({ view, canVote, pending, nameOf, when, onVote, onPropose }: PollProps) {
-  const t = useTranslations("appointments.detail");
-  const [date, setDate] = useState("");
-  const [time, setTime] = useState("");
-  const [error, setError] = useState("");
-
-  function propose() {
-    const iso = vietnamToIso(date, time);
-    if (!iso || new Date(iso).getTime() <= Date.now()) {
-      setError(t("proposeInvalid"));
-      return;
-    }
-    setError("");
-    onPropose(iso);
-    setDate("");
-    setTime("");
-  }
-
-  return (
-    <section aria-labelledby="appt-poll" className="flex flex-col gap-item">
-      <h2 id="appt-poll" className="type-heading">
-        {t("times")}
-      </h2>
-      <ul className="flex flex-col gap-stack">
-        {view.options.map((option) => {
-          const yes = option.votes.filter((v) => v.vote === "yes");
-          const no = option.votes.filter((v) => v.vote === "no");
-          return (
-            <li key={option.id} className="flex flex-col gap-stack rounded-xl border bg-card p-inset-sm">
-              <div className="flex flex-col gap-tight">
-                <span className="type-item-title tabular-nums">{when(option.startAt)}</span>
-                {option.place ? <span className="break-words type-secondary text-muted-foreground">{option.place}</span> : null}
-                {option.proposedBy ? <span className="type-secondary text-muted-foreground">{t("proposedBy", { name: option.proposedBy.name })}</span> : null}
-              </div>
-              <p className="type-secondary text-muted-foreground">
-                {t("tally", { yes: yes.length, no: no.length })}
-                {yes.length > 0 ? ` · ${yes.map((v) => nameOf.get(v.userId) ?? view.creator.name).join(", ")}` : ""}
-              </p>
-              {canVote ? (
-                <div role="group" aria-label={t("yourVote")} className="flex gap-stack">
-                  <Chip selected={option.myVote === "yes"} disabled={pending} onClick={() => onVote(option, option.myVote === "yes" ? null : "yes")}>
-                    <ThumbsUp className="size-icon-sm" aria-hidden />
-                    {t("yes")}
-                  </Chip>
-                  <Chip selected={option.myVote === "no"} disabled={pending} onClick={() => onVote(option, option.myVote === "no" ? null : "no")}>
-                    <ThumbsDown className="size-icon-sm" aria-hidden />
-                    {t("no")}
-                  </Chip>
-                </div>
-              ) : null}
-            </li>
-          );
-        })}
-      </ul>
-
-      {canVote ? (
-        <div className="flex flex-col gap-stack">
-          <span className="type-label text-muted-foreground">
-            <CalendarClock className="mr-stack inline size-icon-sm align-text-bottom" aria-hidden />
-            {t("proposeLabel")}
-          </span>
-          <div className="flex gap-stack">
-            <DateTimeField kind="date" label={t("proposeDate")} value={date} onChange={setDate} className="min-w-0 flex-1" />
-            <DateTimeField kind="time" label={t("proposeTime")} value={time} onChange={setTime} className="w-time-field" />
-            <Button type="button" variant="outline" size="icon" className="size-control shrink-0" disabled={pending} aria-label={t("proposeButton")} onClick={propose}>
-              {pending ? <LoaderCircle className="motion-safe:animate-spin" aria-hidden /> : <Plus aria-hidden />}
-            </Button>
-          </div>
-          {error ? (
-            <p role="alert" className="type-secondary text-destructive">
-              {error}
-            </p>
-          ) : null}
-        </div>
-      ) : null}
-    </section>
-  );
-}
-
-/** Creator only: choose the time, then the final people (starts as the ones who said yes to it), then lock. */
+/**
+ * Creator only: choose the time, then the final people, then lock. Only the people who voted Yes for the chosen time are offered
+ * (all of them ticked); the creator can untick some, but cannot add someone who did not say yes to that time.
+ */
 function LockPanel({ view, pending, onLock }: { view: AppointmentView; pending: boolean; onLock: (optionId: string, attendeeIds: string[]) => void }) {
   const t = useTranslations("appointments.detail");
   const locale = useLocale();
   const [optionId, setOptionId] = useState<string | null>(null);
   const [picked, setPicked] = useState<string[] | null>(null);
-  const eligible = view.participants.filter((p) => p.status === "invited" || p.status === "accepted");
-
   const option = view.options.find((o) => o.id === optionId);
-  const attendees = picked ?? (option ? yesVoterIds(option.votes).filter((id) => eligible.some((p) => p.id === id)) : []);
+  // Only people who said yes to this time (and have not turned the invitation down since).
+  const yesIds = option ? yesVoterIds(option.votes) : [];
+  const voters = view.participants.filter((p) => (p.status === "invited" || p.status === "accepted") && yesIds.includes(p.id));
+  const attendees = picked ?? voters.map((p) => p.id);
 
   function chooseOption(id: string) {
     setOptionId(id);
@@ -374,11 +284,11 @@ function LockPanel({ view, pending, onLock }: { view: AppointmentView; pending: 
           <span id="appt-lock-people" className="type-label text-muted-foreground">
             {t("lockPickPeople")}
           </span>
-          {eligible.length === 0 ? (
+          {voters.length === 0 ? (
             <p className="type-secondary text-muted-foreground">{t("lockNobody")}</p>
           ) : (
             <div role="group" aria-labelledby="appt-lock-people" className="flex flex-wrap gap-stack">
-              {eligible.map((p) => (
+              {voters.map((p) => (
                 <Chip key={p.id} selected={attendees.includes(p.id)} onClick={() => toggle(p.id)}>
                   {p.name}
                 </Chip>

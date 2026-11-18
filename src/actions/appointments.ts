@@ -15,6 +15,8 @@ import {
   proposeOption,
   proposeOptionSchema,
   setVote,
+  submitResponse,
+  submitResponseSchema,
   withdraw,
   type AppointmentError,
 } from "@/services/appointment.service";
@@ -97,4 +99,14 @@ export async function inviteMoreAction(id: string, input: unknown): Promise<Acti
   const result = await inviteMore(user.userId, id, parsed.data.inviteeIds);
   if (result.ok) refresh(id);
   return result.ok ? { ok: true, count: result.addedIds.length } : result;
+}
+
+/** All of a person's answers in one save (see `submitResponse`). */
+export async function submitResponseAction(id: string, input: unknown): Promise<ActionResult> {
+  const user = await requireUser();
+  const parsed = submitResponseSchema.safeParse(input);
+  if (!idSchema.safeParse(id).success || !parsed.success) return { ok: false, error: "validation" };
+  const result = await submitResponse(user.userId, id, parsed.data);
+  if (result.ok) refresh(id);
+  return result.ok ? { ok: true } : result;
 }

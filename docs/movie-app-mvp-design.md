@@ -250,7 +250,7 @@ DRAFT → INVITING → PARTICIPANTS_LOCKED → PLANNING → CONFIRMED → COMPLE
 - **Đề xuất giờ khác:** thêm một phương án mới vào poll (có thể gắn suất chiếu của cùng phim); người đề xuất tự động vote Có,
   những người khác vote tiếp.
 - Người tạo xem bảng tổng hợp, chọn một phương án rồi bấm **Chốt**. Danh sách tham gia mặc định là những người vote Có phương án
-  đó; trước khi chốt, người tạo có thể bỏ bớt hoặc thêm bất kỳ người được mời chưa từ chối. Sau khi chốt, **người tạo không thêm
+  đó; trước khi chốt, người tạo chỉ thấy những người đã vote Có phương án đó (chủ dự án chốt 2026-11-18) và có thể bỏ bớt, **không thêm tay người chưa vote Có giờ đó**. Sau khi chốt, **người tạo không thêm
   hay bớt người** nữa.
 - **Rút lui:** người tham gia tự rút được từ PARTICIPANTS_LOCKED đến CONFIRMED, trước giờ chiếu. Ghế được trả lại, tiền tính lại,
   người tạo nhận thông báo (#13). Người tạo muốn thôi thì hủy lịch hẹn.

@@ -44,6 +44,13 @@ export type CreateAppointmentInput = z.infer<typeof createAppointmentSchema>;
 
 export const proposeOptionSchema = optionInputSchema;
 
+/** A person's whole answer, sent in one go: their vote on each time they changed (`null` takes it back), and times they suggest. */
+export const submitResponseSchema = z.object({
+  votes: z.array(z.object({ optionId: objectId, vote: z.enum(["yes", "no"]).nullable() })).max(MAX_TIME_OPTIONS),
+  proposals: z.array(optionInputSchema).max(MAX_TIME_OPTIONS),
+});
+export type SubmitResponseInput = z.infer<typeof submitResponseSchema>;
+
 export type AppointmentError =
   | "not_found"
   | "forbidden"
@@ -271,6 +278,52 @@ export async function proposeOption(
   return result;
 }
 
+/**
+ * The person's whole answer in one save: all their votes and any times they suggest (each suggestion carries their yes). It is all or
+ * nothing: if any part is refused (a time that has passed, a duplicate, past the limit, an unknown option) nothing is saved.
+ * The creator hears about it once: "suggested another time" when there are suggestions, otherwise "agreed" the first time the person becomes a yes.
+ */
+export async function submitResponse(
+  userId: string,
+  id: string,
+  input: SubmitResponseInput,
+  now = new Date(),
+): Promise<{ ok: true; creatorId: string; becameAccepted: boolean; proposedCount: number } | Failure> {
+  const result = await mutate(id, async (doc) => {
+    const me = participantOf(doc, userId);
+    if (!me) return { ok: false as const, error: "not_found" as const };
+    if (!isOpenForReplies(doc.status)) return { ok: false as const, error: "bad_state" as const };
+    if (deadlinePassed(doc, now)) return { ok: false as const, error: "deadline_passed" as const };
+    // Nothing to save is not an answer: it must not, for example, quietly bring back someone who had declined.
+    if (input.votes.length === 0 && input.proposals.length === 0) return { ok: true as const, creatorId: doc.creatorId.toString(), becameAccepted: false, proposedCount: 0 };
+
+    if (input.votes.some((v) => !doc.timeOptions.some((o) => sameId(o._id, v.optionId)))) return { ok: false as const, error: "invalid_option" as const };
+    if (doc.timeOptions.length + input.proposals.length > MAX_TIME_OPTIONS) return { ok: false as const, error: "limit" as const };
+
+    const added: { startAt: Date; showtimeId?: string }[] = [];
+    for (const proposal of input.proposals) {
+      const option = await resolveOption(doc.movieId.toString(), proposal, now);
+      if (!option) return { ok: false as const, error: "invalid_option" as const };
+      const same = (o: { startAt: Date; showtimeId?: { toString(): string } | string | null }) => o.startAt.getTime() === option.startAt.getTime() && (o.showtimeId?.toString() ?? undefined) === option.showtimeId;
+      if (doc.timeOptions.some(same) || added.some(same)) return { ok: false as const, error: "duplicate" as const };
+      added.push(option);
+    }
+
+    for (const v of input.votes) setOptionVote(doc.timeOptions.find((o) => sameId(o._id, v.optionId))!, userId, v.vote);
+    for (const option of added) doc.timeOptions.push({ ...option, proposedBy: userId, votes: [{ userId, vote: "yes" }] });
+
+    const before = me.status;
+    me.status = doc.timeOptions.some((o) => o.votes.some((v) => sameId(v.userId, userId) && v.vote === "yes")) ? "accepted" : "invited";
+    if (before === "declined") me.declineReason = undefined;
+    return { ok: true as const, creatorId: doc.creatorId.toString(), becameAccepted: before !== "accepted" && me.status === "accepted", proposedCount: added.length };
+  });
+  if (result.ok) {
+    if (result.proposedCount > 0) await notifyPeople(id, userId, "appointment_reply", [result.creatorId], { kind: "propose" });
+    else if (result.becameAccepted) await notifyPeople(id, userId, "appointment_reply", [result.creatorId], { kind: "agree" });
+  }
+  return result;
+}
+
 export const lockSchema = z.object({
   optionId: objectId,
   attendeeIds: z.array(objectId).min(1).max(MAX_INVITEES),
@@ -368,6 +421,8 @@ export interface ParticipantView extends PersonView {
 
 export interface AppointmentView {
   id: string;
+  /** The person looking (the session's user): so their own draft vote can replace their saved one when counting. */
+  viewerId: string;
   status: AppointmentStatus;
   isCreator: boolean;
   myStatus: ParticipantStatus | null;
@@ -417,6 +472,7 @@ export async function getAppointment(userId: string, id: string, now = new Date(
 
   return {
     id: doc._id.toString(),
+    viewerId: userId,
     status: doc.status,
     isCreator,
     myStatus: me?.status ?? null,

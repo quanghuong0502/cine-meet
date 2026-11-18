@@ -187,7 +187,7 @@ giới hạn tra cứu, kết bạn cần chấp nhận (thiết kế mục 6 v�
 **Tiêu chí hoàn thành**
 - [ ] Đi hết luồng với 3 tài khoản: mời → đề xuất giờ khác → vote → chốt người.
 - [x] Sau khi chốt, người tạo không thêm/bớt được người; người tham gia tự rút được và người tạo nhận thông báo (test `appointment.service.test.ts`; màn hình chưa thử trên điện thoại).
-- [x] Người vote Có phương án khác phương án được chọn không tự động nằm trong danh sách (người tạo phải thêm tay) (test service; màn hình chưa thử trên điện thoại).
+- [x] Người vote Có phương án khác phương án được chọn không nằm trong danh sách và không hiện ở bước chốt: màn chốt chỉ liệt kê người đã vote Có giờ được chọn (đổi ngày 2026-11-18 so với bản đầu "người tạo phải thêm tay"; service vẫn nhận người được mời chưa từ chối, giao diện không đưa ra).
 - [ ] Thông báo in-app đến đúng người, đúng thời điểm.
 - [ ] Web Push: bật trên Android và trên iPhone (đã cài PWA), "Gửi thử" (admin gửi từ Cài đặt quản trị tới người dùng chọn) nhận được kể cả khi đã đóng app; sự kiện mời/chốt/hủy đến đúng người.
 - [x] Không gửi trùng khi chạy hai worker; một thiết bị lỗi 410 thì subscription bị xóa, các thiết bị khác vẫn nhận (test `src/notifications/deliver.test.ts` với bộ gửi giả).
