@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { assignSeatsAction, type ActionResult } from "@/actions/appointments";
+import { Chip } from "@/components/admin/auditorium-editor/chips";
 import { SeatMap, type SeatMapSeatType } from "@/components/seat-map/seat-map";
 import { UserAvatar, getInitials } from "@/components/user-avatar";
 import { Button } from "@/components/ui/button";
@@ -37,6 +38,8 @@ export function SeatPlanner({ view, room, onSave, busy, onDraft, initialSeats }:
   const locale = useLocale();
   const [draft, setDraft] = useState(() => initialSeats ?? new Map(view.seats.map((s) => [s.userId, s.seatCode])));
   const firstFree = (map: Map<string, string>) => view.attendees.find((p) => !map.has(p.id))?.id ?? view.attendees[0]?.id ?? "";
+  // Seat score colours are on by default: they show which seats are the best ones to give people.
+  const [heat, setHeat] = useState(true);
   const [active, setActive] = useState(() => firstFree(draft));
 
   const seatByCode = useMemo(() => new Map(room.seats.map((s) => [s.code, s])), [room.seats]);
@@ -128,7 +131,10 @@ export function SeatPlanner({ view, room, onSave, busy, onDraft, initialSeats }:
           </button>
         ))}
       </div>
-      <SeatMap geometry={room.geometry} seats={room.seats} seatTypes={types} selectedCodes={selectedCodes} reservedCodes={taken} holderLabels={holderLabels} onSeatTap={onSeatTap} />
+      <Chip selected={heat} onClick={() => setHeat((v) => !v)} className="self-start">
+        {t("layerScore")}
+      </Chip>
+      <SeatMap showHeatmap={heat} geometry={room.geometry} seats={room.seats} seatTypes={types} selectedCodes={selectedCodes} reservedCodes={taken} holderLabels={holderLabels} onSeatTap={onSeatTap} />
       <Button type="button" variant="outline" size="cta" disabled={busy} onClick={suggest}>
         <Sparkles aria-hidden />
         {t("suggest")}
