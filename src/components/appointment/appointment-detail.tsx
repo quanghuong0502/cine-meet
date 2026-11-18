@@ -71,6 +71,9 @@ export function AppointmentDetail({ view, friends = [], groups = [], plan = null
   const canConfirm = view.isCreator && view.status === "PLANNING";
   const canComplete = view.isCreator && view.status === "CONFIRMED" && view.started;
   const chosen = view.options.find((o) => o.id === view.chosenOptionId);
+  // Once there is a showtime, the money per person (which already names everyone) takes the place of the plain list of people.
+  const costShowtime = view.isCreator && view.status === "PLANNING" ? draft.showtimeId : view.showtimeId;
+  const showCosts = locked && !!chosen && !!costShowtime && (view.status === "PLANNING" || view.status === "CONFIRMED" || view.status === "COMPLETED") && view.myStatus !== "excluded" && view.myStatus !== "dropped";
 
   /** Runs a write, then tells the person what happened (or why not). Network trouble is said out loud. */
   function run(action: () => Promise<ActionResult<{ count?: number }>>, done: string | ((count?: number) => string), after?: () => void) {
@@ -108,6 +111,13 @@ export function AppointmentDetail({ view, friends = [], groups = [], plan = null
               </span>
             ) : null}
           </span>
+          {/* The agreed time and place, short, right under the status (it used to be a section of its own further down). */}
+          {locked && chosen ? (
+            <span className="flex flex-col gap-tight">
+              <span className="type-item-title tabular-nums">{when(chosen.startAt)}</span>
+              {chosen.place ? <span className="break-words type-secondary text-muted-foreground">{chosen.place}</span> : null}
+            </span>
+          ) : null}
         </div>
       </section>
 
@@ -142,15 +152,6 @@ export function AppointmentDetail({ view, friends = [], groups = [], plan = null
 
       {locked && chosen ? (
         <>
-        <section aria-labelledby="appt-time" className="flex flex-col gap-item">
-          <h2 id="appt-time" className="type-heading">
-            {t("chosenTime")}
-          </h2>
-          <div className="flex flex-col gap-tight rounded-xl border bg-card p-inset-sm">
-            <span className="type-item-title tabular-nums">{when(chosen.startAt)}</span>
-            {chosen.place ? <span className="break-words type-secondary text-muted-foreground">{chosen.place}</span> : null}
-          </div>
-        </section>
         {view.status !== "CANCELLED" && view.myStatus !== "excluded" && view.myStatus !== "dropped" ? <PlanSection view={view} plan={plan} run={run} busy={pending} draft={draft} /> : null}
         {view.status === "COMPLETED" ? <CostSection view={view} costs={costs} onSave={run} busy={pending} /> : null}
         </>
@@ -178,6 +179,7 @@ export function AppointmentDetail({ view, friends = [], groups = [], plan = null
         />
       )}
 
+      {showCosts ? null : (
       <section aria-labelledby="appt-people" className="flex flex-col gap-item">
         <h2 id="appt-people" className="type-heading">
           {t("people")}
@@ -195,6 +197,7 @@ export function AppointmentDetail({ view, friends = [], groups = [], plan = null
           ))}
         </ul>
       </section>
+      )}
 
       {view.isCreator && (open || view.status === "DRAFT") && !view.deadlinePassed ? (
         <InviteMore

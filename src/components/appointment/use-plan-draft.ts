@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useRef, useState } from "react";
+import { estimateCosts } from "@/lib/appointment/cost";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { loadPlanRoomAction } from "@/actions/appointments";
@@ -59,6 +60,20 @@ export function usePlanDraft(view: AppointmentView, plan: PlanData | null) {
     };
   }, [showtimeId, seats, lines, view.attendees, view.showtimeId]);
 
-  return useMemo(() => ({ showtimeId, seats, setSeats, lines, setLines, room, food, loading, changeShowtime, payload }), [showtimeId, seats, lines, room, food, loading, changeShowtime, payload]);
+  /** What each person pays for what is on the screen right now (ticket and food), worked out here so it follows every tap. */
+  const estimate = useMemo(() => {
+    const going = view.attendees.map((p) => p.id);
+    const holders = new Map<string, string[]>();
+    for (const [userId, code] of seats) if (going.includes(userId)) holders.set(code, [...(holders.get(code) ?? []), userId]);
+    const unitPrice = (l: FoodLine) => (l.kind === "combo" ? food?.combos : food?.items)?.find((x) => x.id === l.refId)?.price ?? 0;
+    const { perUser } = estimateCosts({
+      attendeeIds: going,
+      seats: [...holders].map(([seatCode, holderIds]) => ({ seatCode, price: room?.prices[seatCode] ?? 0, holderIds })),
+      food: lines.map((l) => ({ ownerId: l.ownerId ?? null, unitPrice: unitPrice(l), quantity: l.quantity })),
+    });
+    return perUser.map((p) => ({ userId: p.userId, ticket: p.ticket, fnb: p.fnb, other: 0 }));
+  }, [seats, lines, room, food, view.attendees]);
+
+  return useMemo(() => ({ showtimeId, seats, setSeats, lines, setLines, room, food, loading, changeShowtime, payload, estimate }), [showtimeId, seats, lines, room, food, loading, changeShowtime, payload, estimate]);
 }
 export type PlanDraft = ReturnType<typeof usePlanDraft>;

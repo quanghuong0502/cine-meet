@@ -137,7 +137,7 @@ export function PlanSection({ view, plan, run, busy, draft }: Props) {
         </section>
       ) : null}
 
-      {view.showtimeId && !(editable && planning) ? <EstimateList view={view} title={view.status === "COMPLETED" ? t("estimateTitleDone") : t("estimateTitle")} /> : null}
+      {showtimeId ? <EstimateList view={view} estimate={editable && planning ? draft.estimate : undefined} title={view.status === "COMPLETED" ? t("estimateTitleDone") : t("estimateTitle")} /> : null}
     </>
   );
 }

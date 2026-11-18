@@ -392,7 +392,7 @@ export interface PlanData {
   /** Upcoming showtimes of the movie, to pick one (or change it). */
   showtimes: ShowtimeRow[];
   /** The room of the chosen showtime, as it was when that showtime was made. */
-  room?: { seats: LayoutSeat[]; geometry: LayoutGeometry; seatTypes: { id: string; name: string; nameEn: string | null; color: string | null }[]; taken: string[] };
+  room?: { seats: LayoutSeat[]; geometry: LayoutGeometry; seatTypes: { id: string; name: string; nameEn: string | null; color: string | null }[]; taken: string[]; /** Ticket price of each seat code (0 when no price rule covers it), so the screen can work out the cost as the seats change. */ prices: Record<string, number> };
   food: {
     /** `categoryId` is missing for items made before categories existed. */
     items: { id: string; name: string; price: number; categoryId?: string }[];
@@ -432,6 +432,7 @@ export async function getPlanData(userId: string, id: string, roomOf?: string): 
     geometry: generateGrid(layout.config as LayoutConfig, infos).geometry,
     seatTypes: types.map((t) => ({ id: t._id.toString(), name: t.name, nameEn: t.nameEn ?? null, color: t.color ?? null })),
     taken: await takenSeatCodes(showtimeId, id),
+    prices: Object.fromEntries([...(await loadSeatPrices(showtimeId))].map(([code, info]) => [code, info.price ?? 0])),
   };
 
   const today = vietnamParts(showtime.startAt).date;

@@ -6,17 +6,16 @@ import { formatVnd } from "@/lib/money";
 import { PX } from "@/lib/ui-sizes";
 import type { AppointmentView } from "@/services/appointment.service";
 
-/** What the viewing costs each person (ticket and food), and the group's total. Only a record of cost: nobody owes anybody. */
-export function EstimateList({ view, title }: { view: AppointmentView; title: string }) {
+/** What the viewing costs each person (ticket and food). Only a record of cost: nobody owes anybody. */
+export function EstimateList({ view, title, estimate = view.estimate }: { view: AppointmentView; title: string; /** Defaults to what is saved; while planning it is the live figure from the draft. */ estimate?: AppointmentView["estimate"] }) {
   const t = useTranslations("appointments.detail.plan");
   const locale = useLocale();
   const rows = view.attendees.map((person) => {
-    const e = view.estimate.find((x) => x.userId === person.id);
+    const e = estimate.find((x) => x.userId === person.id);
     const ticket = e?.ticket ?? 0;
     const fnb = e?.fnb ?? 0;
     return { person, ticket, fnb, total: ticket + fnb };
   });
-  const total = rows.reduce((sum, r) => sum + r.total, 0);
   return (
     <section aria-labelledby="appt-estimate" className="flex flex-col gap-item">
       <h2 id="appt-estimate" className="type-heading">
@@ -34,10 +33,6 @@ export function EstimateList({ view, title }: { view: AppointmentView; title: st
           </li>
         ))}
       </ul>
-      <p className="flex items-center justify-between gap-item type-item-title">
-        <span>{t("total")}</span>
-        <span className="tabular-nums">{formatVnd(total, locale)}</span>
-      </p>
     </section>
   );
 }
