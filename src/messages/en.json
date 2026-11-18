@@ -1033,7 +1033,6 @@
     "directions": "Get directions",
     "rooms": "Auditoriums",
     "room": {
-      "subtitle": "Auditorium seat map",
       "layers": "Layers",
       "layerScore": "Seat score",
       "layerMine": "My marks",

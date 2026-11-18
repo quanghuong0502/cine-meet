@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getTranslations } from "next-intl/server";
 import { PageHeader } from "@/components/page-header";
 import { RoomSeatView } from "@/components/seat-map/room-seat-view";
 import { requireUser } from "@/lib/auth/guards";
@@ -21,13 +20,13 @@ export default async function RoomPage({ params }: Props) {
   const { branchId, auditoriumId } = await params;
   const view = await getRoomView(branchId, auditoriumId);
   if (!view) notFound();
-  const t = await getTranslations("cinemas.room");
   // Only this person's marks: the id comes from the session.
   const marks = await getSeatMarks(user.userId, auditoriumId, view.layoutId);
 
   return (
     <div className="flex flex-1 flex-col gap-section p-inset">
-      <PageHeader title={view.auditorium.name} backHref={`/cinemas/${branchId}`} description={[view.branch.brandName, view.branch.name].filter(Boolean).join(" · ") || t("subtitle")} />
+      <PageHeader backHref={`/cinemas/${branchId}`} />
+      <h1 className="sr-only">{view.auditorium.name}</h1>
       <RoomSeatView view={view} marks={marks} saveAction={saveSeatMarkAction} removeAction={removeSeatMarkAction} />
     </div>
   );

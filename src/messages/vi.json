@@ -1033,7 +1033,6 @@
     "directions": "Chỉ đường",
     "rooms": "Phòng chiếu",
     "room": {
-      "subtitle": "Sơ đồ phòng chiếu",
       "layers": "Lớp hiển thị",
       "layerScore": "Điểm ghế",
       "layerMine": "Đánh dấu của tôi",
