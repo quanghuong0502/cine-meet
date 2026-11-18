@@ -206,27 +206,27 @@ export function AppointmentDetail({ view, friends = [], groups = [], plan = null
 
       {/* Fixed above the menu, always. The poll's Save and Decline are drawn into `barSlot` (inside this same box). */}
       <div ref={barRef} data-bottom-fixed className="pointer-events-none fixed inset-x-0 bottom-[var(--nav-clearance)] z-30 px-inset">
-        <div className="mx-auto flex max-w-form flex-col gap-stack">
+        <div className="mx-auto flex max-w-form flex-row gap-stack">
             {!finished && canConfirm ? (
-              <Button type="button" size="cta" disabled={pending || draft.loading} onClick={() => run(() => confirmPlanAction(view.id, draft.payload()), t("plan.confirmed"))} className="pointer-events-auto">
+              <Button type="button" size="cta" disabled={pending || draft.loading} onClick={() => run(() => confirmPlanAction(view.id, draft.payload()), t("plan.confirmed"))} className="pointer-events-auto min-w-0 flex-1">
                 <CircleCheck aria-hidden />
                 {t("plan.confirm")}
               </Button>
             ) : null}
             {!finished && canComplete ? (
-              <Button type="button" size="cta" disabled={pending} onClick={() => run(() => completeAppointmentAction(view.id), t("plan.completed"))} className="pointer-events-auto">
+              <Button type="button" size="cta" disabled={pending} onClick={() => run(() => completeAppointmentAction(view.id), t("plan.completed"))} className="pointer-events-auto min-w-0 flex-1">
                 <CheckCheck aria-hidden />
                 {t("plan.complete")}
               </Button>
             ) : null}
             {!finished && showWithdraw ? (
-              <Button type="button" variant="destructive" size="cta" disabled={pending} onClick={() => setDialog("withdraw")} className="pointer-events-auto">
+              <Button type="button" variant="destructive" size="cta" disabled={pending} onClick={() => setDialog("withdraw")} className="pointer-events-auto min-w-0 flex-1">
                 <LogOut aria-hidden />
                 {t("withdraw")}
               </Button>
             ) : null}
             {!finished && view.isCreator ? (
-              <Button type="button" variant="destructive" size="cta" disabled={pending} onClick={() => setDialog("cancel")} className="pointer-events-auto">
+              <Button type="button" variant="destructive" size="cta" disabled={pending} onClick={() => setDialog("cancel")} className="pointer-events-auto min-w-0 flex-1">
                 <Ban aria-hidden />
                 {t("cancel")}
               </Button>
