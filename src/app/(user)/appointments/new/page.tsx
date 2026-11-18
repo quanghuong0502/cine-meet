@@ -50,7 +50,12 @@ export default async function NewAppointmentPage({ searchParams }: { searchParam
     startAt: row.startAt,
     branchId: row.branch.id,
     branchName: [row.branch.brandName, row.branch.name].filter(Boolean).join(" · "),
-    label: [row.auditorium.name, row.format.name].filter(Boolean).join(" · "),
+    endAt: row.endAt,
+    roomName: row.auditorium.name,
+    formatName: row.format.name,
+    price: row.price,
+    priceMin: row.priceMin,
+    priceMax: row.priceMax,
   }));
   if (showtimeId && !showtimes.some((s) => s.id === showtimeId)) showtimeId = undefined;
 

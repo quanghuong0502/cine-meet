@@ -1,10 +1,12 @@
 "use client";
 
-import { X } from "lucide-react";
+import { Circle, CircleCheck, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { Chip } from "@/components/admin/auditorium-editor/chips";
+import { Badge } from "@/components/ui/badge";
 import { formatDayLong, formatTime, vietnamDayKey } from "@/lib/datetime";
+import { formatVnd, formatVndRange } from "@/lib/money";
 import { vietnamToday } from "@/lib/movie/status";
 import { cn } from "@/lib/utils";
 
@@ -13,8 +15,13 @@ export interface ShowtimeChoice {
   startAt: string;
   branchId: string;
   branchName: string;
-  /** "Room · Format". */
-  label: string;
+  endAt: string;
+  roomName: string;
+  formatName: string;
+  /** Whole dong; null when no price rule matches. The range shows when seat types differ. */
+  price: number | null;
+  priceMin: number | null;
+  priceMax: number | null;
 }
 
 interface Props {
@@ -103,6 +110,13 @@ export function ShowtimePicker({ showtimes, selectedIds, onToggle, initialDay }:
         <ul className="flex flex-col gap-stack">
           {shown.map((s) => {
             const chosen = selectedIds.includes(s.id);
+            // Same price rule as the showtime card: a range when the room has several seat types.
+            const priceText =
+              s.priceMin !== null && s.priceMax !== null && s.priceMax > s.priceMin
+                ? t("price", { amount: formatVndRange(s.priceMin, s.priceMax, locale) })
+                : s.price === null
+                  ? t("noPrice")
+                  : t("price", { amount: formatVnd(s.price, locale) });
             return (
               <li key={s.id}>
                 <button
@@ -110,15 +124,25 @@ export function ShowtimePicker({ showtimes, selectedIds, onToggle, initialDay }:
                   aria-pressed={chosen}
                   onClick={() => onToggle(s.id)}
                   className={cn(
-                    "flex min-h-target w-full items-center gap-item rounded-xl border p-inset-sm text-left transition-colors",
-                    chosen ? "border-transparent bg-primary text-primary-foreground" : "bg-card",
+                    "flex w-full min-w-0 items-start gap-group rounded-xl border p-inset text-left transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
+                    chosen ? "border-primary bg-accent" : "bg-card",
                   )}
                 >
-                  <span className="shrink-0 type-item-title tabular-nums">{formatTime(s.startAt, locale)}</span>
-                  <span className="flex min-w-0 flex-1 flex-col gap-tight">
-                    <span className="break-words type-body">{s.branchName}</span>
-                    <span className={cn("break-words type-secondary", !chosen && "text-muted-foreground")}>{s.label}</span>
+                  <span className="flex w-row shrink-0 flex-col gap-tight">
+                    <span className="type-heading leading-6! tabular-nums">{formatTime(s.startAt, locale)}</span>
+                    <span className="type-secondary text-muted-foreground tabular-nums">{t("until", { time: formatTime(s.endAt, locale) })}</span>
                   </span>
+                  <span className="flex min-w-0 flex-1 flex-col gap-stack">
+                    <span className="break-words type-body">{s.branchName}</span>
+                    <span className="flex flex-wrap items-center gap-x-item gap-y-stack">
+                      <span className="type-secondary text-muted-foreground">{s.roomName}</span>
+                      <Badge variant="secondary" className="h-auto py-hair type-tag">
+                        {s.formatName}
+                      </Badge>
+                    </span>
+                    <span className="type-secondary">{priceText}</span>
+                  </span>
+                  {chosen ? <CircleCheck className="size-icon-lg shrink-0 text-primary-text" aria-hidden /> : <Circle className="size-icon-lg shrink-0 text-muted-foreground" aria-hidden />}
                 </button>
               </li>
             );
