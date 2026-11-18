@@ -83,14 +83,14 @@ export default async function ShowtimesPage({ searchParams }: { searchParams: Pr
       {nowShowing.length > 0 ? (
         <section aria-label={t("movies")}>
           <ul className="scroll-strip flex gap-item pb-tight">
-            {nowShowing.map((movie) => (
+            {nowShowing.map((movie, index) => (
               <li key={movie._id.toString()} className="w-[calc((100%-2*var(--spacing-item))/3)] shrink-0">
                 <Link href={`/movies/${movie._id.toString()}`} className="flex flex-col gap-stack">
                   <span className="relative block aspect-[2/3] overflow-hidden rounded-lg border bg-muted">
                     {movie.ageRatingId && ratingById.get(movie.ageRatingId.toString()) ? (
                       <AgeRatingBadge rating={ratingById.get(movie.ageRatingId.toString())!} className="absolute top-stack left-stack z-10" />
                     ) : null}
-                    {movie.posterUrl ? <Image src={movie.posterUrl} alt="" fill sizes={`${PX.posterList}px`} unoptimized className="object-cover" /> : null}
+                    {movie.posterUrl ? <Image src={movie.posterUrl} alt="" fill sizes={`${PX.posterList}px`} unoptimized priority={index < 3} className="object-cover" /> : null}
                   </span>
                   <span className="line-clamp-2 type-secondary leading-snug!">{movie.title}</span>
                 </Link>
