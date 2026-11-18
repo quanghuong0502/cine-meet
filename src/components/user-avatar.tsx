@@ -1,11 +1,18 @@
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 
-/** "Lan Anh Nguyen" -> "LN": first letter of the first and last word. */
+/**
+ * "Lan Anh Nguyen" -> "LN": first letter of the first and last word. Anything in brackets is left out ("An (mẫu)" -> "A", not "A("),
+ * and a word that starts with a symbol uses its first letter.
+ */
 export function getInitials(name: string): string {
-  const words = name.trim().split(/\s+/).filter(Boolean);
+  const words = name
+    .replace(/\([^)]*\)/g, " ")
+    .split(/\s+/)
+    .map((word) => word.replace(/^[^\p{L}\p{N}]+/u, ""))
+    .filter(Boolean);
   const letters = words.length > 1 ? [words[0], words[words.length - 1]] : [words[0] ?? "?"];
-  return letters.map((word) => word.charAt(0).toUpperCase()).join("");
+  return letters.map((word) => word!.charAt(0).toUpperCase()).join("");
 }
 
 interface UserAvatarProps {
