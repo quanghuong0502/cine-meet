@@ -1,13 +1,16 @@
 "use client";
 
+import { X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo, useRef, useState, useTransition } from "react";
 import { findShowtimesFromAction } from "@/actions/appointments";
+import { Button } from "@/components/ui/button";
 import { Chip } from "@/components/admin/auditorium-editor/chips";
 import { ShowtimePicker, toShowtimeChoice, type ShowtimeChoice } from "@/components/appointment/showtime-picker";
 import { DateTimeField } from "@/components/date-time-field";
 import { LoadingState } from "@/components/loading-state";
 import { vietnamToIso } from "@/lib/appointment/datetime";
+import { formatDayLong, formatTime } from "@/lib/datetime";
 import { availableValues, type FacetRecord } from "@/lib/showtime/facets";
 import type { FilterKey, FilterValues } from "@/lib/showtime/filters";
 import { slotName, slotRange, timeInSlot, type TimeSlot } from "@/lib/showtime/slots";
@@ -19,8 +22,8 @@ const KEYS: FilterKey[] = ["branch", "format", "slot"];
 interface Props {
   movieId: string;
   slots: TimeSlot[];
-  /** Showtimes already picked: shown as chosen, and not picked twice. */
-  chosenIds: string[];
+  /** Showtimes already picked. Those on the list being shown are ticked there; the others are listed above (so none is out of sight). */
+  chosen: ShowtimeChoice[];
   onPick: (showtime: ShowtimeChoice) => void;
   /** Tapping a showtime that is already picked takes it off again. */
   onUnpick: (showtimeId: string) => void;
@@ -32,7 +35,7 @@ interface Props {
  * The person types the day and time they want to watch; then the showtimes of that movie on that day, from that time on, are loaded
  * and can be narrowed by cinema, format and part of the day. Picking one hands it to the form. With none to pick, nothing can be added.
  */
-export function ShowtimeFinder({ movieId, slots, chosenIds, onPick, onUnpick, onError }: Props) {
+export function ShowtimeFinder({ movieId, slots, chosen, onPick, onUnpick, onError }: Props) {
   const t = useTranslations("appointments.new");
   const tf = useTranslations("showtimes.filters");
   const locale = useLocale();
@@ -106,9 +109,32 @@ export function ShowtimeFinder({ movieId, slots, chosenIds, onPick, onUnpick, on
     records.filter((r) => KEYS.every((key) => !filters[key] || (Array.isArray(r[key]) ? (r[key] as string[]).includes(filters[key]!) : r[key] === filters[key]))).map((r) => r.id),
   );
   const shown = (rows ?? []).filter((row) => shownIds.has(row.id)).map(toShowtimeChoice);
+  const chosenIds = chosen.map((c) => c.id);
+  // Picked showtimes that the list on screen does not hold (picked for another time, or filtered out): shown here so none hides.
+  const listed = new Set(shown.map((s) => s.id));
+  const elsewhere = chosen.filter((c) => !listed.has(c.id));
 
   return (
     <div className="flex flex-col gap-item">
+      {elsewhere.length > 0 ? (
+        <ul className="flex flex-col gap-stack">
+          {elsewhere.map((c) => (
+            <li key={c.id} className="flex items-center gap-item rounded-xl border border-primary bg-accent p-inset-sm">
+              <span className="flex min-w-0 flex-1 flex-col gap-tight">
+                <span className="break-words type-item-title tabular-nums">
+                  {formatDayLong(c.startAt, locale)} · {formatTime(c.startAt, locale)}
+                </span>
+                <span className="break-words type-secondary text-muted-foreground">
+                  {c.branchName} · {c.roomName} · {c.formatName}
+                </span>
+              </span>
+              <Button type="button" variant="ghost" size="icon" className="shrink-0" aria-label={t("removeTime")} onClick={() => onUnpick(c.id)}>
+                <X aria-hidden />
+              </Button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
       <span className="type-secondary text-muted-foreground">{t("pickTimeLabel")}</span>
       <div className="flex gap-stack">
         <DateTimeField kind="date" label={t("customDate")} value={date} onChange={(v) => { setDate(v); schedule(v, time); }} onBlur={settle} className="min-w-0 flex-1" />

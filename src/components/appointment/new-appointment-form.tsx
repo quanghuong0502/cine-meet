@@ -1,7 +1,7 @@
 "use client";
 
-import { LoaderCircle, Send, X } from "lucide-react";
-import { useLocale, useTranslations } from "next-intl";
+import { LoaderCircle, Send } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { DateTimeField } from "@/components/date-time-field";
@@ -17,7 +17,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { vietnamToIso } from "@/lib/appointment/datetime";
 import type { TimeSlot } from "@/lib/showtime/slots";
 import { MAX_TIME_OPTIONS } from "@/lib/appointment/limits";
-import { formatDayLong, formatTime } from "@/lib/datetime";
 
 interface Props {
   movies: { id: string; title: string }[];
@@ -39,7 +38,6 @@ const CONTROL = "h-control rounded-xl bg-card px-inset type-body";
 export function NewAppointmentForm({ movies, movieId: initialMovieId, initialShowtime, slots, friends, groups }: Props) {
   const t = useTranslations("appointments.new");
   const tc = useTranslations("appointments");
-  const locale = useLocale();
   const router = useRouter();
   const [pending, start] = useTransition();
   const [movieId, setMovieId] = useState(initialMovieId);
@@ -145,28 +143,8 @@ export function NewAppointmentForm({ movies, movieId: initialMovieId, initialSho
           {t("timesLabel")}
           <RequiredMark />
         </span>
-        {chosen.length > 0 ? (
-          <ul className="flex flex-col gap-stack">
-            {chosen.map((c) => (
-              <li key={c.id} className="flex items-center gap-item rounded-xl border border-primary bg-accent p-inset-sm">
-                <span className="flex min-w-0 flex-1 flex-col gap-tight">
-                  <span className="break-words type-item-title tabular-nums">
-                    {formatDayLong(c.startAt, locale)} · {formatTime(c.startAt, locale)}
-                  </span>
-                  <span className="break-words type-secondary text-muted-foreground">
-                    {c.branchName} · {c.roomName} · {c.formatName}
-                  </span>
-                </span>
-                <Button type="button" variant="ghost" size="icon" className="shrink-0" aria-label={t("removeTime")} onClick={() => setChosen(chosen.filter((x) => x.id !== c.id))}>
-                  <X aria-hidden />
-                </Button>
-              </li>
-            ))}
-          </ul>
-        ) : null}
-
         {movieId ? (
-          <ShowtimeFinder key={movieId} movieId={movieId} slots={slots} chosenIds={chosen.map((c) => c.id)} onPick={pickShowtime} onUnpick={(id) => setChosen((list) => list.filter((x) => x.id !== id))} onError={(message) => setErrors((e) => ({ ...e, find: message }))} />
+          <ShowtimeFinder key={movieId} movieId={movieId} slots={slots} chosen={chosen} onPick={pickShowtime} onUnpick={(id) => setChosen((list) => list.filter((x) => x.id !== id))} onError={(message) => setErrors((e) => ({ ...e, find: message }))} />
         ) : (
           <p className="type-secondary text-muted-foreground">{t("pickMovieFirst")}</p>
         )}
