@@ -5,10 +5,11 @@ import { useLocale, useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { assignSeatsAction, type ActionResult } from "@/actions/appointments";
-import { Chip } from "@/components/admin/auditorium-editor/chips";
 import { SeatMap, type SeatMapSeatType } from "@/components/seat-map/seat-map";
 import { UserAvatar, getInitials } from "@/components/user-avatar";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { suggestTogether } from "@/lib/appointment/suggest";
 import { PX } from "@/lib/ui-sizes";
 import { cn } from "@/lib/utils";
@@ -131,10 +132,13 @@ export function SeatPlanner({ view, room, onSave, busy, onDraft, initialSeats }:
           </button>
         ))}
       </div>
-      <Chip selected={heat} onClick={() => setHeat((v) => !v)} className="self-start">
-        {t("layerScore")}
-      </Chip>
       <SeatMap showHeatmap={heat} geometry={room.geometry} seats={room.seats} seatTypes={types} selectedCodes={selectedCodes} reservedCodes={taken} holderLabels={holderLabels} onSeatTap={onSeatTap} />
+      <div className="flex min-h-target items-center justify-between gap-group">
+        <Label htmlFor="seat-heat" className="text-muted-foreground">
+          {t("layerScore")}
+        </Label>
+        <Switch id="seat-heat" checked={heat} onCheckedChange={setHeat} />
+      </div>
       <Button type="button" variant="outline" size="cta" disabled={busy} onClick={suggest}>
         <Sparkles aria-hidden />
         {t("suggest")}
