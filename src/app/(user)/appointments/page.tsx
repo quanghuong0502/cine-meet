@@ -33,6 +33,7 @@ export default async function AppointmentsPage() {
 
       {active.length === 0 && past.length === 0 ? (
         <EmptyState
+          className="flex-1 justify-center"
           mascot="duo-watching"
           title={t("emptyTitle")}
           description={t("emptyDescription")}
