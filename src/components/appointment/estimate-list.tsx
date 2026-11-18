@@ -27,7 +27,8 @@ export function EstimateList({ view, title, estimate = view.estimate }: { view: 
             <UserAvatar name={person.name} image={person.avatar} size={PX.avatar} />
             <span className="flex min-w-0 flex-1 flex-col gap-tight">
               <span className="break-words type-item-title">{person.name}</span>
-              <span className="type-secondary text-muted-foreground tabular-nums">{t("ticketAndFood", { ticket: formatVnd(ticket, locale), food: formatVnd(fnb, locale) })}</span>
+              <span className="type-secondary text-muted-foreground tabular-nums">{t("ticketLine", { amount: formatVnd(ticket, locale) })}</span>
+              <span className="type-secondary text-muted-foreground tabular-nums">{t("foodLine", { amount: formatVnd(fnb, locale) })}</span>
             </span>
             <span className="shrink-0 type-item-title tabular-nums">{formatVnd(sum, locale)}</span>
           </li>
