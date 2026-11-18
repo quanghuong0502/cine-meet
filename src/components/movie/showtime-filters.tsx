@@ -75,18 +75,18 @@ export function ShowtimeFilters({ date, values, options, records }: Props) {
 
   const buttonLabel = activeKeys.length > 0 ? t("titleCount", { count: activeKeys.length }) : t("title");
 
+  if (!canFilter) return null;
+
   return (
-    <section aria-label={t("title")} className="flex flex-col gap-2">
-      {canFilter ? (
-        <div ref={anchor} className="flex justify-end">
-          <Chip selected={activeKeys.length > 0} onClick={() => onOpenChange(true)} aria-haspopup="dialog">
-            <SlidersHorizontal className="size-4" aria-hidden />
-            {buttonLabel}
-          </Chip>
-        </div>
-      ) : null}
+    <section aria-label={t("title")} className="-mt-2 flex flex-col gap-2">
+      <div ref={anchor} className="flex justify-end">
+        <Chip selected={activeKeys.length > 0} onClick={() => onOpenChange(true)} aria-haspopup="dialog">
+          <SlidersHorizontal className="size-4" aria-hidden />
+          {buttonLabel}
+        </Chip>
+      </div>
       {/* Once the button above has scrolled away it floats at the bottom right, above the menu, as the icon alone, with a small count badge when filters are on (the label and count are also in aria-label). */}
-      {canFilter && floating ? (
+      {floating ? (
         <div data-bottom-fixed className="pointer-events-none fixed inset-x-0 bottom-[var(--nav-clearance)] z-30">
           <div className="mx-auto flex max-w-2xl justify-end px-4">
             <Button
