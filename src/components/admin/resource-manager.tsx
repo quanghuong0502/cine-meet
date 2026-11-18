@@ -142,7 +142,7 @@ export function ResourceManager({ items, basePath, query, labels, removeAction, 
                     {item.meta?.length ? (
                       <span className="flex flex-wrap gap-tight">
                         {item.meta.map((entry) => (
-                          <Badge key={entry} variant="secondary" className="h-auto max-w-full whitespace-normal py-hair text-left type-tag">
+                          <Badge key={entry} variant="secondary" className="max-w-full whitespace-normal text-left">
                             {entry}
                           </Badge>
                         ))}

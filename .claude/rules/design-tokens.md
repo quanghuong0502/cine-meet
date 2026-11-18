@@ -87,7 +87,8 @@ Quy ước này theo cách Apple dùng *text style* (Dynamic Type) và Material 
 | `type-caption` | 13 / 18 | ghi chú nhỏ | iOS Footnote (13) |
 | `type-micro` | 12 / 16 | chữ nhỏ nhất được phép (nhãn dưới ô ngày, thời gian trình phát) | iOS Caption 1 (12), M3 label medium (12) |
 | `type-action` | 16 / 24, medium | chữ trên nút (nút `pill` và `cta-sm`) | iOS Body nhấn, M3 label large |
-| `type-tag` | 12 / 16, medium | badge, tag, nhãn tab dưới | iOS Caption 1, M3 label medium (12, 500) |
+| `type-badge` | 13 / 18, medium | nhãn trạng thái dạng viên thuốc (component `Badge`, đệm ngang 12 và dọc 4), đã tăng từ 12 lên 13 (2026-11-18, thử) để dấu tiếng Việt dễ đọc | iOS Footnote (13), M3 label medium |
+| `type-tag` | 12 / 16, medium | nhãn tab dưới, chấm số trên chuông, thẻ tuổi | iOS Caption 1, M3 label medium (12, 500) |
 
 Nguồn: [Apple HIG, Typography](https://developer.apple.com/design/human-interface-guidelines/typography) (iOS mặc định 17pt, tối thiểu 11pt; Headline 17pt đậm; Large Title 34pt, Caption 2 11pt) và Material 3 type scale (headline small 24, title large 22, title medium 16/500, body large 16/400, label medium 12/500).
 **Chưa đối chiếu trang gốc** (lấy từ lần tra cứu trước, ghi ở `ui.md`): Title 2 22, Title 3 20, Subheadline 15, Footnote 13, Caption 1 12 của iOS. Cỡ của app là phép gần đúng cho điện thoại (nội dung 16, chữ phụ 15 cho dấu tiếng Việt), không phải bản sao.

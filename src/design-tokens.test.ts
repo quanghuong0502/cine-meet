@@ -68,7 +68,7 @@ describe("design tokens", () => {
   });
 
   // Type roles (docs: .claude/rules/design-tokens.md, "Cỡ chữ theo vai trò"): text takes a role, never a loose size.
-  const ROLES = ["display", "title", "heading", "item-title", "body", "secondary", "label", "caption", "micro", "action", "tag"];
+  const ROLES = ["display", "title", "heading", "item-title", "body", "secondary", "label", "caption", "micro", "action", "tag", "badge"];
 
   it("defines every type role in globals.css", () => {
     const css = readFileSync(join(SRC, "app", "globals.css"), "utf8");

@@ -37,7 +37,7 @@ export function ShowtimeCard({ row, showMovie = false }: { row: ShowtimeRow; sho
         <span className="break-words type-body">{[row.branch.brandName, row.branch.name].filter(Boolean).join(" · ")}</span>
         <span className="flex flex-wrap items-center gap-x-item gap-y-stack">
           <span className="type-secondary text-muted-foreground">{row.auditorium.name}</span>
-          <Badge variant="secondary" className="h-auto py-hair type-tag">
+          <Badge variant="secondary">
             {row.format.name}
           </Badge>
         </span>

@@ -124,7 +124,7 @@ export function ShowtimePicker({ showtimes, selectedIds, onToggle, initialDay }:
                     <span className="break-words type-body">{s.branchName}</span>
                     <span className="flex flex-wrap items-center gap-x-item gap-y-stack">
                       <span className="type-secondary text-muted-foreground">{s.roomName}</span>
-                      <Badge variant="secondary" className="h-auto py-hair type-tag">
+                      <Badge variant="secondary">
                         {s.formatName}
                       </Badge>
                     </span>

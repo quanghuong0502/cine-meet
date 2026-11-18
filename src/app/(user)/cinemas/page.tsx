@@ -44,11 +44,11 @@ export default async function CinemasPage() {
                         </span>
                       ) : null}
                       <span className="flex flex-wrap gap-stack">
-                        <Badge variant="secondary" className="h-auto py-hair type-tag">
+                        <Badge variant="secondary">
                           {t("roomCount", { count: branch.roomCount })}
                         </Badge>
                         {branch.parkingFee !== null ? (
-                          <Badge variant="outline" className="h-auto py-hair type-tag">
+                          <Badge variant="outline">
                             {t("parkingFee", { fee: formatVnd(branch.parkingFee, locale) })}
                           </Badge>
                         ) : null}

@@ -7,7 +7,7 @@ export function AppointmentStatusBadge({ status }: { status: AppointmentStatus }
   const t = useTranslations("appointments.status");
   const variant = status === "CANCELLED" ? "destructive" : status === "INVITING" ? "accent" : "secondary";
   return (
-    <Badge variant={variant} className="h-auto py-hair type-tag">
+    <Badge variant={variant}>
       {t(status)}
     </Badge>
   );

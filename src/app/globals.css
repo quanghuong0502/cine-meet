@@ -485,6 +485,11 @@ html[data-keyboard="open"]:has([data-slot="drawer-content"]) body {
   line-height: var(--text-base--line-height) !important;
   font-weight: 500 !important;
 }
+@utility type-badge {
+  font-size: var(--text-footnote) !important;
+  line-height: var(--text-footnote--line-height) !important;
+  font-weight: 500 !important;
+}
 @utility type-tag {
   font-size: var(--text-xs) !important;
   line-height: var(--text-xs--line-height) !important;

@@ -113,17 +113,17 @@ async function RoomTags({ room, locale }: { room: CinemaRoom; locale: string }) 
   return (
     <span className="flex flex-wrap gap-stack">
       {room.formats.map((format) => (
-        <Badge key={`f-${format}`} variant="outline" className="h-auto py-hair type-tag">
+        <Badge key={`f-${format}`} variant="outline">
           {format}
         </Badge>
       ))}
       {special.map((name) => (
-        <Badge key={`t-${name}`} variant="secondary" className="h-auto py-hair type-tag">
+        <Badge key={`t-${name}`} variant="secondary">
           {name}
         </Badge>
       ))}
       {room.markCount > 0 ? (
-        <Badge variant="secondary" className="h-auto py-hair type-tag">
+        <Badge variant="secondary">
           <Star aria-hidden />
           {t("markedSeats", { count: room.markCount })}
         </Badge>

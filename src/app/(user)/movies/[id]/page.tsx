@@ -64,7 +64,7 @@ export default async function MovieDetailPage({ params }: Props) {
           <h1 className="type-heading">{movie.title}</h1>
           {movie.originalTitle ? <p className="type-secondary text-muted-foreground">{movie.originalTitle}</p> : null}
           <div className="flex flex-wrap gap-stack">
-            <Badge variant={movie.status === "showing" ? "default" : "secondary"} className="h-auto py-hair type-tag">
+            <Badge variant={movie.status === "showing" ? "default" : "secondary"}>
               {t(`status.${movie.status}`)}
             </Badge>
             {rating ? <AgeRatingBadge rating={rating} /> : null}
@@ -75,14 +75,14 @@ export default async function MovieDetailPage({ params }: Props) {
             <div className="flex flex-wrap gap-stack">
               <span role="group" aria-label={t("genres")} className="contents">
                 {genreNames.map((name) => (
-                  <Badge key={name} variant="secondary" className="h-auto py-hair type-tag">
+                  <Badge key={name} variant="secondary">
                     {name}
                   </Badge>
                 ))}
               </span>
               <span role="group" aria-label={t("formats")} className="contents">
                 {formatNames.map((name) => (
-                  <Badge key={name} variant="secondary" className="h-auto py-hair type-tag">
+                  <Badge key={name} variant="secondary">
                     {name}
                   </Badge>
                 ))}
