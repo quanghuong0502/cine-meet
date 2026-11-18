@@ -29,7 +29,7 @@ export function SeatsPanel({ seatTypes, selectedCount, allHaveFlag, allHaveType,
         {t("selected", { count: selectedCount })}
       </p>
 
-      <div role="group" aria-label={t("typeGroup")} className="flex flex-wrap gap-stack">
+      <Section title={t("typeGroup")}>
         {seatTypes.map((type) => (
           <Chip key={type.id} disabled={idle} selected={!idle && allHaveType(type.id)} onClick={() => onType(type.id)}>
             <span aria-hidden className="size-icon-xs shrink-0 rounded-sm border border-foreground/20" style={{ backgroundColor: type.color ?? undefined }} />
@@ -39,9 +39,9 @@ export function SeatsPanel({ seatTypes, selectedCount, allHaveFlag, allHaveType,
         <Chip disabled={idle} selected={!idle && allHaveType(NO_SEAT)} onClick={() => onType(NO_SEAT)}>
           {t("none")}
         </Chip>
-      </div>
+      </Section>
 
-      <div role="group" aria-label={t("flagGroup")} className="flex flex-wrap gap-stack">
+      <Section title={t("flagGroup")}>
         {(["broken", "obstructed"] as const).map((flag) => {
           const on = !idle && allHaveFlag(flag);
           return (
@@ -50,9 +50,9 @@ export function SeatsPanel({ seatTypes, selectedCount, allHaveFlag, allHaveType,
             </Chip>
           );
         })}
-      </div>
+      </Section>
 
-      <div className="flex flex-wrap gap-stack">
+      <Section title={t("actionGroup")}>
         <Chip selected={false} disabled={idle} onClick={onReset}>
           <RotateCcw className="size-icon-sm" aria-hidden />
           {t("reset")}
@@ -61,7 +61,19 @@ export function SeatsPanel({ seatTypes, selectedCount, allHaveFlag, allHaveType,
           <X className="size-icon-sm" aria-hidden />
           {t("clear")}
         </Chip>
-      </div>
+      </Section>
+    </div>
+  );
+}
+
+/** One kind of action under its own small heading, so the chips read as groups (what the cell is, its condition, what to do with it). */
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div role="group" aria-label={title} className="flex flex-col gap-stack">
+      <p aria-hidden className="type-label text-muted-foreground">
+        {title}
+      </p>
+      <div className="flex flex-wrap gap-stack">{children}</div>
     </div>
   );
 }

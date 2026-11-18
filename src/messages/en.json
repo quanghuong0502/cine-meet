@@ -747,6 +747,7 @@
           "obstructed": "View blocked",
           "clear": "Deselect",
           "reset": "Reset cells",
+          "actionGroup": "Actions",
           "typeGroup": "Seat type",
           "flagGroup": "Condition"
         }
