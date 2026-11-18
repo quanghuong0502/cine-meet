@@ -21,6 +21,7 @@ import { User } from "@/models/user";
 import { filterFriendIds, type PersonView } from "@/services/friend.service";
 import { SeatClaim } from "@/models/seat-claim";
 import { recomputeEstimate, releaseUnusedClaims } from "@/services/appointment-estimate";
+import { getSystemSettings } from "@/services/settings.service";
 import { enqueueNotifications } from "@/notifications/outbox";
 import type { NotificationPayload, NotificationType } from "@/notifications/types";
 
@@ -168,8 +169,11 @@ export async function createAppointment(creatorId: string, input: CreateAppointm
     if (clash) return { ok: false, error: "duplicate" };
     options.push(option);
   }
-  // The poll has to end before the first time on it: after that time nobody could go anyway.
-  if (input.responseDeadline && input.responseDeadline.getTime() >= Math.min(...options.map((o) => o.startAt.getTime()))) return { ok: false, error: "deadline_too_late" };
+  // The poll has to end at least the admin's number of minutes before the first time on it (after that nobody could plan to go anyway).
+  if (input.responseDeadline) {
+    const lead = (await getSystemSettings()).responseDeadlineMinutes * 60_000;
+    if (input.responseDeadline.getTime() > Math.min(...options.map((o) => o.startAt.getTime())) - lead) return { ok: false, error: "deadline_too_late" };
+  }
 
   const doc = await Appointment.create({
     creatorId,
@@ -318,8 +322,8 @@ export async function proposeOption(
     if (doc.timeOptions.length >= MAX_TIME_OPTIONS) return { ok: false as const, error: "limit" as const };
     const option = await resolveOption(doc.movieId.toString(), input, now);
     if (!option) return { ok: false as const, error: "invalid_option" as const };
-    // A time that comes before the answer-by time would be over before people could vote on it.
-    if (doc.responseDeadline && option.startAt.getTime() <= doc.responseDeadline.getTime()) return { ok: false as const, error: "option_before_deadline" as const };
+    // A time that comes too soon after the answer-by time (less than the admin's lead) would be over before people could vote on it.
+    if (doc.responseDeadline && option.startAt.getTime() < doc.responseDeadline.getTime() + (await getSystemSettings()).responseDeadlineMinutes * 60_000) return { ok: false as const, error: "option_before_deadline" as const };
     if (doc.timeOptions.some((o) => o.startAt.getTime() === option.startAt.getTime() && o.showtimeId?.toString() === option.showtimeId)) {
       return { ok: false as const, error: "duplicate" as const };
     }
@@ -358,7 +362,7 @@ export async function submitResponse(
     for (const proposal of input.proposals) {
       const option = await resolveOption(doc.movieId.toString(), proposal, now);
       if (!option) return { ok: false as const, error: "invalid_option" as const };
-      if (doc.responseDeadline && option.startAt.getTime() <= doc.responseDeadline.getTime()) return { ok: false as const, error: "option_before_deadline" as const };
+      if (doc.responseDeadline && option.startAt.getTime() < doc.responseDeadline.getTime() + (await getSystemSettings()).responseDeadlineMinutes * 60_000) return { ok: false as const, error: "option_before_deadline" as const };
       const same = (o: { startAt: Date; showtimeId?: { toString(): string } | string | null }) => o.startAt.getTime() === option.startAt.getTime() && (o.showtimeId?.toString() ?? undefined) === option.showtimeId;
       if (doc.timeOptions.some(same) || added.some(same)) return { ok: false as const, error: "duplicate" as const };
       added.push(option);

@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { vietnamToIso } from "@/lib/appointment/datetime";
 import type { TimeSlot } from "@/lib/showtime/slots";
+import { vietnamToday } from "@/lib/movie/status";
 import { MAX_TIME_OPTIONS } from "@/lib/appointment/limits";
 
 interface Props {
@@ -24,6 +25,8 @@ interface Props {
   /** The showtime the person came from ("plan this showtime"): already picked when the form opens. */
   initialShowtime?: ShowtimeChoice;
   slots: TimeSlot[];
+  /** The answer-by time must be at least this many minutes before the earliest showtime (set by the admin). */
+  deadlineLeadMinutes: number;
   friends: { id: string; name: string }[];
   groups: { id: string; name: string; memberIds: string[] }[];
 }
@@ -35,7 +38,7 @@ const CONTROL = "h-control rounded-xl bg-card px-inset type-body";
  * answer-by time. A showtime is found by typing the day and time to watch: the showtimes of that movie from then on are loaded (with
  * filters) and one is picked. With no showtime to pick there is nothing to add, so an appointment cannot be made without one.
  */
-export function NewAppointmentForm({ movies, movieId: initialMovieId, initialShowtime, slots, friends, groups }: Props) {
+export function NewAppointmentForm({ movies, movieId: initialMovieId, initialShowtime, slots, deadlineLeadMinutes, friends, groups }: Props) {
   const t = useTranslations("appointments.new");
   const tc = useTranslations("appointments");
   const router = useRouter();
@@ -46,6 +49,19 @@ export function NewAppointmentForm({ movies, movieId: initialMovieId, initialSho
   const [deadlineDate, setDeadlineDate] = useState("");
   const [deadlineTime, setDeadlineTime] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // The latest answer-by time: the earliest showtime picked, minus the admin's lead. Checked as soon as both fields are filled.
+  const earliestStart = chosen.length > 0 ? Math.min(...chosen.map((c) => new Date(c.startAt).getTime())) : null;
+  const latestDeadline = earliestStart === null ? null : earliestStart - deadlineLeadMinutes * 60_000;
+  const deadlineIso = vietnamToIso(deadlineDate, deadlineTime);
+  const deadlineProblem = ((): string => {
+    if (!deadlineIso) return "";
+    // Only the lead is checked while typing (a time already past is caught on send, and the date picker starts at today).
+    const at = new Date(deadlineIso).getTime();
+    if (latestDeadline !== null && at > latestDeadline) return t("errors.deadlineBeforeStart", { minutes: deadlineLeadMinutes });
+    return "";
+  })();
+  const deadlineMaxDate = latestDeadline === null ? undefined : new Date(latestDeadline + 7 * 3600_000).toISOString().slice(0, 10);
 
   const toggle = <T,>(list: T[], value: T) => (list.includes(value) ? list.filter((v) => v !== value) : [...list, value]);
 
@@ -82,7 +98,7 @@ export function NewAppointmentForm({ movies, movieId: initialMovieId, initialSho
       // The poll must end before the first time on it.
       const starts = chosen.map((c) => new Date(c.startAt).getTime());
       if (!iso || new Date(iso).getTime() <= Date.now()) next.deadline = t("errors.deadline");
-      else if (starts.length > 0 && new Date(iso).getTime() >= Math.min(...starts)) next.deadline = t("errors.deadlineBeforeStart");
+      else if (starts.length > 0 && new Date(iso).getTime() > Math.min(...starts) - deadlineLeadMinutes * 60_000) next.deadline = t("errors.deadlineBeforeStart", { minutes: deadlineLeadMinutes });
       else responseDeadline = iso;
     }
     setErrors(next);
@@ -183,10 +199,16 @@ export function NewAppointmentForm({ movies, movieId: initialMovieId, initialSho
       <div className="flex flex-col gap-item">
         <span className="type-label text-muted-foreground">{t("deadlineLabel")}</span>
         <div className="flex gap-stack">
-          <DateTimeField kind="date" label={t("deadlineDate")} value={deadlineDate} onChange={setDeadlineDate} className="min-w-0 flex-1" />
+          <DateTimeField kind="date" label={t("deadlineDate")} value={deadlineDate} onChange={setDeadlineDate} min={vietnamToday()} max={deadlineMaxDate} className="min-w-0 flex-1" />
           <DateTimeField kind="time" label={t("deadlineTime")} value={deadlineTime} onChange={setDeadlineTime} className="w-time-field" />
         </div>
-        {fieldError("deadline")}
+        {deadlineProblem ? (
+          <p role="alert" className="type-secondary text-destructive">
+            {deadlineProblem}
+          </p>
+        ) : (
+          fieldError("deadline")
+        )}
       </div>
 
       <div aria-hidden className="h-save-clear shrink-0" />

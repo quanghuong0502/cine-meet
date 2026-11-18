@@ -625,9 +625,6 @@
           "label": "Nhắc trước giờ chiếu (phút)",
           "placeholder": "vd. 1440, 20"
         },
-        "responseDeadlineHours": {
-          "label": "Hạn phản hồi lời mời (giờ)"
-        },
         "adMinutes": {
           "label": "Quảng cáo trước phim (phút)"
         },
@@ -639,6 +636,9 @@
         },
         "pushTtlHours": {
           "label": "Giữ thông báo đẩy khi máy offline (giờ)"
+        },
+        "responseDeadlineMinutes": {
+          "label": "Hạn trả lời trước giờ chiếu (phút)"
         }
       },
       "slots": {
@@ -1335,7 +1335,7 @@
         "past": "Giờ này đã qua rồi.",
         "duplicate": "Giờ này có trong danh sách rồi.",
         "tooManyTimes": "Tối đa {max} giờ thôi nha.",
-        "deadlineBeforeStart": "Hạn trả lời phải trước giờ xem sớm nhất, và phải ở tương lai nha.",
+        "deadlineBeforeStart": "Hạn trả lời phải trước giờ chiếu sớm nhất ít nhất {minutes} phút, và phải ở tương lai nha.",
         "searchFailed": "Chưa tải được các suất chiếu, thử lại nha."
       },
       "noShowtimesFilter": "Ngày này chưa có suất nào ở rạp đã chọn.",

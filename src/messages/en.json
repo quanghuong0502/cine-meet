@@ -625,9 +625,6 @@
           "label": "Remind before showtime (minutes)",
           "placeholder": "e.g. 1440, 20"
         },
-        "responseDeadlineHours": {
-          "label": "Invitation deadline (hours)"
-        },
         "adMinutes": {
           "label": "Ads before the movie (minutes)"
         },
@@ -639,6 +636,9 @@
         },
         "pushTtlHours": {
           "label": "Keep push for offline phones (hours)"
+        },
+        "responseDeadlineMinutes": {
+          "label": "Answer-by time before the showtime (minutes)"
         }
       },
       "slots": {
@@ -1335,7 +1335,7 @@
         "past": "That time has already passed.",
         "duplicate": "That time is already on the list.",
         "tooManyTimes": "Up to {max} times.",
-        "deadlineBeforeStart": "The answer-by time has to be in the future and before the earliest viewing time.",
+        "deadlineBeforeStart": "The answer-by time must be at least {minutes} minutes before the earliest showtime, and in the future.",
         "searchFailed": "Could not load the showtimes, try again."
       },
       "noShowtimesFilter": "No showtimes on this day at the chosen cinema.",

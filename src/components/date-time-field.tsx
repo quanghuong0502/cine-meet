@@ -9,6 +9,9 @@ interface DateTimeFieldProps {
   kind: "date" | "time";
   value: string;
   onChange: (value: string) => void;
+  /** Earliest and latest value the picker offers (a date as YYYY-MM-DD). The browser limits the choice; the form still checks it. */
+  min?: string;
+  max?: string;
   /** The field lost focus: the picker was closed, so the choice is final. (`onChange` also fires while the picker is still being turned.) */
   onBlur?: () => void;
   /** Name for screen readers (the visible words are only a hint while the field is empty). */
@@ -23,7 +26,7 @@ interface DateTimeFieldProps {
  * invisible and stretched over the whole field (a tap anywhere opens the picker), and our own icon is drawn at the right edge.
  * Same height as every other input (48px).
  */
-export function DateTimeField({ kind, value, onChange, onBlur, label, className }: DateTimeFieldProps) {
+export function DateTimeField({ kind, value, onChange, onBlur, min, max, label, className }: DateTimeFieldProps) {
   const t = useTranslations("dateTimeField");
   const empty = value === "";
   const Icon = kind === "date" ? CalendarDays : Clock;
@@ -31,6 +34,8 @@ export function DateTimeField({ kind, value, onChange, onBlur, label, className 
     <div className={cn("relative", className)}>
       <Input
         type={kind}
+        min={min}
+        max={max}
         aria-label={label}
         value={value}
         onChange={(event) => onChange(event.target.value)}

@@ -58,6 +58,7 @@ export default async function NewAppointmentPage({ searchParams }: { searchParam
         movieId={movieId}
         initialShowtime={initialShowtime ? toShowtimeChoice(initialShowtime) : undefined}
         slots={settings.timeSlots}
+        deadlineLeadMinutes={settings.responseDeadlineMinutes}
         friends={overview.friends.map((f) => ({ id: f.id, name: f.name }))}
         groups={groups.map((g) => ({ id: g.id, name: g.name, memberIds: g.members.map((m) => m.id) }))}
       />

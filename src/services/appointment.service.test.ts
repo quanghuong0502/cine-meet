@@ -259,8 +259,24 @@ describe("appointment service", () => {
       const opts = [{ startAt: hours(48) }, { startAt: hours(72) }];
       expect(await svc.createAppointment(creator, { ...base(), options: opts, responseDeadline: hours(50) })).toEqual({ ok: false, error: "deadline_too_late" });
       expect(await svc.createAppointment(creator, { ...base(), options: opts, responseDeadline: hours(80) })).toEqual({ ok: false, error: "deadline_too_late" });
-      expect(await svc.createAppointment(creator, { ...base(), options: opts, responseDeadline: hours(47) })).toMatchObject({ ok: true });
+      expect(await svc.createAppointment(creator, { ...base(), options: opts, responseDeadline: hours(46) })).toMatchObject({ ok: true });
       expect(await svc.createAppointment(creator, { ...base(), options: opts })).toMatchObject({ ok: true }); // no deadline: nothing to check
+    });
+
+    it("must be at least the admin's number of minutes before the earliest time (60 by default)", async () => {
+      const opts = [{ startAt: hours(48) }];
+      // 30 minutes before the showtime: too close.
+      expect(await svc.createAppointment(creator, { ...base(), options: opts, responseDeadline: hours(47.5) })).toEqual({ ok: false, error: "deadline_too_late" });
+      // 90 minutes before: fine.
+      expect(await svc.createAppointment(creator, { ...base(), options: opts, responseDeadline: hours(46.5) })).toMatchObject({ ok: true });
+      // Change the lead to 15 minutes and 30 minutes before now passes.
+      const { SystemSetting } = await import("@/models/system-setting");
+      await SystemSetting.create({ key: "responseDeadlineMinutes", value: 15 });
+      try {
+        expect(await svc.createAppointment(creator, { ...base(), options: opts, responseDeadline: hours(47.5) })).toMatchObject({ ok: true });
+      } finally {
+        await SystemSetting.deleteMany({});
+      }
     });
 
     it("a suggested time cannot be earlier than the answer-by time", async () => {

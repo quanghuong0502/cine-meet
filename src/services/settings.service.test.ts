@@ -31,7 +31,7 @@ const codes = (input: Record<string, string>) => {
   const result = parse(input);
   return result.success ? {} : Object.fromEntries(result.error.issues.map((i) => [String(i.path[0]), i.message]));
 };
-const base = { reminderMinutesBefore: "1440, 20", responseDeadlineHours: "24", adMinutes: "15", movieUpcomingDays: "30", timeSlots: JSON.stringify(DEFAULT_TIME_SLOTS), pushTtlHours: "24" };
+const base = { reminderMinutesBefore: "1440, 20", responseDeadlineMinutes: "60", adMinutes: "15", movieUpcomingDays: "30", timeSlots: JSON.stringify(DEFAULT_TIME_SLOTS), pushTtlHours: "24" };
 
 describe("settings input", () => {
   it("reads the reminders as a list, largest first, without repeats", () => {
@@ -45,7 +45,7 @@ describe("settings input", () => {
     expect(codes({ ...base, reminderMinutesBefore: "0" })).toEqual({ reminderMinutesBefore: "out_of_range" });
     expect(codes({ ...base, reminderMinutesBefore: "20000" })).toEqual({ reminderMinutesBefore: "out_of_range" });
     expect(codes({ ...base, reminderMinutesBefore: "1,2,3,4,5,6" })).toEqual({ reminderMinutesBefore: "out_of_range" });
-    expect(codes({ ...base, responseDeadlineHours: "0" })).toEqual({ responseDeadlineHours: "out_of_range" });
+    expect(codes({ ...base, responseDeadlineMinutes: "-1" })).toEqual({ responseDeadlineMinutes: "out_of_range" });
     expect(codes({ ...base, adMinutes: "61" })).toEqual({ adMinutes: "out_of_range" });
     expect(codes({ ...base, adMinutes: "1.5" })).toEqual({ adMinutes: "invalid_number" });
     expect(codes({ ...base })).toEqual({});
@@ -89,7 +89,7 @@ describe("settings storage", () => {
     const parsed = parse({ ...base, adMinutes: "20" });
     if (!parsed.success) throw new Error("setup failed");
     const saved = await svc.updateSystemSettings(parsed.data, ACTOR);
-    expect(saved).toEqual({ reminderMinutesBefore: [1440, 20], responseDeadlineHours: 24, adMinutes: 20, movieUpcomingDays: 30, timeSlots: DEFAULT_TIME_SLOTS, pushTtlHours: 24 });
+    expect(saved).toEqual({ reminderMinutesBefore: [1440, 20], responseDeadlineMinutes: 60, adMinutes: 20, movieUpcomingDays: 30, timeSlots: DEFAULT_TIME_SLOTS, pushTtlHours: 24 });
     expect(await svc.getSystemSettings()).toEqual(saved);
     // reminders and ads differ from the defaults; the 24 hours is the default and unchanged.
     expect(await AuditLog.countDocuments({ entity: "systemSetting" })).toBe(2);

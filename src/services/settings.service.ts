@@ -8,8 +8,8 @@ import { recordAudit } from "@/services/audit.service";
 export interface SystemSettings {
   /** Minutes before showtime to remind attendees; several values allowed, largest first (e.g. [1440, 20]). */
   reminderMinutesBefore: number[];
-  /** By default, invitees must answer this many hours before the showtime. */
-  responseDeadlineHours: number;
+  /** The answer-by time of an appointment must be at least this many minutes before its earliest showtime. */
+  responseDeadlineMinutes: number;
   /** Minutes of ads before the movie, added to the end time of a showtime. */
   adMinutes: number;
   /** The movie filter also offers movies that start within this many days (movies already showing are always offered). */
@@ -22,7 +22,7 @@ export interface SystemSettings {
 
 export const SETTING_DEFAULTS: SystemSettings = {
   reminderMinutesBefore: [20],
-  responseDeadlineHours: 24,
+  responseDeadlineMinutes: 60,
   adMinutes: 15,
   movieUpcomingDays: 30,
   timeSlots: DEFAULT_TIME_SLOTS,
@@ -31,6 +31,9 @@ export const SETTING_DEFAULTS: SystemSettings = {
 
 /** Four weeks: the longest wait Google's push service allows. */
 export const MAX_PUSH_TTL_HOURS = 28 * 24;
+
+/** A week. */
+export const MAX_DEADLINE_MINUTES = 7 * 24 * 60;
 
 export const MAX_REMINDERS = 5;
 export const MAX_REMINDER_MINUTES = 7 * 24 * 60;
@@ -58,7 +61,7 @@ export const systemSettingsInputSchema = z.object({
     .string({ error: "required" })
     .transform(parseMinutesList)
     .pipe(reminderList),
-  responseDeadlineHours: requiredInt(1, 168),
+  responseDeadlineMinutes: requiredInt(0, MAX_DEADLINE_MINUTES),
   adMinutes: requiredInt(0, 60),
   movieUpcomingDays: requiredInt(0, 365),
   timeSlots: timeSlotsFieldSchema,
@@ -70,7 +73,7 @@ export type SystemSettingsInput = z.infer<typeof systemSettingsInputSchema>;
 /** Each stored value is checked again on the way out; a bad or missing one falls back to its default. */
 const storedSchemas: { [K in keyof SystemSettings]: z.ZodType<SystemSettings[K]> } = {
   reminderMinutesBefore: reminderList,
-  responseDeadlineHours: z.number().int().min(1).max(168),
+  responseDeadlineMinutes: z.number().int().min(0).max(MAX_DEADLINE_MINUTES),
   adMinutes: z.number().int().min(0).max(60),
   movieUpcomingDays: z.number().int().min(0).max(365),
   timeSlots: timeSlotsSchema,
