@@ -48,6 +48,8 @@ export function PlanSection({ view, plan, run, busy }: Props) {
     [plan?.showtimes],
   );
   const current = plan?.showtimes.find((s) => s.id === view.showtimeId);
+  // The chosen showtime may not be in the list (it is not offered earlier than the agreed time), so its place is also read from the chosen time.
+  const chosenPlace = view.options.find((o) => o.id === view.chosenOptionId)?.place;
 
   if (view.status === "PARTICIPANTS_LOCKED") {
     return view.isCreator ? (
@@ -74,9 +76,9 @@ export function PlanSection({ view, plan, run, busy }: Props) {
           <h2 id="appt-showtime" className="type-heading">
             {t("showtimeTitle")}
           </h2>
-          {current && !pickerOpen ? (
+          {!pickerOpen && (current || chosenPlace) ? (
             <p className="break-words rounded-xl border bg-card p-inset-sm type-secondary">
-              {current.branch.name} · {current.auditorium.name} · {current.format.name}
+              {current ? `${current.branch.name} · ${current.auditorium.name} · ${current.format.name}` : chosenPlace}
             </p>
           ) : null}
           {pickerOpen ? (

@@ -69,7 +69,7 @@ describe("appointment planning (stage 2)", () => {
     const layout = await m.AuditoriumLayout!.create({
       auditoriumId: room._id,
       version: 1,
-      config: {},
+      config: { defaultSeatType: "std" },
       seats: [seat("A", 1), seat("A", 2), seat("A", 3), seat("A", 4, { flags: ["broken"] }), seat("B", 1, { span: 2 })],
     });
     showtime = String((await m.Showtime!.create({ movieId: movie, auditoriumId: room._id, layoutId: layout._id, startAt: start, endAt: new Date(start.getTime() + 2 * 3600_000), formatId: oid() }))._id);
@@ -120,6 +120,29 @@ describe("appointment planning (stage 2)", () => {
     const loser = ra.ok ? rb : ra;
     expect(loser).toEqual({ ok: false, error: "seat_taken" });
     expect(await (await import("@/models/seat-claim")).SeatClaim.countDocuments({ seatCode: "A1" })).toBe(1);
+  });
+
+  it("starts planning on the showtime the time was picked from, and with none when the time was typed by hand", async () => {
+    const withShowtime = await lockedAppointment();
+    await plan.beginPlanning(creator, withShowtime);
+    expect((await svc.getAppointment(creator, withShowtime))?.showtimeId).toBe(showtime);
+
+    const typed = await m.Appointment!.create({
+      creatorId: creator,
+      movieId: movie,
+      status: "PARTICIPANTS_LOCKED",
+      timeOptions: [{ startAt: start, proposedBy: creator, votes: [] }],
+      participants: [{ userId: u1, status: "accepted" }],
+    });
+    const doc = await (await import("@/models/appointment")).Appointment.findById(typed._id);
+    doc!.chosenOptionId = doc!.timeOptions[0]!._id;
+    doc!.lockedStartAt = start;
+    await doc!.save();
+    await plan.beginPlanning(creator, String(typed._id));
+    expect((await svc.getAppointment(creator, String(typed._id)))?.showtimeId).toBeUndefined();
+    // The list offered for a typed time holds the showtime at that time and later ones, never earlier ones.
+    const offered = await plan.getPlanData(creator, String(typed._id));
+    expect(offered?.showtimes.every((x) => new Date(x.startAt).getTime() >= start.getTime())).toBe(true);
   });
 
   it("only accepts a showtime on the day the group agreed on", async () => {
