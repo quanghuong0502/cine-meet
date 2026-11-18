@@ -1600,5 +1600,9 @@
   "dateTimeField": {
     "pickDate": "Chọn ngày",
     "pickTime": "Chọn giờ"
+  },
+  "confirmDialog": {
+    "cancel": "Hủy",
+    "pending": "Đang xử lý..."
   }
 }

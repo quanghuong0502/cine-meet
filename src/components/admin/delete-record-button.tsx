@@ -1,20 +1,11 @@
 "use client";
 
-import { LoaderCircle, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import type { RemoveResult } from "@/lib/admin/action-result";
 
@@ -64,28 +55,7 @@ export function DeleteRecordButton({ id, name, backHref, removeAction }: DeleteR
         <Trash2 aria-hidden />
         {t("delete")}
       </Button>
-      <AlertDialog open={open} onOpenChange={setOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="type-item-title">{t("deleteTitle", { name })}</AlertDialogTitle>
-            <AlertDialogDescription>{t("deleteDescription")}</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>{t("cancel")}</AlertDialogCancel>
-            <AlertDialogAction
-              disabled={isDeleting}
-              className="border border-destructive/40 bg-destructive/10 text-destructive hover:bg-destructive/20"
-              onClick={(event) => {
-                event.preventDefault();
-                confirm();
-              }}
-            >
-              {isDeleting ? <LoaderCircle className="motion-safe:animate-spin" aria-hidden /> : <Trash2 aria-hidden />}
-              {isDeleting ? t("saving") : t("delete")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDialog open={open} onOpenChange={setOpen} title={t("deleteTitle", { name })} description={t("deleteDescription")} tone="destructive" icon={<Trash2 aria-hidden />} confirmLabel={t("delete")} pending={isDeleting} onConfirm={confirm} />
     </>
   );
 }

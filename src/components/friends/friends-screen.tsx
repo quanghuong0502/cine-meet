@@ -7,16 +7,7 @@ import { useState, useSyncExternalStore, useTransition } from "react";
 import { toast } from "sonner";
 import { removeFriendAction, respondRequestAction, sendFriendRequestAction } from "@/actions/friends";
 import { PersonRow } from "@/components/friends/person-row";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -230,28 +221,17 @@ export function FriendsScreen({ overview, inviteCode }: Props) {
         </section>
       ) : null}
 
-      <AlertDialog open={removing !== null} onOpenChange={(open) => (open ? undefined : setRemoving(null))}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="type-item-title">{t("removeTitle", { name: removing?.name ?? "" })}</AlertDialogTitle>
-            <AlertDialogDescription>{t("removeDescription")}</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={removePending}>{t("cancel")}</AlertDialogCancel>
-            <AlertDialogAction
-              disabled={removePending}
-              className="border border-destructive/40 bg-destructive/10 text-destructive hover:bg-destructive/20"
-              onClick={(event) => {
-                event.preventDefault();
-                confirmRemove();
-              }}
-            >
-              {removePending ? <LoaderCircle className="motion-safe:animate-spin" aria-hidden /> : <UserMinus aria-hidden />}
-              {t("removeConfirm")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDialog
+        open={removing !== null}
+        onOpenChange={(open) => (open ? undefined : setRemoving(null))}
+        title={t("removeTitle", { name: removing?.name ?? "" })}
+        description={t("removeDescription")}
+        tone="destructive"
+        icon={<UserMinus aria-hidden />}
+        confirmLabel={t("removeConfirm")}
+        pending={removePending}
+        onConfirm={confirmRemove}
+      />
     </div>
   );
 }

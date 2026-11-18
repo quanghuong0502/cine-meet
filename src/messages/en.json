@@ -1600,5 +1600,9 @@
   "dateTimeField": {
     "pickDate": "Pick date",
     "pickTime": "Pick time"
+  },
+  "confirmDialog": {
+    "cancel": "Cancel",
+    "pending": "Working..."
   }
 }

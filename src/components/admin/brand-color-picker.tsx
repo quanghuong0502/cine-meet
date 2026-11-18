@@ -1,19 +1,10 @@
 "use client";
 
-import { LoaderCircle, RotateCcw } from "lucide-react";
+import { RotateCcw } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState, useTransition, type CSSProperties } from "react";
 import { toast } from "sonner";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DEFAULT_BRAND_HEX, defaultBrandTheme, deriveBrandTheme, parseHex } from "@/lib/brand-theme";
@@ -115,27 +106,16 @@ export function BrandColorPicker({
           <RotateCcw aria-hidden />
           {t("reset")}
         </Button>
-        <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle className="type-item-title">{t("resetTitle")}</AlertDialogTitle>
-              <AlertDialogDescription>{t("resetDescription")}</AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel disabled={isResetting}>{tc("cancel")}</AlertDialogCancel>
-              <AlertDialogAction
-                disabled={isResetting}
-                onClick={(event) => {
-                  event.preventDefault();
-                  reset();
-                }}
-              >
-                {isResetting ? <LoaderCircle className="motion-safe:animate-spin" aria-hidden /> : <RotateCcw aria-hidden />}
-                {t("resetConfirm")}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        <ConfirmDialog
+          open={confirmOpen}
+          onOpenChange={setConfirmOpen}
+          title={t("resetTitle")}
+          description={t("resetDescription")}
+          icon={<RotateCcw aria-hidden />}
+          confirmLabel={t("resetConfirm")}
+          pending={isResetting}
+          onConfirm={reset}
+        />
       </div>
 
       <div className="flex flex-col gap-item" aria-hidden>

@@ -1,19 +1,10 @@
 "use client";
 
-import { LoaderCircle, UserLock } from "lucide-react";
+import { UserLock } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { Chip } from "@/components/admin/auditorium-editor/chips";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 
 interface Props {
   open: boolean;
@@ -37,33 +28,26 @@ export function LockDialog({ open, onOpenChange, timeText, voters, pending, onCo
   const toggle = (id: string) => setPicked((list) => (list.includes(id) ? list.filter((p) => p !== id) : [...list, id]));
 
   return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle className="type-item-title tabular-nums">{timeText}</AlertDialogTitle>
-          <AlertDialogDescription>{t("lockDialogDescription")}</AlertDialogDescription>
-        </AlertDialogHeader>
-        <div role="group" aria-label={t("lockPickPeople")} className="flex flex-wrap gap-stack">
-          {voters.map((voter) => (
-            <Chip key={voter.id} selected={picked.includes(voter.id)} disabled={pending} onClick={() => toggle(voter.id)}>
-              {voter.name}
-            </Chip>
-          ))}
-        </div>
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={pending}>{t("back")}</AlertDialogCancel>
-          <AlertDialogAction
-            disabled={pending || picked.length === 0}
-            onClick={(event) => {
-              event.preventDefault();
-              onConfirm(picked);
-            }}
-          >
-            {pending ? <LoaderCircle className="motion-safe:animate-spin" aria-hidden /> : <UserLock aria-hidden />}
-            {t("lockButton", { count: picked.length })}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+    <ConfirmDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title={timeText}
+      titleClassName="tabular-nums"
+      description={t("lockDialogDescription")}
+      icon={<UserLock aria-hidden />}
+      confirmLabel={t("lockButton", { count: picked.length })}
+      cancelLabel={t("back")}
+      pending={pending}
+      confirmDisabled={picked.length === 0}
+      onConfirm={() => onConfirm(picked)}
+    >
+      <div role="group" aria-label={t("lockPickPeople")} className="flex flex-wrap gap-stack">
+        {voters.map((voter) => (
+          <Chip key={voter.id} selected={picked.includes(voter.id)} disabled={pending} onClick={() => toggle(voter.id)}>
+            {voter.name}
+          </Chip>
+        ))}
+      </div>
+    </ConfirmDialog>
   );
 }

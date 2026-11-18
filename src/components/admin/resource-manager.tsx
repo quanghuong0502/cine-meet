@@ -1,6 +1,6 @@
 "use client";
 
-import { LoaderCircle, Plus, Search, Trash2 } from "lucide-react";
+import { Plus, Search, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -8,16 +8,7 @@ import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/empty-state";
 import { ListThumb } from "@/components/list-thumb";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -169,28 +160,17 @@ export function ResourceManager({ items, basePath, query, labels, removeAction, 
         </>
       )}
 
-      <AlertDialog open={pendingDelete !== null} onOpenChange={(open) => (open ? undefined : setPendingDelete(null))}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="type-item-title">{t("deleteTitle", { name: pendingDelete?.title ?? "" })}</AlertDialogTitle>
-            <AlertDialogDescription>{t("deleteDescription")}</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>{t("cancel")}</AlertDialogCancel>
-            <AlertDialogAction
-              disabled={isDeleting}
-              className="border border-destructive/40 bg-destructive/10 text-destructive hover:bg-destructive/20"
-              onClick={(event) => {
-                event.preventDefault();
-                confirmDelete();
-              }}
-            >
-              {isDeleting ? <LoaderCircle className="motion-safe:animate-spin" aria-hidden /> : <Trash2 aria-hidden />}
-              {isDeleting ? t("saving") : t("delete")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        onOpenChange={(open) => (open ? undefined : setPendingDelete(null))}
+        title={t("deleteTitle", { name: pendingDelete?.title ?? "" })}
+        description={t("deleteDescription")}
+        tone="destructive"
+        icon={<Trash2 aria-hidden />}
+        confirmLabel={t("delete")}
+        pending={isDeleting}
+        onConfirm={confirmDelete}
+      />
     </div>
   );
 }

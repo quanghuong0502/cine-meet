@@ -1,13 +1,10 @@
 "use client";
 
-import { LoaderCircle, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
-  AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import type { RemoveResult } from "@/lib/admin/action-result";
 import { formatDayKey, formatTime, vietnamDayKey } from "@/lib/datetime";
@@ -67,28 +64,17 @@ export function AdminShowtimeList({ rows, removeAction }: { rows: ShowtimeRow[];
         ))}
       </div>
 
-      <AlertDialog open={pending !== null} onOpenChange={(open) => (open ? undefined : setPending(null))}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="type-item-title">{t("deleteTitle", { movie: pending?.movie.title ?? "", time: pending ? formatTime(pending.startAt, locale) : "" })}</AlertDialogTitle>
-            <AlertDialogDescription>{tc("deleteDescription")}</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>{tc("cancel")}</AlertDialogCancel>
-            <AlertDialogAction
-              disabled={isDeleting}
-              className="border border-destructive/40 bg-destructive/10 text-destructive hover:bg-destructive/20"
-              onClick={(event) => {
-                event.preventDefault();
-                confirm();
-              }}
-            >
-              {isDeleting ? <LoaderCircle className="motion-safe:animate-spin" aria-hidden /> : null}
-              {tc("delete")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDialog
+        open={pending !== null}
+        onOpenChange={(open) => (open ? undefined : setPending(null))}
+        title={t("deleteTitle", { movie: pending?.movie.title ?? "", time: pending ? formatTime(pending.startAt, locale) : "" })}
+        description={tc("deleteDescription")}
+        tone="destructive"
+        icon={<Trash2 aria-hidden />}
+        confirmLabel={tc("delete")}
+        pending={isDeleting}
+        onConfirm={confirm}
+      />
     </>
   );
 }

@@ -1,21 +1,12 @@
 "use client";
 
-import { KeyRound, LoaderCircle, Lock, LockOpen } from "lucide-react";
+import { KeyRound, Lock, LockOpen } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { setUserStatusAction } from "../actions";
 
@@ -70,27 +61,17 @@ export function UserActions({ id, name, locked, isSelf, canResetPassword, resetH
         </Button>
       ) : null}
 
-      <AlertDialog open={confirming} onOpenChange={setConfirming}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="type-item-title">{t(locked ? "unlockTitle" : "lockTitle", { name })}</AlertDialogTitle>
-            <AlertDialogDescription>{t(locked ? "unlockDescription" : "lockDescription")}</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isPending}>{tc("cancel")}</AlertDialogCancel>
-            <AlertDialogAction
-              disabled={isPending}
-              onClick={(event) => {
-                event.preventDefault();
-                confirm();
-              }}
-            >
-              {isPending ? <LoaderCircle className="motion-safe:animate-spin" aria-hidden /> : null}
-              {t(locked ? "unlock" : "lock")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDialog
+        open={confirming}
+        onOpenChange={setConfirming}
+        title={t(locked ? "unlockTitle" : "lockTitle", { name })}
+        description={t(locked ? "unlockDescription" : "lockDescription")}
+        tone={locked ? "default" : "destructive"}
+        icon={locked ? <LockOpen aria-hidden /> : <Lock aria-hidden />}
+        confirmLabel={t(locked ? "unlock" : "lock")}
+        pending={isPending}
+        onConfirm={confirm}
+      />
     </div>
   );
 }
