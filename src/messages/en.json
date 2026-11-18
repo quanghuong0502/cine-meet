@@ -1407,7 +1407,7 @@
       "withdrew": "You left the plan",
       "cancel": "Cancel plan",
       "cancelTitle": "Cancel this plan?",
-      "cancelDescription": "Everyone who joined will be told, and this can't be undone.",
+      "cancelDescription": "Everyone who joined will be told it was cancelled.",
       "cancelConfirm": "Cancel plan",
       "cancelledToast": "Plan cancelled",
       "lockPickPeople": "Who's going",

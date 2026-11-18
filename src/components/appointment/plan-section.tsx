@@ -3,7 +3,7 @@
 import { ClipboardList } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
-import { beginPlanningAction, chooseShowtimeAction, type ActionResult } from "@/actions/appointments";
+import { beginPlanningAction, type ActionResult } from "@/actions/appointments";
 import { EstimateList } from "@/components/appointment/estimate-list";
 import { FoodPlanner } from "@/components/appointment/food-planner";
 import { SeatPlanner } from "@/components/appointment/seat-planner";
@@ -29,7 +29,7 @@ interface Props {
 
 /**
  * Stage 2 of an appointment. The creator picks the showtime, seats everyone, adds food and confirms (the confirm button floats above the
- * menu, in the parent). Everyone else sees where people sit and what it costs. Showtime, seats and food stay editable after confirming.
+ * menu, in the parent). Everyone else sees where people sit and what it costs. After confirming nothing in it can be changed.
  */
 export function PlanSection({ view, plan, run, busy, draft }: Props) {
   const t = useTranslations("appointments.detail.plan");
@@ -94,7 +94,6 @@ export function PlanSection({ view, plan, run, busy, draft }: Props) {
               initialDay={current ? vietnamDayKey(current.startAt) : undefined}
               hideDays
               onToggle={(id) => {
-                if (!planning) return run(() => chooseShowtimeAction(view.id, id), t("showtimeSaved"), () => setChanging(false));
                 setChanging(false);
                 void draft.changeShowtime(id);
               }}
@@ -114,8 +113,6 @@ export function PlanSection({ view, plan, run, busy, draft }: Props) {
           <FoodPlanner key={`draft-food:${draft.showtimeId}`} view={view} food={draft.food} onSave={run} busy={busy} initialLines={draft.lines} onDraft={draft.setLines} />
         </>
       ) : null}
-      {editable && !planning && plan.room ? <SeatPlanner key={`seats:${view.seats.map((s) => `${s.userId}:${s.seatCode}`).join("|")}`} view={view} room={plan.room} onSave={run} busy={busy} /> : null}
-      {editable && !planning && plan.room ? <FoodPlanner key={`food:${view.fnb.map((l) => `${l.id}`).join("|")}`} view={view} food={plan.food} onSave={run} busy={busy} /> : null}
 
       {!editable ? (
         <section aria-labelledby="appt-where" className="flex flex-col gap-item">

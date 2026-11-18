@@ -59,14 +59,14 @@ async function clearSeats(id: string): Promise<void> {
 
 /**
  * The creator picks the showtime (it must be this movie's and not started). The appointment's time follows the showtime. Seats are
- * cleared because they belong to the old room. After confirming, everyone going is told the time changed.
+ * cleared because they belong to the old room.
  */
 export async function chooseShowtime(creatorId: string, id: string, showtimeId: string, now = new Date()): Promise<{ ok: true } | Failure> {
   if (!isValidObjectId(showtimeId)) return { ok: false, error: "no_showtime" };
   await connectToDatabase();
   const result = await mutate(id, async (doc) => {
     if (!sameId(doc.creatorId, creatorId)) return { ok: false as const, error: "forbidden" as const };
-    if (doc.status !== "PLANNING" && doc.status !== "CONFIRMED") return { ok: false as const, error: "bad_state" as const };
+    if (doc.status !== "PLANNING") return { ok: false as const, error: "bad_state" as const };
     if (doc.showtimeFromPoll ?? Boolean(chosenOption(doc)?.showtimeId)) return { ok: false as const, error: "showtime_fixed" as const };
     const showtime = await Showtime.findOne({ _id: showtimeId, movieId: doc.movieId }, "startAt").lean();
     if (!showtime || showtime.startAt.getTime() <= now.getTime()) return { ok: false as const, error: "no_showtime" as const };
@@ -74,7 +74,7 @@ export async function chooseShowtime(creatorId: string, id: string, showtimeId: 
     const agreedAt = doc.lockedStartAt ?? chosenOption(doc)?.startAt;
     if (agreedAt && vietnamDayKey(agreedAt.toISOString()) !== vietnamDayKey(showtime.startAt.toISOString())) return { ok: false as const, error: "wrong_day" as const };
     if (agreedAt && showtime.startAt.getTime() < agreedAt.getTime()) return { ok: false as const, error: "before_agreed" as const };
-    if (sameId(doc.showtimeId, showtimeId)) return { ok: true as const, changed: false, wasConfirmed: false, slotAt: showtime.startAt.toISOString(), attendeeIds: [] as string[] };
+    if (sameId(doc.showtimeId, showtimeId)) return { ok: true as const, changed: false };
 
     let option = doc.timeOptions.find((o) => sameId(o.showtimeId, showtimeId));
     if (!option) option = doc.timeOptions[doc.timeOptions.push({ startAt: showtime.startAt, showtimeId: showtime._id, proposedBy: creatorId, votes: [] }) - 1]!;
@@ -82,12 +82,11 @@ export async function chooseShowtime(creatorId: string, id: string, showtimeId: 
     doc.set("showtimeId", showtime._id);
     doc.set("seats", []);
     await recomputeEstimate(doc);
-    return { ok: true as const, changed: true, wasConfirmed: doc.status === "CONFIRMED", slotAt: showtime.startAt.toISOString(), attendeeIds: attendeeIdsOf(doc) };
+    return { ok: true as const, changed: true };
   });
   if (!result.ok) return result;
   if (result.changed) {
     await clearSeats(id);
-    if (result.wasConfirmed) await notifyPeople(id, creatorId, "appointment_changed", result.attendeeIds, { change: "time", slotAt: result.slotAt, place: await placeOf(showtimeId) });
   }
   return { ok: true };
 }
@@ -111,7 +110,7 @@ export async function assignSeats(creatorId: string, id: string, input: AssignSe
   const first = await Appointment.findById(id, "creatorId status showtimeId").lean();
   if (!first) return { ok: false, error: "not_found" };
   if (!sameId(first.creatorId, creatorId)) return { ok: false, error: "forbidden" };
-  if (first.status !== "PLANNING" && first.status !== "CONFIRMED") return { ok: false, error: "bad_state" };
+  if (first.status !== "PLANNING") return { ok: false, error: "bad_state" };
   if (!first.showtimeId) return { ok: false, error: "no_showtime" };
   const showtime = await Showtime.findById(first.showtimeId, "layoutId").lean();
   const layout = showtime ? await AuditoriumLayout.findById(showtime.layoutId, "seats").lean() : null;
@@ -137,7 +136,7 @@ export async function assignSeats(creatorId: string, id: string, input: AssignSe
       await session.withTransaction(async () => {
         outcome = undefined;
         const doc = await Appointment.findById(id).session(session);
-        if (!doc || (doc.status !== "PLANNING" && doc.status !== "CONFIRMED") || !sameId(doc.showtimeId, first.showtimeId!.toString())) {
+        if (!doc || doc.status !== "PLANNING" || !sameId(doc.showtimeId, first.showtimeId!.toString())) {
           outcome = { ok: false, error: "bad_state" };
           return;
         }
@@ -165,15 +164,6 @@ export async function assignSeats(creatorId: string, id: string, input: AssignSe
       await session.endSession();
     }
     if (outcome) {
-      if (outcome.ok) {
-        const doc = await Appointment.findById(id, "status showtimeId").lean();
-        if (doc?.status === "CONFIRMED" && outcome.affectedIds.length > 0) {
-          const place = await placeOf(doc.showtimeId?.toString());
-          for (const userId of outcome.affectedIds.filter((u) => u !== creatorId)) {
-            await notifyPeople(id, creatorId, "appointment_changed", [userId], { change: "seat", seatCode: input.assignments.find((a) => a.userId === userId)?.seatCode, place });
-          }
-        }
-      }
       return outcome;
     }
   }
@@ -206,7 +196,7 @@ export async function setFood(creatorId: string, id: string, input: SetFoodInput
   await connectToDatabase();
   return mutate(id, async (doc) => {
     if (!sameId(doc.creatorId, creatorId)) return { ok: false as const, error: "forbidden" as const };
-    if (doc.status !== "PLANNING" && doc.status !== "CONFIRMED") return { ok: false as const, error: "bad_state" as const };
+    if (doc.status !== "PLANNING") return { ok: false as const, error: "bad_state" as const };
     if (!doc.showtimeId) return { ok: false as const, error: "no_showtime" as const };
     const attendees = attendeeIdsOf(doc);
     if (input.lines.some((l) => l.ownerId && !attendees.includes(l.ownerId))) return { ok: false as const, error: "not_attendee" as const };
@@ -408,7 +398,7 @@ export async function getPlanData(userId: string, id: string, roomOf?: string): 
   if (roomOf !== undefined && !isValidObjectId(roomOf)) return null;
   await connectToDatabase();
   const doc = await Appointment.findById(id, "creatorId status movieId showtimeId chosenOptionId timeOptions lockedStartAt").lean();
-  if (!doc || !sameId(doc.creatorId, userId) || (doc.status !== "PLANNING" && doc.status !== "CONFIRMED")) return null;
+  if (!doc || !sameId(doc.creatorId, userId) || doc.status !== "PLANNING") return null;
   // Only showtimes on the day the group agreed on, from the agreed time onwards.
   const agreedAt = doc.lockedStartAt ?? doc.timeOptions.find((o) => sameId(o._id, doc.chosenOptionId?.toString() ?? ""))?.startAt;
   const day = agreedAt ? vietnamDayKey(agreedAt.toISOString()) : undefined;

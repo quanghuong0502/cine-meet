@@ -90,6 +90,11 @@ describe("appointment planning (stage 2)", () => {
     const told = await (await import("@/models/notification")).Notification.find({ type: "appointment_confirmed" }).lean();
     expect(told.map((n) => (n.payload as { seatCode?: string }).seatCode).sort()).toEqual(["A2", "A3"]);
 
+    // Once confirmed, the showtime, the seats and the food cannot be changed any more.
+    expect(await plan.assignSeats(creator, id, { assignments: [{ userId: creator, seatCode: "A4" }] })).toEqual({ ok: false, error: "bad_state" });
+    expect(await plan.setFood(creator, id, { lines: [] })).toEqual({ ok: false, error: "bad_state" });
+    expect(await plan.getPlanData(creator, id)).toBeNull();
+
     // Not before the film starts.
     expect(await plan.completeAppointment(creator, id)).toEqual({ ok: false, error: "too_early" });
     expect(await plan.completeAppointment(creator, id, hours(6))).toEqual({ ok: true });
