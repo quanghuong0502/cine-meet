@@ -201,8 +201,9 @@ export function AppointmentDetail({ view, friends = [], groups = [], plan = null
       ) : null}
 
       {hasFloatingAction ? (
-        // In the flow, stuck above the menu: a short page does not get taller (and scrollable) to make room for it.
-        <div data-bottom-fixed className="pointer-events-none sticky bottom-[var(--nav-clearance)] z-30">
+        // In the flow, stuck at the bottom of the scroll area (the area already ends above the menu, so `bottom-0` is the right offset: a sticky
+        // offset is measured from inside the container's padding). A short page does not get taller to make room for it.
+        <div data-bottom-fixed className="pointer-events-none sticky bottom-0 z-30 -mt-stack">
           <div className="mx-auto flex max-w-form flex-col gap-stack">
             {canConfirm ? (
               <Button type="button" size="cta" disabled={pending} onClick={() => run(() => confirmAppointmentAction(view.id), t("plan.confirmed"))} className="pointer-events-auto">
@@ -232,7 +233,7 @@ export function AppointmentDetail({ view, friends = [], groups = [], plan = null
         </div>
       ) : null}
 
-      <div ref={setBarSlot} data-bottom-fixed className="pointer-events-none sticky bottom-[var(--nav-clearance)] z-30 empty:hidden" />
+      <div ref={setBarSlot} data-bottom-fixed className="pointer-events-none sticky bottom-0 z-30 -mt-stack empty:hidden" />
 
       <ReasonDialog
         open={dialog === "decline"}
