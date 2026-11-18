@@ -6,6 +6,7 @@ describe("friend service", () => {
   let User: typeof import("@/models/user").User;
   let Friendship: typeof import("@/models/friendship").Friendship;
   let Lookup: typeof import("@/models/friend-lookup").FriendLookup;
+  let Notification: typeof import("@/models/notification").Notification;
   let a: string;
   let b: string;
   let c: string;
@@ -16,6 +17,7 @@ describe("friend service", () => {
     User = (await import("@/models/user")).User;
     Friendship = (await import("@/models/friendship")).Friendship;
     Lookup = (await import("@/models/friend-lookup")).FriendLookup;
+    Notification = (await import("@/models/notification")).Notification;
     const { connectToDatabase } = await import("@/lib/db");
     await connectToDatabase();
     await Friendship.init();
@@ -24,7 +26,7 @@ describe("friend service", () => {
   afterAll(stopTestDatabase);
 
   beforeEach(async () => {
-    await Promise.all([User.deleteMany({}), Friendship.deleteMany({}), Lookup.deleteMany({}), (await import("@/models/friend-group")).FriendGroup.deleteMany({})]);
+    await Promise.all([User.deleteMany({}), Friendship.deleteMany({}), Lookup.deleteMany({}), Notification.deleteMany({}), (await import("@/models/friend-group")).FriendGroup.deleteMany({})]);
     const make = (name: string, phone: string, extra = {}) => User.create({ name, username: name, phone, ...extra });
     a = String((await make("an", "84911111111"))._id);
     b = String((await make("binh", "84922222222"))._id);
@@ -111,5 +113,49 @@ describe("friend service", () => {
     expect((await svc.listGroups(a))[0]?.members.map((p) => p.name)).toEqual(["binh"]);
     expect(await svc.removeFriendship(b, a)).toEqual({ ok: true });
     expect((await svc.listGroups(a))[0]?.members).toEqual([]);
+  });
+
+  describe("notifications", () => {
+    const sent = async () => (await Notification.find({}).sort({ createdAt: 1 }).lean()).map((n) => [String(n.recipientId), n.type, (n.payload as { actorName: string }).actorName]);
+
+    it("a new request tells only the person asked, with the asker's name", async () => {
+      await svc.requestByPhone(a, "0922222222");
+      expect(await sent()).toEqual([[b, "friend_request", "an"]]);
+    });
+
+    it("saying yes tells the person who asked; saying no tells nobody", async () => {
+      await svc.requestByPhone(a, "0922222222");
+      await svc.requestByPhone(c, "0911111111");
+      await Notification.deleteMany({});
+      const incoming = (await svc.getFriendOverview(b)).incoming[0]!.friendshipId;
+      await svc.respondToRequest(b, incoming, true);
+      expect(await sent()).toEqual([[a, "friend_accepted", "binh"]]);
+      await Notification.deleteMany({});
+      const second = (await svc.getFriendOverview(a)).incoming[0]!.friendshipId;
+      await svc.respondToRequest(a, second, false);
+      expect(await sent()).toEqual([]);
+    });
+
+    it("asking someone who already asked you accepts it and tells them", async () => {
+      await svc.requestByPhone(a, "0922222222");
+      await Notification.deleteMany({});
+      await svc.requestByPhone(b, "0911111111");
+      expect(await sent()).toEqual([[a, "friend_accepted", "binh"]]);
+    });
+
+    it("asking again, an unknown number, or yourself tells nobody", async () => {
+      await svc.requestByPhone(a, "0922222222");
+      await Notification.deleteMany({});
+      await svc.requestByPhone(a, "0922222222");
+      await svc.requestByPhone(a, "0999999999");
+      await svc.requestByPhone(a, "0911111111");
+      expect(await sent()).toEqual([]);
+    });
+
+    it("a request from an invite link tells the owner of the link", async () => {
+      const code = (await svc.getInviteCode(a))!;
+      await svc.requestByInviteCode(b, code);
+      expect(await sent()).toEqual([[a, "friend_request", "binh"]]);
+    });
   });
 });

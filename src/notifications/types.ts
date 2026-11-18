@@ -5,6 +5,8 @@ export const NOTIFICATION_TYPES = [
   "participants_locked", // #4  the creator locked the list
   "appointment_cancelled", // #7  the creator cancelled
   "participant_withdrew", // #13 an attendee left
+  "friend_request", //        someone asked me to be friends
+  "friend_accepted", //       someone said yes to my friend request
 ] as const;
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
 
@@ -16,8 +18,10 @@ export type ReplyKind = (typeof REPLY_KINDS)[number];
  * (or pushed), in the language of the person who gets it.
  */
 export interface NotificationPayload {
-  appointmentId: string;
-  movieTitle: string;
+  /** The appointment this is about; friend notifications have none. */
+  appointmentId?: string;
+  movieTitle?: string;
+  /** Who did it. */
   actorName: string;
   /** For `appointment_reply`. */
   kind?: ReplyKind;

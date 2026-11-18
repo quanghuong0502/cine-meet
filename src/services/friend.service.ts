@@ -8,6 +8,8 @@ import { FriendGroup } from "@/models/friend-group";
 import { FriendLookup } from "@/models/friend-lookup";
 import { Friendship } from "@/models/friendship";
 import { User } from "@/models/user";
+import { enqueueNotifications } from "@/notifications/outbox";
+import type { NotificationType } from "@/notifications/types";
 
 export interface PersonView {
   id: string;
@@ -56,6 +58,12 @@ export type RequestResult =
   | { ok: true; outcome: "sent" | "accepted" | "already_friends" | "already_requested" }
   | { ok: false; error: "not_found" | "self" };
 
+/** Tells one person about a friend event. The actor's name is stored with it; the words are made when it is shown, in the receiver's language. */
+async function notifyFriend(recipientId: string, actorId: string, type: NotificationType): Promise<void> {
+  const actor = await User.findById(actorId, "name").lean();
+  await enqueueNotifications([{ recipientId, type, payload: { actorName: actor?.name ?? "" } }]);
+}
+
 /** Adds a request from `userId` to `targetId`, or accepts one the other person already sent. */
 async function requestFriendship(userId: string, targetId: string): Promise<RequestResult> {
   if (userId === targetId) return { ok: false, error: "self" };
@@ -66,6 +74,8 @@ async function requestFriendship(userId: string, targetId: string): Promise<Requ
     // They asked first: asking back is the same as saying yes.
     if (existing.userB.toString() === userId) {
       await Friendship.updateOne({ _id: existing._id }, { $set: { status: "accepted" } });
+      // The other person asked first, so they are the one waiting for an answer.
+      await notifyFriend(targetId, userId, "friend_accepted");
       return { ok: true, outcome: "accepted" };
     }
     return { ok: true, outcome: "already_requested" };
@@ -77,6 +87,7 @@ async function requestFriendship(userId: string, targetId: string): Promise<Requ
     if ((error as { code?: number }).code === 11000) return { ok: true, outcome: "already_requested" };
     throw error;
   }
+  await notifyFriend(targetId, userId, "friend_request");
   return { ok: true, outcome: "sent" };
 }
 
@@ -116,9 +127,15 @@ export async function respondToRequest(userId: string, friendshipId: string, acc
   if (!isValidObjectId(friendshipId)) return { ok: false, error: "not_found" };
   await connectToDatabase();
   const filter = { _id: friendshipId, userB: userId, status: "pending" as const };
-  const result = accept ? await Friendship.updateOne(filter, { $set: { status: "accepted" } }) : await Friendship.deleteOne(filter);
-  const changed = accept ? (result as { modifiedCount: number }).modifiedCount : (result as { deletedCount: number }).deletedCount;
-  return changed ? { ok: true } : { ok: false, error: "not_found" };
+  if (!accept) {
+    // A "no" is not announced: the other person just stays on "waiting" until they take the request back.
+    const removed = await Friendship.deleteOne(filter);
+    return removed.deletedCount ? { ok: true } : { ok: false, error: "not_found" };
+  }
+  const accepted = await Friendship.findOneAndUpdate(filter, { $set: { status: "accepted" } }, { returnDocument: "after" }).lean();
+  if (!accepted) return { ok: false, error: "not_found" };
+  await notifyFriend(accepted.userA.toString(), userId, "friend_accepted");
+  return { ok: true };
 }
 
 /** Takes back a request the person sent, or ends a friendship (either side). Also drops the person from the other one's groups. */

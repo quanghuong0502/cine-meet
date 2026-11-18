@@ -31,6 +31,8 @@ export function notificationKey(type: NotificationType, payload: NotificationPay
 /** `t` is a translator scoped to `notifications.types` (title and body live under each key). */
 export function renderNotification(t: Translate, type: NotificationType, payload: NotificationPayload): RenderedNotification {
   const key = notificationKey(type, payload);
-  const values = { actorName: payload.actorName, movieTitle: payload.movieTitle, reason: payload.reason ?? "" };
-  return { title: t(`${key}.title`, values), body: t(`${key}.body`, values), url: `/appointments/${payload.appointmentId}` };
+  const values = { actorName: payload.actorName, movieTitle: payload.movieTitle ?? "", reason: payload.reason ?? "" };
+  // Appointment news opens that appointment; friend news opens the Friends screen.
+  const url = payload.appointmentId ? `/appointments/${payload.appointmentId}` : "/friends";
+  return { title: t(`${key}.title`, values), body: t(`${key}.body`, values), url };
 }

@@ -1005,7 +1005,9 @@
         "appointment_reply": "Replies to your plan",
         "participants_locked": "Guest list final",
         "appointment_cancelled": "Plan cancelled",
-        "participant_withdrew": "Someone drops out"
+        "participant_withdrew": "Someone drops out",
+        "friend_request": "Friend requests",
+        "friend_accepted": "Requests accepted"
       },
       "errors": {
         "network": "Network is shaky, please try again.",
@@ -1441,6 +1443,14 @@
       "participant_withdrew": {
         "title": "{actorName} left",
         "body": "{actorName} can't watch {movieTitle} anymore."
+      },
+      "friend_request": {
+        "title": "New friend request",
+        "body": "{actorName} wants to be friends with you. Take a look!"
+      },
+      "friend_accepted": {
+        "title": "{actorName} accepted",
+        "body": "You and {actorName} are friends now. Time to plan a movie night!"
       }
     },
     "test": {

@@ -1005,7 +1005,9 @@
         "appointment_reply": "Bạn bè trả lời kèo",
         "participants_locked": "Đã chốt người",
         "appointment_cancelled": "Kèo bị hủy",
-        "participant_withdrew": "Có người hủy kèo"
+        "participant_withdrew": "Có người hủy kèo",
+        "friend_request": "Có lời mời bạn bè",
+        "friend_accepted": "Được chấp nhận bạn bè"
       },
       "errors": {
         "network": "Mạng đang chập chờn, thử lại giúp [me] nha.",
@@ -1441,6 +1443,14 @@
       "participant_withdrew": {
         "title": "{actorName} rút lui",
         "body": "{actorName} không đi xem {movieTitle} được nữa."
+      },
+      "friend_request": {
+        "title": "Có lời mời bạn bè",
+        "body": "{actorName} muốn làm bạn bè với [you]. Vào xem nha!"
+      },
+      "friend_accepted": {
+        "title": "{actorName} đã đồng ý",
+        "body": "[you] và {actorName} đã là bạn bè rồi. Rủ đi xem phim thôi!"
       }
     },
     "test": {
