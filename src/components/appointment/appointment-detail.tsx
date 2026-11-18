@@ -22,7 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { canWithdraw, isFinished, isOpenForReplies, yesVoterIds } from "@/lib/appointment/state";
 import { formatDayCompact, formatDayLong, formatTime } from "@/lib/datetime";
-import type { AppointmentView, ParticipantView } from "@/services/appointment.service";
+import type { AppointmentView, OptionView, ParticipantView } from "@/services/appointment.service";
 
 type Dialog = "decline" | "withdraw" | "cancel" | null;
 
@@ -255,6 +255,7 @@ function LockPanel({ view, pending, onLock }: { view: AppointmentView; pending: 
   const locale = useLocale();
   const [optionId, setOptionId] = useState<string | null>(null);
   const [picked, setPicked] = useState<string[] | null>(null);
+  const hasVoters = (o: OptionView) => view.participants.some((p) => (p.status === "invited" || p.status === "accepted") && yesVoterIds(o.votes).includes(p.id));
   const option = view.options.find((o) => o.id === optionId);
   // Only people who said yes to this time (and have not turned the invitation down since).
   const yesIds = option ? yesVoterIds(option.votes) : [];
@@ -274,11 +275,13 @@ function LockPanel({ view, pending, onLock }: { view: AppointmentView; pending: 
       </h2>
       <div role="radiogroup" aria-label={t("lockPickTime")} className="flex flex-wrap gap-stack">
         {view.options.map((o) => (
-          <Chip key={o.id} role="radio" selected={optionId === o.id} onClick={() => chooseOption(o.id)}>
+          // A time nobody voted Yes for cannot be locked in: there would be nobody to go.
+          <Chip key={o.id} role="radio" selected={optionId === o.id} disabled={!hasVoters(o)} onClick={() => chooseOption(o.id)}>
             {formatDayLong(o.startAt, locale)} · {formatTime(o.startAt, locale)}
           </Chip>
         ))}
       </div>
+      {view.options.every((o) => !hasVoters(o)) ? <p className="type-secondary text-muted-foreground">{t("lockNobody")}</p> : null}
       {option ? (
         <>
           <span id="appt-lock-people" className="type-label text-muted-foreground">

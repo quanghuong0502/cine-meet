@@ -1367,7 +1367,7 @@
       "lockTitle": "Chốt người tham gia",
       "lockPickTime": "Chọn giờ chốt",
       "lockPickPeople": "Ai đi nè",
-      "lockNobody": "Chưa ai vote Có giờ này. Chọn giờ khác hoặc chờ mọi người trả lời nha.",
+      "lockNobody": "Chưa giờ nào có người vote Có nên chưa chốt được. Chờ mọi người trả lời nha.",
       "lockButton": "{count, plural, one {Chốt # người} other {Chốt # người}}",
       "locked": "Đã chốt {count, plural, one {# người} other {# người}} tham gia",
       "participant": {

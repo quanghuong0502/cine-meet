@@ -1367,7 +1367,7 @@
       "lockTitle": "Lock in attendees",
       "lockPickTime": "Pick the time to lock",
       "lockPickPeople": "Who's going",
-      "lockNobody": "Nobody has voted Yes for this time yet. Pick another time or wait for replies.",
+      "lockNobody": "No time has a Yes vote yet, so there is nothing to lock in. Wait for replies.",
       "lockButton": "{count, plural, one {Lock in # person} other {Lock in # people}}",
       "locked": "Locked in {count, plural, one {# person} other {# people}}",
       "participant": {
