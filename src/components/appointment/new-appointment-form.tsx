@@ -146,14 +146,23 @@ export function NewAppointmentForm({ movies, movieId: initialMovieId, initialSho
           <RequiredMark />
         </span>
         {chosen.length > 0 ? (
-          <div className="flex flex-wrap gap-stack">
+          <ul className="flex flex-col gap-stack">
             {chosen.map((c) => (
-              <Chip key={c.id} selected onClick={() => setChosen(chosen.filter((x) => x.id !== c.id))} aria-label={t("removeTime")}>
-                {formatDayLong(c.startAt, locale)} · {formatTime(c.startAt, locale)} · {c.branchName}
-                <X className="size-icon-sm" aria-hidden />
-              </Chip>
+              <li key={c.id} className="flex items-center gap-item rounded-xl border border-primary bg-accent p-inset-sm">
+                <span className="flex min-w-0 flex-1 flex-col gap-tight">
+                  <span className="break-words type-item-title tabular-nums">
+                    {formatDayLong(c.startAt, locale)} · {formatTime(c.startAt, locale)}
+                  </span>
+                  <span className="break-words type-secondary text-muted-foreground">
+                    {c.branchName} · {c.roomName} · {c.formatName}
+                  </span>
+                </span>
+                <Button type="button" variant="ghost" size="icon" className="shrink-0" aria-label={t("removeTime")} onClick={() => setChosen(chosen.filter((x) => x.id !== c.id))}>
+                  <X aria-hidden />
+                </Button>
+              </li>
             ))}
-          </div>
+          </ul>
         ) : null}
 
         {movieId ? (
