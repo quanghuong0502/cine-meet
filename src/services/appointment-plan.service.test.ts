@@ -145,6 +145,16 @@ describe("appointment planning (stage 2)", () => {
     expect(offered?.showtimes.every((x) => new Date(x.startAt).getTime() >= start.getTime())).toBe(true);
   });
 
+  it("does not let the showtime be changed when it was already chosen with the time", async () => {
+    const id = await lockedAppointment();
+    const doc = await (await import("@/models/appointment")).Appointment.findById(id);
+    doc!.showtimeFromPoll = true;
+    await doc!.save();
+    await plan.beginPlanning(creator, id);
+    expect((await svc.getAppointment(creator, id))?.showtimeFixed).toBe(true);
+    expect(await plan.chooseShowtime(creator, id, showtime)).toEqual({ ok: false, error: "showtime_fixed" });
+  });
+
   it("only accepts a showtime on the day the group agreed on", async () => {
     const id = await lockedAppointment();
     await plan.beginPlanning(creator, id);

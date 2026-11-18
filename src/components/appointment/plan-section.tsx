@@ -71,7 +71,7 @@ export function PlanSection({ view, plan, run, busy }: Props) {
 
   return (
     <>
-      {editable ? (
+      {editable && !view.showtimeFixed ? (
         <section aria-labelledby="appt-showtime" className="flex flex-col gap-item">
           <h2 id="appt-showtime" className="type-heading">
             {t("showtimeTitle")}

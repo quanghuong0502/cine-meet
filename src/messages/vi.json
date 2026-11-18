@@ -1307,7 +1307,8 @@
       "too_early": "Phim chưa chiếu nên chưa đóng lịch hẹn được nha.",
       "invalid_amount": "Số tiền chưa đúng, kiểm tra lại nha.",
       "wrong_day": "Suất này không cùng ngày đã chốt nha, chọn suất trong ngày đó.",
-      "before_agreed": "Suất này sớm hơn giờ đã chốt nha, chọn suất từ giờ đó trở đi."
+      "before_agreed": "Suất này sớm hơn giờ đã chốt nha, chọn suất từ giờ đó trở đi.",
+      "showtime_fixed": "Suất chiếu đã chọn từ lúc tạo lịch hẹn nên không đổi được nha. Muốn suất khác thì tạo lịch hẹn mới."
     },
     "new": {
       "title": "Tạo lịch hẹn",

@@ -66,6 +66,7 @@ export async function chooseShowtime(creatorId: string, id: string, showtimeId: 
   const result = await mutate(id, async (doc) => {
     if (!sameId(doc.creatorId, creatorId)) return { ok: false as const, error: "forbidden" as const };
     if (doc.status !== "PLANNING" && doc.status !== "CONFIRMED") return { ok: false as const, error: "bad_state" as const };
+    if (doc.showtimeFromPoll) return { ok: false as const, error: "showtime_fixed" as const };
     const showtime = await Showtime.findOne({ _id: showtimeId, movieId: doc.movieId }, "startAt").lean();
     if (!showtime || showtime.startAt.getTime() <= now.getTime()) return { ok: false as const, error: "no_showtime" as const };
     // The group agreed on a day and a time: the showtime has to be on that day, and not before that time.

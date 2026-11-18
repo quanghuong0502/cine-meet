@@ -34,6 +34,8 @@ async function seedAppointment(): Promise<void> {
     participants: others.map((u) => ({ userId: u._id, status: "accepted" })),
   });
   doc.chosenOptionId = doc.timeOptions[0]!._id;
+  doc.lockedStartAt = showtime.startAt;
+  doc.showtimeFromPoll = true;
   await doc.save();
   console.log(`Đã tạo lịch hẹn ${doc._id.toString()}: ${creator!.name} (người tạo) rủ ${others.map((u) => u.name).join(", ")}. Mở /appointments/${doc._id.toString()}.`);
 }

@@ -69,6 +69,8 @@ const appointmentSchema = new Schema(
     chosenOptionId: { type: Schema.Types.ObjectId },
     // The time the group agreed on when the list was locked. Picking a showtime moves `chosenOptionId`, but never earlier than this.
     lockedStartAt: { type: Date },
+    // The agreed time came from a real showtime: that showtime is the plan, and it is not picked or changed again.
+    showtimeFromPoll: { type: Boolean },
     participants: { type: [participantSchema], default: [] },
     cancelReason: { type: String, trim: true },
     // Stage 2 (Sprint 5A).

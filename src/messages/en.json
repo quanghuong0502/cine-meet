@@ -1307,7 +1307,8 @@
       "too_early": "The movie hasn't started yet, so it can't be marked as watched.",
       "invalid_amount": "That amount doesn't look right, check it again.",
       "wrong_day": "That showtime is not on the agreed day, pick one on that day.",
-      "before_agreed": "That showtime is earlier than the agreed time, pick one from then on."
+      "before_agreed": "That showtime is earlier than the agreed time, pick one from then on.",
+      "showtime_fixed": "The showtime was picked when the plan was made, so it can not be changed. Make a new plan for another one."
     },
     "new": {
       "title": "Create plan",

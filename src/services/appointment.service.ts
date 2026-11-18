@@ -74,6 +74,7 @@ export type AppointmentError =
   | "no_showtime"
   | "wrong_day"
   | "before_agreed"
+  | "showtime_fixed"
   | "seat_taken"
   | "invalid_seat"
   | "needs_seat"
@@ -413,6 +414,7 @@ export async function lockParticipants(
     }
     doc.chosenOptionId = option._id;
     doc.lockedStartAt = option.startAt;
+    doc.showtimeFromPoll = Boolean(option.showtimeId);
     doc.status = "PARTICIPANTS_LOCKED";
     return { ok: true as const, attendeeIds, excludedIds };
   });
@@ -505,6 +507,8 @@ export interface AppointmentView {
   cancelReason?: string;
   /** Stage 2: the showtime, who sits where, the food, and each person's estimated money (whole dong). */
   showtimeId?: string;
+  /** The showtime was already chosen when the time was picked: nothing to choose in the plan. */
+  showtimeFixed: boolean;
   /** The people going: the creator and everyone still in. */
   attendees: PersonView[];
   seats: { userId: string; seatCode: string }[];
@@ -578,6 +582,7 @@ export async function getAppointment(userId: string, id: string, now = new Date(
     })),
     cancelReason: doc.cancelReason ?? undefined,
     showtimeId: doc.showtimeId?.toString(),
+    showtimeFixed: doc.showtimeFromPoll === true,
     attendees: [doc.creatorId.toString(), ...doc.participants.filter((p) => p.status === "accepted").map((p) => p.userId.toString())].map(person),
     seats: (doc.seats ?? []).map((s) => ({ userId: s.userId.toString(), seatCode: s.seatCode })),
     fnb: (doc.fnb ?? []).map((l) => ({ id: l._id.toString(), ownerId: l.ownerId?.toString(), kind: l.kind, refId: l.refId.toString(), name: l.name, unitPrice: l.unitPrice, quantity: l.quantity })),
