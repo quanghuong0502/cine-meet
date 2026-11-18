@@ -1,5 +1,4 @@
 import { BackButton } from "@/components/back-button";
-import { cn } from "@/lib/utils";
 
 interface PageHeaderProps {
   /** Omit it on a screen whose content already starts with its own title: the bar then holds only the back button. */
@@ -10,24 +9,26 @@ interface PageHeaderProps {
 }
 
 /**
- * Title of a screen. A tab screen shows a large title that scrolls with the page. An inner screen (with a back button) is a
- * navigation bar like iOS: a smaller title that stays at the top while the page scrolls, so back is always one tap away.
+ * Title of a screen. An inner screen (with a back button) is a navigation bar like iOS: a title that stays at the top while the page
+ * scrolls, so back is always one tap away. A tab screen draws no title: the bottom menu already shows which tab this is, and a big
+ * title would take about 60px of a phone; the title and description stay in the page for screen readers (`sr-only`), so the page still has its h1.
  * Every page puts it first inside a `p-4` container: the bar cancels that padding (negative margins) to reach the screen edges.
  */
 export function PageHeader({ title, backHref, description }: PageHeaderProps) {
+  if (!backHref) {
+    return (
+      <header className="sr-only">
+        {title ? <h1>{title}</h1> : null}
+        {description ? <p>{description}</p> : null}
+      </header>
+    );
+  }
   return (
-    <header
-      className={cn(
-        "flex gap-2",
-        backHref
-          ? "sticky top-0 z-20 -mx-4 -mt-4 items-center bg-background/95 px-4 py-0 backdrop-blur"
-          : "items-start",
-      )}
-    >
-      {backHref ? <BackButton href={backHref} /> : null}
-      {title || description ? (
-        <div className={cn("flex min-w-0 flex-col gap-0.5", !backHref && "pt-1.5")}>
-          {title ? <h1 className={cn("font-semibold", backHref ? "truncate text-xl" : "text-2xl")}>{title}</h1> : null}
+    <header className="sticky top-0 z-20 -mx-4 -mt-4 flex items-center gap-2 bg-background/95 px-4 py-0 backdrop-blur">
+      <BackButton href={backHref} />
+      {title ? (
+        <div className="flex min-w-0 flex-col gap-0.5">
+          <h1 className="truncate text-xl font-semibold">{title}</h1>
           {description ? <p className="text-sm text-muted-foreground">{description}</p> : null}
         </div>
       ) : null}
