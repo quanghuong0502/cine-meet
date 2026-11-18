@@ -22,7 +22,7 @@ export default getRequestConfig(async () => {
 
   const messages = (await import(`../messages/${locale}.json`)).default;
   // Vietnamese messages hold pronoun tokens; the admin's pair (default bạn / tôi) is put in here, once per pair, not per request.
-  const spoken = locale === "vi" ? applyPronouns(messages, await getPronounsCached(), locale) : messages;
+  const spoken = locale === "vi" ? applyPronouns(messages, await getPronounsCached()) : messages;
 
   return {
     locale,

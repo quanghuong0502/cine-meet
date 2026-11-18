@@ -65,19 +65,22 @@ export function applyPronounsToText(text: string, pronouns: Pronouns): string {
 
 type Tree = { [key: string]: Tree | string };
 
-const memo = new Map<string, Tree>();
+/** Results per source tree and pair. Keyed by the tree object itself, so a messages file that changes (dev reload) never serves a stale copy. */
+const memo = new WeakMap<object, Map<string, Tree>>();
 
 /**
- * A copy of the message tree with every token swapped. Kept per pair and per source, so the walk over the messages happens once
+ * A copy of the message tree with every token swapped. Kept per source and per pair, so the walk over the messages happens once
  * for each pair the app has used, not on every request.
  */
-export function applyPronouns<T extends Tree>(messages: T, pronouns: Pronouns, sourceKey: string): T {
-  const key = `${sourceKey}|${pronouns.you}|${pronouns.me}|${pronouns.youIsName}|${pronouns.meIsName}`;
-  const known = memo.get(key);
+export function applyPronouns<T extends Tree>(messages: T, pronouns: Pronouns): T {
+  const key = `${pronouns.you}|${pronouns.me}|${pronouns.youIsName}|${pronouns.meIsName}`;
+  const perSource = memo.get(messages) ?? new Map<string, Tree>();
+  memo.set(messages, perSource);
+  const known = perSource.get(key);
   if (known) return known as T;
   const walk = (node: Tree): Tree =>
     Object.fromEntries(Object.entries(node).map(([name, value]) => [name, typeof value === "string" ? applyPronounsToText(value, pronouns) : walk(value)]));
   const result = walk(messages);
-  memo.set(key, result);
+  perSource.set(key, result);
   return result as T;
 }

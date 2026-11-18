@@ -42,8 +42,13 @@ describe("applyPronounsToText", () => {
 describe("applyPronouns", () => {
   it("swaps inside nested messages without touching the original", () => {
     const source = { a: { b: "[You] ơi" }, c: "[me]" };
-    const out = applyPronouns(source, { ...PAIR, you: "cậu", me: "tớ" }, "test");
+    const out = applyPronouns(source, { ...PAIR, you: "cậu", me: "tớ" });
     expect(out).toEqual({ a: { b: "Cậu ơi" }, c: "Tớ" });
     expect(source.a.b).toBe("[You] ơi");
+  });
+  it("does not serve a stale copy when the messages object changes", () => {
+    const pair = { ...PAIR };
+    expect(applyPronouns({ a: "[you]" }, pair)).toEqual({ a: "Bạn" });
+    expect(applyPronouns({ a: "[you]", b: "mới" }, pair)).toEqual({ a: "Bạn", b: "mới" });
   });
 });
