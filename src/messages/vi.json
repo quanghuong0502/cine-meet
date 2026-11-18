@@ -1005,7 +1005,7 @@
         "appointment_reply": "Bạn bè trả lời kèo",
         "participants_locked": "Đã chốt người",
         "appointment_cancelled": "Kèo bị hủy",
-        "participant_withdrew": "Có người rút lui"
+        "participant_withdrew": "Có người hủy kèo"
       },
       "errors": {
         "network": "Mạng đang chập chờn, thử lại giúp [me] nha.",
