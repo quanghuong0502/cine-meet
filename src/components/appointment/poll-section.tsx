@@ -142,12 +142,11 @@ export function PollSection({ view, canVote, when, declineButton, onLock, onRemi
                         <ThumbsDown className="size-icon-sm" aria-hidden />
                         <span aria-hidden>{no}</span>
                       </li>
-                      {waiting > 0 ? (
-                        <li className="flex items-center gap-tight" aria-label={t("countWaiting", { count: waiting })}>
-                          <Clock className="size-icon-sm" aria-hidden />
-                          <span aria-hidden>{waiting}</span>
-                        </li>
-                      ) : null}
+                      {/* Always shown, like the Yes and No counts: it does not appear and disappear as people answer. */}
+                      <li className="flex items-center gap-tight" aria-label={t("countWaiting", { count: waiting })}>
+                        <Clock className="size-icon-sm" aria-hidden />
+                        <span aria-hidden>{waiting}</span>
+                      </li>
                     </ul>
                   </div>
                 </div>
