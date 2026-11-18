@@ -396,7 +396,7 @@ export function DomRecorder() {
       className={cn(
         // touch-none: dragging the button must not scroll the page. Hold and drag to move it; a tap still toggles.
         "pointer-events-auto fixed z-[60] touch-none rounded-full shadow-lg",
-        !position && "top-1/2 right-2",
+        !position && "top-1/2 right-inset-xs",
         !on && "opacity-60",
         // On: a ring while a snapshot is being sent; red when the dev server cannot be reached.
         on && link === "sending" && "ring-4 ring-ring",

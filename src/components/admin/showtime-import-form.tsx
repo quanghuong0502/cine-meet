@@ -84,7 +84,7 @@ export function ShowtimeImportForm({ backHref, action }: Props) {
       ) : null}
 
       <div aria-hidden className="h-action-clear shrink-0" />
-      <div data-save-bar className="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-inset pb-(--inset-bottom) md:left-64">
+      <div data-save-bar className="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-inset pb-(--inset-bottom) md:left-sidebar">
         <div className="mx-auto flex max-w-form">
           <Button type="submit" size="cta" disabled={isPending} className="pointer-events-auto min-w-0 flex-1">
             {isPending ? (

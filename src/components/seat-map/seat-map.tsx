@@ -342,7 +342,7 @@ export function SeatMap({
           />
         </svg>
 
-        <div className="absolute right-2 bottom-2 flex gap-stack" data-no-pan>
+        <div className="absolute right-inset-xs bottom-inset-xs flex gap-stack" data-no-pan>
           <Button type="button" variant="secondary" size="icon" aria-label={t("zoomOut")} disabled={scale <= MIN_SCALE} onClick={zoomOut} onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()}>
             <ZoomOut className="size-icon" />
           </Button>

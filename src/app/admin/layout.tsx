@@ -18,7 +18,7 @@ export default async function AdminLayout({
   const hasBottomNav = ENABLED_ADMIN_NAV_ITEMS.length >= MIN_BOTTOM_NAV_ITEMS;
 
   return (
-    <div data-app-shell className="h-dvh overflow-hidden md:grid md:grid-cols-[16rem_1fr] md:grid-rows-1">
+    <div data-app-shell className="h-dvh overflow-hidden md:grid md:grid-cols-[var(--spacing-sidebar)_1fr] md:grid-rows-1">
       <aside className="sticky top-0 hidden h-dvh flex-col gap-group border-r p-inset md:flex">
         <span className="px-inset-sm py-inset-xs">
           <Logo size={44} wordmarkClassName="type-heading" />

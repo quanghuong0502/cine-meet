@@ -252,7 +252,7 @@ export function ResourceForm({ itemId, fields, values, backHref, saveAction, del
 
       {/* Fixed to the bottom, in thumb reach. It stays while the keyboard is open: on the installed app the keyboard shrinks the page, so
           the bar rides just above it and Save is always reachable while typing (unlike the menu and the list's Add button, which hide). */}
-      <div data-save-bar className="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-inset pb-(--inset-bottom) md:left-64">
+      <div data-save-bar className="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-inset pb-(--inset-bottom) md:left-sidebar">
         <div className="mx-auto flex max-w-form items-center gap-stack">
           {deleteItem ? <DeleteRecordButton id={deleteItem.id} name={deleteItem.name} backHref={backHref} removeAction={deleteItem.removeAction} /> : null}
           <Button type="submit" size="cta" disabled={isPending} className="pointer-events-auto min-w-0 flex-1">

@@ -87,7 +87,7 @@ export default async function ShowtimesPage({ searchParams }: { searchParams: Pr
                 <Link href={`/movies/${movie._id.toString()}`} className="flex flex-col gap-stack">
                   <span className="relative block aspect-[2/3] overflow-hidden rounded-lg border bg-muted">
                     {movie.ageRatingId && ratingById.get(movie.ageRatingId.toString()) ? (
-                      <AgeRatingBadge rating={ratingById.get(movie.ageRatingId.toString())!} className="absolute top-1.5 left-1.5 z-10" />
+                      <AgeRatingBadge rating={ratingById.get(movie.ageRatingId.toString())!} className="absolute top-stack left-stack z-10" />
                     ) : null}
                     {movie.posterUrl ? <Image src={movie.posterUrl} alt="" fill sizes="128px" unoptimized className="object-cover" /> : null}
                   </span>

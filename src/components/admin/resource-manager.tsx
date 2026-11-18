@@ -110,7 +110,7 @@ export function ResourceManager({ items, basePath, query, labels, removeAction, 
   return (
     <div className="flex flex-1 flex-col gap-group">
       <div className="relative">
-        <Search className="pointer-events-none absolute top-1/2 left-4 size-icon-sm -translate-y-1/2 text-muted-foreground" aria-hidden />
+        <Search className="pointer-events-none absolute top-1/2 left-inset size-icon-sm -translate-y-1/2 text-muted-foreground" aria-hidden />
         <Input
           type="search"
           enterKeyHint="search"
@@ -173,7 +173,7 @@ export function ResourceManager({ items, basePath, query, labels, removeAction, 
 
       {/* Primary action: fixed above the bottom menu (not inside the flow), so it stays in thumb reach, at the same
           place whether the list is empty, short or long. On wide screens it starts after the sidebar. */}
-      <div data-bottom-fixed className="pointer-events-none fixed inset-x-0 bottom-[var(--bottom-nav-h,0px)] z-30 px-inset md:left-64">
+      <div data-bottom-fixed className="pointer-events-none fixed inset-x-0 bottom-[var(--bottom-nav-h,0px)] z-30 px-inset md:left-sidebar">
         <Button asChild size="cta" className="pointer-events-auto mx-auto flex max-w-form">
           <Link href={withBack(`${base}/new`)}>
             <Plus aria-hidden />

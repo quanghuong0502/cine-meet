@@ -1,8 +1,8 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
-import { join, relative, sep } from "node:path";
+import { join, relative } from "node:path";
 import { describe, expect, it } from "vitest";
 
-/** Keeps the design tokens honest (docs: .claude/rules/design-tokens.md). Components in `ui/` come from shadcn and are exempt. */
+/** Keeps the design tokens honest (docs: .claude/rules/design-tokens.md). Applies to every component, the shadcn ones in `ui/` too. */
 const SRC = join(process.cwd(), "src");
 
 function sourceFiles(dir: string, found: string[] = []): string[] {
@@ -14,7 +14,8 @@ function sourceFiles(dir: string, found: string[] = []): string[] {
   return found;
 }
 
-const appFiles = sourceFiles(SRC).filter((path) => !path.split(sep).join("/").includes("/components/ui/"));
+// Every component, shadcn ones in `components/ui` included: nothing is exempt from the tokens.
+const appFiles = sourceFiles(SRC);
 const read = (path: string) => readFileSync(path, "utf8");
 
 function offenders(pattern: RegExp): string[] {
@@ -66,7 +67,7 @@ describe("design tokens", () => {
   });
 
   // Type roles (docs: .claude/rules/design-tokens.md, "Cỡ chữ theo vai trò"): text takes a role, never a loose size.
-  const ROLES = ["display", "title", "heading", "item-title", "body", "secondary", "label", "caption", "micro", "tag"];
+  const ROLES = ["display", "title", "heading", "item-title", "body", "secondary", "label", "caption", "micro", "action", "tag"];
 
   it("defines every type role in globals.css", () => {
     const css = readFileSync(join(SRC, "app", "globals.css"), "utf8");
@@ -94,8 +95,8 @@ describe("design tokens", () => {
     expect(offenders(/\b(?:h-11|h-12|size-11|min-h-11|min-h-14|min-h-16)\b/)).toEqual([]);
   });
   // Space and size roles (docs: .claude/rules/design-tokens.md, "Khoảng cách và kích thước theo vai trò"): no loose numbers.
-  const VARIANTS = String.raw`(?:[\w\[\]&>*:@()-]+:)*`;
-  const SPACING = ["gap", "gap-x", "gap-y", "space-x", "space-y", "p", "px", "py", "pt", "pr", "pb", "pl", "m", "mx", "my", "mt", "mr", "mb", "ml"];
+  const VARIANTS = String.raw`(?:[^\s"'\x60]+:)*`;
+  const SPACING = ["gap", "gap-x", "gap-y", "space-x", "space-y", "p", "px", "py", "pt", "pr", "pb", "pl", "m", "mx", "my", "mt", "mr", "mb", "ml", "inset", "inset-x", "inset-y", "top", "right", "bottom", "left", "translate-x", "translate-y"];
   const SIZING = ["size", "h", "w", "min-h", "min-w", "max-h", "max-w"];
   // `-0`, `0`, fractions (`w-1/2`) and named roles are fine; a plain number (`gap-3`, `px-4`, `size-5`, `w-16`) is not.
   const looseNumber = (utilities: string[]) =>
@@ -114,15 +115,17 @@ describe("design tokens", () => {
   });
 
   it("writes no bare px or rem inside an arbitrary value (use a token, or var(--token) inside calc)", () => {
-    const arbitrary = /(?<![\w-])(?:[\w\[\]&>*:@()-]+:)*-?(?:gap|p[xytblr]?|m[xytblr]?|size|h|w|min-h|min-w|max-h|max-w|top|left|right|bottom|inset(?:-[xy])?)-\[([^\]]+)\]/;
-    const bare = (value: string) => /(?<![\w.-])(?!0(?:px|rem)\b)\d*\.?\d+(?:px|rem)\b/.test(value.replace(/var\([^)]*\)|env\([^)]*\)/g, ""));
+    // Any utility: `p-[13px]`, `grid-cols-[16rem_1fr]`, `shadow-[0_8px_...]`, `rounded-[10px]`. `0px`, `dvh` and `%` are fine.
+    const arbitrary = /(?<![\w-])(?:[^\s"'\x60]+:)*-?[a-z][a-z-]*-\[([^\]]+)\]/g;
+    const bare = (value: string) => /(?<![A-Za-z0-9.-])(?!0(?:px|rem)(?![a-z]))\d*\.?\d+(?:px|rem)(?![a-z])/.test(value.replace(/var\([^)]*\)|env\([^)]*\)/g, ""));
     const bad = appFiles.flatMap((path) =>
       read(path)
         .split("\n")
-        .flatMap((line, index) => [...line.matchAll(new RegExp(arbitrary.source, "g"))].filter((match) => bare(match[1] ?? "")).map(() => `${relative(SRC, path)}:${index + 1}`)),
+        .flatMap((line, index) => [...line.matchAll(arbitrary)].filter((match) => bare(match[1] ?? "")).map(() => `${relative(SRC, path)}:${index + 1}`)),
     );
     expect(bad).toEqual([]);
   });
+
   it("never gives a spacing token and a container token the same name", () => {
     // `max-w-<name>` looks in both groups: a clash silently picks the wrong one (max-w-menu once became 68px wide).
     const css = readFileSync(join(SRC, "app", "globals.css"), "utf8");

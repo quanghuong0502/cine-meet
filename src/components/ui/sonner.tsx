@@ -14,19 +14,19 @@ const Toaster = ({ ...props }: ToasterProps) => {
       mobileOffset={{ bottom: "var(--toast-offset)" }}
       icons={{
         success: (
-          <CircleCheckIcon className="size-4" />
+          <CircleCheckIcon className="size-icon-sm" />
         ),
         info: (
-          <InfoIcon className="size-4" />
+          <InfoIcon className="size-icon-sm" />
         ),
         warning: (
-          <TriangleAlertIcon className="size-4" />
+          <TriangleAlertIcon className="size-icon-sm" />
         ),
         error: (
-          <OctagonXIcon className="size-4" />
+          <OctagonXIcon className="size-icon-sm" />
         ),
         loading: (
-          <Loader2Icon className="size-4 animate-spin" />
+          <Loader2Icon className="size-icon-sm animate-spin" />
         ),
       }}
       style={

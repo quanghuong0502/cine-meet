@@ -20,7 +20,7 @@ export function TrailerPlayer({ videoId, title }: { videoId: string; title: stri
   return (
     <Dialog.Root>
       <Dialog.Trigger asChild>
-        <Button type="button" variant="outline" size="pill" className="h-target self-start px-inset type-label" aria-label={t("play", { title })}>
+        <Button type="button" variant="outline" size="pill" className="h-target self-start px-inset" aria-label={t("play", { title })}>
           <Play aria-hidden className="fill-current" />
           {t("watch")}
         </Button>

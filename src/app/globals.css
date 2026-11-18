@@ -130,6 +130,13 @@
   --spacing-area-max: 18rem; /* 288: maximum height of that text area */
   --spacing-poster: 8.5rem; /* 136: poster on the movie page */
   --spacing-mascot-max: 11rem; /* 176: tallest the mascot may be on a screen that must fit */
+  --spacing-sheet-gap: 6rem; /* 96: the least a bottom sheet leaves free at the top of the screen */
+  --spacing-grabber: 6.25rem; /* 100: width of the grab handle on top of a bottom sheet */
+  --spacing-menu-min: 9rem; /* 144: narrowest a drop-down list opens */
+  --spacing-area-cap: 10rem; /* 160: tallest a text area grows before it scrolls */
+  --spacing-switch: 3.25rem; /* 52: width of a switch (its height is `stepper`) */
+  --spacing-switch-thumb: 1.75rem; /* 28: the knob of a switch */
+  --spacing-sidebar: 16rem; /* 256: the admin sidebar on a wide screen (fixed bars start after it) */
   --spacing-fab-clear: 5rem; /* 80: room at the page end under the floating filter button */
   --spacing-action-clear: calc(var(--spacing-control) + var(--spacing-inset-xl) + var(--spacing-stack)); /* 88: room under the fixed Add button */
 
@@ -140,6 +147,9 @@
   --container-menu: 28rem; /* 448: the bottom menu pill */
   --container-media: 36rem; /* 576: the trailer */
   --container-hint: 20rem; /* 320: a short explanation under a picture */
+
+  /* Shadows have names too. */
+  --shadow-menu: 0 8px 32px -8px rgb(0 0 0 / 0.6), inset 0 1px 0 rgb(255 255 255 / 0.12); /* the floating bottom menu */
 
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
@@ -417,6 +427,7 @@ html[data-keyboard="open"]:has([data-slot="drawer-content"]) body {
  *   label       15 medium    the name of a field or of a value (above the value)    (iOS Subheadline, M3 label large)
  *   caption     13           a small note                                           (iOS Footnote)
  *   micro       12           the smallest text that is allowed                      (iOS Caption 1, M3 label medium)
+ *   action      16 medium    the label of a button that is not a main action's heading (pill, the quiet action)   (iOS Body emphasised, M3 label large)
  *   tag         12 medium    badges, chips, tab labels                              (iOS Caption 1 emphasised, M3 label medium)
  */
 @utility type-display {
@@ -465,6 +476,11 @@ html[data-keyboard="open"]:has([data-slot="drawer-content"]) body {
   font-size: var(--text-xs) !important;
   line-height: var(--text-xs--line-height) !important;
   font-weight: 400 !important;
+}
+@utility type-action {
+  font-size: var(--text-base) !important;
+  line-height: var(--text-base--line-height) !important;
+  font-weight: 500 !important;
 }
 @utility type-tag {
   font-size: var(--text-xs) !important;

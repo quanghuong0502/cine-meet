@@ -4,7 +4,7 @@ import { cn } from "cn"
 import { Slot } from "radix-ui"
 
 const buttonVariants = cva(
-  "group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding type-label whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-icon-sm",
   {
     variants: {
       variant: {
@@ -23,22 +23,17 @@ const buttonVariants = cva(
       },
       size: {
         default:
-          "h-control gap-2 px-4 has-data-[icon=inline-end]:pr-3 has-data-[icon=inline-start]:pl-3",
-        xs: "h-6 gap-1 rounded-[min(var(--radius-md),10px)] px-2 text-xs in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3",
-        sm: "h-target gap-1.5 rounded-[min(var(--radius-md),12px)] px-3 in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3.5",
-        lg: "h-control-lg gap-2 px-6 has-data-[icon=inline-end]:pr-4 has-data-[icon=inline-start]:pl-4",
+          "h-control gap-stack px-inset type-label has-data-[icon=inline-end]:pr-inset-sm has-data-[icon=inline-start]:pl-inset-sm",
+        sm: "h-target gap-stack rounded-lg px-inset-sm type-label has-data-[icon=inline-end]:pr-inset-xs has-data-[icon=inline-start]:pl-inset-xs",
         // The same few shapes on every screen (docs: .claude/rules/ui.md, "Nút"):
         // cta = the one main action of a form or screen, full width; cta-sm = the quiet action under it (Cancel);
         // pill = a main action that sits alone and keeps its own width (retry, back to home, open a page).
-        cta: "h-control w-full gap-2 rounded-full px-4 text-base font-semibold",
-        "cta-sm": "h-target w-full gap-2 rounded-full px-4 text-base",
-        pill: "h-control gap-2 rounded-full px-8 text-base",
+        // Each size carries its own text role (one role per button: roles are !important, so two would clash).
+        cta: "h-control w-full gap-stack rounded-full px-inset type-item-title",
+        "cta-sm": "h-target w-full gap-stack rounded-full px-inset type-action",
+        pill: "h-control gap-stack rounded-full px-inset-xl type-action",
         icon: "size-target",
-        "icon-xs":
-          "size-6 rounded-[min(var(--radius-md),10px)] in-data-[slot=button-group]:rounded-lg [&_svg:not([class*='size-'])]:size-3",
-        "icon-sm":
-          "size-target rounded-[min(var(--radius-md),12px)] in-data-[slot=button-group]:rounded-lg",
-        "icon-lg": "size-control",
+        "icon-sm": "size-target rounded-lg",
       },
     },
     defaultVariants: {

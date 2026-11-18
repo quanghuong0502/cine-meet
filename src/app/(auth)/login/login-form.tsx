@@ -98,7 +98,7 @@ export function LoginForm({ callbackUrl, initialError }: LoginFormProps) {
               onClick={() => setShowPassword((visible) => !visible)}
               aria-label={showPassword ? t("hidePassword") : t("showPassword")}
               aria-pressed={showPassword}
-              className="absolute top-1/2 right-0.5 size-target -translate-y-1/2 text-muted-foreground"
+              className="absolute top-1/2 right-hair size-target -translate-y-1/2 text-muted-foreground"
             >
               {showPassword ? <EyeOff aria-hidden /> : <Eye aria-hidden />}
             </Button>

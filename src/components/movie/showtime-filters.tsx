@@ -101,7 +101,7 @@ export function ShowtimeFilters({ date, values, options, records }: Props) {
               {activeKeys.length > 0 ? (
                 <span
                   aria-hidden
-                  className="absolute -top-1 -right-1 flex size-icon items-center justify-center rounded-full bg-foreground type-tag font-semibold! text-background tabular-nums"
+                  className="absolute -top-tight -right-tight flex size-icon items-center justify-center rounded-full bg-foreground type-tag font-semibold! text-background tabular-nums"
                 >
                   {activeKeys.length}
                 </span>
