@@ -74,7 +74,7 @@ export function AppointmentDetail({ view, friends = [], groups = [] }: DetailPro
   const when = (iso: string) => `${formatDayLong(iso, locale)} · ${formatTime(iso, locale)}`;
 
   return (
-    <div className="flex flex-col gap-section">
+    <div className="flex flex-col gap-section has-[[data-poll-dirty]]:pb-action-clear">
       <section className="flex items-start gap-item">
         <ListThumb shape="poster" imageUrl={view.movie.posterUrl} />
         <div className="flex min-w-0 flex-1 flex-col gap-stack">

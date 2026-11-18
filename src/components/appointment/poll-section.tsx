@@ -162,11 +162,12 @@ export function PollSection({ view, canVote, nameOf, when }: Props) {
 
       {canVote && dirty ? (
         <>
-          {/* Room for the fixed bar, so the last thing on the page can scroll clear of it. */}
-          <div aria-hidden className="h-action-clear shrink-0" />
+          {/* Tells the page to leave room at its very end for the fixed bar (see `has-[[data-poll-dirty]]` on the screen), so the last
+              thing on the page can scroll clear of it. The room is not made here: it would open a gap in the middle of the page. */}
+          <span data-poll-dirty hidden />
           <div data-bottom-fixed className="pointer-events-none fixed inset-x-0 bottom-[var(--nav-clearance)] z-30 px-inset">
             <div className="mx-auto flex max-w-form items-center gap-stack">
-              <Button type="button" variant="outline" size="cta" disabled={pending} onClick={discard} aria-label={t("discard")} className="pointer-events-auto shrink-0 px-inset">
+              <Button type="button" variant="outline" size="icon" disabled={pending} onClick={discard} aria-label={t("discard")} className="pointer-events-auto size-control shrink-0 rounded-full">
                 <Undo2 aria-hidden />
               </Button>
               <Button type="button" size="cta" disabled={pending} onClick={save} className="pointer-events-auto min-w-0 flex-1">
