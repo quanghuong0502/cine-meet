@@ -20,19 +20,19 @@ Next.js (App Router, `src/`) · TypeScript strict · MongoDB Atlas + Mongoose ·
 ## Lệnh
 
 - `npm run dev` · `npm run lint` · `npm run typecheck` · `npm test` · `npm run seed`
-- Thêm component UI: dùng shadcn MCP/skill, cài bằng `npx shadcn@latest add <tên>`
+- Thêm component UI: dùng shadcn MCP/skill, cài bằng `npx shadcn@latest add <tên>`, **rồi đổi mọi số rời trong file vừa tạo sang token** (quy tắc số 1; `npm test` đỏ nếu còn)
 
 ## Cấu trúc thư mục
 
 - `src/app/(user)/*`, `src/app/admin/*`, `src/app/api/*`: route theo role
-- `src/components/ui`: component shadcn (không sửa tay trừ khi cần); `src/components/*`: component nghiệp vụ
+- `src/components/ui`: component shadcn (đã chuyển sang token, giữ 100% token khi sửa hoặc thêm); `src/components/*`: component nghiệp vụ
 - `src/models`: Mongoose schema · `src/services`: logic nghiệp vụ · `src/lib`: tiện ích dùng chung
 - `src/ai`: tầng LLM (provider, tool, orchestrator) · `src/notifications`: outbox, Web Push, scheduler
 - `scripts/`: seed, tiện ích chạy tay
 
 ## Quy tắc luôn áp dụng
 
-- **QUY TẮC SỐ 1, ĐỌC TRƯỚC KHI VIẾT BẤT KỲ GIAO DIỆN NÀO: không viết số rời.** Mọi cỡ chữ, khoảng cách, kích thước, chiều rộng đi qua token trong `src/app/globals.css`, đặt tên theo vai trò: chữ `type-*` (`type-heading`, `type-item-title`, `type-secondary`...), khoảng giữa các thứ `gap-section|group|item|stack|tight`, padding `p-inset|inset-sm|inset-xs|inset-lg`, icon `size-icon-sm|icon|icon-lg`, cột `max-w-page|form|app`. **Không viết** `text-xl`, `gap-3`, `px-4`, `size-5`, `w-16`, `max-w-sm`, `p-[13px]`... Cần giá trị chưa có thì thêm token vào `globals.css` và bảng ở `.claude/rules/design-tokens.md`, rồi mới dùng. `npm test` chặn các số rời (xem `src/design-tokens.test.ts`). Bảng đầy đủ và căn cứ Apple/Material ở `.claude/rules/design-tokens.md`.
+- **QUY TẮC SỐ 1, ĐỌC TRƯỚC KHI VIẾT BẤT KỲ GIAO DIỆN NÀO: không viết số rời.** Mọi cỡ chữ, khoảng cách, kích thước, chiều rộng đi qua token trong `src/app/globals.css`, đặt tên theo vai trò: chữ `type-*` (`type-heading`, `type-item-title`, `type-secondary`...), khoảng giữa các thứ `gap-section|group|item|stack|tight`, padding `p-inset|inset-sm|inset-xs|inset-lg`, icon `size-icon-sm|icon|icon-lg`, cột `max-w-page|form|app`. **Không viết** `text-xl`, `gap-3`, `px-4`, `size-5`, `w-16`, `max-w-sm`, `p-[13px]`... Cần giá trị chưa có thì thêm token vào `globals.css` và bảng ở `.claude/rules/design-tokens.md`, rồi mới dùng. **Không có ngoại lệ, kể cả `src/components/ui` (shadcn)**; component shadcn vừa thêm bằng CLI phải được đổi sang token ngay trước khi báo xong. `npm test` chặn các số rời ở mọi file (xem `src/design-tokens.test.ts`). Bảng đầy đủ và căn cứ Apple/Material ở `.claude/rules/design-tokens.md`.
 - Mobile-first: thiết kế cho iPhone 13 và iPhone 14 Pro (390 đến 393px) trước. UI hai ngôn ngữ: tiếng Việt (mặc định) và tiếng Anh; mọi chuỗi đi qua tầng i18n, không viết cứng (xem `.claude/rules/i18n.md`). Chữ ngắn gọn nhưng đủ ngữ cảnh (xem `.claude/rules/copy.md`). Tiền VND (`Intl.NumberFormat`).
 - Chỉ dùng shadcn/ui + Tailwind cho giao diện. Không thêm thư viện UI khác khi chưa hỏi.
 - `userId` và role luôn lấy từ session ở server. Không bao giờ nhận từ body, query hay từ AI.
