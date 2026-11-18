@@ -33,6 +33,10 @@ describe("design tokens", () => {
     const required = [
       "--text-xs", "--text-footnote", "--text-sm", "--text-base", "--text-xl", "--text-2xl", "--text-3xl",
       "--spacing-target", "--spacing-control", "--spacing-control-lg", "--spacing-area", "--spacing-row", "--spacing-nav", "--spacing-field",
+      "--spacing-section", "--spacing-group", "--spacing-item", "--spacing-stack", "--spacing-tight", "--spacing-hair",
+      "--spacing-inset-xs", "--spacing-inset-sm", "--spacing-inset", "--spacing-inset-lg", "--spacing-inset-xl",
+      "--spacing-icon-xs", "--spacing-icon-sm", "--spacing-icon", "--spacing-icon-lg",
+      "--container-app", "--container-page", "--container-form", "--container-nav", "--container-media", "--container-hint",
     ];
     expect(required.filter((token) => !css.includes(`${token}:`))).toEqual([]);
   });
@@ -88,5 +92,35 @@ describe("design tokens", () => {
 
   it("uses size tokens, not loose numbers, for things you touch", () => {
     expect(offenders(/\b(?:h-11|h-12|size-11|min-h-11|min-h-14|min-h-16)\b/)).toEqual([]);
+  });
+  // Space and size roles (docs: .claude/rules/design-tokens.md, "Khoảng cách và kích thước theo vai trò"): no loose numbers.
+  const VARIANTS = String.raw`(?:[\w\[\]&>*:@()-]+:)*`;
+  const SPACING = ["gap", "gap-x", "gap-y", "space-x", "space-y", "p", "px", "py", "pt", "pr", "pb", "pl", "m", "mx", "my", "mt", "mr", "mb", "ml"];
+  const SIZING = ["size", "h", "w", "min-h", "min-w", "max-h", "max-w"];
+  // `-0`, `0`, fractions (`w-1/2`) and named roles are fine; a plain number (`gap-3`, `px-4`, `size-5`, `w-16`) is not.
+  const looseNumber = (utilities: string[]) =>
+    new RegExp(String.raw`(?<![\w-])${VARIANTS}-?(?:${utilities.join("|")})-(?!0(?:[\s"'\x60!]|$))\d+(?:\.\d+)?(?![\w./])`);
+
+  it("sets gap, margin and padding only through a spacing role", () => {
+    expect(offenders(looseNumber(SPACING))).toEqual([]);
+  });
+
+  it("sets size and width only through a size role", () => {
+    expect(offenders(looseNumber(SIZING))).toEqual([]);
+  });
+
+  it("names the width of a column instead of using max-w-sm, max-w-3xl...", () => {
+    expect(offenders(/(?<![\w-])max-w-(xs|sm|md|lg|xl|2xl|3xl|4xl|5xl|6xl|7xl)(?![\w-])/)).toEqual([]);
+  });
+
+  it("writes no bare px or rem inside an arbitrary value (use a token, or var(--token) inside calc)", () => {
+    const arbitrary = /(?<![\w-])(?:[\w\[\]&>*:@()-]+:)*-?(?:gap|p[xytblr]?|m[xytblr]?|size|h|w|min-h|min-w|max-h|max-w|top|left|right|bottom|inset(?:-[xy])?)-\[([^\]]+)\]/;
+    const bare = (value: string) => /(?<![\w.-])(?!0(?:px|rem)\b)\d*\.?\d+(?:px|rem)\b/.test(value.replace(/var\([^)]*\)|env\([^)]*\)/g, ""));
+    const bad = appFiles.flatMap((path) =>
+      read(path)
+        .split("\n")
+        .flatMap((line, index) => [...line.matchAll(new RegExp(arbitrary.source, "g"))].filter((match) => bare(match[1] ?? "")).map(() => `${relative(SRC, path)}:${index + 1}`)),
+    );
+    expect(bad).toEqual([]);
   });
 });

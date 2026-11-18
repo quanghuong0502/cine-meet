@@ -5,7 +5,7 @@ paths:
 
 # Design token cho điện thoại
 
-Chủ dự án rất nhạy cảm với cỡ chữ và kích thước phần tử. **Mọi kích thước đi qua token**, định nghĩa một lần trong khối `@theme` của `src/app/globals.css`.
+Chủ dự án rất nhạy cảm với cỡ chữ, khoảng cách và kích thước phần tử. **Mọi giá trị cỡ chữ, khoảng cách, kích thước đi qua token**, định nghĩa một lần trong khối `@theme` của `src/app/globals.css` (chữ theo vai trò `type-*`, khoảng cách và kích thước theo vai trò như `gap-section`, `px-inset`, `size-icon`). **Không viết số rời ở bất kỳ đâu ngoài `components/ui`**; test chặn.
 Muốn chỉnh cỡ chữ hay kích thước cho cả app thì sửa đúng ở đó, không sửa từng component.
 
 ## Căn cứ tham khảo (đã tra cứu)
@@ -30,6 +30,41 @@ Muốn chỉnh cỡ chữ hay kích thước cho cả app thì sửa đúng ở 
 | `text-xl` | 20 / 28 | tiêu đề nhỏ, trạng thái rỗng, wordmark ở header |
 | `text-2xl` | 24 / 32 | tiêu đề màn hình |
 | `text-3xl` | 30 / 36 | display: wordmark ở màn đăng nhập |
+
+## Khoảng cách và kích thước theo vai trò (bắt buộc, từ 2026-11-18)
+
+**Mọi gap, margin, padding, kích thước icon, kích thước cố định và chiều rộng cột đều lấy từ token trong `globals.css`, không bao giờ viết số rời** (`gap-3`, `px-4`, `size-5`, `w-16`, `max-w-sm`, `p-[13px]`). Cùng vai trò thì cùng khoảng ở mọi màn; muốn đổi cả app thì sửa một chỗ. Tất cả là bội số của 4 (lưới 4/8 của iOS và Material).
+
+| Giữa các thứ (`gap-*`, `mt-*`, `mb-*`) | Giá trị | Dùng cho |
+|---|---|---|
+| `section` | 24 | giữa các khối của một trang (mọi trang người dùng và admin) |
+| `field` | 24 | giữa hai ô của form |
+| `group` | 16 | giữa các phần liên quan trong một khối hoặc thẻ |
+| `item` | 12 | giữa hai thẻ hoặc hai hàng trong danh sách; nhãn tới ô nhập |
+| `stack` | 8 | các thứ nằm cạnh nhau: chip, hai nút, biểu tượng với chữ |
+| `tight` | 4 | hai dòng của cùng một mục (tên và dòng phụ) |
+| `hair` | 2 | nhích nhỏ nhất (padding dọc của badge) |
+
+| Bên trong thứ (`p-*`, `px-*`, `py-*`...) | Giá trị | Dùng cho |
+|---|---|---|
+| `inset-xs` / `inset-sm` | 8 / 12 | padding nhỏ của chip, hàng, ô thông báo |
+| `inset` | 16 | lề trang và padding thẻ (mặc định) |
+| `inset-lg` / `inset-xl` | 24 / 32 | khung thoáng (màn auth, trạng thái rỗng, nút rộng) |
+| `--inset-bottom` / `--inset-top` | `max(16, vùng an toàn)` | thanh dính đáy và đỉnh: dùng `pb-(--inset-bottom)` để chừa thanh home và tai thỏ |
+
+Icon: `size-icon-xs` 12, `size-icon-sm` 16 (cạnh chữ phụ), `size-icon` 20 (trong nút), `size-icon-lg` 24 (thanh tab, nút quay lại).
+Kích thước cố định có tên: `stepper` 32, `swatch` 80, `track` 8, `area-lg` 192 và `area-max` 288 (ô nhiều dòng lớn), `poster` 136, `mascot-max` 176, `fab-clear` 80, `action-clear` 88; cộng các token cũ `target`, `control`, `control-lg`, `row`, `avatar`, `nav`.
+Cột (`max-w-*`): `app` 672 (cột người dùng), `page` 768 (trang admin), `form` 384 (thẻ form, thanh Lưu), `nav` 448, `media` 576, `hint` 320.
+
+**Cách dùng:**
+- Chọn vai trò theo việc nó làm, không theo số. Hai chỗ cùng việc phải cùng vai trò (hai trang có khối cách nhau đều `section`).
+- Giá trị chưa có vai trò (ví dụ một kích thước cố định mới) thì **thêm token vào `globals.css`, ghi vào bảng này, rồi mới dùng**. Không viết số tạm.
+- Giá trị tùy ý `[...]` chỉ được dùng token bên trong (`calc(100%-2*var(--spacing-inset))`, `max(var(--spacing-inset),env(...))`); không viết `px` hay `rem` lẻ. Đơn vị theo khung nhìn (`dvh`, `%`) và `0` được phép.
+- Số 0 (`gap-0`, `p-0`, `-mt-0`) và phân số (`w-1/2`) được phép.
+- `components/ui` (shadcn) giữ nguyên.
+- Test `src/design-tokens.test.ts` chặn: số rời ở gap/margin/padding, số rời ở size/width/height, `max-w-sm|md|...|7xl`, và `px` hoặc `rem` lẻ trong giá trị `[...]`.
+
+**Căn cứ và chỗ chưa kiểm chứng:** lưới 4/8, lề 16 và bậc 8 / 16 / 24 theo [Apple HIG, Layout](https://developer.apple.com/design/human-interface-guidelines/layout) (nguyên tắc dùng lề và vùng an toàn của hệ thống; con số lề 16–20pt lấy từ nguồn thứ ba, chưa đối chiếu trang gốc) và [Material layout metrics](https://m1.material.io/layout/metrics-keylines.html) (lưới 8dp, lề 16dp; tài liệu Material 1–2, chưa kiểm tra Material 3). Vùng chạm 44pt và khoảng 8pt giữa hai vùng chạm: nhiều nguồn khớp. Một bài hướng dẫn nêu nên **áp vùng an toàn một lần ở cấp màn hình** (app áp `--inset-bottom` ở các thanh dính, không ở từng thành phần) và dùng **padding để nới vùng chạm** thay vì margin. Chưa tìm được nguồn về bo góc liên tục (squircle) của iOS. Một báo cáo cho rằng PWA standalone có thể đếm đôi vùng an toàn khi dùng `env()` làm khoảng đệm; chưa thấy trên máy của chủ dự án, kiểm tra trên máy thật khi chỉnh thanh dính.
 
 ## Cỡ chữ theo vai trò (bắt buộc, từ 2026-11-18)
 

@@ -97,7 +97,7 @@ cả hai ngôn ngữ, có và không có khung lỗi.
 - **Ô nhiều dòng (`Textarea`) luôn có chiều cao tối đa** (mặc định `max-h-40` đã nằm sẵn trong `components/ui/textarea.tsx`, quá thì cuộn trong ô): ô tự giãn theo chữ (`field-sizing-content`) sẽ đẩy form dài vô hạn và đẩy nút Lưu xa. Ô cần rộng hơn (dán CSV) tự đặt `max-h-*` lớn hơn, không bao giờ để không giới hạn.
 - **Ô bắt buộc: dấu `*` ngay sau nhãn (`RequiredMark`, màu đỏ, ẩn với trình đọc màn hình; ô có `aria-required`). Ô không bắt buộc: không ghi gì** (không có chữ "Không bắt buộc").
 - Khung dùng chung `ResourceForm` đã áp dụng sẵn; form tự dựng (đăng nhập, đổi mật khẩu) dùng `RequiredMark` và không thêm gợi ý.
-- Khoảng cách nhãn tới ô nhập **12px** (`gap-3`), giữa hai trường 24px (token `gap-field`, chủ dự án chọn cho thoáng, dùng cho mọi form hiện tại và sau này): nhãn luôn gần ô của nó hơn trường phía trên; thông báo lỗi sát dưới ô (8px).
+- Khoảng cách nhãn tới ô nhập **12px** (`gap-item`), giữa hai trường 24px (token `gap-field`, chủ dự án chọn cho thoáng, dùng cho mọi form hiện tại và sau này): nhãn luôn gần ô của nó hơn trường phía trên; thông báo lỗi sát dưới ô (8px).
 - Không bọc trong thẻ; nhãn phía trên ô nhập (`text-muted-foreground`); ô nhập nền `card`, `h-control rounded-xl text-base`; ô mật khẩu có nút hiện/ẩn (vùng chạm 44px, `aria-pressed`); lỗi hiện trong khung `destructive` nhạt kèm biểu tượng; nút gửi `size="cta"`, đang xử lý thì hiện spinner (`motion-safe:`);
   đăng nhập bằng nhà cung cấp ngoài là nút viền `rounded-full` bên dưới dòng phân cách "hoặc".
 
