@@ -581,8 +581,12 @@
       "open": "Đổi cách xưng hô",
       "presets": "Cặp gợi ý",
       "fields": {
-        "you": { "label": "App gọi người dùng là" },
-        "me": { "label": "App tự xưng là" }
+        "you": {
+          "label": "App gọi người dùng là"
+        },
+        "me": {
+          "label": "App tự xưng là"
+        }
       },
       "isName": "Là tên riêng",
       "preview": "Xem trước",
@@ -929,7 +933,8 @@
       "seatPreference": {
         "label": "Chỗ ngồi hay chọn"
       }
-    }
+    },
+    "friends": "Bạn bè"
   },
   "mascot": {
     "alt": {
@@ -1087,6 +1092,89 @@
       "saveFailed": "Chưa lưu được. Kiểm tra mạng rồi thử lại.",
       "oldMarks": "Đánh dấu cũ",
       "oldMarksDescription": "Ghế đã dời hoặc bị xóa khi phòng đổi sơ đồ."
+    }
+  },
+  "friends": {
+    "title": "Bạn bè",
+    "phoneLabel": "Số điện thoại của bạn bè",
+    "phonePlaceholder": "vd. 0912 345 678",
+    "addButton": "Thêm",
+    "requestSent": "Xong rồi nè! Nếu số này có tài khoản thì lời mời đã bay tới.",
+    "networkError": "Mạng đang chập chờn, thử lại giúp [me] nha.",
+    "errors": {
+      "invalid_phone": "Số điện thoại chưa đúng. Nhập số di động 10 chữ số, vd. 0912 345 678.",
+      "throttled": "Tìm nhiều quá rồi nè. Nghỉ chút, khoảng 1 giờ nữa thử lại nha.",
+      "not_found": "Lời mời này không còn nữa."
+    },
+    "linkTitle": "Link mời bạn bè",
+    "copyLink": "Sao chép link",
+    "shareLink": "Chia sẻ link",
+    "linkCopied": "Đã chép link, gửi cho bạn bè nha",
+    "linkCopyFailed": "Chưa chép được link. Thử lại nha.",
+    "shareTitle": "Cùng xem phim trên SeatMate",
+    "incomingTitle": "Lời mời bạn bè",
+    "accept": "Đồng ý lời mời của {name}",
+    "decline": "Từ chối lời mời của {name}",
+    "accepted": "Giờ [you] và {name} là bạn bè rồi",
+    "declined": "Đã từ chối lời mời",
+    "listTitle": "Bạn bè của [you]",
+    "groupsLink": "Nhóm",
+    "emptyTitle": "Chưa có ai trong danh sách",
+    "emptyDescription": "Thêm bạn bè bằng số điện thoại hoặc gửi link mời, rồi rủ nhau đi xem phim thôi!",
+    "noFriendsYet": "Chưa ai đồng ý lời mời.",
+    "remove": "Xóa {name} khỏi bạn bè",
+    "removeTitle": "Xóa {name} khỏi bạn bè?",
+    "removeDescription": "Hai người sẽ không còn thấy nhau trong danh sách bạn bè. Muốn làm bạn bè lại thì gửi lời mời mới.",
+    "removeConfirm": "Xóa",
+    "cancel": "Hủy",
+    "removed": "Đã xóa {name} khỏi bạn bè",
+    "outgoingTitle": "Đang chờ trả lời",
+    "cancelRequest": "Thu hồi lời mời gửi {name}",
+    "requestCancelled": "Đã thu hồi lời mời",
+    "invite": {
+      "title": "Lời mời bạn bè",
+      "prompt": "{name} muốn làm bạn bè với [you]",
+      "button": "Gửi lời mời",
+      "networkError": "Mạng đang chập chờn, thử lại giúp [me] nha.",
+      "notFoundTitle": "Link này không dùng được nữa",
+      "notFoundDescription": "Link có thể bị gõ sai hoặc chủ link không còn dùng. Nhờ bạn bè gửi lại link mới nha.",
+      "toFriends": "Về danh sách bạn bè",
+      "selfTitle": "Đây là link của chính [you]",
+      "selfDescription": "Gửi link này cho bạn bè để họ gửi lời mời tới [you].",
+      "errors": {
+        "not_found": "Link này không dùng được nữa.",
+        "self": "Đây là link của chính [you] nè."
+      },
+      "done": {
+        "sent": "Đã gửi lời mời cho {name}, chờ người ấy đồng ý nha",
+        "accepted": "Giờ [you] và {name} là bạn bè rồi",
+        "already_friends": "[you] và {name} đã là bạn bè từ trước rồi",
+        "already_requested": "[you] đã gửi lời mời cho {name} rồi, chờ người ấy đồng ý nha"
+      }
+    },
+    "groups": {
+      "title": "Nhóm bạn bè",
+      "newTitle": "Thêm nhóm",
+      "editTitle": "Sửa nhóm",
+      "emptyTitle": "Chưa có nhóm nào",
+      "emptyDescription": "Gom những người hay đi xem cùng vào một nhóm để mời nhanh hơn.",
+      "memberCount": "{count, plural, one {# người} other {# người}}",
+      "add": "Thêm nhóm",
+      "nameLabel": "Tên nhóm",
+      "namePlaceholder": "vd. Hội cuối tuần",
+      "membersLabel": "Thành viên",
+      "noFriends": "Thêm bạn bè trước rồi quay lại lập nhóm nha.",
+      "save": "Lưu nhóm",
+      "delete": "Xóa nhóm",
+      "saved": "Đã lưu nhóm",
+      "deleted": "Đã xóa nhóm",
+      "networkError": "Mạng đang chập chờn, thử lại giúp [me] nha.",
+      "errors": {
+        "required": "Đặt tên cho nhóm nha.",
+        "too_many": "Nhiều nhóm quá rồi, xóa bớt một nhóm cũ trước nha.",
+        "invalid": "Chỉ thêm được người đang là bạn bè.",
+        "not_found": "Không tìm thấy nhóm này."
+      }
     }
   }
 }

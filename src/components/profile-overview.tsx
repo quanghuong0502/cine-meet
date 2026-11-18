@@ -1,4 +1,4 @@
-import { Pencil, Settings } from "lucide-react";
+import { Pencil, Settings, Users } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
@@ -22,13 +22,15 @@ interface ProfileOverviewProps {
   backHref: string;
   settingsHref: string;
   editHref: string;
+  /** The Friends screen; only the user app has one (admin has no friends). */
+  friendsHref?: string;
 }
 
 /**
  * Body of the Profile page, opened from the avatar (user and admin share it): picture, name, phone and seat preference,
  * with Edit. Settings and Sign out live here because the avatar opens this page directly.
  */
-export async function ProfileOverview({ name, identity, role, avatar, phone, seatPreference, backHref, settingsHref, editHref }: ProfileOverviewProps) {
+export async function ProfileOverview({ name, identity, role, avatar, phone, seatPreference, backHref, settingsHref, editHref, friendsHref }: ProfileOverviewProps) {
   const t = await getTranslations("profile");
   const account = await getTranslations("account");
 
@@ -67,6 +69,14 @@ export async function ProfileOverview({ name, identity, role, avatar, phone, sea
         </CardContent>
       </Card>
       <nav aria-label={account("menuLabel")} className="flex flex-col gap-stack">
+        {friendsHref ? (
+          <Button asChild variant="ghost" className="h-target justify-start gap-stack">
+            <Link href={friendsHref}>
+              <Users aria-hidden />
+              {t("friends")}
+            </Link>
+          </Button>
+        ) : null}
         <Button asChild variant="ghost" className="h-target justify-start gap-stack">
           <Link href={settingsHref}>
             <Settings aria-hidden />

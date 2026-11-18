@@ -23,6 +23,7 @@ export default async function ProfilePage() {
       backHref="/"
       settingsHref="/settings"
       editHref="/profile/edit"
+      friendsHref="/friends"
     />
   );
 }

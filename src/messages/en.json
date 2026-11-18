@@ -581,8 +581,12 @@
       "open": "Change forms of address",
       "presets": "Quick pairs",
       "fields": {
-        "you": { "label": "The app calls the user" },
-        "me": { "label": "The app calls itself" }
+        "you": {
+          "label": "The app calls the user"
+        },
+        "me": {
+          "label": "The app calls itself"
+        }
       },
       "isName": "Is a proper name",
       "preview": "Preview",
@@ -929,7 +933,8 @@
       "seatPreference": {
         "label": "Preferred seats"
       }
-    }
+    },
+    "friends": "Friends"
   },
   "mascot": {
     "alt": {
@@ -1087,6 +1092,89 @@
       "saveFailed": "Could not save. Check your connection and try again.",
       "oldMarks": "Old marks",
       "oldMarksDescription": "Seats that moved or were removed when the auditorium changed its seat map."
+    }
+  },
+  "friends": {
+    "title": "Friends",
+    "phoneLabel": "Friend's phone number",
+    "phonePlaceholder": "e.g. 0912 345 678",
+    "addButton": "Add friend",
+    "requestSent": "Done! If that number has an account, the request is on its way.",
+    "networkError": "Network is shaky, please try again.",
+    "errors": {
+      "invalid_phone": "That phone number doesn't look right. Use a 10-digit mobile number, e.g. 0912 345 678.",
+      "throttled": "That's a lot of searching. Take a break and try again in about an hour.",
+      "not_found": "This request is gone."
+    },
+    "linkTitle": "Friend invite link",
+    "copyLink": "Copy link",
+    "shareLink": "Share link",
+    "linkCopied": "Link copied, send it to your friends",
+    "linkCopyFailed": "Couldn't copy the link. Try again.",
+    "shareTitle": "Be friends on SeatMate",
+    "incomingTitle": "Friend requests",
+    "accept": "Accept {name}'s request",
+    "decline": "Decline {name}'s request",
+    "accepted": "You and {name} are friends now",
+    "declined": "Request declined",
+    "listTitle": "Your friends",
+    "groupsLink": "Groups",
+    "emptyTitle": "Nobody here yet",
+    "emptyDescription": "Add friends by phone number or send an invite link, then plan a movie night!",
+    "noFriendsYet": "Nobody has accepted yet.",
+    "remove": "Remove {name} from friends",
+    "removeTitle": "Remove {name} from friends?",
+    "removeDescription": "You won't see each other in your friends lists anymore. To be friends again, send a new request.",
+    "removeConfirm": "Remove",
+    "cancel": "Cancel",
+    "removed": "{name} removed from friends",
+    "outgoingTitle": "Waiting for a reply",
+    "cancelRequest": "Withdraw request to {name}",
+    "requestCancelled": "Request withdrawn",
+    "invite": {
+      "title": "Friend request",
+      "prompt": "{name} wants to be friends with you",
+      "button": "Send friend request",
+      "networkError": "Network is shaky, please try again.",
+      "notFoundTitle": "This link doesn't work anymore",
+      "notFoundDescription": "The link may be mistyped or its owner stopped using it. Ask your friend for a new one.",
+      "toFriends": "Back to friends",
+      "selfTitle": "This is your own link",
+      "selfDescription": "Send this link to friends so they can send you a request.",
+      "errors": {
+        "not_found": "This link doesn't work anymore.",
+        "self": "This is your own link."
+      },
+      "done": {
+        "sent": "Request sent to {name}, waiting for them to accept",
+        "accepted": "You and {name} are friends now",
+        "already_friends": "You and {name} are already friends",
+        "already_requested": "You already sent {name} a request, waiting for them to accept"
+      }
+    },
+    "groups": {
+      "title": "Friend groups",
+      "newTitle": "New group",
+      "editTitle": "Edit group",
+      "emptyTitle": "No groups yet",
+      "emptyDescription": "Put the people you often watch with into a group to invite them faster.",
+      "memberCount": "{count, plural, one {# person} other {# people}}",
+      "add": "Add group",
+      "nameLabel": "Group name",
+      "namePlaceholder": "e.g. Weekend crew",
+      "membersLabel": "Members",
+      "noFriends": "Add some friends first, then come back to build a group.",
+      "save": "Save group",
+      "delete": "Delete group",
+      "saved": "Group saved",
+      "deleted": "Group deleted",
+      "networkError": "Network is shaky, please try again.",
+      "errors": {
+        "required": "Give the group a name.",
+        "too_many": "That's a lot of groups. Delete an old one first.",
+        "invalid": "You can only add people who are your friends.",
+        "not_found": "Couldn't find this group."
+      }
     }
   }
 }

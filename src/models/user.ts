@@ -45,6 +45,8 @@ const userSchema = new Schema(
     // Left unset until the user chooses, so the browser language still applies on first sign-in.
     locale: { type: String, enum: LOCALES },
     seatPreference: { type: String, enum: SEAT_PREFERENCES },
+    // Random code in this person's friend-invite link; made the first time they open "Friends". Unique when present.
+    inviteCode: { type: String, unique: true, sparse: true },
   },
   { timestamps: true },
 );
