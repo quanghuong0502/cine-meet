@@ -1387,7 +1387,8 @@
       "saved": "Đã lưu trả lời của [you]",
       "unsaved": "Chưa lưu",
       "proposedYes": "[you] vote Có giờ này",
-      "removeProposal": "Bỏ giờ đề xuất này"
+      "removeProposal": "Bỏ giờ đề xuất này",
+      "declineShort": "Từ chối"
     },
     "invite": {
       "title": "Mời thêm",

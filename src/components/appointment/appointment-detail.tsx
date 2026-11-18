@@ -74,7 +74,7 @@ export function AppointmentDetail({ view, friends = [], groups = [] }: DetailPro
   const when = (iso: string) => `${formatDayLong(iso, locale)} · ${formatTime(iso, locale)}`;
 
   return (
-    <div className="flex flex-col gap-section has-[[data-poll-dirty]]:pb-action-clear">
+    <div className="flex flex-col gap-section has-[[data-poll-bar]]:pb-action-clear">
       <section className="flex items-start gap-item">
         <ListThumb shape="poster" imageUrl={view.movie.posterUrl} />
         <div className="flex min-w-0 flex-1 flex-col gap-stack">
@@ -139,6 +139,15 @@ export function AppointmentDetail({ view, friends = [], groups = [] }: DetailPro
           canVote={canVote}
           nameOf={nameOf}
           when={when}
+          // Turning the invitation down sits in the bottom bar beside "Save answers": both are ways to finish answering.
+          declineButton={
+            canVote && view.myStatus !== "declined" ? (
+              <Button type="button" variant="destructive" size="cta" disabled={pending} onClick={() => setDialog("decline")} aria-label={t("decline")} className="pointer-events-auto min-w-0 flex-1">
+                <XCircle aria-hidden />
+                {t("declineShort")}
+              </Button>
+            ) : null
+          }
         />
       )}
 
@@ -174,12 +183,6 @@ export function AppointmentDetail({ view, friends = [], groups = [] }: DetailPro
 
       {!finished ? (
         <div className="flex flex-col gap-stack">
-          {canVote && view.myStatus !== "declined" ? (
-            <Button type="button" variant="destructive" size="cta-sm" disabled={pending} onClick={() => setDialog("decline")}>
-              <XCircle aria-hidden />
-              {t("decline")}
-            </Button>
-          ) : null}
           {view.myStatus === "accepted" && locked && canWithdraw(view.status) ? (
             <Button type="button" variant="destructive" size="cta-sm" disabled={pending} onClick={() => setDialog("withdraw")}>
               <LogOut aria-hidden />

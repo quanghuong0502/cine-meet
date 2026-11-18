@@ -21,6 +21,8 @@ interface Props {
   canVote: boolean;
   nameOf: Map<string, string>;
   when: (iso: string) => string;
+  /** The "turn the invitation down" button (built by the screen, which owns its confirmation); it shares the bottom bar with Save. */
+  declineButton?: React.ReactNode;
 }
 
 /**
@@ -29,7 +31,7 @@ interface Props {
  * at once. The counts and names show the person's own draft straight away. The parent gives this a `key` that changes after a save,
  * so it starts again from what the server now has.
  */
-export function PollSection({ view, canVote, nameOf, when }: Props) {
+export function PollSection({ view, canVote, nameOf, when, declineButton }: Props) {
   const t = useTranslations("appointments.detail");
   const tc = useTranslations("appointments");
   const [pending, start] = useTransition();
@@ -160,20 +162,25 @@ export function PollSection({ view, canVote, nameOf, when }: Props) {
         </div>
       ) : null}
 
-      {canVote && dirty ? (
+      {canVote && (dirty || declineButton) ? (
         <>
-          {/* Tells the page to leave room at its very end for the fixed bar (see `has-[[data-poll-dirty]]` on the screen), so the last
+          {/* Tells the page to leave room at its very end for the fixed bar (see `has-[[data-poll-bar]]` on the screen), so the last
               thing on the page can scroll clear of it. The room is not made here: it would open a gap in the middle of the page. */}
-          <span data-poll-dirty hidden />
+          <span data-poll-bar hidden />
           <div data-bottom-fixed className="pointer-events-none fixed inset-x-0 bottom-[var(--nav-clearance)] z-30 px-inset">
             <div className="mx-auto flex max-w-form items-center gap-stack">
-              <Button type="button" variant="outline" size="icon" disabled={pending} onClick={discard} aria-label={t("discard")} className="pointer-events-auto size-control shrink-0 rounded-full">
-                <Undo2 aria-hidden />
-              </Button>
-              <Button type="button" size="cta" disabled={pending} onClick={save} className="pointer-events-auto min-w-0 flex-1">
-                {pending ? <LoaderCircle className="motion-safe:animate-spin" aria-hidden /> : <Save aria-hidden />}
-                {t("save")}
-              </Button>
+              {dirty ? (
+                <Button type="button" variant="outline" size="icon" disabled={pending} onClick={discard} aria-label={t("discard")} className="pointer-events-auto size-control shrink-0 rounded-full">
+                  <Undo2 aria-hidden />
+                </Button>
+              ) : null}
+              {declineButton}
+              {dirty ? (
+                <Button type="button" size="cta" disabled={pending} onClick={save} className="pointer-events-auto min-w-0 flex-1">
+                  {pending ? <LoaderCircle className="motion-safe:animate-spin" aria-hidden /> : <Save aria-hidden />}
+                  {t("save")}
+                </Button>
+              ) : null}
             </div>
           </div>
         </>

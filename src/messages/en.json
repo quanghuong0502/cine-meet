@@ -1387,7 +1387,8 @@
       "saved": "Your answers are saved",
       "unsaved": "Not saved",
       "proposedYes": "You vote Yes on this time",
-      "removeProposal": "Remove this suggested time"
+      "removeProposal": "Remove this suggested time",
+      "declineShort": "Decline"
     },
     "invite": {
       "title": "Invite more",
