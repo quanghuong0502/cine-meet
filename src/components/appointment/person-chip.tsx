@@ -28,7 +28,14 @@ export function PersonChip({ selected, onClick, person, icon, label, trailing }:
     >
       {person ? <UserAvatar name={person.name} image={person.avatar} size={PX.avatar} /> : icon}
       <span className="type-label">{person?.name ?? label}</span>
-      {trailing ? <span className="type-label tabular-nums">{trailing}</span> : null}
+      {trailing ? (
+        <>
+          <span aria-hidden className="type-label opacity-60">
+            ·
+          </span>
+          <span className="type-label tabular-nums">{trailing}</span>
+        </>
+      ) : null}
     </button>
   );
 }
