@@ -75,8 +75,7 @@ Không viết tay chữ tên app trong giao diện; dùng hằng `APP_NAME` khi 
 **Bố cục & hình khối:**
 - Lưới 4px; lề trang 16px; khoảng cách giữa các khối 24px; padding thẻ 16px.
 - Bo góc theo `--radius` của theme (thẻ `rounded-xl`, ô nhập `rounded-lg`, chip `rounded-full`). Không trộn kiểu bo khác.
-- Mỗi trang có tiêu đề trang thống nhất: nút quay lại tròn, tiêu đề ở giữa hoặc trái, hành động phụ bên phải.
-  Màn con (có nút quay lại) dùng `PageHeader` dạng thanh điều hướng: tiêu đề `text-xl`, dính đầu màn khi cuộn (`sticky`, nền mờ); màn gốc của tab **không vẽ tiêu đề** (menu dưới đã cho biết đang ở tab nào, tiết kiệm khoảng 60px; chủ dự án chọn 2026-11-18): `PageHeader` chỉ để `h1` ẩn (`sr-only`) cho trình đọc màn hình. Trang chứa `PageHeader` phải là khung `p-4` (thanh dùng lề âm để chạm mép màn).
+- Màn con dùng `PageHeader` dạng thanh quay lại, dính đầu màn khi cuộn (`sticky`, nền mờ). Tiêu đề và mô tả của `PageHeader` dùng `sr-only` cho trình đọc màn hình. Trang chứa `PageHeader` dùng `p-inset` để thanh quay lại chạm mép màn.
 - Hành động chính của màn hình là nút toàn chiều rộng, cao tối thiểu 48px, bo tròn hết cỡ, đặt ở dưới cùng
   (cố định, chừa safe-area). Mỗi màn hình tối đa một nút chính.
 - Poster là nhân vật chính: tỉ lệ 2:3, bo góc, lớp phủ gradient khi có chữ đè lên.

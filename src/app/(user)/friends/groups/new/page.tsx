@@ -16,7 +16,7 @@ export default async function NewGroupPage() {
   const { friends } = await getFriendOverview(user.userId);
   return (
     <div className="flex w-full flex-col gap-section p-inset">
-      <PageHeader title={t("newTitle")} backHref="/friends/groups" hideTitle />
+      <PageHeader title={t("newTitle")} backHref="/friends/groups" />
       <GroupForm initialName="" initialMemberIds={[]} friends={friends} />
     </div>
   );

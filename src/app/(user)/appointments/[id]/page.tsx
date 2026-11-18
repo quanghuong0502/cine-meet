@@ -25,7 +25,7 @@ export default async function AppointmentPage({ params }: { params: Promise<{ id
   const [plan, costs] = await Promise.all([view.isCreator ? getPlanData(user.userId, id) : null, view.status === "COMPLETED" ? getCosts(id) : null]);
   return (
     <div className="flex w-full flex-col gap-section p-inset">
-      <PageHeader title={t("title")} backHref="/appointments" hideTitle />
+      <PageHeader title={t("title")} backHref="/appointments" />
       <AppointmentDetail
         view={view}
         friends={overview?.friends.map((f) => ({ id: f.id, name: f.name }))}

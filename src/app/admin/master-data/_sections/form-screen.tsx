@@ -16,7 +16,7 @@ export async function SectionFormScreen({ section, id, back }: { section: string
 
   return (
     <div className="mx-auto flex w-full max-w-page flex-1 flex-col gap-section p-inset">
-      <PageHeader title={form.title} backHref={backHref} hideTitle />
+      <PageHeader title={form.title} backHref={backHref} />
       <ResourceForm
         itemId={id}
         fields={form.fields}

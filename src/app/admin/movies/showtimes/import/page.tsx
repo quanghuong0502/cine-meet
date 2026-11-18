@@ -16,7 +16,7 @@ export default async function ImportShowtimesPage({ searchParams }: { searchPara
   const backHref = resolveBackHref(back, "/admin/movies/showtimes");
   return (
     <div className="mx-auto flex w-full max-w-page flex-1 flex-col gap-section p-inset">
-      <PageHeader title={t("title")} backHref={backHref} hideTitle />
+      <PageHeader title={t("title")} backHref={backHref} />
       <ShowtimeImportForm backHref={backHref} action={importShowtimesAction} />
     </div>
   );

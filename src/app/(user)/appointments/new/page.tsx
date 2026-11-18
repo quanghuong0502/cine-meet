@@ -52,7 +52,7 @@ export default async function NewAppointmentPage({ searchParams }: { searchParam
 
   return (
     <div className="flex w-full flex-col gap-section p-inset">
-      <PageHeader title={t("title")} backHref="/appointments" hideTitle />
+      <PageHeader title={t("title")} backHref="/appointments" />
       <NewAppointmentForm
         movies={movies.map((m) => ({ id: m._id.toString(), title: m.title }))}
         movieId={movieId}

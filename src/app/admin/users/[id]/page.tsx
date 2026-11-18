@@ -44,7 +44,7 @@ export default async function EditUserPage({
 
   return (
     <div className="mx-auto flex w-full max-w-page flex-1 flex-col gap-section p-inset">
-      <PageHeader title={user.name} backHref={backHref} hideTitle />
+      <PageHeader title={user.name} backHref={backHref} />
 
       <dl className="grid gap-item rounded-xl border bg-card p-inset type-secondary">
         {info

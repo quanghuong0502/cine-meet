@@ -20,7 +20,7 @@ export default async function EditGroupPage({ params }: { params: Promise<{ id: 
   if (!group) notFound();
   return (
     <div className="flex w-full flex-col gap-section p-inset">
-      <PageHeader title={t("editTitle")} backHref="/friends/groups" hideTitle />
+      <PageHeader title={t("editTitle")} backHref="/friends/groups" />
       <GroupForm groupId={group.id} initialName={group.name} initialMemberIds={group.members.map((m) => m.id)} friends={friends} />
     </div>
   );

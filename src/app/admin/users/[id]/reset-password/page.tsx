@@ -28,7 +28,7 @@ export default async function ResetPasswordPage({
 
   return (
     <div className="mx-auto flex w-full max-w-page flex-1 flex-col gap-section p-inset">
-      <PageHeader title={t("resetTitle")} backHref={backHref} hideTitle />
+      <PageHeader title={t("resetTitle")} backHref={backHref} />
       <ResourceForm
         itemId={id}
         fields={await resetPasswordFields()}

@@ -26,7 +26,7 @@ export default async function NotificationsPage() {
 
   return (
     <div className="flex w-full flex-1 flex-col gap-section p-inset">
-      <PageHeader title={t("title")} backHref="/" hideTitle />
+      <PageHeader title={t("title")} backHref="/" />
       {items.length === 0 ? <EmptyState className="flex-1 justify-center" mascot="bubu-sleepy" title={t("emptyTitle")} description={t("emptyDescription")} /> : <NotificationList items={items} />}
     </div>
   );

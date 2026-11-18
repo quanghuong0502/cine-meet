@@ -39,7 +39,7 @@ export default async function BulkShowtimesPage({ searchParams }: { searchParams
   if (movies.length === 0 || formats.every((f) => f.active === false) || roomsReady.length === 0) {
     return (
       <div className="mx-auto flex w-full max-w-page flex-1 flex-col gap-section p-inset">
-        <PageHeader title={t("title")} backHref={backHref} hideTitle />
+        <PageHeader title={t("title")} backHref={backHref} />
         <EmptyState
           title={t("needSetup.title")}
           description={t("needSetup.description")}
@@ -58,7 +58,7 @@ export default async function BulkShowtimesPage({ searchParams }: { searchParams
 
   return (
     <div className="mx-auto flex w-full max-w-page flex-1 flex-col gap-section p-inset">
-      <PageHeader title={t("title")} backHref={backHref} hideTitle />
+      <PageHeader title={t("title")} backHref={backHref} />
       <ShowtimeBulkForm
         movies={movies.filter((m) => m.status !== "ended").map((m) => ({ value: m._id.toString(), label: m.title }))}
         formats={formats.filter((f) => f.active !== false).map((f) => ({ value: f._id.toString(), label: f.name }))}
