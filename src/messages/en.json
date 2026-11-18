@@ -636,6 +636,9 @@
         },
         "timeSlots": {
           "label": "Showtime slots (filter)"
+        },
+        "pushTtlHours": {
+          "label": "Keep push for offline phones (hours)"
         }
       },
       "slots": {

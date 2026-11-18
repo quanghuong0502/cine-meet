@@ -4,7 +4,7 @@ import { ResourceForm } from "@/components/admin/resource-form";
 import type { ResourceField } from "@/components/admin/resource-types";
 import { PageHeader } from "@/components/page-header";
 import { requireAdmin } from "@/lib/auth/guards";
-import { getSystemSettings } from "@/services/settings.service";
+import { getSystemSettings, MAX_PUSH_TTL_HOURS } from "@/services/settings.service";
 import { saveSystemSettings } from "./actions";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -21,6 +21,7 @@ export default async function SystemSettingsPage() {
     { name: "responseDeadlineHours", kind: "number", label: t("fields.responseDeadlineHours.label"), required: true, step: "1", min: 1, max: 168 },
     { name: "adMinutes", kind: "number", label: t("fields.adMinutes.label"), required: true, step: "1", min: 0, max: 60 },
     { name: "timeSlots", kind: "timeSlots", label: t("fields.timeSlots.label") },
+    { name: "pushTtlHours", kind: "number", label: t("fields.pushTtlHours.label"), required: true, step: "1", min: 1, max: MAX_PUSH_TTL_HOURS },
     { name: "movieUpcomingDays", kind: "number", label: t("fields.movieUpcomingDays.label"), required: true, step: "1", min: 0, max: 365 },
   ];
 
@@ -35,6 +36,7 @@ export default async function SystemSettingsPage() {
           responseDeadlineHours: String(settings.responseDeadlineHours),
           adMinutes: String(settings.adMinutes),
           movieUpcomingDays: String(settings.movieUpcomingDays),
+          pushTtlHours: String(settings.pushTtlHours),
           timeSlots: JSON.stringify(settings.timeSlots),
         }}
         backHref="/admin/settings"

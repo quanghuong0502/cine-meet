@@ -16,7 +16,12 @@ export interface PushTarget {
 /** The result of one try on one device. `gone` means the browser says this subscription no longer exists (404 or 410). */
 export type PushOutcome = { status: "ok" } | { status: "gone" } | { status: "error"; message: string };
 
-export type PushSender = (target: PushTarget, payload: PushPayload) => Promise<PushOutcome>;
+export interface PushSendOptions {
+  /** How long the push service keeps the message for a phone that is offline, in seconds. */
+  ttlSeconds: number;
+}
+
+export type PushSender = (target: PushTarget, payload: PushPayload, options: PushSendOptions) => Promise<PushOutcome>;
 
 /** A bare email ("a@b.com") becomes "mailto:a@b.com": push services only accept a mailto: or https: contact, and the bare form is an easy slip in .env. */
 export function normalizeVapidSubject(raw: string): string {
@@ -33,13 +38,13 @@ export function pushConfig(): { publicKey: string; privateKey: string; subject: 
 }
 
 /** Sends one push with the `web-push` library, turning its errors into outcomes. */
-export const sendWebPush: PushSender = async (target, payload) => {
+export const sendWebPush: PushSender = async (target, payload, options) => {
   const config = pushConfig();
   if (!config) return { status: "error", message: "not_configured" };
   try {
     await sendNotification(target, JSON.stringify(payload), {
       vapidDetails: config,
-      TTL: 60 * 60 * 24,
+      TTL: options.ttlSeconds,
       // Time-sensitive: an invitation is worth little a day later, and a pushed "leaving now" even less.
       urgency: "high",
     });

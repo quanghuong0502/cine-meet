@@ -4,7 +4,7 @@ import { connectToDatabase } from "@/lib/db";
 import { describeDevice, type DeviceKind } from "@/lib/device";
 import { PushSubscription } from "@/models/push-subscription";
 import { User } from "@/models/user";
-import type { PushPayload, PushSender } from "@/notifications/push";
+import type { PushPayload, PushSendOptions, PushSender } from "@/notifications/push";
 import { NOTIFICATION_TYPES, type NotificationType } from "@/notifications/types";
 
 export const subscriptionSchema = z.object({
@@ -86,12 +86,12 @@ export interface TestResult {
 }
 
 /** "Send a test": straight to every device of the person, so they can see push works (no retry, no outbox). */
-export async function sendTestPush(userId: string, payload: PushPayload, sender: PushSender): Promise<TestResult> {
+export async function sendTestPush(userId: string, payload: PushPayload, sender: PushSender, options: PushSendOptions): Promise<TestResult> {
   await connectToDatabase();
   const subscriptions = await PushSubscription.find({ userId }).lean();
   const result: TestResult = { sent: 0, failed: 0, removed: 0, errors: [] };
   for (const sub of subscriptions) {
-    const outcome = await sender({ endpoint: sub.endpoint, keys: { p256dh: sub.keys?.p256dh ?? "", auth: sub.keys?.auth ?? "" } }, payload);
+    const outcome = await sender({ endpoint: sub.endpoint, keys: { p256dh: sub.keys?.p256dh ?? "", auth: sub.keys?.auth ?? "" } }, payload, options);
     if (outcome.status === "ok") {
       result.sent++;
       await PushSubscription.updateOne({ _id: sub._id }, { $set: { lastUsedAt: new Date() } });

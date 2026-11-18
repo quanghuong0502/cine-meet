@@ -42,9 +42,9 @@ describe("web push delivery", () => {
   const queue = (type: "appointment_invited" | "appointment_cancelled" = "appointment_invited") => outbox.enqueueNotifications([{ recipientId: user, type, payload }]);
   const pending = () => M.Delivery.find({ channel: "webpush" }).lean();
   const sender = (outcome: (endpoint: string) => PushOutcome) => {
-    const calls: { endpoint: string; title: string; body: string; url: string }[] = [];
-    const fn: PushSender = async (target, message) => {
-      calls.push({ endpoint: target.endpoint, ...message });
+    const calls: { endpoint: string; title: string; body: string; url: string; ttlSeconds: number }[] = [];
+    const fn: PushSender = async (target, message, options) => {
+      calls.push({ endpoint: target.endpoint, ...message, ttlSeconds: options.ttlSeconds });
       return outcome(target.endpoint);
     };
     return { fn, calls };
@@ -88,6 +88,21 @@ describe("web push delivery", () => {
       expect((await pending())[0]).toMatchObject({ status: "sent" });
       // Nothing left: a second round does nothing.
       expect(await deliver.processDeliveries({ sender: fn })).toBe(0);
+    });
+
+    it("waits as long as the admin's setting says (24 hours by default)", async () => {
+      await device(1);
+      await queue();
+      const first = sender(() => ({ status: "ok" }));
+      await deliver.processDeliveries({ sender: first.fn });
+      expect(first.calls[0]?.ttlSeconds).toBe(24 * 3600);
+
+      const { SystemSetting } = await import("@/models/system-setting");
+      await SystemSetting.updateOne({ key: "pushTtlHours" }, { $set: { value: 3 } }, { upsert: true });
+      await queue();
+      const second = sender(() => ({ status: "ok" }));
+      await deliver.processDeliveries({ sender: second.fn });
+      expect(second.calls[0]?.ttlSeconds).toBe(3 * 3600);
     });
 
     it("uses English for an English-speaking person", async () => {
@@ -204,7 +219,7 @@ describe("web push delivery", () => {
       await device(1);
       await device(2);
       const { fn } = sender((endpoint) => (endpoint.endsWith("/2") ? { status: "gone" } : { status: "ok" }));
-      expect(await push.sendTestPush(user, { title: "t", body: "b", url: "/" }, fn)).toEqual({ sent: 1, failed: 0, removed: 1, errors: [] });
+      expect(await push.sendTestPush(user, { title: "t", body: "b", url: "/" }, fn, { ttlSeconds: 60 })).toEqual({ sent: 1, failed: 0, removed: 1, errors: [] });
       expect(await push.listDevices(user)).toHaveLength(1);
     });
   });

@@ -636,6 +636,9 @@
         },
         "timeSlots": {
           "label": "Khung giờ chiếu (bộ lọc)"
+        },
+        "pushTtlHours": {
+          "label": "Giữ thông báo đẩy khi máy offline (giờ)"
         }
       },
       "slots": {

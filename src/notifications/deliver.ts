@@ -6,7 +6,8 @@ import { NotificationDelivery } from "@/models/notification-delivery";
 import { PushSubscription } from "@/models/push-subscription";
 import { User } from "@/models/user";
 import { getPronouns } from "@/services/pronouns.service";
-import type { PushPayload, PushSender } from "./push";
+import { getSystemSettings } from "@/services/settings.service";
+import type { PushPayload, PushSendOptions, PushSender } from "./push";
 import { renderNotification } from "./render";
 import { MAX_DELIVERY_ATTEMPTS, type NotificationPayload, type NotificationType } from "./types";
 
@@ -59,6 +60,8 @@ export interface DeliverOptions {
 export async function processDeliveries({ sender, now = new Date(), batch = 25 }: DeliverOptions): Promise<number> {
   await connectToDatabase();
   let handled = 0;
+  // The admin's setting is read once per round, and only when there is something to send.
+  let ttlSeconds: number | undefined;
   while (handled < batch) {
     const delivery = await NotificationDelivery.findOneAndUpdate(
       {
@@ -71,7 +74,8 @@ export async function processDeliveries({ sender, now = new Date(), batch = 25 }
     );
     if (!delivery) break;
     handled++;
-    await deliverOne(delivery._id.toString(), delivery.notificationId.toString(), delivery.attempts, sender, now);
+    ttlSeconds ??= (await getSystemSettings()).pushTtlHours * 3600;
+    await deliverOne(delivery._id.toString(), delivery.notificationId.toString(), delivery.attempts, sender, now, { ttlSeconds });
   }
   return handled;
 }
@@ -80,7 +84,7 @@ async function finish(id: string, status: "sent" | "failed" | "pending", extra: 
   await NotificationDelivery.updateOne({ _id: id }, { $set: { status, ...extra } });
 }
 
-async function deliverOne(deliveryId: string, notificationId: string, attempts: number, sender: PushSender, now: Date): Promise<void> {
+async function deliverOne(deliveryId: string, notificationId: string, attempts: number, sender: PushSender, now: Date, options: PushSendOptions): Promise<void> {
   const notification = await Notification.findById(notificationId).lean();
   if (!notification) return finish(deliveryId, "failed", { error: "notification_missing" });
   const user = await User.findById(notification.recipientId, "locale status").lean();
@@ -95,7 +99,7 @@ async function deliverOne(deliveryId: string, notificationId: string, attempts: 
   let temporaryFailures = 0;
   let lastError = "";
   for (const sub of subscriptions) {
-    const outcome = await sender({ endpoint: sub.endpoint, keys: { p256dh: sub.keys?.p256dh ?? "", auth: sub.keys?.auth ?? "" } }, payload);
+    const outcome = await sender({ endpoint: sub.endpoint, keys: { p256dh: sub.keys?.p256dh ?? "", auth: sub.keys?.auth ?? "" } }, payload, options);
     if (outcome.status === "ok") {
       delivered++;
       await PushSubscription.updateOne({ _id: sub._id }, { $set: { lastUsedAt: now } });

@@ -16,6 +16,8 @@ export interface SystemSettings {
   movieUpcomingDays: number;
   /** Windows of the day (by start time) offered in the showtime filter. */
   timeSlots: TimeSlot[];
+  /** How many hours a push waits at the push service for a phone that is offline; after that it is dropped (in-app notifications stay). */
+  pushTtlHours: number;
 }
 
 export const SETTING_DEFAULTS: SystemSettings = {
@@ -24,7 +26,11 @@ export const SETTING_DEFAULTS: SystemSettings = {
   adMinutes: 15,
   movieUpcomingDays: 30,
   timeSlots: DEFAULT_TIME_SLOTS,
+  pushTtlHours: 24,
 };
+
+/** Four weeks: the longest wait Google's push service allows. */
+export const MAX_PUSH_TTL_HOURS = 28 * 24;
 
 export const MAX_REMINDERS = 5;
 export const MAX_REMINDER_MINUTES = 7 * 24 * 60;
@@ -56,6 +62,7 @@ export const systemSettingsInputSchema = z.object({
   adMinutes: requiredInt(0, 60),
   movieUpcomingDays: requiredInt(0, 365),
   timeSlots: timeSlotsFieldSchema,
+  pushTtlHours: requiredInt(1, MAX_PUSH_TTL_HOURS),
 });
 
 export type SystemSettingsInput = z.infer<typeof systemSettingsInputSchema>;
@@ -67,6 +74,7 @@ const storedSchemas: { [K in keyof SystemSettings]: z.ZodType<SystemSettings[K]>
   adMinutes: z.number().int().min(0).max(60),
   movieUpcomingDays: z.number().int().min(0).max(365),
   timeSlots: timeSlotsSchema,
+  pushTtlHours: z.number().int().min(1).max(MAX_PUSH_TTL_HOURS),
 };
 
 export async function getSystemSettings(): Promise<SystemSettings> {

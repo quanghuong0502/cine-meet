@@ -7,6 +7,7 @@ import { User } from "@/models/user";
 import { buildTestPayload } from "@/notifications/deliver";
 import { pushConfig, sendWebPush } from "@/notifications/push";
 import { NOTIFICATION_TYPES, type NotificationType } from "@/notifications/types";
+import { getSystemSettings } from "@/services/settings.service";
 import { removeDevice, saveSubscription, sendTestPush, setPushPreference, subscriptionSchema, type TestResult } from "@/services/push.service";
 
 // The person is always the signed-in user; a device or setting of someone else can never be touched.
@@ -41,5 +42,5 @@ export async function sendTestPushAction(
   const target = await User.findOne({ _id: targetId, role: "user", status: "active" }, "name locale").lean();
   if (!target) return { ok: false, error: "not_found" };
   const payload = await buildTestPayload(target.locale ?? "vi");
-  return { ok: true, name: target.name, result: await sendTestPush(targetId, payload, sendWebPush) };
+  return { ok: true, name: target.name, result: await sendTestPush(targetId, payload, sendWebPush, { ttlSeconds: (await getSystemSettings()).pushTtlHours * 3600 }) };
 }
