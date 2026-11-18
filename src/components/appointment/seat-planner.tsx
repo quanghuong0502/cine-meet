@@ -18,6 +18,9 @@ import type { PlanData } from "@/services/appointment-plan.service";
 
 type Room = NonNullable<PlanData["room"]>;
 
+/** "Suggest seats side by side" is hidden for now (the logic stays); set to true to bring the button back. */
+const SHOW_SUGGEST = false;
+
 interface Props {
   view: AppointmentView;
   room: Room;
@@ -125,10 +128,12 @@ export function SeatPlanner({ view, room, onSave, busy, onDraft, initialSeats }:
         </Label>
         <Switch id="seat-heat" checked={heat} onCheckedChange={setHeat} />
       </div>
-      <Button type="button" variant="outline" size="cta" disabled={busy} onClick={suggest}>
-        <Sparkles aria-hidden />
-        {t("suggest")}
-      </Button>
+      {SHOW_SUGGEST ? (
+        <Button type="button" variant="outline" size="cta" disabled={busy} onClick={suggest}>
+          <Sparkles aria-hidden />
+          {t("suggest")}
+        </Button>
+      ) : null}
     </section>
   );
 }
