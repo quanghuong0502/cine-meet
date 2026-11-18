@@ -1306,7 +1306,8 @@
       "invalid_food": "That item isn't sold at this cinema, pick another.",
       "too_early": "The movie hasn't started yet, so it can't be marked as watched.",
       "invalid_amount": "That amount doesn't look right, check it again.",
-      "wrong_day": "That showtime is not on the agreed day, pick one on that day."
+      "wrong_day": "That showtime is not on the agreed day, pick one on that day.",
+      "before_agreed": "That showtime is earlier than the agreed time, pick one from then on."
     },
     "new": {
       "title": "Create plan",

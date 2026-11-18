@@ -67,6 +67,8 @@ const appointmentSchema = new Schema(
     responseDeadline: { type: Date },
     timeOptions: { type: [timeOptionSchema], default: [] },
     chosenOptionId: { type: Schema.Types.ObjectId },
+    // The time the group agreed on when the list was locked. Picking a showtime moves `chosenOptionId`, but never earlier than this.
+    lockedStartAt: { type: Date },
     participants: { type: [participantSchema], default: [] },
     cancelReason: { type: String, trim: true },
     // Stage 2 (Sprint 5A).

@@ -68,9 +68,10 @@ export async function chooseShowtime(creatorId: string, id: string, showtimeId: 
     if (doc.status !== "PLANNING" && doc.status !== "CONFIRMED") return { ok: false as const, error: "bad_state" as const };
     const showtime = await Showtime.findOne({ _id: showtimeId, movieId: doc.movieId }, "startAt").lean();
     if (!showtime || showtime.startAt.getTime() <= now.getTime()) return { ok: false as const, error: "no_showtime" as const };
-    // The group agreed on a day: the showtime has to be on it.
-    const agreed = chosenOption(doc);
-    if (agreed && vietnamDayKey(agreed.startAt.toISOString()) !== vietnamDayKey(showtime.startAt.toISOString())) return { ok: false as const, error: "wrong_day" as const };
+    // The group agreed on a day and a time: the showtime has to be on that day, and not before that time.
+    const agreedAt = doc.lockedStartAt ?? chosenOption(doc)?.startAt;
+    if (agreedAt && vietnamDayKey(agreedAt.toISOString()) !== vietnamDayKey(showtime.startAt.toISOString())) return { ok: false as const, error: "wrong_day" as const };
+    if (agreedAt && showtime.startAt.getTime() < agreedAt.getTime()) return { ok: false as const, error: "before_agreed" as const };
     if (sameId(doc.showtimeId, showtimeId)) return { ok: true as const, changed: false, wasConfirmed: false, slotAt: showtime.startAt.toISOString(), attendeeIds: [] as string[] };
 
     let option = doc.timeOptions.find((o) => sameId(o.showtimeId, showtimeId));
@@ -372,12 +373,13 @@ export interface PlanData {
 export async function getPlanData(userId: string, id: string): Promise<PlanData | null> {
   if (!isValidObjectId(id)) return null;
   await connectToDatabase();
-  const doc = await Appointment.findById(id, "creatorId status movieId showtimeId chosenOptionId timeOptions").lean();
+  const doc = await Appointment.findById(id, "creatorId status movieId showtimeId chosenOptionId timeOptions lockedStartAt").lean();
   if (!doc || !sameId(doc.creatorId, userId) || (doc.status !== "PLANNING" && doc.status !== "CONFIRMED")) return null;
-  // Only showtimes on the day the group agreed on.
-  const agreed = doc.timeOptions.find((o) => sameId(o._id, doc.chosenOptionId?.toString() ?? ""));
-  const day = agreed ? vietnamDayKey(agreed.startAt.toISOString()) : undefined;
-  const showtimes = await searchShowtimes({ movieId: doc.movieId.toString(), date: day, limit: 300 });
+  // Only showtimes on the day the group agreed on, from the agreed time onwards.
+  const agreedAt = doc.lockedStartAt ?? doc.timeOptions.find((o) => sameId(o._id, doc.chosenOptionId?.toString() ?? ""))?.startAt;
+  const day = agreedAt ? vietnamDayKey(agreedAt.toISOString()) : undefined;
+  const found = await searchShowtimes({ movieId: doc.movieId.toString(), date: day, limit: 300 });
+  const showtimes = agreedAt ? found.filter((s) => new Date(s.startAt).getTime() >= agreedAt.getTime()) : found;
   const data: PlanData = { showtimes, food: { items: [], combos: [] } };
   if (!doc.showtimeId) return data;
 

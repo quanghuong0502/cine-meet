@@ -73,6 +73,7 @@ export type AppointmentError =
   | "conflict"
   | "no_showtime"
   | "wrong_day"
+  | "before_agreed"
   | "seat_taken"
   | "invalid_seat"
   | "needs_seat"
@@ -411,6 +412,7 @@ export async function lockParticipants(
       (inList ? attendeeIds : excludedIds).push(p.userId.toString());
     }
     doc.chosenOptionId = option._id;
+    doc.lockedStartAt = option.startAt;
     doc.status = "PARTICIPANTS_LOCKED";
     return { ok: true as const, attendeeIds, excludedIds };
   });

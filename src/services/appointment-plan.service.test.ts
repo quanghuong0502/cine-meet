@@ -11,6 +11,8 @@ describe("appointment planning (stage 2)", () => {
   let u2: string;
   let movie: string;
   let showtime: string;
+  // One fixed start for the agreed time and the showtime, so they match to the millisecond.
+  let start: Date;
   const hours = (h: number) => new Date(Date.now() + h * 3600_000);
   const oid = () => new mongoose.Types.ObjectId();
 
@@ -44,7 +46,7 @@ describe("appointment planning (stage 2)", () => {
       creatorId: creator,
       movieId: movie,
       status: "PARTICIPANTS_LOCKED",
-      timeOptions: [{ startAt: hours(5), showtimeId: showtime, proposedBy: creator, votes: [] }],
+      timeOptions: [{ startAt: start, showtimeId: showtime, proposedBy: creator, votes: [] }],
       participants: [{ userId: u1, status: "accepted" }, { userId: u2, status: "accepted" }],
     });
     const created = await svc.getAppointment(creator, String(doc._id));
@@ -60,6 +62,7 @@ describe("appointment planning (stage 2)", () => {
     const make = async (name: string) => String((await m.User!.create({ name, username: name }))._id);
     [creator, u1, u2] = (await Promise.all(["creator", "u1", "u2"].map(make))) as [string, string, string];
     movie = String((await m.Movie!.create({ title: "Phim", durationMin: 100, releaseDate: "2026-01-01" }))._id);
+    start = hours(5);
     const brandId = oid();
     const branch = await m.Branch!.create({ name: "Rạp", brandId, address: "x" });
     const room = await m.Auditorium!.create({ branchId: branch._id, name: "P1" });
@@ -69,7 +72,7 @@ describe("appointment planning (stage 2)", () => {
       config: {},
       seats: [seat("A", 1), seat("A", 2), seat("A", 3), seat("A", 4, { flags: ["broken"] }), seat("B", 1, { span: 2 })],
     });
-    showtime = String((await m.Showtime!.create({ movieId: movie, auditoriumId: room._id, layoutId: layout._id, startAt: hours(5), endAt: hours(7), formatId: oid() }))._id);
+    showtime = String((await m.Showtime!.create({ movieId: movie, auditoriumId: room._id, layoutId: layout._id, startAt: start, endAt: new Date(start.getTime() + 2 * 3600_000), formatId: oid() }))._id);
   });
 
   it("walks the whole life: planning, seats, confirm, watched, costs", async () => {
@@ -123,8 +126,25 @@ describe("appointment planning (stage 2)", () => {
     const id = await lockedAppointment();
     await plan.beginPlanning(creator, id);
     const room = await m.Auditorium!.create({ branchId: oid(), name: "P2" });
-    const otherDay = String((await m.Showtime!.create({ movieId: movie, auditoriumId: room._id, layoutId: oid(), startAt: hours(5 + 48), endAt: hours(7 + 48), formatId: oid() }))._id);
+    const otherDay = String((await m.Showtime!.create({ movieId: movie, auditoriumId: room._id, layoutId: oid(), startAt: new Date(start.getTime() + 48 * 3600_000), endAt: new Date(start.getTime() + 50 * 3600_000), formatId: oid() }))._id);
     expect(await plan.chooseShowtime(creator, id, otherDay)).toEqual({ ok: false, error: "wrong_day" });
+    expect(await plan.chooseShowtime(creator, id, showtime)).toEqual({ ok: true });
+  });
+
+  it("does not accept a showtime earlier than the agreed time, even after moving to a later one", async () => {
+    const id = await lockedAppointment();
+    await plan.beginPlanning(creator, id);
+    const doc = await (await import("@/models/appointment")).Appointment.findById(id);
+    const base = doc!.timeOptions[0]!.startAt;
+    doc!.lockedStartAt = base;
+    await doc!.save();
+    const room = await m.Auditorium!.create({ branchId: oid(), name: "P3" });
+    const make = async (offsetMin: number) => String((await m.Showtime!.create({ movieId: movie, auditoriumId: room._id, layoutId: oid(), startAt: new Date(base.getTime() + offsetMin * 60_000), endAt: new Date(base.getTime() + (offsetMin + 100) * 60_000), formatId: oid() }))._id);
+    const earlier = await make(-30);
+    const later = await make(30);
+    expect(await plan.chooseShowtime(creator, id, earlier)).toEqual({ ok: false, error: "before_agreed" });
+    expect(await plan.chooseShowtime(creator, id, later)).toEqual({ ok: true });
+    // Back to the agreed time itself: still allowed, because the floor is the locked time, not the new choice.
     expect(await plan.chooseShowtime(creator, id, showtime)).toEqual({ ok: true });
   });
 
