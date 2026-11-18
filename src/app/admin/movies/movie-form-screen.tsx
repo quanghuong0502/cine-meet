@@ -73,7 +73,7 @@ export async function MovieFormScreen({ id, back }: { id: string | null; back?: 
   const title = t(movie ? "editTitle" : "createTitle");
   return (
     <div className="mx-auto flex w-full max-w-page flex-1 flex-col gap-section p-inset">
-      <PageHeader title={title} backHref={backHref} />
+      <PageHeader title={title} backHref={backHref} hideTitle />
       <ResourceForm
         itemId={id}
         fields={fields}

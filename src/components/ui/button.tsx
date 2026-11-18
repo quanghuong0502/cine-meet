@@ -8,9 +8,9 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        // Looks like `destructive` (a see-through tint of the colour, the colour as the fill, solid foreground text, no edge) in the brand colour, a little denser than it.
+        // Solid brand colour (100%, no see-through tint) with the brand's own foreground text; hover darkens it a little.
         default:
-          "bg-primary/50 text-primary-foreground hover:bg-primary/60 focus-visible:border-primary/40 focus-visible:ring-primary/20 dark:bg-primary/60 dark:hover:bg-primary/70 dark:focus-visible:ring-primary/40",
+          "bg-primary text-primary-foreground hover:bg-[color-mix(in_oklch,var(--primary),black_10%)] focus-visible:border-primary/40 focus-visible:ring-primary/20 dark:focus-visible:ring-primary/40",
         outline:
           "border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
         secondary:

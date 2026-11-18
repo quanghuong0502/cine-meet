@@ -19,7 +19,7 @@ export default async function NewUserPage({ searchParams }: { searchParams: Prom
 
   return (
     <div className="mx-auto flex w-full max-w-page flex-1 flex-col gap-section p-inset">
-      <PageHeader title={t("createTitle")} backHref={backHref} />
+      <PageHeader title={t("createTitle")} backHref={backHref} hideTitle />
       <ResourceForm
         itemId={null}
         fields={await userFields("create")}

@@ -6,6 +6,8 @@ interface PageHeaderProps {
   /** Where the back button goes. Every inner screen (not a tab) sets this: see `BackButton`. */
   backHref?: string;
   description?: string;
+  /** Create/edit screens: the title is not drawn beside the back arrow (the form says what it is); it stays as the page's h1 for screen readers. */
+  hideTitle?: boolean;
 }
 
 /**
@@ -14,7 +16,7 @@ interface PageHeaderProps {
  * title would take about 60px of a phone; the title and description stay in the page for screen readers (`sr-only`), so the page still has its h1.
  * Every page puts it first inside a `p-inset` container: the bar cancels that padding (negative margins) to reach the screen edges.
  */
-export function PageHeader({ title, backHref, description }: PageHeaderProps) {
+export function PageHeader({ title, backHref, description, hideTitle }: PageHeaderProps) {
   if (!backHref) {
     return (
       <header className="sr-only">
@@ -26,7 +28,8 @@ export function PageHeader({ title, backHref, description }: PageHeaderProps) {
   return (
     <header className="sticky top-0 z-20 -mx-inset -mt-inset flex items-center gap-stack bg-background/95 px-inset py-0 backdrop-blur">
       <BackButton href={backHref} />
-      {title ? (
+      {title && hideTitle ? <h1 className="sr-only">{title}</h1> : null}
+      {title && !hideTitle ? (
         <div className="flex min-w-0 flex-col gap-tight">
           <h1 className="truncate type-heading">{title}</h1>
           {description ? <p className="type-secondary text-muted-foreground">{description}</p> : null}
