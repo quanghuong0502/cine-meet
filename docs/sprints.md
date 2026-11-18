@@ -31,7 +31,7 @@ Nguồn chi tiết: `docs/movie-app-mvp-design.md` (số mục ghi ở từng sp
 | 0 | Khung nền: scaffold, auth, layout, theme, i18n (vi, en) | — | Xong |
 | 1 | Master data, quản lý người dùng, cài đặt hệ thống, hồ sơ cơ bản | 0 | Xong |
 | 2 | Editor phòng chiếu, sơ đồ ghế, điểm ghế, versioning | 1 | Xong |
-| 3 | Phim (trailer), suất chiếu, trang rạp & lịch chiếu cho user, đánh dấu ghế cá nhân | 2 | Chưa bắt đầu |
+| 3 | Phim (trailer), suất chiếu, trang rạp & lịch chiếu cho user, đánh dấu ghế cá nhân | 2 | Xong |
 | 4 | Lịch hẹn giai đoạn 1 (mời, vote, chốt người), bạn bè, thông báo in-app, worker, Web Push | 3 | Chưa bắt đầu |
 | 5A | Lịch hẹn giai đoạn 2: chọn suất, xếp ghế, đồ ăn, chi phí, công nợ, xác nhận | 4 | Chưa bắt đầu |
 | 5B | Nhắc lịch và các thông báo theo giờ (#3, #8), tự hoàn thành | 5A | Chưa bắt đầu |
@@ -149,9 +149,9 @@ Trạng thái: Chưa bắt đầu · Đang làm · Chờ kiểm tra · Xong
 
 **Tiêu chí hoàn thành**
 - [x] Tạo suất hàng loạt và import CSV thành công, báo lỗi rõ khi dòng CSV sai (test `showtime.service.test.ts`, `csv.test.ts`; màn hình chưa thử trên điện thoại).
-- [ ] Trailer phát được ngay trong trang trên điện thoại.
+- [x] Trailer phát được ngay trong trang trên điện thoại (chủ dự án duyệt, 2026-11-18).
 - [x] Đánh dấu ghế ở một phòng rồi mở lại vẫn thấy (test service `seat-mark.service.test.ts`; màn hình chưa thử trên điện thoại); sau khi phòng có version mới (không đổi ghế đó), đánh dấu vẫn hiện; ghế bị dời hoặc xóa thì vào "Đánh dấu cũ".
-- [ ] Bộ lọc lịch chiếu hoạt động và nhanh trên dữ liệu mẫu.
+- [x] Bộ lọc lịch chiếu hoạt động và nhanh trên dữ liệu mẫu (chủ dự án duyệt, 2026-11-18).
 
 ---
 
@@ -352,7 +352,7 @@ Mỗi sprint xong thêm 3 đến 6 dòng: đã làm gì, còn dở gì, quyết 
 - Quyết định: **tạo hàng loạt theo khoảng ngày (từ, đến) × nhiều giờ × nhiều phòng**, mỗi lần tối đa 500 suất, suất trùng giờ với suất khác cùng phòng bị bỏ qua và báo số lượng; **CSV chạy tất cả hoặc không**: cột `movie,branch,auditorium,start,format,price` (giờ `YYYY-MM-DD HH:mm` giờ Việt Nam, giá để trống thì theo bảng giá, khớp tên không phân biệt dấu và hoa thường, dòng đầu tiêu đề có hay không đều được, ngăn cách `,` `;` hoặc tab), một dòng sai hoặc trùng giờ thì không tạo suất nào và liệt kê từng dòng lỗi; giờ kết thúc = bắt đầu + thời lượng + phút quảng cáo (cài đặt hệ thống); suất gắn `layoutId` hiện tại của phòng;
   **giá ước tính** = giá ghế mặc định của layout theo bảng giá (`resolveTicketPrice`), có `priceOverride` thì dùng giá đó; **một ghế một đánh dấu cho mỗi người trong một phòng**, đánh dấu còn hiệu lực ở layout mới khi ghế giữ nguyên mã, hàng, cột và độ rộng, không thì vào "Đánh dấu cũ" (`src/lib/seat-layout/marks.ts`); **bản đồ chi nhánh**: nút "Chỉ đường" mở link Google Maps ngoài app (không thêm thư viện bản đồ); khung sửa đánh dấu là phần của trang dưới sơ đồ, **không dùng bottom sheet** vì ô ghi chú trong sheet gây lỗi bàn phím trên PWA iOS; nút "Tạo lịch hẹn" hiện nhưng tắt (Sprint 4 bật); xóa phòng bị chặn khi còn suất chiếu; thể loại, định dạng, phân loại tuổi đang được phim dùng thì không xóa được.
 - Làm thêm theo yêu cầu (2026-11-17): **công tắc Bật/Tắt** (`active`, mặc định bật, bản ghi cũ chưa có giá trị tính là bật) cho thương hiệu, chi nhánh, thể loại, định dạng: mục tắt không hiện ở bộ lọc, danh sách rạp, suất chiếu của user (suất của chi nhánh, thương hiệu hay định dạng đang tắt bị ẩn) và không được gợi ý khi admin tạo mới, mục đang được dùng thì vẫn hiện; **lọc phim theo khoảng thời gian**: cài đặt hệ thống `movieUpcomingDays` (mặc định 30), bộ lọc phim và hàng poster chỉ gồm phim đang chiếu và phim khởi chiếu trong N ngày tới (`isOfferedInFilter`); **khung giờ chiếu do admin cấu hình** (cài đặt hệ thống `timeSlots`: tên, tên tiếng Anh, từ, đến, tối đa 8, không chồng lấn; mặc định 4 khung cũ; `00:00` ở ô Đến là hết ngày; xóa hết khung thì ẩn bộ lọc Khung giờ; đổi khung giờ chỉ đổi cách lọc, không đụng suất đã tạo). Bảng giá và các lựa chọn khác trong Danh mục chưa lọc theo công tắc.
-- Còn dở: **chủ dự án cần thử trên điện thoại** (trailer phát tại chỗ trên iPhone, tốc độ bộ lọc, khung đánh dấu ghế, nhập CSV bằng file); trailer mẫu chưa có (thêm link YouTube thật ở Admin > Phim); chưa có đánh giá phòng và lịch sử ngồi (thiết kế 3.2, để Sprint 6); chưa đo ở cỡ chữ 125% và 150%.
+- **Chốt 2026-11-18: chủ dự án xác nhận Sprint 3 xong.** (Mục dưới là ghi chú lúc đó.) Còn dở cũ: **thử trên điện thoại** (trailer phát tại chỗ trên iPhone, tốc độ bộ lọc, khung đánh dấu ghế, nhập CSV bằng file); trailer mẫu chưa có (thêm link YouTube thật ở Admin > Phim); chưa có đánh giá phòng và lịch sử ngồi (thiết kế 3.2, để Sprint 6); chưa đo ở cỡ chữ 125% và 150%.
 - File chính: `src/services/{movie,showtime,seat-mark,cinema}.service.ts`, `src/lib/showtime/`, `src/lib/movie/`, `src/lib/seat-layout/marks.ts`, `src/app/admin/movies/`, `src/components/admin/showtime-*.tsx`, `src/app/(user)/{showtimes,movies,cinemas}/`, `src/components/movie/`, `src/components/seat-map/room-seat-view.tsx`, `scripts/seed-movies.ts`.
 
 <!-- Ví dụ:
