@@ -35,14 +35,15 @@ interface ChoiceGroupProps<T extends string> {
   value: T;
   options: { value: T; label: string }[];
   onChange: (value: T) => void;
+  disabled?: boolean;
 }
 
 /** Pick exactly one of a few options; the options share the row's width. */
-export function ChoiceGroup<T extends string>({ label, value, options, onChange }: ChoiceGroupProps<T>) {
+export function ChoiceGroup<T extends string>({ label, value, options, onChange, disabled }: ChoiceGroupProps<T>) {
   return (
     <div role="radiogroup" aria-label={label} className="flex gap-stack">
       {options.map((option) => (
-        <Chip key={option.value} role="radio" selected={option.value === value} onClick={() => onChange(option.value)} className="min-w-0 flex-1 px-inset-xs">
+        <Chip key={option.value} role="radio" disabled={disabled} selected={option.value === value} onClick={() => onChange(option.value)} className="min-w-0 flex-1 px-inset-xs">
           {option.label}
         </Chip>
       ))}

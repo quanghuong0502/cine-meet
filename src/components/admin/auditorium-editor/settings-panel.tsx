@@ -223,17 +223,16 @@ export function SettingsPanel({ name, onName, branchId, onBranch, branchLocked, 
         />
       </div>
 
-      {config.stadiumFromRow !== null ? (
-        <div className="flex flex-col gap-item">
-          <span className="type-label leading-none! text-muted-foreground">{t("fields.stepsPerRow.label")}</span>
-          <ChoiceGroup
-            label={t("fields.stepsPerRow.label")}
-            value={String(config.stepsPerRow)}
-            options={Array.from({ length: MAX_STEPS_PER_ROW - MIN_STEPS_PER_ROW + 1 }, (_, i) => String(MIN_STEPS_PER_ROW + i)).map((n) => ({ value: n, label: n }))}
-            onChange={(n) => set({ stepsPerRow: Number(n) })}
-          />
-        </div>
-      ) : null}
+      <div className="flex flex-col gap-item">
+        <span className="type-label leading-none! text-muted-foreground">{t("fields.stepsPerRow.label")}</span>
+        <ChoiceGroup
+          label={t("fields.stepsPerRow.label")}
+          value={String(config.stepsPerRow)}
+          options={Array.from({ length: MAX_STEPS_PER_ROW - MIN_STEPS_PER_ROW + 1 }, (_, i) => String(MIN_STEPS_PER_ROW + i)).map((n) => ({ value: n, label: n }))}
+          onChange={(n) => set({ stepsPerRow: Number(n) })}
+          disabled={config.stadiumFromRow === null}
+        />
+      </div>
 
       <div className="flex flex-col gap-item">
         <span className="type-label leading-none! text-muted-foreground">{t("fields.verticalAisles.label")}</span>
