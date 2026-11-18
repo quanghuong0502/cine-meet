@@ -209,7 +209,7 @@ giới hạn tra cứu, kết bạn cần chấp nhận (thiết kế mục 6 v�
 - Sửa sau khi CONFIRMED (đổi ghế/giờ): chỉ người tạo sửa được, gửi #6 (in-app + Web Push) cho người bị ảnh hưởng.
 - COMPLETED: người tạo bấm "Đã xem xong" sau giờ chiếu (tự động chuyển ở Sprint 5B).
 - Nhập chi phí thực tế: người tạo nhập vé, đồ ăn, khoản khác của từng người (không ghi ai trả); mỗi người thấy và chỉnh được phần của mình.
-  Ghi `expenses` cho từng người (phần của chính họ, `category`: ticket, fnb, other).
+  Ghi `expenses` cho từng người (phần của chính họ, `category`: ticket, fnb, other) và `actualCost` của cả lần hẹn (tổng vé, đồ ăn, khác của cả nhóm, luôn bằng tổng phần của mọi người). Chỉ lưu chi phí; không có logic trả tiền hay nợ.
 - Thông báo #5 và các sự kiện còn lại của giai đoạn này (in-app + Web Push, dùng hạ tầng của Sprint 4).
 
 **Ngoài phạm vi:** Zalo, nhắc theo giờ (#3, #8), tự chuyển COMPLETED, phim yêu thích sắp chiếu (#12), dashboard. Không làm: công nợ, nhắc trả tiền (#10), VietQR.
@@ -217,7 +217,7 @@ giới hạn tra cứu, kết bạn cần chấp nhận (thiết kế mục 6 v�
 **Tiêu chí hoàn thành**
 - [ ] Đi trọn vòng đời một lịch hẹn: xếp ghế, đồ ăn, xác nhận, hoàn thành, nhập chi phí.
 - [ ] Hai người cùng chọn một ghế thì chỉ một người thành công (có test với transaction).
-- [ ] Nhập chi phí một buổi: tổng `expenses` của cả nhóm đúng bằng tổng vé, đồ ăn và khoản khác đã nhập; mỗi người thấy và chỉnh được phần của mình (có test).
+- [ ] Nhập chi phí một buổi: `actualCost` của lần hẹn luôn bằng tổng `expenses` của mọi người (vé, đồ ăn, khác); mỗi người thấy và chỉnh được phần của mình, chỉnh xong thì tổng cả lần hẹn tính lại (có test).
 - [ ] Người rút lui thì ghế được trả lại và chi phí ước tính tính lại đúng.
 
 ---

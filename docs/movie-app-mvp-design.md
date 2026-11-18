@@ -269,6 +269,7 @@ DRAFT → INVITING → PARTICIPANTS_LOCKED → PLANNING → CONFIRMED → COMPLE
 - **Hoàn thành:** người tạo bấm "Đã xem xong" sau giờ chiếu; nếu không bấm, hệ thống tự chuyển sau giờ kết thúc suất.
 - **Nhập chi phí thực tế** (người tạo): tiền vé, tiền đồ ăn và khoản khác (nếu có) **của từng người** (mặc định bằng ước tính, sửa được).
   Không ghi ai là người trả. Mỗi người tham gia thấy phần của mình và được chỉnh số tiền phần của mình (kèm lý do).
+- **Lưu ở hai mức** (chủ dự án chốt 2026-11-18): chi phí **cả lần hẹn** (`actualCost` của lịch hẹn: tổng vé, đồ ăn, khác của cả nhóm, luôn bằng tổng phần của mọi người) và chi phí **từng người** (`expenses`, chia theo vé, đồ ăn, khác). Mục đích duy nhất là lưu lại chi phí xem phim; app không có logic trả tiền hay nợ.
 - Phần của mỗi người ghi thành `expenses` của chính người đó. Đây là nguồn duy nhất cho dashboard.
 - **Không có công nợ, không có "Tôi đã trả"/"Đã nhận", không có mã VietQR** (chủ dự án chốt 2026-11-18): app chỉ cho biết buổi đó tốn bao nhiêu.
 - Đánh giá phim và đánh giá ghế đã ngồi (lưu cá nhân, hiện ở lịch sử ngồi; điểm cộng đồng để giai đoạn sau).
@@ -388,7 +389,7 @@ appointments             { creatorId, movieId, status, responseDeadline,
                                           declineReason? }],
                            showtimeId?, seats[{ userId, seatCode }],
                            fnb[{ userId?, itemId, qty, price }],
-                           estimatedCost, actualCost }
+                           estimatedCost, actualCost{ ticket, fnb, other, total } }  // actualCost = tổng phần của mọi người
 expenses                 { userId, appointmentId?, category: ticket|fnb|other, amount, date }
                          // chi tiêu CÁ NHÂN (phần của chính userId); nguồn duy nhất cho dashboard. Không lưu ai trả tiền.
 
