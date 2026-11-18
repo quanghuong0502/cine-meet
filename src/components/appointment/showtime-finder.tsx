@@ -22,6 +22,8 @@ interface Props {
   /** Showtimes already picked: shown as chosen, and not picked twice. */
   chosenIds: string[];
   onPick: (showtime: ShowtimeChoice) => void;
+  /** Tapping a showtime that is already picked takes it off again. */
+  onUnpick: (showtimeId: string) => void;
   /** Said under the finder when the time or the search is wrong (the form owns the error text). */
   onError: (message: string) => void;
 }
@@ -30,7 +32,7 @@ interface Props {
  * The person types the day and time they want to watch; then the showtimes of that movie on that day, from that time on, are loaded
  * and can be narrowed by cinema, format and part of the day. Picking one hands it to the form. With none to pick, nothing can be added.
  */
-export function ShowtimeFinder({ movieId, slots, chosenIds, onPick, onError }: Props) {
+export function ShowtimeFinder({ movieId, slots, chosenIds, onPick, onUnpick, onError }: Props) {
   const t = useTranslations("appointments.new");
   const tf = useTranslations("showtimes.filters");
   const locale = useLocale();
@@ -140,13 +142,10 @@ export function ShowtimeFinder({ movieId, slots, chosenIds, onPick, onError }: P
             hideDays
             hideBranchFilter
             onToggle={(id) => {
+              // The day, time and list stay, so several showtimes can be picked without typing the time again.
+              if (chosenIds.includes(id)) return onUnpick(id);
               const choice = shown.find((s) => s.id === id);
-              if (!choice || chosenIds.includes(id)) return;
-              onPick(choice);
-              setRows(null);
-              setDate("");
-              setTime("");
-              setFilters({});
+              if (choice) onPick(choice);
             }}
           />
         </div>

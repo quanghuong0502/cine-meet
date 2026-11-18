@@ -166,7 +166,7 @@ export function NewAppointmentForm({ movies, movieId: initialMovieId, initialSho
         ) : null}
 
         {movieId ? (
-          <ShowtimeFinder key={movieId} movieId={movieId} slots={slots} chosenIds={chosen.map((c) => c.id)} onPick={pickShowtime} onError={(message) => setErrors((e) => ({ ...e, find: message }))} />
+          <ShowtimeFinder key={movieId} movieId={movieId} slots={slots} chosenIds={chosen.map((c) => c.id)} onPick={pickShowtime} onUnpick={(id) => setChosen((list) => list.filter((x) => x.id !== id))} onError={(message) => setErrors((e) => ({ ...e, find: message }))} />
         ) : (
           <p className="type-secondary text-muted-foreground">{t("pickMovieFirst")}</p>
         )}
