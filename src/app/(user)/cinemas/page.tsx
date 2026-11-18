@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import { getLocale, getTranslations } from "next-intl/server";
 import { MapPin } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
 import { requireUser } from "@/lib/auth/guards";
 import { formatVnd } from "@/lib/money";
+import { PX } from "@/lib/ui-sizes";
 import { listCinemaGroups } from "@/services/cinema.service";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -32,24 +34,31 @@ export default async function CinemasPage() {
             <ul className="flex flex-col gap-stack">
               {group.branches.map((branch) => (
                 <li key={branch.id}>
-                  <Link href={`/cinemas/${branch.id}`} className="flex min-h-row flex-col gap-stack rounded-xl border bg-card p-inset">
-                    <span className="type-item-title">{branch.name}</span>
-                    {branch.address ? (
-                      <span className="flex items-start gap-stack type-secondary text-muted-foreground">
-                        <MapPin className="mt-hair size-icon-sm shrink-0" aria-hidden />
-                        {branch.address}
-                      </span>
+                  <Link href={`/cinemas/${branch.id}`} className="flex min-h-row flex-col overflow-hidden rounded-xl border bg-card">
+                    {branch.imageUrl ? (
+                      <div className="relative aspect-video w-full bg-muted">
+                        <Image src={branch.imageUrl} alt="" fill sizes={`(max-width: ${PX.column}px) 100vw, ${PX.column}px`} unoptimized className="object-cover" />
+                      </div>
                     ) : null}
-                    <span className="flex flex-wrap gap-stack">
-                      <Badge variant="secondary" className="h-auto py-hair type-tag">
-                        {t("roomCount", { count: branch.roomCount })}
-                      </Badge>
-                      {branch.parkingFee !== null ? (
-                        <Badge variant="outline" className="h-auto py-hair type-tag">
-                          {t("parkingFee", { fee: formatVnd(branch.parkingFee, locale) })}
-                        </Badge>
+                    <div className="flex flex-col gap-stack p-inset">
+                      <span className="type-item-title">{branch.name}</span>
+                      {branch.address ? (
+                        <span className="flex items-start gap-stack type-secondary text-muted-foreground">
+                          <MapPin className="mt-hair size-icon-sm shrink-0" aria-hidden />
+                          {branch.address}
+                        </span>
                       ) : null}
-                    </span>
+                      <span className="flex flex-wrap gap-stack">
+                        <Badge variant="secondary" className="h-auto py-hair type-tag">
+                          {t("roomCount", { count: branch.roomCount })}
+                        </Badge>
+                        {branch.parkingFee !== null ? (
+                          <Badge variant="outline" className="h-auto py-hair type-tag">
+                            {t("parkingFee", { fee: formatVnd(branch.parkingFee, locale) })}
+                          </Badge>
+                        ) : null}
+                      </span>
+                    </div>
                   </Link>
                 </li>
               ))}
