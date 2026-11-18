@@ -38,9 +38,18 @@ export function parsePronoun(raw: string): { ok: true; value: string } | { ok: f
 
 const upperFirst = (word: string) => word.charAt(0).toUpperCase() + word.slice(1);
 
-/** Swaps the tokens in one string. */
+/** A token that starts a sentence: at the very start, after . ! ? … and a space, or on a new line. */
+const SENTENCE_START = /(^|[.!?…]\s+|\n\s*)\[(you|me)\]/gi;
+
+/**
+ * Swaps the tokens in one string. The saved words are lower case ("tôi"); a word that starts a sentence gets its first letter in
+ * capitals ("Tôi") by position, whichever form the message used (`[me]` or `[Me]`). `[You]` and `[Me]` also force capitals elsewhere
+ * (after a colon, at the start of a label).
+ */
 export function applyPronounsToText(text: string, pronouns: Pronouns): string {
+  const word = (kind: string) => (kind.toLowerCase() === "you" ? pronouns.you : pronouns.me);
   return text
+    .replace(SENTENCE_START, (_whole, lead: string, kind: string) => `${lead}${upperFirst(word(kind))}`)
     .replaceAll("[You]", upperFirst(pronouns.you))
     .replaceAll("[you]", pronouns.you)
     .replaceAll("[Me]", upperFirst(pronouns.me))

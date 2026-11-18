@@ -21,6 +21,15 @@ describe("applyPronounsToText", () => {
     expect(applyPronounsToText(text, DEFAULT_PRONOUNS)).toBe("Bạn đã chốt. Tôi nhắc bạn nha, tôi hứa.");
     expect(applyPronounsToText(text, { you: "anh", me: "em" })).toBe("Anh đã chốt. Em nhắc anh nha, em hứa.");
   });
+  it("capitalises a word that starts a sentence by position, whichever form the message used", () => {
+    const pair = { you: "tôi", me: "tớ" };
+    expect(applyPronounsToText("[you] đã chốt. [me] nhắc nha! [you] nhớ nhé? Cho [you] nè", pair)).toBe("Tôi đã chốt. Tớ nhắc nha! Tôi nhớ nhé? Cho tôi nè");
+    expect(applyPronounsToText("[You] đã chốt.\n[me] nhắc nha", pair)).toBe("Tôi đã chốt.\nTớ nhắc nha");
+    expect(applyPronounsToText("Mời [you] nhé", pair)).toBe("Mời tôi nhé");
+  });
+  it("forces capitals with [You] and [Me] anywhere", () => {
+    expect(applyPronounsToText("Gửi: [Me] hứa", { you: "bạn", me: "tôi" })).toBe("Gửi: Tôi hứa");
+  });
   it("leaves 'bạn bè' and other text alone", () => {
     expect(applyPronounsToText("Mời bạn bè", { you: "anh", me: "em" })).toBe("Mời bạn bè");
   });
