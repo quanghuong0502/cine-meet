@@ -91,6 +91,21 @@ const SAMPLE = "(mẫu)";
 /** Google Maps link shared by every sample branch (they are all invented, so one place stands in for all). */
 const SAMPLE_MAPS_URL = "https://maps.app.goo.gl/8jhMmuEFsHhUF8Bg7";
 
+/**
+ * What a sample branch says about itself, per brand: where it is, which floor, when it opens, and how to park. Invented but readable,
+ * so the screens show believable text. A branch made earlier with the old placeholder text (`OLD_BRANCH_TEXT`) gets these too;
+ * any value an admin has changed is left alone.
+ */
+const BRANCH_DETAILS: Record<string, { address: string; floor: string; openingHours: string; parkingFee: number; parkingLocation: string; parkingEntrance: string }> = {
+  CGV: { address: "Đối diện tòa nhà A, đường 32", floor: "Tầng 4", openingHours: "09:00 – 23:30", parkingFee: 5000, parkingLocation: "Hầm B1 của tòa nhà", parkingEntrance: "Cổng phía đường 32" },
+  "BHD Star": { address: "Cạnh siêu thị, đường số 5", floor: "Tầng 5", openingHours: "09:00 – 23:00", parkingFee: 8000, parkingLocation: "Bãi xe tầng trệt", parkingEntrance: "Cổng sau, gần thang máy" },
+  "Beta Cinemas": { address: "Sau chợ đêm, đường Lê Lợi", floor: "Tầng 3", openingHours: "08:30 – 22:30", parkingFee: 3000, parkingLocation: "Sân trước rạp", parkingEntrance: "Lối vào chính" },
+  "Lotte Cinema": { address: "Tầng trên trung tâm thương mại, đường 10", floor: "Tầng 6", openingHours: "09:00 – 23:30", parkingFee: 10000, parkingLocation: "Hầm B2 của trung tâm thương mại", parkingEntrance: "Cổng phía đường 10" },
+  "Galaxy Cinema": { address: "Góc ngã tư, đối diện công viên", floor: "Tầng 2", openingHours: "09:30 – 23:00", parkingFee: 5000, parkingLocation: "Bãi xe ngoài trời bên hông", parkingEntrance: "Cổng bên hông, gần quầy bắp nước" },
+};
+/** The text the first version of this seed wrote; a branch still holding it counts as not yet filled in. */
+const OLD_BRANCH_TEXT = { address: "Địa chỉ (mẫu)", parkingLocation: "Hầm gửi xe (mẫu)", openingHours: "09:00 – 23:00", parkingFee: 5000 } as const;
+
 const BRANDS = [
   { name: "CGV", color: "#e71a0f", websiteUrl: "https://www.cgv.vn" },
   { name: "BHD Star", color: "#f5a300", websiteUrl: "https://bhdstar.vn" },
@@ -251,20 +266,19 @@ async function seedCatalog(): Promise<void> {
   for (const brandDoc of await Brand.find({ name: { $in: BRANDS.map((brand) => brand.name) } }).lean()) {
     const brandId = brandDoc._id;
     const branchName = `${brandDoc.name} ${SAMPLE}`;
+    const details = BRANCH_DETAILS[brandDoc.name];
     if (!(await Branch.exists({ brandId, name: branchName }).collation(collation))) {
-      await Branch.create({
-        brandId,
-        name: branchName,
-        address: `Địa chỉ ${SAMPLE}`,
-        mapsUrl: SAMPLE_MAPS_URL,
-        openingHours: "09:00 – 23:00",
-        parkingFee: 5000,
-        parkingLocation: `Hầm gửi xe ${SAMPLE}`,
-      });
+      await Branch.create({ brandId, name: branchName, mapsUrl: SAMPLE_MAPS_URL, ...details });
       added.branches = (added.branches ?? 0) + 1;
-    } else {
-      // A sample branch made before the link existed gets it too; one with its own link is left alone.
-      await Branch.updateOne({ brandId, name: branchName, $or: [{ mapsUrl: { $exists: false } }, { mapsUrl: null }, { mapsUrl: "" }] }, { mapsUrl: SAMPLE_MAPS_URL }).collation(collation);
+    } else if (details) {
+      // A sample branch made earlier: fill what is empty or still the old placeholder, field by field; never an admin's own value.
+      for (const [field, value] of Object.entries({ mapsUrl: SAMPLE_MAPS_URL, ...details })) {
+        const old = OLD_BRANCH_TEXT[field as keyof typeof OLD_BRANCH_TEXT];
+        await Branch.updateOne(
+          { brandId, name: branchName, $or: [{ [field]: { $exists: false } }, { [field]: null }, { [field]: "" }, ...(old !== undefined ? [{ [field]: old }] : [])] },
+          { [field]: value },
+        ).collation(collation);
+      }
     }
 
     // Several items per brand, so a combo has something to pick from.

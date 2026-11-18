@@ -26,11 +26,24 @@ import { makePoster, SAMPLE_POSTERS } from "./sample-posters";
 const ENV_FILE = ".env.local";
 
 const SAMPLES = [
-  { title: "Hành Trình Cuối Cùng (mẫu)", durationMin: 128, genres: ["Hành động"], rating: "T16", startOffset: -10, endOffset: 30, director: "Đạo diễn mẫu", cast: "Diễn viên A, Diễn viên B", synopsis: "Phim mẫu để thử giao diện." },
-  { title: "Mùa Hè Của Chúng Ta (mẫu)", durationMin: 105, genres: ["Tình cảm", "Hài"], rating: "T13", startOffset: -3, endOffset: 25, director: "Đạo diễn mẫu", cast: "Diễn viên C, Diễn viên D", synopsis: "Phim mẫu để thử giao diện." },
-  { title: "Bóng Tối Dưới Nhà (mẫu)", durationMin: 96, genres: ["Kinh dị"], rating: "T18", startOffset: -1, endOffset: 14, director: "Đạo diễn mẫu", cast: "Diễn viên E", synopsis: "Phim mẫu để thử giao diện." },
-  { title: "Vũ Trụ Nhỏ (mẫu)", durationMin: 92, genres: ["Hoạt hình"], rating: "P", startOffset: 12, endOffset: 50, director: "Đạo diễn mẫu", cast: "", synopsis: "Phim sắp chiếu mẫu." },
+  { title: "Hành Trình Cuối Cùng (mẫu)", durationMin: 128, genres: ["Hành động"], rating: "T16", startOffset: -10, endOffset: 30, director: "Trần Minh Khôi", cast: "Lê Hoàng Nam, Phạm Ngọc Anh, Võ Thanh Tùng", synopsis: "Một cựu đặc nhiệm nhận nhiệm vụ cuối cùng: đưa một nhân chứng băng qua thành phố trong một đêm, khi cả hai phía đều muốn bắt họ." },
+  { title: "Mùa Hè Của Chúng Ta (mẫu)", durationMin: 105, genres: ["Tình cảm", "Hài"], rating: "T13", startOffset: -3, endOffset: 25, director: "Nguyễn Thu Hà", cast: "Đỗ Khánh Linh, Bùi Quang Huy", synopsis: "Hai người bạn thân thời cấp ba gặp lại trong một mùa hè ở biển, và phải thú nhận điều họ giấu nhau suốt mười năm." },
+  { title: "Bóng Tối Dưới Nhà (mẫu)", durationMin: 96, genres: ["Kinh dị"], rating: "T18", startOffset: -1, endOffset: 14, director: "Phạm Đức Long", cast: "Hoàng Mai Chi, Ngô Văn Sơn", synopsis: "Cả gia đình chuyển vào căn nhà mới và nghe tiếng động mỗi đêm từ tầng hầm, nơi chủ nhà cũ dặn đừng bao giờ mở cửa." },
+  { title: "Vũ Trụ Nhỏ (mẫu)", durationMin: 92, genres: ["Hoạt hình"], rating: "P", startOffset: 12, endOffset: 50, director: "Lý Bảo Châu", cast: "", synopsis: "Một chú robot nhỏ lạc trên con tàu vũ trụ bỏ hoang, đi tìm đường về nhà và kết bạn với những ngôi sao biết nói." },
 ];
+
+/** What the first version of this seed wrote; a sample movie still holding it counts as not yet filled in. */
+const OLD_MOVIE_TEXT = { director: "Đạo diễn mẫu", synopsis: ["Phim mẫu để thử giao diện.", "Phim sắp chiếu mẫu."] } as const;
+
+/** Gives a sample movie made earlier its director, cast and story when they are empty or still the old placeholder; never an admin's own text. */
+async function fillMissingDetails(): Promise<void> {
+  const empty = (field: string) => [{ [field]: { $exists: false } }, { [field]: null }, { [field]: "" }];
+  for (const sample of SAMPLES) {
+    await Movie.updateOne({ title: sample.title, $or: [...empty("director"), { director: OLD_MOVIE_TEXT.director }] }, { director: sample.director });
+    await Movie.updateOne({ title: sample.title, $or: [...empty("synopsis"), { synopsis: { $in: [...OLD_MOVIE_TEXT.synopsis] } }] }, { synopsis: sample.synopsis });
+    if (sample.cast) await Movie.updateOne({ title: sample.title, $or: [...empty("cast"), { cast: /^Diễn viên [A-Z]/ }] }, { cast: sample.cast });
+  }
+}
 
 /**
  * Gives every sample movie that has no poster one drawn poster (`sample-posters.ts`), uploaded to Cloudinary the way the admin form does
@@ -102,6 +115,7 @@ async function seed(): Promise<void> {
     console.log(`Đã thêm phim: ${sample.title}`);
   }
 
+  await fillMissingDetails();
   await addMissingPosters();
   if (process.argv.includes("--posters-only")) return;
 
