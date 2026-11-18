@@ -1003,10 +1003,6 @@
     "cast": "Cast",
     "language": "Language",
     "showtimes": "Showtimes",
-    "noShowtimes": {
-      "title": "No showtimes yet",
-      "description": "This movie has no upcoming showtimes."
-    },
     "trailer": {
       "watch": "Watch trailer",
       "play": "Watch trailer of {title}",

@@ -1003,10 +1003,6 @@
     "cast": "Diễn viên",
     "language": "Ngôn ngữ",
     "showtimes": "Suất chiếu",
-    "noShowtimes": {
-      "title": "Chưa có suất chiếu",
-      "description": "Phim này chưa có suất nào sắp tới."
-    },
     "trailer": {
       "watch": "Xem trailer",
       "play": "Xem trailer {title}",

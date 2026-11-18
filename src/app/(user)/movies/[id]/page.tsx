@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { getLocale, getTranslations } from "next-intl/server";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { EmptyState } from "@/components/empty-state";
 import { AgeRatingBadge } from "@/components/movie/age-rating-badge";
 import { MovieShowtimes } from "@/components/movie/movie-showtimes";
 import { TrailerPlayer } from "@/components/movie/trailer-player";
@@ -104,14 +103,13 @@ export default async function MovieDetailPage({ params }: Props) {
           ))}
       </dl>
 
-      <section className="flex flex-col gap-3">
-        <h2 className="text-xl font-semibold">{t("showtimes")}</h2>
-        {showtimes.length === 0 ? (
-          <EmptyState mascot="bubu-sleepy" title={t("noShowtimes.title")} description={t("noShowtimes.description")} />
-        ) : (
+      {/* No showtimes yet: the whole section is left out (a heading over an empty state only filled the screen). */}
+      {showtimes.length > 0 ? (
+        <section className="flex flex-col gap-3">
+          <h2 className="text-xl font-semibold">{t("showtimes")}</h2>
           <MovieShowtimes rows={showtimes} />
-        )}
-      </section>
+        </section>
+      ) : null}
     </div>
   );
 }
