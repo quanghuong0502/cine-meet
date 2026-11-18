@@ -33,7 +33,7 @@ Nguồn chi tiết: `docs/movie-app-mvp-design.md` (số mục ghi ở từng sp
 | 2 | Editor phòng chiếu, sơ đồ ghế, điểm ghế, versioning | 1 | Xong |
 | 3 | Phim (trailer), suất chiếu, trang rạp & lịch chiếu cho user, đánh dấu ghế cá nhân | 2 | Xong |
 | 4 | Lịch hẹn giai đoạn 1 (mời, vote, chốt người), bạn bè, thông báo in-app, worker, Web Push | 3 | Xong |
-| 5A | Lịch hẹn giai đoạn 2: chọn suất, xếp ghế, đồ ăn, chi phí, xác nhận | 4 | Chưa bắt đầu |
+| 5A | Lịch hẹn giai đoạn 2: chọn suất, xếp ghế, đồ ăn, chi phí, xác nhận | 4 | Chờ kiểm tra |
 | 5B | Nhắc lịch và các thông báo theo giờ (#3, #8), tự hoàn thành | 5A | Chưa bắt đầu |
 | 6 | Dashboard, ngân sách, ghi lại buổi đã xem, đánh giá cá nhân | 5B | Chưa bắt đầu |
 | 7 | Chatbot AI (tầng provider, tool, lưu context) | 6 | Chưa bắt đầu |
@@ -215,10 +215,10 @@ giới hạn tra cứu, kết bạn cần chấp nhận (thiết kế mục 6 v�
 **Ngoài phạm vi:** Zalo, nhắc theo giờ (#3, #8), tự chuyển COMPLETED, phim yêu thích sắp chiếu (#12), dashboard. Không làm: công nợ, nhắc trả tiền (#10), VietQR.
 
 **Tiêu chí hoàn thành**
-- [ ] Đi trọn vòng đời một lịch hẹn: xếp ghế, đồ ăn, xác nhận, hoàn thành, nhập chi phí.
-- [ ] Hai người cùng chọn một ghế thì chỉ một người thành công (có test với transaction).
-- [ ] Nhập chi phí một buổi: `actualCost` của lần hẹn luôn bằng tổng `expenses` của mọi người (vé, đồ ăn, khác); mỗi người thấy và chỉnh được phần của mình, chỉnh xong thì tổng cả lần hẹn tính lại (có test).
-- [ ] Người rút lui thì ghế được trả lại và chi phí ước tính tính lại đúng.
+- [x] Đi trọn vòng đời một lịch hẹn: xếp ghế, đồ ăn, xác nhận, hoàn thành, nhập chi phí.
+- [x] Hai người cùng chọn một ghế thì chỉ một người thành công (có test với transaction).
+- [x] Nhập chi phí một buổi: `actualCost` của lần hẹn luôn bằng tổng `expenses` của mọi người (vé, đồ ăn, khác); mỗi người thấy và chỉnh được phần của mình, chỉnh xong thì tổng cả lần hẹn tính lại (có test).
+- [x] Người rút lui thì ghế được trả lại và chi phí ước tính tính lại đúng.
 
 ---
 
@@ -405,3 +405,14 @@ Mỗi sprint xong thêm 3 đến 6 dòng: đã làm gì, còn dở gì, quyết 
 - Quyết định: điểm ghế tính ở `src/services/seat-score.ts`, lưu vào từng ghế khi lưu layout.
 - Còn dở: chưa hỗ trợ ghế giường nằm trong heatmap.
 -->
+
+### Sprint 5A (2026-11-18)
+- Xong phần code, test, build (**chưa thử trên điện thoại, chưa bấm thao tác bằng trình duyệt**). Chủ dự án cần thử: `npm run seed:users`, `npm run seed:appointment` (tạo một lịch hẹn đã chốt người, người tạo là tài khoản đầu), rồi đi hết vòng: Lên kế hoạch chi tiết, chọn suất, xếp ghế, đồ ăn, Xác nhận kế hoạch; sau giờ chiếu bấm Đã xem xong và nhập chi phí.
+- Dữ liệu: `appointments` thêm `showtimeId`, `seats`, `fnb` (giá lưu lúc thêm), `estimate` (theo người), `actualCost`, `confirmedAt`, `completedAt`; collection mới `seatClaims` (unique `showtimeId + seatCode`) và `expenses` (`userId, appointmentId, category, amount, date, note`).
+- **Chống trùng ghế:** xếp ghế ghi `seats` và `seatClaims` trong cùng một transaction; claim trùng thì lỗi khóa duy nhất, trả `seat_taken`, không lưu gì. Có test hai lịch hẹn cùng chọn một ghế (`Promise.all`), chỉ một thành công.
+- Quyết định (phán đoán, cần chủ dự án duyệt): **ghế đôi giá một lần cho cả ghế, chia đều cho hai người** (người đầu nhận đồng lẻ); **đồ ăn chung chia đều cho mọi người đi**; **người tạo xếp ghế và chọn đồ ăn cho tất cả** (người khác chỉ xem phần của mình), mỗi người chỉ sửa chi phí thực tế của chính mình; **xếp ghế bằng chạm người rồi chạm ghế** (không kéo thả, vì kéo thả khó dùng trên màn nhỏ và đụng cử chỉ cuộn), lưu ngay mỗi lần chạm; đổi suất sau khi xác nhận thì xóa sơ đồ ghế và báo #6 loại "đổi giờ" cho cả nhóm; đổi ghế sau khi xác nhận báo #6 loại "đổi ghế" cho người bị ảnh hưởng; sang COMPLETED thì ước tính của từng người thành chi phí thực tế ban đầu (sửa được), `actualCost` luôn tính lại từ `expenses`.
+- Người tạo không nằm trong `participants`; danh sách người đi = người tạo + người `accepted` (`attendeeIdsOf`).
+- Giao diện: `PlanSection` (chọn suất bằng `ShowtimePicker`, `SeatPlanner`, `FoodPlanner`, `EstimateList`), `CostSection`; `SeatMap` thêm `reservedCodes`, `holderLabels`; nút Xác nhận kế hoạch và Đã xem xong cố định phía trên menu cùng nút Hủy.
+- **Ảnh nhân vật:** màn mới không đặt nhân vật (màn dày dữ liệu); chưa cần ảnh thêm. Tư thế `đang chọn ghế` và `đang tính tiền` vẫn chưa có.
+- Còn dở: chưa đo cỡ chữ 125% và 150%, chưa đo 320px; thử trên iPhone và Android; thông báo #3 và #8 và tự chuyển COMPLETED làm ở Sprint 5B (nút Đã xem xong chỉ hiện sau giờ chiếu); đánh giá phim và đánh giá ghế sau buổi xem để Sprint 6.
+- File chính: `src/services/appointment-{plan,estimate}.service.ts` (estimate không có đuôi `.service`), `src/lib/appointment/{cost,suggest}.ts`, `src/models/{seat-claim,expense}.ts`, `src/components/appointment/{plan-section,seat-planner,food-planner,estimate-list,cost-section}.tsx`, `scripts/seed-appointment.ts`.

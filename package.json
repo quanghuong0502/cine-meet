@@ -14,6 +14,7 @@
         "seed:movies": "tsx scripts/seed-movies.ts",
         "seed:users": "tsx scripts/seed-users.ts",
         "seed:friends": "tsx scripts/seed-friends.ts",
+        "seed:appointment": "tsx scripts/seed-appointment.ts",
         "rescore": "tsx scripts/rescore-layouts.ts",
         "mascots:trim": "node scripts/trim-mascots.mjs",
         "splash:generate": "node scripts/generate-splash.mjs"
