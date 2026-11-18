@@ -1045,6 +1045,7 @@
         "obstructed": "view blocked"
       },
       "kindLabel": "Kind of mark",
+      "kindRequired": "Choose Like or Avoid to save.",
       "favorite": "Like",
       "avoid": "Avoid",
       "tagsLabel": "Quick notes",

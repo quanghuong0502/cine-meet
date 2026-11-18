@@ -8,6 +8,7 @@ import { Chip } from "@/components/admin/auditorium-editor/chips";
 import { SeatMap, type SeatMapSeatType } from "@/components/seat-map/seat-map";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 import { SEAT_MARK_TAGS, type SeatMarkKind, type SeatMarkTag } from "@/models/seat-mark-constants";
 import type { LayoutSeat } from "@/lib/seat-layout/types";
 import type { RoomView } from "@/services/cinema.service";
@@ -154,6 +155,12 @@ function SeatPanel({ seat, typeName, existing, onSave, onRemove, onClose }: Pane
   const [kind, setKind] = useState<SeatMarkKind | null>(existing?.kind ?? null);
   const [tags, setTags] = useState<SeatMarkTag[]>(existing?.tags ?? []);
   const [note, setNote] = useState(existing?.note ?? "");
+  // Shown after the person taps Save without choosing Like or Avoid; a mark needs one of them.
+  const [kindMissing, setKindMissing] = useState(false);
+  const chooseKind = (next: SeatMarkKind) => {
+    setKind(next);
+    setKindMissing(false);
+  };
   const flags = seat.flags.map((flag) => t(`flags.${flag}`));
 
   return (
@@ -169,15 +176,21 @@ function SeatPanel({ seat, typeName, existing, onSave, onRemove, onClose }: Pane
       </div>
 
       <div role="radiogroup" aria-label={t("kindLabel")} className="flex gap-stack">
-        <Chip role="radio" selected={kind === "favorite"} onClick={() => setKind("favorite")} className="min-w-0 flex-1 px-inset-xs">
+        <Chip role="radio" selected={kind === "favorite"} onClick={() => chooseKind("favorite")} className={cn("min-w-0 flex-1 px-inset-xs", kindMissing && "border-destructive")}>
           <Star className="size-icon-sm" aria-hidden />
           {t("favorite")}
         </Chip>
-        <Chip role="radio" selected={kind === "avoid"} onClick={() => setKind("avoid")} className="min-w-0 flex-1 px-inset-xs">
+        <Chip role="radio" selected={kind === "avoid"} onClick={() => chooseKind("avoid")} className={cn("min-w-0 flex-1 px-inset-xs", kindMissing && "border-destructive")}>
           <Ban className="size-icon-sm" aria-hidden />
           {t("avoid")}
         </Chip>
       </div>
+
+      {kindMissing ? (
+        <p role="alert" className="-mt-stack type-secondary text-destructive">
+          {t("kindRequired")}
+        </p>
+      ) : null}
 
       <div role="group" aria-label={t("tagsLabel")} className="flex flex-wrap gap-stack">
         {SEAT_MARK_TAGS.map((tag) => (
@@ -208,9 +221,11 @@ function SeatPanel({ seat, typeName, existing, onSave, onRemove, onClose }: Pane
         <Button
           type="button"
           size="cta"
-          disabled={kind === null}
           onClick={() => {
-            if (!kind) return;
+            if (!kind) {
+              setKindMissing(true);
+              return;
+            }
             onSave({ seatCode: seat.code, kind, tags, note: note.trim() });
           }}
           className="min-w-0 flex-1"
