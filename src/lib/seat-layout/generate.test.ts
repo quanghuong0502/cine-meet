@@ -147,6 +147,8 @@ describe("scoreSeats", () => {
     expect(scoreOf({ ...base(), stadiumFromRow: 3 }, "I8")).toBeGreaterThan(scoreOf(base(), "I8") + 3);
     // The front rows are before the slope starts, so they stay as they were.
     expect(scoreOf({ ...base(), stadiumFromRow: 3 }, "A8")).toBe(scoreOf(base(), "A8"));
+    // More steps between rows lift the back rows higher, so their view is no worse than with fewer steps.
+    expect(scoreOf({ ...base(), stadiumFromRow: 3, stepsPerRow: 3 }, "I8")).toBeGreaterThanOrEqual(scoreOf({ ...base(), stadiumFromRow: 3, stepsPerRow: 1 }, "I8"));
   });
 
   it("does not penalize a seat that has nobody in front of it (removed cell in the row ahead)", () => {

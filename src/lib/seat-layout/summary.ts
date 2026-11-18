@@ -53,7 +53,7 @@ export function buildLayoutSummary(
   }
   parts.push(aisles.length ? `${aisles.join("; ")}.` : "Không có lối đi.");
 
-  parts.push(config.stadiumFromRow !== null ? `Bậc thang từ hàng thứ ${config.stadiumFromRow} tính từ màn hình.` : "Phòng phẳng, không có bậc thang.");
+  parts.push(config.stadiumFromRow !== null ? `Bậc thang từ hàng thứ ${config.stadiumFromRow} tính từ màn hình, ${config.stepsPerRow} bậc giữa hai hàng.` : "Phòng phẳng, không có bậc thang.");
   if (config.entrances.length) {
     parts.push(
       `Cửa: ${config.entrances.map((e) => `${ENTRANCE_SIDE[e.side]}-${ENTRANCE_POSITION[e.position]}`).join(", ")}.`,

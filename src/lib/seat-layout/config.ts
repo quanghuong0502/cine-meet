@@ -3,6 +3,10 @@ import { NO_SEAT, type LayoutConfig } from "./types";
 
 export const MAX_ROWS = 40;
 export const MAX_COLS = 60;
+export const MIN_STEPS_PER_ROW = 1;
+export const MAX_STEPS_PER_ROW = 4;
+/** What layouts saved before the field existed are read as (about the 0.2 m rise the score used to assume). */
+export const DEFAULT_STEPS_PER_ROW = 2;
 
 /** A, B ... Z, AA, AB ... */
 export function rowLabel(index: number): string {
@@ -34,6 +38,7 @@ export const layoutConfigSchema = z
       distance: z.enum(["near", "medium", "far"]),
     }),
     stadiumFromRow: z.number().int().min(1).max(MAX_ROWS).nullable(),
+    stepsPerRow: z.number().int().min(MIN_STEPS_PER_ROW).max(MAX_STEPS_PER_ROW).default(DEFAULT_STEPS_PER_ROW),
     aisles: z.object({
       verticalAfterCols: uniqueInts(1, MAX_COLS),
       horizontalAfterRows: uniqueInts(1, MAX_ROWS),
@@ -83,6 +88,7 @@ export function defaultLayoutConfig(defaultSeatType: string): LayoutConfig {
     defaultSeatType,
     screen: { positionPct: 50, widthPct: 85, distance: "medium" },
     stadiumFromRow: null,
+    stepsPerRow: DEFAULT_STEPS_PER_ROW,
     aisles: { verticalAfterCols: [], horizontalAfterRows: [] },
     entrances: [{ side: "right", position: "back" }],
     overrides: [],

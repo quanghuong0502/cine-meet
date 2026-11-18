@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { MAX_COLS, MAX_ROWS, rowLabel } from "@/lib/seat-layout/config";
+import { MAX_COLS, MAX_ROWS, MAX_STEPS_PER_ROW, MIN_STEPS_PER_ROW, rowLabel } from "@/lib/seat-layout/config";
 import { pruneConfig } from "@/lib/seat-layout/overrides";
 import type { EntrancePosition, EntranceSide, LayoutConfig } from "@/lib/seat-layout/types";
 import { Chip, ChoiceGroup } from "./chips";
@@ -222,6 +222,18 @@ export function SettingsPanel({ name, onName, branchId, onBranch, branchLocked, 
           onChange={(stadiumFromRow) => set({ stadiumFromRow })}
         />
       </div>
+
+      {config.stadiumFromRow !== null ? (
+        <div className="flex flex-col gap-item">
+          <span className="type-label leading-none! text-muted-foreground">{t("fields.stepsPerRow.label")}</span>
+          <ChoiceGroup
+            label={t("fields.stepsPerRow.label")}
+            value={String(config.stepsPerRow)}
+            options={Array.from({ length: MAX_STEPS_PER_ROW - MIN_STEPS_PER_ROW + 1 }, (_, i) => String(MIN_STEPS_PER_ROW + i)).map((n) => ({ value: n, label: n }))}
+            onChange={(n) => set({ stepsPerRow: Number(n) })}
+          />
+        </div>
+      ) : null}
 
       <div className="flex flex-col gap-item">
         <span className="type-label leading-none! text-muted-foreground">{t("fields.verticalAisles.label")}</span>

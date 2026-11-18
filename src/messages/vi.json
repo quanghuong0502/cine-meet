@@ -705,6 +705,9 @@
             "label": "Bậc thang từ hàng thứ (tính từ màn hình, trống nếu phòng phẳng)",
             "placeholder": "vd. 3"
           },
+          "stepsPerRow": {
+            "label": "Số bậc giữa hai hàng"
+          },
           "verticalAisles": {
             "label": "Lối đi dọc (sau cột)"
           },

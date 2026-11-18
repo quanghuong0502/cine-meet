@@ -27,6 +27,7 @@ export interface SeatOverride {
  * - `horizontalAfterRows`: aisle between the Nth and (N+1)th row in label order (A = 1).
  * - `stadiumFromRow`: rows counted from the screen (1 = front row); rows from here back are raised.
  *   `null` = no stadium information (all rows treated alike).
+ * - `stepsPerRow`: how many steps rise between two raised rows (1 to 4); old layouts without it count as 2.
  */
 export interface LayoutConfig {
   rows: number;
@@ -37,6 +38,8 @@ export interface LayoutConfig {
   defaultSeatType: string;
   screen: { positionPct: number; widthPct: number; distance: ScreenDistance };
   stadiumFromRow: number | null;
+  /** Steps between two raised rows (each step about `STEP_HEIGHT_M`); only meaningful when `stadiumFromRow` is set. */
+  stepsPerRow: number;
   aisles: { verticalAfterCols: number[]; horizontalAfterRows: number[] };
   entrances: { side: EntranceSide; position: EntrancePosition }[];
   overrides: SeatOverride[];

@@ -705,6 +705,9 @@
             "label": "Stadium starts at row (from the screen, empty if flat)",
             "placeholder": "e.g. 3"
           },
+          "stepsPerRow": {
+            "label": "Steps between two rows"
+          },
           "verticalAisles": {
             "label": "Vertical aisles (after column)"
           },

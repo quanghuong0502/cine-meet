@@ -94,7 +94,7 @@ thì dùng giá đó, bỏ qua mọi rule. Giá ước tính của lịch hẹn 
 - **Vị trí màn hình**: thanh trượt 0–100%. **50% là chính giữa**, kéo sang trái nhỏ hơn 50, kéo sang phải lớn hơn 50. Sơ đồ xem trước cập nhật theo thời gian thực.
 - Chiều rộng màn hình so với chiều rộng dãy ghế (%).
 - Khoảng cách từ màn hình tới hàng đầu: gần / vừa / xa.
-- Bậc thang (stadium): bắt đầu dốc lên từ hàng nào.
+- Bậc thang (stadium): bắt đầu dốc lên từ hàng nào, và số bậc giữa hai hàng (1 đến 4, mặc định 2; mỗi bậc giả định khoảng 0,1 m để chấm điểm ghế).
 
 **Lối đi & vị trí đặc biệt**
 - Lối đi dọc: nằm sau cột nào (có thể nhiều lối).
@@ -118,6 +118,7 @@ Ví dụ dữ liệu layout:
   "colNumbering": "left_to_right",
   "screen": { "positionPct": 58, "widthPct": 85, "distance": "medium" },
   "stadiumFromRow": 3,
+  "stepsPerRow": 2,
   "aisles": { "verticalAfterCols": [3, 13], "horizontalAfterRows": [4] },
   "entrances": [{ "side": "right", "position": "back" }],
   "overrides": [

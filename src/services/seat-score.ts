@@ -24,10 +24,11 @@ export const HEAD_ABOVE_EYE_M = 0.12;
 export const SCREEN_BOTTOM_M = 1.0;
 export const SCREEN_ASPECT = 2.0;
 /**
- * Floor rise per row from the row where the stadium section starts. Sources give roughly 12 to 18 cm for a shallow tier and note
- * that this barely clears heads; commercial rooms rise more, so 0.2 m is assumed. The layout has no field for the real rise.
+ * Height of one step. The admin enters how many steps lie between two rows (`stepsPerRow`), so the rise per row is steps times this.
+ * Sources give roughly 12 to 18 cm per row for a shallow tier and note that this barely clears heads; commercial rooms rise more.
+ * 0.1 m per step is a judgement call (2 steps = 0.2 m, what the score assumed before the field existed).
  */
-export const STADIUM_RISE_M = 0.2;
+export const STEP_HEIGHT_M = 0.1;
 
 export const SCORE_WEIGHTS = {
   /** Loss when the screen looks far too wide (front rows) or far too small (too far back). */
@@ -112,7 +113,7 @@ export function buildScoreContext(seats: GridSeat[], config: LayoutConfig, geome
 /** Floor height of a physical row (0 = front). Without a stadium section the room is flat. */
 export function floorHeight(rowIndex: number, config: LayoutConfig): number {
   if (config.stadiumFromRow === null) return 0;
-  return STADIUM_RISE_M * Math.max(0, rowIndex + 1 - (config.stadiumFromRow - 1));
+  return STEP_HEIGHT_M * config.stepsPerRow * Math.max(0, rowIndex + 1 - (config.stadiumFromRow - 1));
 }
 
 /** The seat directly in front (same columns, previous row), if there is one; nobody sits in a removed cell or across the gap. */
