@@ -1,0 +1,396 @@
+import { Error as MongooseError, isValidObjectId, type HydratedDocument } from "mongoose";
+import { z } from "zod";
+import { connectToDatabase } from "@/lib/db";
+import { MAX_DECLINE_REASON, MAX_INVITEES, MAX_TIME_OPTIONS } from "@/lib/appointment/limits";
+import {
+  canTransition,
+  canWithdraw,
+  isFinished,
+  isOpenForReplies,
+  isOverdue,
+  type AppointmentStatus,
+  type ParticipantStatus,
+} from "@/lib/appointment/state";
+import { Appointment, type AppointmentDoc } from "@/models/appointment";
+import { Movie } from "@/models/movie";
+import { Showtime } from "@/models/showtime";
+import { User } from "@/models/user";
+import { filterFriendIds, type PersonView } from "@/services/friend.service";
+
+type Doc = HydratedDocument<AppointmentDoc>;
+
+const objectId = z.string().regex(/^[0-9a-fA-F]{24}$/, { error: "invalid" });
+
+const optionInputSchema = z.object({
+  /** Needed when there is no showtime; with a showtime the start comes from it. */
+  startAt: z.coerce.date().optional(),
+  showtimeId: objectId.optional(),
+});
+export type OptionInput = z.infer<typeof optionInputSchema>;
+
+export const createAppointmentSchema = z.object({
+  movieId: objectId,
+  options: z.array(optionInputSchema).min(1).max(MAX_TIME_OPTIONS),
+  inviteeIds: z.array(objectId).min(1).max(MAX_INVITEES),
+  responseDeadline: z.coerce.date().optional(),
+  /** false keeps it as a draft (nobody is told yet). */
+  send: z.boolean().default(true),
+});
+export type CreateAppointmentInput = z.infer<typeof createAppointmentSchema>;
+
+export const proposeOptionSchema = optionInputSchema;
+
+export type AppointmentError =
+  | "not_found"
+  | "forbidden"
+  | "bad_state"
+  | "movie_not_found"
+  | "invalid_option"
+  | "not_friends"
+  | "invalid_deadline"
+  | "limit"
+  | "duplicate"
+  | "needs_attendee"
+  | "late"
+  | "conflict";
+type Failure = { ok: false; error: AppointmentError };
+
+const MAX_RETRIES = 4;
+
+/** Loads, changes and saves one appointment. A stale save (someone else changed it meanwhile) is retried on fresh data. */
+async function mutate<T extends { ok: boolean }>(id: string, change: (doc: Doc) => Promise<T> | T): Promise<T | Failure> {
+  if (!isValidObjectId(id)) return { ok: false, error: "not_found" };
+  await connectToDatabase();
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    const doc = await Appointment.findById(id);
+    if (!doc) return { ok: false, error: "not_found" };
+    const result = await change(doc);
+    if (!result.ok) return result;
+    try {
+      await doc.save();
+      return result;
+    } catch (error) {
+      if (error instanceof MongooseError.VersionError) continue;
+      throw error;
+    }
+  }
+  return { ok: false, error: "conflict" };
+}
+
+const sameId = (a: { toString(): string } | undefined | null, b: string) => a?.toString() === b;
+/** Replaces one person's vote on an option (or removes it). The whole list is rewritten so the in-memory copy is always what gets saved. */
+function setOptionVote(option: Doc["timeOptions"][number], userId: string, vote: "yes" | "no" | null): void {
+  const others = option.votes.filter((v) => !sameId(v.userId, userId)).map((v) => ({ userId: v.userId, vote: v.vote }));
+  option.set("votes", vote ? [...others, { userId, vote }] : others);
+}
+const participantOf = (doc: Doc, userId: string) => doc.participants.find((p) => sameId(p.userId, userId));
+
+/** Turns a time option from the form into a real start time, checking it against the movie and the clock. */
+async function resolveOption(movieId: string, input: OptionInput, now = new Date()): Promise<{ startAt: Date; showtimeId?: string } | null> {
+  if (input.showtimeId) {
+    const showtime = await Showtime.findOne({ _id: input.showtimeId, movieId }, "startAt").lean();
+    if (!showtime || showtime.startAt.getTime() <= now.getTime()) return null;
+    return { startAt: showtime.startAt, showtimeId: input.showtimeId };
+  }
+  if (!input.startAt || Number.isNaN(input.startAt.getTime()) || input.startAt.getTime() <= now.getTime()) return null;
+  return { startAt: input.startAt };
+}
+
+export type CreateResult = { ok: true; id: string; status: AppointmentStatus } | Failure;
+
+/** A new appointment: the creator picks the movie, one or more times, and friends to invite. Sent right away unless it is a draft. */
+export async function createAppointment(creatorId: string, input: CreateAppointmentInput, now = new Date()): Promise<CreateResult> {
+  await connectToDatabase();
+  if (!(await Movie.exists({ _id: input.movieId }))) return { ok: false, error: "movie_not_found" };
+
+  const inviteeIds = [...new Set(input.inviteeIds)];
+  // Only current, active friends can be invited: that is also what keeps locked accounts out.
+  if ((await filterFriendIds(creatorId, inviteeIds)).length !== inviteeIds.length) return { ok: false, error: "not_friends" };
+  if (input.responseDeadline && input.responseDeadline.getTime() <= now.getTime()) return { ok: false, error: "invalid_deadline" };
+
+  const options: { startAt: Date; showtimeId?: string }[] = [];
+  for (const raw of input.options) {
+    const option = await resolveOption(input.movieId, raw, now);
+    if (!option) return { ok: false, error: "invalid_option" };
+    const clash = options.some((o) => o.startAt.getTime() === option.startAt.getTime() && o.showtimeId === option.showtimeId);
+    if (clash) return { ok: false, error: "duplicate" };
+    options.push(option);
+  }
+
+  const doc = await Appointment.create({
+    creatorId,
+    movieId: input.movieId,
+    status: input.send ? "INVITING" : "DRAFT",
+    responseDeadline: input.responseDeadline,
+    timeOptions: options.map((o) => ({ ...o, proposedBy: creatorId, votes: [] })),
+    participants: inviteeIds.map((userId) => ({ userId, status: "invited" })),
+  });
+  return { ok: true, id: doc._id.toString(), status: doc.status };
+}
+
+/** Sends a draft: DRAFT becomes INVITING and the invited people are told. */
+export async function sendInvitations(creatorId: string, id: string): Promise<{ ok: true; recipientIds: string[] } | Failure> {
+  return mutate(id, (doc) => {
+    if (!sameId(doc.creatorId, creatorId)) return { ok: false as const, error: "forbidden" as const };
+    if (!canTransition(doc.status, "INVITING")) return { ok: false as const, error: "bad_state" as const };
+    doc.status = "INVITING";
+    return { ok: true as const, recipientIds: doc.participants.map((p) => p.userId.toString()) };
+  });
+}
+
+/** The invited person turns the whole invitation down (optionally saying why). They can still change their mind by voting. */
+export async function declineInvitation(userId: string, id: string, reason?: string): Promise<{ ok: true; creatorId: string } | Failure> {
+  const text = reason?.trim().slice(0, MAX_DECLINE_REASON) || undefined;
+  return mutate(id, (doc) => {
+    const me = participantOf(doc, userId);
+    if (!me) return { ok: false as const, error: "not_found" as const };
+    if (!isOpenForReplies(doc.status)) return { ok: false as const, error: "bad_state" as const };
+    me.status = "declined";
+    me.declineReason = text;
+    for (const option of doc.timeOptions) setOptionVote(option, userId, null);
+    return { ok: true as const, creatorId: doc.creatorId.toString() };
+  });
+}
+
+/** Votes yes or no on one time option (`null` takes the vote back). A yes anywhere means the person is in; no yes at all means undecided. */
+export async function setVote(
+  userId: string,
+  id: string,
+  optionId: string,
+  vote: "yes" | "no" | null,
+): Promise<{ ok: true; creatorId: string; becameAccepted: boolean } | Failure> {
+  return mutate(id, (doc) => {
+    const me = participantOf(doc, userId);
+    if (!me) return { ok: false as const, error: "not_found" as const };
+    if (!isOpenForReplies(doc.status)) return { ok: false as const, error: "bad_state" as const };
+    const option = doc.timeOptions.find((o) => sameId(o._id, optionId));
+    if (!option) return { ok: false as const, error: "invalid_option" as const };
+
+    setOptionVote(option, userId, vote);
+    const before = me.status;
+    me.status = doc.timeOptions.some((o) => o.votes.some((v) => sameId(v.userId, userId) && v.vote === "yes")) ? "accepted" : "invited";
+    if (before === "declined") me.declineReason = undefined;
+    return { ok: true as const, creatorId: doc.creatorId.toString(), becameAccepted: before !== "accepted" && me.status === "accepted" };
+  });
+}
+
+/** Suggests another time. It joins the poll, and the person who suggested it votes yes automatically. */
+export async function proposeOption(
+  userId: string,
+  id: string,
+  input: OptionInput,
+  now = new Date(),
+): Promise<{ ok: true; creatorId: string; optionId: string } | Failure> {
+  return mutate(id, async (doc) => {
+    const me = participantOf(doc, userId);
+    if (!me) return { ok: false as const, error: "not_found" as const };
+    if (!isOpenForReplies(doc.status)) return { ok: false as const, error: "bad_state" as const };
+    if (doc.timeOptions.length >= MAX_TIME_OPTIONS) return { ok: false as const, error: "limit" as const };
+    const option = await resolveOption(doc.movieId.toString(), input, now);
+    if (!option) return { ok: false as const, error: "invalid_option" as const };
+    if (doc.timeOptions.some((o) => o.startAt.getTime() === option.startAt.getTime() && o.showtimeId?.toString() === option.showtimeId)) {
+      return { ok: false as const, error: "duplicate" as const };
+    }
+    const added = doc.timeOptions[doc.timeOptions.push({ ...option, proposedBy: userId, votes: [{ userId, vote: "yes" }] }) - 1]!;
+    me.status = "accepted";
+    me.declineReason = undefined;
+    return { ok: true as const, creatorId: doc.creatorId.toString(), optionId: added._id.toString() };
+  });
+}
+
+export const lockSchema = z.object({
+  optionId: objectId,
+  attendeeIds: z.array(objectId).min(1).max(MAX_INVITEES),
+});
+export type LockInput = z.infer<typeof lockSchema>;
+
+/**
+ * The creator picks one time and the final list of people, and the list is locked: nobody is added or removed after this.
+ * Anyone invited who has not turned the invitation down can be put in (even without a yes); everyone else not chosen is left out.
+ */
+export async function lockParticipants(
+  creatorId: string,
+  id: string,
+  input: LockInput,
+): Promise<{ ok: true; attendeeIds: string[]; excludedIds: string[] } | Failure> {
+  return mutate(id, (doc) => {
+    if (!sameId(doc.creatorId, creatorId)) return { ok: false as const, error: "forbidden" as const };
+    if (!canTransition(doc.status, "PARTICIPANTS_LOCKED")) return { ok: false as const, error: "bad_state" as const };
+    const option = doc.timeOptions.find((o) => sameId(o._id, input.optionId));
+    if (!option) return { ok: false as const, error: "invalid_option" as const };
+
+    const chosen = new Set(input.attendeeIds);
+    const eligible = doc.participants.filter((p) => p.status === "invited" || p.status === "accepted");
+    const eligibleIds = new Set(eligible.map((p) => p.userId.toString()));
+    // Declined people and strangers cannot be put in; an empty list is not a plan.
+    if (chosen.size === 0 || [...chosen].some((userId) => !eligibleIds.has(userId))) return { ok: false as const, error: "needs_attendee" as const };
+
+    const attendeeIds: string[] = [];
+    const excludedIds: string[] = [];
+    for (const p of eligible) {
+      const inList = chosen.has(p.userId.toString());
+      p.status = inList ? "accepted" : "excluded";
+      (inList ? attendeeIds : excludedIds).push(p.userId.toString());
+    }
+    doc.chosenOptionId = option._id;
+    doc.status = "PARTICIPANTS_LOCKED";
+    return { ok: true as const, attendeeIds, excludedIds };
+  });
+}
+
+/** An attendee leaves on their own, until the showtime. The creator is told; seats and money are settled in Sprint 5A. */
+export async function withdraw(userId: string, id: string, now = new Date()): Promise<{ ok: true; creatorId: string } | Failure> {
+  return mutate(id, (doc) => {
+    const me = participantOf(doc, userId);
+    if (!me || me.status !== "accepted") return { ok: false as const, error: "not_found" as const };
+    if (!canWithdraw(doc.status)) return { ok: false as const, error: "bad_state" as const };
+    const chosen = doc.timeOptions.find((o) => sameId(o._id, doc.chosenOptionId?.toString() ?? ""));
+    if (chosen && chosen.startAt.getTime() <= now.getTime()) return { ok: false as const, error: "late" as const };
+    me.status = "dropped";
+    return { ok: true as const, creatorId: doc.creatorId.toString() };
+  });
+}
+
+/** Only the creator cancels, at any step before it is over. Everyone who has not turned it down is told. */
+export async function cancelAppointment(creatorId: string, id: string, reason?: string): Promise<{ ok: true; recipientIds: string[]; wasDraft: boolean } | Failure> {
+  const text = reason?.trim().slice(0, MAX_DECLINE_REASON) || undefined;
+  return mutate(id, (doc) => {
+    if (!sameId(doc.creatorId, creatorId)) return { ok: false as const, error: "forbidden" as const };
+    if (!canTransition(doc.status, "CANCELLED")) return { ok: false as const, error: "bad_state" as const };
+    const wasDraft = doc.status === "DRAFT";
+    doc.status = "CANCELLED";
+    doc.cancelReason = text;
+    const skip: ParticipantStatus[] = ["declined", "dropped", "excluded"];
+    return { ok: true as const, wasDraft, recipientIds: wasDraft ? [] : doc.participants.filter((p) => !skip.includes(p.status)).map((p) => p.userId.toString()) };
+  });
+}
+
+// ---------- reading ----------
+
+export interface OptionView {
+  id: string;
+  startAt: string;
+  showtimeId?: string;
+  proposedBy?: PersonView;
+  votes: { userId: string; vote: "yes" | "no" }[];
+  myVote?: "yes" | "no";
+}
+
+export interface ParticipantView extends PersonView {
+  status: ParticipantStatus;
+  overdue: boolean;
+  declineReason?: string;
+}
+
+export interface AppointmentView {
+  id: string;
+  status: AppointmentStatus;
+  isCreator: boolean;
+  myStatus: ParticipantStatus | null;
+  creator: PersonView;
+  movie: { id: string; title: string; posterUrl?: string };
+  responseDeadline: string | null;
+  options: OptionView[];
+  chosenOptionId?: string;
+  participants: ParticipantView[];
+  cancelReason?: string;
+}
+
+async function loadPeople(ids: string[]): Promise<Map<string, PersonView>> {
+  const users = await User.find({ _id: { $in: [...new Set(ids)] } }, "name avatar").lean();
+  return new Map(users.map((u) => [u._id.toString(), { id: u._id.toString(), name: u.name, avatar: u.avatar ?? undefined }]));
+}
+
+/** One appointment as the signed-in person may see it, or null when it does not exist or they are not part of it. */
+export async function getAppointment(userId: string, id: string, now = new Date()): Promise<AppointmentView | null> {
+  if (!isValidObjectId(id)) return null;
+  await connectToDatabase();
+  const doc = await Appointment.findById(id).lean();
+  if (!doc) return null;
+  const isCreator = doc.creatorId.toString() === userId;
+  const me = doc.participants.find((p) => p.userId.toString() === userId);
+  // A draft has not been sent: only its creator knows about it.
+  if (!isCreator && (!me || doc.status === "DRAFT")) return null;
+
+  const people = await loadPeople([doc.creatorId.toString(), ...doc.participants.map((p) => p.userId.toString()), ...doc.timeOptions.map((o) => o.proposedBy.toString())]);
+  const movie = await Movie.findById(doc.movieId, "title posterUrl").lean();
+  const unknown = (pid: string): PersonView => ({ id: pid, name: "?" });
+  const person = (pid: string) => people.get(pid) ?? unknown(pid);
+
+  return {
+    id: doc._id.toString(),
+    status: doc.status,
+    isCreator,
+    myStatus: me?.status ?? null,
+    creator: person(doc.creatorId.toString()),
+    movie: { id: doc.movieId.toString(), title: movie?.title ?? "", posterUrl: movie?.posterUrl ?? undefined },
+    responseDeadline: doc.responseDeadline?.toISOString() ?? null,
+    options: doc.timeOptions.map((o) => ({
+      id: o._id.toString(),
+      startAt: o.startAt.toISOString(),
+      showtimeId: o.showtimeId?.toString(),
+      proposedBy: o.proposedBy.toString() === doc.creatorId.toString() ? undefined : person(o.proposedBy.toString()),
+      votes: o.votes.map((v) => ({ userId: v.userId.toString(), vote: v.vote })),
+      myVote: o.votes.find((v) => v.userId.toString() === userId)?.vote,
+    })),
+    chosenOptionId: doc.chosenOptionId?.toString(),
+    participants: doc.participants.map((p) => ({
+      ...person(p.userId.toString()),
+      status: p.status,
+      overdue: isOverdue(doc.responseDeadline, p.status, now),
+      declineReason: p.declineReason ?? undefined,
+    })),
+    cancelReason: doc.cancelReason ?? undefined,
+  };
+}
+
+export interface AppointmentSummary {
+  id: string;
+  status: AppointmentStatus;
+  isCreator: boolean;
+  /** This person has not answered yet and the poll is open: shown as "needs your answer". */
+  needsReply: boolean;
+  creatorName: string;
+  movie: { title: string; posterUrl?: string };
+  /** The chosen time once locked, otherwise the earliest candidate. */
+  startAt: string;
+  optionCount: number;
+  attendeeCount: number;
+}
+
+/** The signed-in person's appointments, split into current and finished (watched or cancelled). */
+export async function listAppointments(userId: string): Promise<{ active: AppointmentSummary[]; past: AppointmentSummary[] }> {
+  await connectToDatabase();
+  const docs = await Appointment.find({
+    $or: [{ creatorId: userId }, { "participants.userId": userId, status: { $ne: "DRAFT" } }],
+  })
+    .sort({ updatedAt: -1 })
+    .limit(200)
+    .lean();
+  const movies = await Movie.find({ _id: { $in: [...new Set(docs.map((d) => d.movieId.toString()))] } }, "title posterUrl").lean();
+  const movieById = new Map(movies.map((m) => [m._id.toString(), m]));
+  const people = await loadPeople(docs.map((d) => d.creatorId.toString()));
+
+  const summaries = docs.map((doc): AppointmentSummary => {
+    const me = doc.participants.find((p) => p.userId.toString() === userId);
+    const chosen = doc.timeOptions.find((o) => o._id.toString() === doc.chosenOptionId?.toString());
+    const times = doc.timeOptions.map((o) => o.startAt.getTime());
+    const movie = movieById.get(doc.movieId.toString());
+    return {
+      id: doc._id.toString(),
+      status: doc.status,
+      isCreator: doc.creatorId.toString() === userId,
+      needsReply: doc.status === "INVITING" && me?.status === "invited",
+      creatorName: people.get(doc.creatorId.toString())?.name ?? "",
+      movie: { title: movie?.title ?? "", posterUrl: movie?.posterUrl ?? undefined },
+      startAt: (chosen?.startAt ?? new Date(Math.min(...times))).toISOString(),
+      optionCount: doc.timeOptions.length,
+      attendeeCount: doc.participants.filter((p) => p.status === "accepted").length + 1,
+    };
+  });
+  const byTime = (a: AppointmentSummary, b: AppointmentSummary) => a.startAt.localeCompare(b.startAt);
+  return {
+    active: summaries.filter((s) => !isFinished(s.status)).sort(byTime),
+    past: summaries.filter((s) => isFinished(s.status)).sort((a, b) => byTime(b, a)),
+  };
+}
