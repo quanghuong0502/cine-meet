@@ -1,7 +1,7 @@
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 import { findShowtimesFromAction } from "@/actions/appointments";
 import { Chip } from "@/components/admin/auditorium-editor/chips";
 import { ShowtimePicker, toShowtimeChoice, type ShowtimeChoice } from "@/components/appointment/showtime-picker";
@@ -40,7 +40,29 @@ export function ShowtimeFinder({ movieId, slots, chosenIds, onPick, onError }: P
   const [rows, setRows] = useState<ShowtimeRow[] | null>(null);
   const [filters, setFilters] = useState<FilterValues>({});
 
+  // The picker fires `onChange` while it is still being turned. The search waits until the choice is final: the field loses focus (the
+  // picker closed) or nothing changes for a moment. Only the newest search may show its result.
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const latest = useRef(0);
+  const SETTLE_MS = 600;
+
+  function schedule(nextDate: string, nextTime: string) {
+    if (timer.current) clearTimeout(timer.current);
+    setRows(null);
+    setFilters({});
+    latest.current += 1;
+    if (nextDate && nextTime) timer.current = setTimeout(() => search(nextDate, nextTime), SETTLE_MS);
+  }
+
+  function settle() {
+    if (!timer.current) return;
+    clearTimeout(timer.current);
+    timer.current = null;
+    search(date, time);
+  }
+
   function search(nextDate: string, nextTime: string) {
+    timer.current = null;
     setRows(null);
     setFilters({});
     if (!nextDate || !nextTime) return;
@@ -48,8 +70,10 @@ export function ShowtimeFinder({ movieId, slots, chosenIds, onPick, onError }: P
     if (!iso) return onError(t("errors.customInvalid"));
     if (new Date(iso).getTime() <= Date.now()) return onError(t("errors.past"));
     onError("");
+    const mine = ++latest.current;
     startSearch(async () => {
       const result = await findShowtimesFromAction(movieId, iso).catch(() => null);
+      if (mine !== latest.current) return;
       if (!result?.ok) return onError(t("errors.searchFailed"));
       setRows(result.showtimes);
     });
@@ -85,8 +109,8 @@ export function ShowtimeFinder({ movieId, slots, chosenIds, onPick, onError }: P
     <div className="flex flex-col gap-item">
       <span className="type-secondary text-muted-foreground">{t("pickTimeLabel")}</span>
       <div className="flex gap-stack">
-        <DateTimeField kind="date" label={t("customDate")} value={date} onChange={(v) => { setDate(v); search(v, time); }} className="min-w-0 flex-1" />
-        <DateTimeField kind="time" label={t("customTime")} value={time} onChange={(v) => { setTime(v); search(date, v); }} className="w-time-field" />
+        <DateTimeField kind="date" label={t("customDate")} value={date} onChange={(v) => { setDate(v); schedule(v, time); }} onBlur={settle} className="min-w-0 flex-1" />
+        <DateTimeField kind="time" label={t("customTime")} value={time} onChange={(v) => { setTime(v); schedule(date, v); }} onBlur={settle} className="w-time-field" />
       </div>
 
       {searching ? <LoadingState compact /> : null}

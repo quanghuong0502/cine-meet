@@ -9,6 +9,8 @@ interface DateTimeFieldProps {
   kind: "date" | "time";
   value: string;
   onChange: (value: string) => void;
+  /** The field lost focus: the picker was closed, so the choice is final. (`onChange` also fires while the picker is still being turned.) */
+  onBlur?: () => void;
   /** Name for screen readers (the visible words are only a hint while the field is empty). */
   label: string;
   className?: string;
@@ -21,7 +23,7 @@ interface DateTimeFieldProps {
  * invisible and stretched over the whole field (a tap anywhere opens the picker), and our own icon is drawn at the right edge.
  * Same height as every other input (48px).
  */
-export function DateTimeField({ kind, value, onChange, label, className }: DateTimeFieldProps) {
+export function DateTimeField({ kind, value, onChange, onBlur, label, className }: DateTimeFieldProps) {
   const t = useTranslations("dateTimeField");
   const empty = value === "";
   const Icon = kind === "date" ? CalendarDays : Clock;
@@ -32,6 +34,7 @@ export function DateTimeField({ kind, value, onChange, label, className }: DateT
         aria-label={label}
         value={value}
         onChange={(event) => onChange(event.target.value)}
+        onBlur={onBlur}
         className={cn(
           "relative h-control w-full rounded-xl bg-card pr-inset-xl pl-inset type-body text-left [&::-webkit-date-and-time-value]:text-left",
           "[&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:size-full [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0",
