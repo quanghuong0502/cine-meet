@@ -113,12 +113,16 @@ export function PollSection({ view, canVote, nameOf, when, declineButton, onLock
           const yes = others.filter((v) => v.vote === "yes").length + (mine === "yes" ? 1 : 0);
           const no = others.filter((v) => v.vote === "no").length + (mine === "no" ? 1 : 0);
           return (
-            <li key={option.id} className="flex flex-col gap-stack rounded-xl border bg-card p-inset-sm pb-inset">
+            <li key={option.id} className="flex flex-col gap-stack rounded-xl border bg-card p-inset-sm">
               <div className="flex items-start gap-stack">
                 <div className="flex min-w-0 flex-1 flex-col gap-tight">
                   <span className="type-item-title tabular-nums">{when(option.startAt)}</span>
                   {option.place ? <span className="break-words type-secondary text-muted-foreground">{option.place}</span> : null}
                   {option.proposedBy ? <span className="type-secondary text-muted-foreground">{t("proposedBy", { name: option.proposedBy.name })}</span> : null}
+                  <p className="pt-stack type-secondary text-muted-foreground">
+                    {t("tally", { yes, no })}
+                    {yesNames.length > 0 ? ` · ${yesNames.join(", ")}` : ""}
+                  </p>
                 </div>
                 {/* Creator: nudge the people who have not voted on this time, or lock it in (nobody said Yes -> nobody could go, so it is off). */}
                 {onLock || onRemind ? (
@@ -136,10 +140,6 @@ export function PollSection({ view, canVote, nameOf, when, declineButton, onLock
                   </div>
                 ) : null}
               </div>
-              <p className="type-secondary text-muted-foreground">
-                {t("tally", { yes, no })}
-                {yesNames.length > 0 ? ` · ${yesNames.join(", ")}` : ""}
-              </p>
               {canVote ? (
                 <div role="group" aria-label={t("yourVote")} className="flex gap-stack">
                   <Chip selected={mine === "yes"} disabled={pending} onClick={() => setDraft({ ...draft, [option.id]: mine === "yes" ? null : "yes" })}>
