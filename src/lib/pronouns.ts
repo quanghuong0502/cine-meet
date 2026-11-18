@@ -1,7 +1,7 @@
 /**
  * How the app speaks in Vietnamese: what it calls the person (`you`) and what it calls itself (`me`). The admin picks the pair
  * (Settings > Cách xưng hô); the default is "bạn" and "tôi". Messages never contain the words themselves: they hold the tokens
- * `[you]` and `[me]` (`[You]` and `[Me]` at the start of a sentence), swapped for the saved pair when the messages are loaded.
+ * `[you]` and `[me]`, swapped for the saved pair when the messages are loaded; capitals follow the position (see `applyPronounsToText`).
  * Pure code (no database): the admin form and the tests use it too.
  */
 
@@ -10,17 +10,20 @@ export interface Pronouns {
   you: string;
   /** What the app calls itself: "tôi", "mình", "em". */
   me: string;
+  /** The word is a proper name ("Bubu", "Huong"): always written with capitals, wherever it stands. */
+  youIsName: boolean;
+  meIsName: boolean;
 }
 
-export const DEFAULT_PRONOUNS: Pronouns = { you: "bạn", me: "tôi" };
+export const DEFAULT_PRONOUNS: Pronouns = { you: "bạn", me: "tôi", youIsName: false, meIsName: false };
 
 /** Quick picks shown in the admin form; any other pair can still be typed. */
 export const PRONOUN_PRESETS: readonly Pronouns[] = [
-  { you: "bạn", me: "tôi" },
-  { you: "bạn", me: "mình" },
-  { you: "cậu", me: "tớ" },
-  { you: "anh", me: "em" },
-  { you: "chị", me: "em" },
+  { you: "bạn", me: "tôi", youIsName: false, meIsName: false },
+  { you: "bạn", me: "mình", youIsName: false, meIsName: false },
+  { you: "cậu", me: "tớ", youIsName: false, meIsName: false },
+  { you: "anh", me: "em", youIsName: false, meIsName: false },
+  { you: "chị", me: "em", youIsName: false, meIsName: false },
 ];
 
 export const MAX_PRONOUN_LENGTH = 12;
@@ -37,23 +40,27 @@ export function parsePronoun(raw: string): { ok: true; value: string } | { ok: f
 }
 
 const upperFirst = (word: string) => word.charAt(0).toUpperCase() + word.slice(1);
+const titleCase = (words: string) => words.split(" ").map(upperFirst).join(" ");
 
-/** A token that starts a sentence: at the very start, after . ! ? … and a space, or on a new line. */
-const SENTENCE_START = /(^|[.!?…]\s+|\n\s*)\[(you|me)\]/gi;
+/** How one saved word is written: a proper name always with capitals (each word of it), anything else as saved, with capitals only when it starts a sentence. */
+export function pronounWord(word: string, isName: boolean, startsSentence: boolean): string {
+  if (isName) return titleCase(word);
+  return startsSentence ? upperFirst(word) : word;
+}
+
+/** Text before a token ends a sentence (or there is none): at the very start, after . ! ? … and a space, or on a new line. */
+const BEFORE_SENTENCE_START = /(?:^|[.!?…]\s+|\n\s*)$/;
 
 /**
- * Swaps the tokens in one string. The saved words are lower case ("tôi"); a word that starts a sentence gets its first letter in
- * capitals ("Tôi") by position, whichever form the message used (`[me]` or `[Me]`). `[You]` and `[Me]` also force capitals elsewhere
- * (after a colon, at the start of a label).
+ * Swaps the tokens in one string. The saved words are lower case ("tôi"). A word that starts a sentence gets a capital first letter
+ * ("Tôi") and one inside a sentence stays as saved, by position, whichever form the message used (`[me]` or `[Me]`). A proper name
+ * ("Bubu") is written with capitals everywhere.
  */
 export function applyPronounsToText(text: string, pronouns: Pronouns): string {
-  const word = (kind: string) => (kind.toLowerCase() === "you" ? pronouns.you : pronouns.me);
-  return text
-    .replace(SENTENCE_START, (_whole, lead: string, kind: string) => `${lead}${upperFirst(word(kind))}`)
-    .replaceAll("[You]", upperFirst(pronouns.you))
-    .replaceAll("[you]", pronouns.you)
-    .replaceAll("[Me]", upperFirst(pronouns.me))
-    .replaceAll("[me]", pronouns.me);
+  return text.replace(/\[(you|me)\]/gi, (_token, kind: string, offset: number) => {
+    const startsSentence = BEFORE_SENTENCE_START.test(text.slice(0, offset));
+    return kind.toLowerCase() === "you" ? pronounWord(pronouns.you, pronouns.youIsName, startsSentence) : pronounWord(pronouns.me, pronouns.meIsName, startsSentence);
+  });
 }
 
 type Tree = { [key: string]: Tree | string };
@@ -65,7 +72,7 @@ const memo = new Map<string, Tree>();
  * for each pair the app has used, not on every request.
  */
 export function applyPronouns<T extends Tree>(messages: T, pronouns: Pronouns, sourceKey: string): T {
-  const key = `${sourceKey}|${pronouns.you}|${pronouns.me}`;
+  const key = `${sourceKey}|${pronouns.you}|${pronouns.me}|${pronouns.youIsName}|${pronouns.meIsName}`;
   const known = memo.get(key);
   if (known) return known as T;
   const walk = (node: Tree): Tree =>

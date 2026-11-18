@@ -11,7 +11,11 @@ export async function savePronounsAction(_previous: SaveState, formData: FormDat
   const admin = await requireAdmin();
   const you = formData.get("you");
   const me = formData.get("me");
-  const result = await savePronouns({ you: typeof you === "string" ? you : "", me: typeof me === "string" ? me : "" }, admin.userId);
+  // A switch sends "on" when it is on and nothing when it is off.
+  const result = await savePronouns(
+    { you: typeof you === "string" ? you : "", me: typeof me === "string" ? me : "", youIsName: formData.get("youIsName") === "on", meIsName: formData.get("meIsName") === "on" },
+    admin.userId,
+  );
   if (!result.ok) return errorState(formData, "validation", result.fieldErrors);
 
   // Every screen speaks the new pair: drop the cached pair and the client's cached pages.

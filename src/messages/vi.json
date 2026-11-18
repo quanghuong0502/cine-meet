@@ -584,6 +584,7 @@
         "you": { "label": "App gọi người dùng là" },
         "me": { "label": "App tự xưng là" }
       },
+      "isName": "Là tên riêng",
       "preview": "Xem trước",
       "sample": "{You} đã chốt ghế D8 rồi nè. {Me} sẽ nhắc {you} trước giờ chiếu nha!"
     },

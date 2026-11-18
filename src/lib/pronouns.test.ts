@@ -15,31 +15,35 @@ describe("parsePronoun", () => {
   });
 });
 
+const PAIR = { ...DEFAULT_PRONOUNS };
+
 describe("applyPronounsToText", () => {
-  it("swaps the tokens, capital form at the start of a sentence", () => {
-    const text = "[You] đã chốt. [Me] nhắc [you] nha, [me] hứa.";
-    expect(applyPronounsToText(text, DEFAULT_PRONOUNS)).toBe("Bạn đã chốt. Tôi nhắc bạn nha, tôi hứa.");
-    expect(applyPronounsToText(text, { you: "anh", me: "em" })).toBe("Anh đã chốt. Em nhắc anh nha, em hứa.");
+  it("writes the saved word in lower case inside a sentence and with a capital when it starts one", () => {
+    const text = "[you] đã chốt. [me] nhắc [you] nha, [me] hứa.";
+    expect(applyPronounsToText(text, PAIR)).toBe("Bạn đã chốt. Tôi nhắc bạn nha, tôi hứa.");
+    expect(applyPronounsToText(text, { ...PAIR, you: "anh", me: "em" })).toBe("Anh đã chốt. Em nhắc anh nha, em hứa.");
   });
-  it("capitalises a word that starts a sentence by position, whichever form the message used", () => {
-    const pair = { you: "tôi", me: "tớ" };
-    expect(applyPronounsToText("[you] đã chốt. [me] nhắc nha! [you] nhớ nhé? Cho [you] nè", pair)).toBe("Tôi đã chốt. Tớ nhắc nha! Tôi nhớ nhé? Cho tôi nè");
+  it("decides capitals by position, not by the form the message used", () => {
+    const pair = { ...PAIR, you: "tôi", me: "tớ" };
+    expect(applyPronounsToText("[you] đã chốt. [me] nhắc nha! [You] nhớ nhé? Cho [You] nè", pair)).toBe("Tôi đã chốt. Tớ nhắc nha! Tôi nhớ nhé? Cho tôi nè");
     expect(applyPronounsToText("[You] đã chốt.\n[me] nhắc nha", pair)).toBe("Tôi đã chốt.\nTớ nhắc nha");
-    expect(applyPronounsToText("Mời [you] nhé", pair)).toBe("Mời tôi nhé");
+    expect(applyPronounsToText("Gửi: [Me] hứa", pair)).toBe("Gửi: tớ hứa");
   });
-  it("forces capitals with [You] and [Me] anywhere", () => {
-    expect(applyPronounsToText("Gửi: [Me] hứa", { you: "bạn", me: "tôi" })).toBe("Gửi: Tôi hứa");
+  it("writes a proper name with capitals everywhere", () => {
+    const pair = { you: "huong", me: "bubu", youIsName: true, meIsName: true };
+    expect(applyPronounsToText("Chào [you]! [me] đây. Hỏi [me] nha, [you] ơi", pair)).toBe("Chào Huong! Bubu đây. Hỏi Bubu nha, Huong ơi");
+    expect(applyPronounsToText("nhắc [me]", { ...pair, me: "quang huong" })).toBe("nhắc Quang Huong");
   });
   it("leaves 'bạn bè' and other text alone", () => {
-    expect(applyPronounsToText("Mời bạn bè", { you: "anh", me: "em" })).toBe("Mời bạn bè");
+    expect(applyPronounsToText("Mời bạn bè", { ...PAIR, you: "anh", me: "em" })).toBe("Mời bạn bè");
   });
 });
 
 describe("applyPronouns", () => {
   it("swaps inside nested messages without touching the original", () => {
     const source = { a: { b: "[You] ơi" }, c: "[me]" };
-    const out = applyPronouns(source, { you: "cậu", me: "tớ" }, "test");
-    expect(out).toEqual({ a: { b: "Cậu ơi" }, c: "tớ" });
+    const out = applyPronouns(source, { ...PAIR, you: "cậu", me: "tớ" }, "test");
+    expect(out).toEqual({ a: { b: "Cậu ơi" }, c: "Tớ" });
     expect(source.a.b).toBe("[You] ơi");
   });
 });

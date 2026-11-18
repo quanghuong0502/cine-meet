@@ -584,6 +584,7 @@
         "you": { "label": "The app calls the user" },
         "me": { "label": "The app calls itself" }
       },
+      "isName": "Is a proper name",
       "preview": "Preview",
       "sample": "{You} locked seat D8! {Me} will remind {you} before the show."
     },
