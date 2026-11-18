@@ -53,7 +53,7 @@ Muốn chỉnh cỡ chữ hay kích thước cho cả app thì sửa đúng ở 
 | `--inset-bottom` / `--inset-top` | `max(16, vùng an toàn)` | thanh dính đáy và đỉnh: dùng `pb-(--inset-bottom)` để chừa thanh home và tai thỏ |
 
 Icon: `size-icon-xs` 12, `size-icon-sm` 16 (cạnh chữ phụ), `size-icon` 20 (trong nút), `size-icon-lg` 24 (thanh tab, nút quay lại).
-Kích thước cố định có tên: `stepper` 32, `swatch` 80, `track` 8, `area-lg` 192 và `area-max` 288 (ô nhiều dòng lớn), `poster` 136, `mascot-max` 176, `fab-clear` 80, `action-clear` 88; cộng các token cũ `target`, `control`, `control-lg`, `row`, `avatar`, `nav`.
+Kích thước cố định có tên: `stepper` 32, `swatch` 80, `track` 8, `area-lg` 192, `area-max` 288 và `area-cap` 160 (ô nhiều dòng), `poster` 136, `mascot-max` 176, `fab-clear` 80, `action-clear` 88, `sidebar` 256, `sheet-gap` 96, `grabber` 100, `menu-min` 144, `switch` 52 và `switch-thumb` 28; bóng: `shadow-menu`; cộng các token cũ `target`, `control`, `control-lg`, `row`, `avatar`, `nav`.
 Cột (`max-w-*`): `app` 672 (cột người dùng), `page` 768 (trang admin), `form` 384 (thẻ form, thanh Lưu), `menu` 448, `media` 576, `hint` 320.
 
 **Cách dùng:**
@@ -61,8 +61,9 @@ Cột (`max-w-*`): `app` 672 (cột người dùng), `page` 768 (trang admin), `
 - Giá trị chưa có vai trò (ví dụ một kích thước cố định mới) thì **thêm token vào `globals.css`, ghi vào bảng này, rồi mới dùng**. Không viết số tạm.
 - Giá trị tùy ý `[...]` chỉ được dùng token bên trong (`calc(100%-2*var(--spacing-inset))`, `max(var(--spacing-inset),env(...))`); không viết `px` hay `rem` lẻ. Đơn vị theo khung nhìn (`dvh`, `%`) và `0` được phép.
 - Số 0 (`gap-0`, `p-0`, `-mt-0`) và phân số (`w-1/2`) được phép.
-- `components/ui` (shadcn) giữ nguyên.
-- Test `src/design-tokens.test.ts` chặn: số rời ở gap/margin/padding, số rời ở size/width/height, `max-w-sm|md|...|7xl`, và `px` hoặc `rem` lẻ trong giá trị `[...]`.
+- **Không có ngoại lệ, kể cả `components/ui`** (các thành phần shadcn đã được chuyển sang token và test quét cả thư mục này). Thêm thành phần shadcn mới (`npx shadcn@latest add ...`) thì **phải đổi mọi số rời trong file vừa tạo sang token ngay**, nếu không `npm test` đỏ; biến thể kích thước không dùng thì xóa.
+- Test `src/design-tokens.test.ts` chặn trong **mọi** file (kể cả `components/ui`): số rời ở gap/margin/padding/vị trí (`top|right|bottom|left|inset|translate`), số rời ở size/width/height, `max-w-sm|md|...|7xl`, `px` hoặc `rem` lẻ trong **mọi** giá trị `[...]` (kể cả `grid-cols`, `shadow`, `rounded`), và hai token trùng tên giữa spacing và container.
+- **Đặt tên token không được trùng giữa các nhóm**: `max-w-<tên>` tìm cả trong `--spacing-*` lẫn `--container-*`, trùng tên sẽ chọn nhầm (`max-w-nav` từng rộng 68px vì `--spacing-nav`). Test chặn.
 
 **Căn cứ và chỗ chưa kiểm chứng:** lưới 4/8, lề 16 và bậc 8 / 16 / 24 theo [Apple HIG, Layout](https://developer.apple.com/design/human-interface-guidelines/layout) (nguyên tắc dùng lề và vùng an toàn của hệ thống; con số lề 16–20pt lấy từ nguồn thứ ba, chưa đối chiếu trang gốc) và [Material layout metrics](https://m1.material.io/layout/metrics-keylines.html) (lưới 8dp, lề 16dp; tài liệu Material 1–2, chưa kiểm tra Material 3). Vùng chạm 44pt và khoảng 8pt giữa hai vùng chạm: nhiều nguồn khớp. Một bài hướng dẫn nêu nên **áp vùng an toàn một lần ở cấp màn hình** (app áp `--inset-bottom` ở các thanh dính, không ở từng thành phần) và dùng **padding để nới vùng chạm** thay vì margin. Chưa tìm được nguồn về bo góc liên tục (squircle) của iOS. Một báo cáo cho rằng PWA standalone có thể đếm đôi vùng an toàn khi dùng `env()` làm khoảng đệm; chưa thấy trên máy của chủ dự án, kiểm tra trên máy thật khi chỉnh thanh dính.
 
@@ -82,6 +83,7 @@ Quy ước này theo cách Apple dùng *text style* (Dynamic Type) và Material 
 | `type-label` | 15 / 22, medium | tên của một trường hoặc giá trị đặt phía trên, nhãn chip, tab | iOS Subheadline, M3 label large (14, 500) |
 | `type-caption` | 13 / 18 | ghi chú nhỏ | iOS Footnote (13) |
 | `type-micro` | 12 / 16 | chữ nhỏ nhất được phép (nhãn dưới ô ngày, thời gian trình phát) | iOS Caption 1 (12), M3 label medium (12) |
+| `type-action` | 16 / 24, medium | chữ trên nút (nút `pill` và `cta-sm`) | iOS Body nhấn, M3 label large |
 | `type-tag` | 12 / 16, medium | badge, tag, nhãn tab dưới | iOS Caption 1, M3 label medium (12, 500) |
 
 Nguồn: [Apple HIG, Typography](https://developer.apple.com/design/human-interface-guidelines/typography) (iOS mặc định 17pt, tối thiểu 11pt; Headline 17pt đậm; Large Title 34pt, Caption 2 11pt) và Material 3 type scale (headline small 24, title large 22, title medium 16/500, body large 16/400, label medium 12/500).
@@ -91,9 +93,9 @@ Nguồn: [Apple HIG, Typography](https://developer.apple.com/design/human-interf
 - Chọn vai trò theo việc chữ đó làm. Hai chỗ cùng làm một việc (hai tên nhóm thẻ) phải cùng vai trò.
 - **Màu và `tabular-nums` là class riêng** (`type-secondary text-muted-foreground`); vai trò không chứa màu.
 - Vai trò là `!important` để luôn thắng cỡ mặc định của thành phần shadcn (một `DrawerTitle` có `type-heading` là 20px). Ngoại lệ hiếm phải ghi rõ bằng dấu `!` ở class kia (`font-semibold!`, `leading-6!`), kèm lý do ở bình luận hoặc commit.
-- **Thành phần shadcn trong `components/ui` giữ nguyên.** Nhưng mọi tiêu đề dùng chúng (`CardTitle`, `DrawerTitle`, `SheetTitle`, `AlertDialogTitle`) và mọi `h1` đến `h4` phải ghi vai trò. `Label`, `CardDescription`, `AlertDialogDescription`, nút và ô nhập đã có cỡ nhất quán sẵn từ `components/ui`.
+- **Mọi thành phần shadcn cũng dùng vai trò chữ** (`components/ui` đã chuyển). Mỗi phần tử chỉ mang **một** vai trò (vai trò là `!important`, hai vai trò trên một phần tử sẽ tranh nhau): vì vậy `Button` mang vai trò theo từng kích thước (`default`, `sm`: `type-label`; `cta`: `type-item-title`; `cta-sm`, `pill`: `type-action`), còn các thành phần tiêu đề (`CardTitle`, `DrawerTitle`, `AlertDialogTitle`) **không có vai trò mặc định** và nơi dùng phải ghi vai trò. Mọi `h1` đến `h4` cũng phải ghi vai trò. Đừng truyền thêm vai trò chữ vào `Button` ở nơi dùng; đổi `size` nếu cần.
 - Cần vai trò mới = thêm `@utility type-...` vào `globals.css`, ghi vào bảng này, rồi mới dùng. Không thêm cỡ ngoài thang.
-- Test `src/design-tokens.test.ts` chặn: `text-xs|sm|base|xl|2xl|3xl|footnote` ngoài `components/ui`, `type-*` không có trong bảng, và heading hoặc tiêu đề thiếu vai trò.
+- Test `src/design-tokens.test.ts` chặn trong **mọi** file: `text-xs|sm|base|xl|2xl|3xl|footnote`, `type-*` không có trong bảng, và heading hoặc tiêu đề thiếu vai trò.
 
 **Kích thước phần tử** (dùng thay cho `h-11`, `h-12`... để mỗi con số có tên và lý do):
 
