@@ -252,6 +252,31 @@ describe("appointment service", () => {
     });
   });
 
+  describe("answer-by time must come before the first viewing time", () => {
+    const base = () => ({ movieId: movie, inviteeIds: [u1], send: true });
+
+    it("is refused at or after the earliest time, accepted before it", async () => {
+      const opts = [{ startAt: hours(48) }, { startAt: hours(72) }];
+      expect(await svc.createAppointment(creator, { ...base(), options: opts, responseDeadline: hours(50) })).toEqual({ ok: false, error: "deadline_too_late" });
+      expect(await svc.createAppointment(creator, { ...base(), options: opts, responseDeadline: hours(80) })).toEqual({ ok: false, error: "deadline_too_late" });
+      expect(await svc.createAppointment(creator, { ...base(), options: opts, responseDeadline: hours(47) })).toMatchObject({ ok: true });
+      expect(await svc.createAppointment(creator, { ...base(), options: opts })).toMatchObject({ ok: true }); // no deadline: nothing to check
+    });
+
+    it("a suggested time cannot be earlier than the answer-by time", async () => {
+      const created = await svc.createAppointment(creator, { ...base(), options: [{ startAt: hours(100) }], responseDeadline: hours(60) });
+      if (!created.ok) throw new Error();
+      expect(await svc.proposeOption(u1, created.id, { startAt: hours(30) })).toEqual({ ok: false, error: "option_before_deadline" });
+      expect(await svc.submitResponse(u1, created.id, { votes: [], proposals: [{ startAt: hours(59) }] })).toEqual({ ok: false, error: "option_before_deadline" });
+      expect(await svc.proposeOption(u1, created.id, { startAt: hours(70) })).toMatchObject({ ok: true });
+    });
+
+    it("with no deadline any future time can be suggested", async () => {
+      const id = await inviting();
+      expect(await svc.proposeOption(u1, id, { startAt: hours(2) })).toMatchObject({ ok: true });
+    });
+  });
+
   describe("answer-by time", () => {
     it("after it, nobody can vote, suggest a time, decline or be invited; the creator can still lock", async () => {
       const created = await svc.createAppointment(creator, { movieId: movie, options: [{ startAt: hours(48) }], inviteeIds: [u1, u2], responseDeadline: hours(1), send: true });

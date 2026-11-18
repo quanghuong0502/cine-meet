@@ -59,6 +59,8 @@ export type AppointmentError =
   | "invalid_option"
   | "not_friends"
   | "invalid_deadline"
+  | "deadline_too_late"
+  | "option_before_deadline"
   | "limit"
   | "duplicate"
   | "needs_attendee"
@@ -150,6 +152,8 @@ export async function createAppointment(creatorId: string, input: CreateAppointm
     if (clash) return { ok: false, error: "duplicate" };
     options.push(option);
   }
+  // The poll has to end before the first time on it: after that time nobody could go anyway.
+  if (input.responseDeadline && input.responseDeadline.getTime() >= Math.min(...options.map((o) => o.startAt.getTime()))) return { ok: false, error: "deadline_too_late" };
 
   const doc = await Appointment.create({
     creatorId,
@@ -266,6 +270,8 @@ export async function proposeOption(
     if (doc.timeOptions.length >= MAX_TIME_OPTIONS) return { ok: false as const, error: "limit" as const };
     const option = await resolveOption(doc.movieId.toString(), input, now);
     if (!option) return { ok: false as const, error: "invalid_option" as const };
+    // A time that comes before the answer-by time would be over before people could vote on it.
+    if (doc.responseDeadline && option.startAt.getTime() <= doc.responseDeadline.getTime()) return { ok: false as const, error: "option_before_deadline" as const };
     if (doc.timeOptions.some((o) => o.startAt.getTime() === option.startAt.getTime() && o.showtimeId?.toString() === option.showtimeId)) {
       return { ok: false as const, error: "duplicate" as const };
     }
@@ -304,6 +310,7 @@ export async function submitResponse(
     for (const proposal of input.proposals) {
       const option = await resolveOption(doc.movieId.toString(), proposal, now);
       if (!option) return { ok: false as const, error: "invalid_option" as const };
+      if (doc.responseDeadline && option.startAt.getTime() <= doc.responseDeadline.getTime()) return { ok: false as const, error: "option_before_deadline" as const };
       const same = (o: { startAt: Date; showtimeId?: { toString(): string } | string | null }) => o.startAt.getTime() === option.startAt.getTime() && (o.showtimeId?.toString() ?? undefined) === option.showtimeId;
       if (doc.timeOptions.some(same) || added.some(same)) return { ok: false as const, error: "duplicate" as const };
       added.push(option);

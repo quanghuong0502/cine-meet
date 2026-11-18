@@ -99,7 +99,10 @@ export function NewAppointmentForm({ movies, movieId, showtimes, initialShowtime
     let responseDeadline: string | undefined;
     if (deadlineDate || deadlineTime) {
       const iso = vietnamToIso(deadlineDate, deadlineTime);
+      // The poll must end before the first time on it.
+      const starts = [...showtimeIds.map((id) => showtimes.find((s) => s.id === id)?.startAt), ...custom].filter((v): v is string => Boolean(v)).map((v) => new Date(v).getTime());
       if (!iso || new Date(iso).getTime() <= Date.now()) next.deadline = t("errors.deadline");
+      else if (starts.length > 0 && new Date(iso).getTime() >= Math.min(...starts)) next.deadline = t("errors.deadlineBeforeStart");
       else responseDeadline = iso;
     }
     setErrors(next);

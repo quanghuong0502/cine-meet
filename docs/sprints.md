@@ -172,7 +172,7 @@ giới hạn tra cứu, kết bạn cần chấp nhận (thiết kế mục 6 v�
 - Chốt: người tạo chọn một phương án, danh sách mặc định là người vote Có (bỏ bớt/thêm người chưa từ chối trước khi chốt), rồi khóa
   danh sách (người tạo không thêm/bớt nữa). Hủy lịch hẹn. Không mời được tài khoản đang bị khóa.
 - Rút lui: người tham gia tự rút trước giờ chiếu; người tạo nhận thông báo #13. (Trả ghế và tính lại tiền làm ở Sprint 5A.)
-- Quá hạn phản hồi: lịch hẹn không tự hủy; người chưa trả lời hiện nhãn "Quá hạn", người tạo vẫn chốt được. **Sau hạn khóa cứng** (chủ dự án chốt 2026-11-18): người được mời không vote, đề xuất giờ hay từ chối được nữa, người tạo không mời thêm được.
+- Quá hạn phản hồi: lịch hẹn không tự hủy; người chưa trả lời hiện nhãn "Quá hạn", người tạo vẫn chốt được. **Sau hạn khóa cứng** (chủ dự án chốt 2026-11-18): người được mời không vote, đề xuất giờ hay từ chối được nữa, người tạo không mời thêm được. Hạn trả lời phải trước giờ sớm nhất đang bình chọn, và giờ đề xuất thêm không được sớm hơn hạn.
 - Máy trạng thái trong service, có test các chuyển trạng thái hợp lệ và không hợp lệ.
 - Thông báo cho sự kiện #1, #2, #4, #7, #13 (không có #3 vì cần tác vụ chạy theo giờ, làm ở Sprint 5B):
   - **In-app:** chuông trên header, badge; ghi trực tiếp vào `notifications`/`notificationDeliveries`.

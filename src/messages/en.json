@@ -1290,7 +1290,9 @@
       "needs_attendee": "Pick at least one person who hasn't declined.",
       "late": "The showtime has started, so you can't leave anymore.",
       "conflict": "Several people edited at once, please try again.",
-      "deadline_passed": "The answer-by time has passed, so this can't change anymore."
+      "deadline_passed": "The answer-by time has passed, so this can't change anymore.",
+      "deadline_too_late": "The answer-by time has to be before the earliest viewing time.",
+      "option_before_deadline": "That time is before the answer-by time, so it can't be suggested."
     },
     "new": {
       "title": "Create plan",
@@ -1319,7 +1321,8 @@
         "customInvalid": "Fill in both date and time.",
         "past": "That time has already passed.",
         "duplicate": "That time is already on the list.",
-        "tooManyTimes": "Up to {max} times."
+        "tooManyTimes": "Up to {max} times.",
+        "deadlineBeforeStart": "The answer-by time has to be in the future and before the earliest viewing time."
       },
       "noShowtimesFilter": "No showtimes on this day at the chosen cinema."
     },

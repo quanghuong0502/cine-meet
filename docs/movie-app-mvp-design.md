@@ -254,7 +254,7 @@ DRAFT → INVITING → PARTICIPANTS_LOCKED → PLANNING → CONFIRMED → COMPLE
   hay bớt người** nữa.
 - **Rút lui:** người tham gia tự rút được từ PARTICIPANTS_LOCKED đến CONFIRMED, trước giờ chiếu. Ghế được trả lại, tiền tính lại,
   người tạo nhận thông báo (#13). Người tạo muốn thôi thì hủy lịch hẹn.
-- **Quá hạn phản hồi:** lịch hẹn không tự hủy; người chưa trả lời hiện nhãn "Quá hạn", người tạo vẫn chốt được. **Sau hạn, người được mời không còn vote, đề xuất giờ khác hay từ chối được nữa** (chủ dự án chốt 2026-11-18, khóa cứng); người tạo cũng không mời thêm được vì người mới không còn thời gian trả lời. Người chưa trả lời không tự đổi thành từ chối.
+- **Quá hạn phản hồi:** lịch hẹn không tự hủy; người chưa trả lời hiện nhãn "Quá hạn", người tạo vẫn chốt được. **Sau hạn, người được mời không còn vote, đề xuất giờ khác hay từ chối được nữa** (chủ dự án chốt 2026-11-18, khóa cứng); người tạo cũng không mời thêm được vì người mới không còn thời gian trả lời. Người chưa trả lời không tự đổi thành từ chối. **Hạn trả lời phải ở tương lai và trước giờ sớm nhất đang bình chọn; giờ được đề xuất thêm cũng không được sớm hơn hạn** (chủ dự án chốt 2026-11-18).
 
 **Giai đoạn 2: Chi tiết** (chỉ mở sau khi đã chốt người)
 - Chọn suất chiếu cụ thể (từ đó biết phòng chiếu). Nếu phương án đã chốt có `showtimeId` thì điền sẵn; nếu không, chọn trong các suất của phim gần giờ đã chốt, và giờ lịch hẹn cập nhật theo suất đó.

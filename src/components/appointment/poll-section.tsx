@@ -45,6 +45,7 @@ export function PollSection({ view, canVote, nameOf, when }: Props) {
   function addProposal() {
     const iso = vietnamToIso(date, time);
     if (!iso || new Date(iso).getTime() <= Date.now()) return setError(t("proposeInvalid"));
+    if (view.responseDeadline && new Date(iso).getTime() <= new Date(view.responseDeadline).getTime()) return setError(tc("errors.option_before_deadline"));
     const taken = [...view.options.map((o) => new Date(o.startAt).getTime()), ...proposals.map((p) => new Date(p).getTime())];
     if (taken.includes(new Date(iso).getTime())) return setError(tc("errors.duplicate"));
     if (view.options.length + proposals.length >= MAX_TIME_OPTIONS) return setError(tc("errors.limit"));

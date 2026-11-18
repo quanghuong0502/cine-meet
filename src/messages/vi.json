@@ -1290,7 +1290,9 @@
       "needs_attendee": "Chọn ít nhất một người chưa từ chối để chốt nha.",
       "late": "Suất chiếu bắt đầu rồi nên không rút lui được nữa.",
       "conflict": "Nhiều người cùng sửa một lúc, thử lại giúp [me] nha.",
-      "deadline_passed": "Đã hết hạn trả lời rồi nên không thay đổi được nữa."
+      "deadline_passed": "Đã hết hạn trả lời rồi nên không thay đổi được nữa.",
+      "deadline_too_late": "Hạn trả lời phải trước giờ xem sớm nhất nha.",
+      "option_before_deadline": "Giờ này sớm hơn hạn trả lời nên chưa đề xuất được."
     },
     "new": {
       "title": "Tạo lịch hẹn",
@@ -1319,7 +1321,8 @@
         "customInvalid": "Nhập đủ ngày và giờ nha.",
         "past": "Giờ này đã qua rồi.",
         "duplicate": "Giờ này có trong danh sách rồi.",
-        "tooManyTimes": "Tối đa {max} giờ thôi nha."
+        "tooManyTimes": "Tối đa {max} giờ thôi nha.",
+        "deadlineBeforeStart": "Hạn trả lời phải trước giờ xem sớm nhất, và phải ở tương lai nha."
       },
       "noShowtimesFilter": "Ngày này chưa có suất nào ở rạp đã chọn."
     },
