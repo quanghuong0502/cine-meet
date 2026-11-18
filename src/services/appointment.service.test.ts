@@ -258,6 +258,73 @@ describe("appointment service", () => {
     });
   });
 
+  describe("invite more", () => {
+    let u4: string;
+    beforeEach(async () => {
+      u4 = String((await models.User.create({ name: "u4", username: "u4" }))._id);
+      await models.Friendship.create({ userA: creator, userB: u4, status: "accepted", pairKey: friends.pairKey(creator, u4) });
+    });
+
+    async function invitingTwo() {
+      const created = await svc.createAppointment(creator, { movieId: movie, options: [{ startAt: hours(30) }], inviteeIds: [u1, u2], send: true });
+      if (!created.ok) throw new Error(created.error);
+      return created.id;
+    }
+
+    it("adds the new person and tells only them", async () => {
+      const id = await invitingTwo();
+      await models.Notification.deleteMany({});
+      expect(await svc.inviteMore(creator, id, [u4])).toEqual({ ok: true, addedIds: [u4] });
+      const view = await svc.getAppointment(creator, id);
+      expect(view?.participants.map((p) => [p.id, p.status])).toEqual([[u1, "invited"], [u2, "invited"], [u4, "invited"]]);
+      const rows = await models.Notification.find({}).lean();
+      expect(rows.map((n) => [String(n.recipientId), n.type])).toEqual([[u4, "appointment_invited"]]);
+    });
+
+    it("a draft takes more people without telling anyone; sending then tells everyone", async () => {
+      const created = await svc.createAppointment(creator, { movieId: movie, options: [{ startAt: hours(30) }], inviteeIds: [u1], send: false });
+      if (!created.ok) throw new Error();
+      expect(await svc.inviteMore(creator, created.id, [u4])).toMatchObject({ ok: true });
+      expect(await models.Notification.countDocuments()).toBe(0);
+      await svc.sendInvitations(creator, created.id);
+      expect((await models.Notification.find({}).lean()).map((n) => String(n.recipientId)).sort()).toEqual([u1, u4].sort());
+    });
+
+    it("only the creator, only friends, nobody already in (even if they declined), and not past the limit", async () => {
+      const id = await invitingTwo();
+      await svc.declineInvitation(u2, id);
+      expect(await svc.inviteMore(u1, id, [u4])).toEqual({ ok: false, error: "forbidden" });
+      expect(await svc.inviteMore(creator, id, [stranger])).toEqual({ ok: false, error: "not_friends" });
+      expect(await svc.inviteMore(creator, id, [u2])).toEqual({ ok: false, error: "duplicate" });
+      expect(await svc.inviteMore(creator, id, [u4, u1])).toEqual({ ok: false, error: "duplicate" });
+      expect(await svc.inviteMore(creator, id, [])).toEqual({ ok: false, error: "needs_attendee" });
+      expect(await svc.getAppointment(creator, id).then((v) => v?.participants.length)).toBe(2);
+
+      const { MAX_INVITEES } = await import("@/lib/appointment/limits");
+      const many = await Promise.all(Array.from({ length: MAX_INVITEES }, async (_, i) => {
+        const user = String((await models.User.create({ name: `m${i}`, username: `m${i}` }))._id);
+        await models.Friendship.create({ userA: creator, userB: user, status: "accepted", pairKey: friends.pairKey(creator, user) });
+        return user;
+      }));
+      expect(await svc.inviteMore(creator, id, many.slice(0, MAX_INVITEES - 1))).toEqual({ ok: false, error: "limit" });
+    });
+
+    it("not once the list is locked or the plan is cancelled", async () => {
+      const id = await invitingTwo();
+      const a = (await svc.getAppointment(creator, id))!.options[0]!;
+      await svc.lockParticipants(creator, id, { optionId: a.id, attendeeIds: [u1] });
+      expect(await svc.inviteMore(creator, id, [u4])).toEqual({ ok: false, error: "bad_state" });
+      await svc.cancelAppointment(creator, id);
+      expect(await svc.inviteMore(creator, id, [u4])).toEqual({ ok: false, error: "bad_state" });
+    });
+
+    it("a locked account cannot be invited", async () => {
+      const id = await invitingTwo();
+      await models.User.updateOne({ _id: u4 }, { status: "locked" });
+      expect(await svc.inviteMore(creator, id, [u4])).toEqual({ ok: false, error: "not_friends" });
+    });
+  });
+
   describe("lists", () => {
     it("split into current and finished, and flag what needs this person's answer", async () => {
       const first = await inviting();

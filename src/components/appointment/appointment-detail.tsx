@@ -14,6 +14,7 @@ import {
   type ActionResult,
 } from "@/actions/appointments";
 import { Chip } from "@/components/admin/auditorium-editor/chips";
+import { InviteMore } from "@/components/appointment/invite-more";
 import { AppointmentStatusBadge } from "@/components/appointment/status-badge";
 import { ReasonDialog } from "@/components/appointment/reason-dialog";
 import { PersonRow } from "@/components/friends/person-row";
@@ -35,7 +36,14 @@ type Dialog = "decline" | "withdraw" | "cancel" | null;
  * an invited person votes, suggests another time or turns it down; the creator sees the totals, picks one time and the final
  * list (locks it), or cancels; after locking an attendee can still leave. Every write says what happened in a toast.
  */
-export function AppointmentDetail({ view }: { view: AppointmentView }) {
+interface DetailProps {
+  view: AppointmentView;
+  /** The creator's friends and groups, for "invite more" (empty for everyone else). */
+  friends?: { id: string; name: string }[];
+  groups?: { id: string; name: string; memberIds: string[] }[];
+}
+
+export function AppointmentDetail({ view, friends = [], groups = [] }: DetailProps) {
   const t = useTranslations("appointments.detail");
   const tc = useTranslations("appointments");
   const locale = useLocale();
@@ -149,6 +157,14 @@ export function AppointmentDetail({ view }: { view: AppointmentView }) {
           ))}
         </ul>
       </section>
+
+      {view.isCreator && (open || view.status === "DRAFT") ? (
+        <InviteMore
+          appointmentId={view.id}
+          candidates={friends.filter((f) => f.id !== view.creator.id && !view.participants.some((p) => p.id === f.id))}
+          groups={groups}
+        />
+      ) : null}
 
       {view.isCreator && open ? (
         <LockPanel view={view} pending={pending} onLock={(optionId, attendeeIds) => run(() => lockParticipantsAction(view.id, { optionId, attendeeIds }), t("locked", { count: attendeeIds.length }))} />

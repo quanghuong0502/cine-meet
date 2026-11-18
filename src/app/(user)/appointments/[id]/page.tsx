@@ -5,6 +5,7 @@ import { AppointmentDetail } from "@/components/appointment/appointment-detail";
 import { PageHeader } from "@/components/page-header";
 import { requireUser } from "@/lib/auth/guards";
 import { getAppointment } from "@/services/appointment.service";
+import { getFriendOverview, listGroups } from "@/services/friend.service";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("appointments.detail");
@@ -17,10 +18,16 @@ export default async function AppointmentPage({ params }: { params: Promise<{ id
   const t = await getTranslations("appointments.detail");
   const view = await getAppointment(user.userId, id);
   if (!view) notFound();
+  // Friends and groups are only needed for the creator's "invite more".
+  const [overview, groups] = view.isCreator ? await Promise.all([getFriendOverview(user.userId), listGroups(user.userId)]) : [null, []];
   return (
     <div className="flex w-full flex-col gap-section p-inset">
       <PageHeader title={t("title")} backHref="/appointments" />
-      <AppointmentDetail view={view} />
+      <AppointmentDetail
+        view={view}
+        friends={overview?.friends.map((f) => ({ id: f.id, name: f.name }))}
+        groups={groups.map((g) => ({ id: g.id, name: g.name, memberIds: g.members.map((m) => m.id) }))}
+      />
     </div>
   );
 }

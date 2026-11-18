@@ -164,6 +164,36 @@ export async function sendInvitations(creatorId: string, id: string): Promise<{ 
   return result;
 }
 
+export const inviteMoreSchema = z.object({ inviteeIds: z.array(objectId).min(1).max(MAX_INVITEES) });
+
+/**
+ * The creator invites more friends while people can still answer (or while it is a draft). Only the new people are told; the ones
+ * invited before get nothing. The list is still capped, and nobody already in the appointment (even someone who declined) is added again.
+ */
+export async function inviteMore(creatorId: string, id: string, inviteeIds: string[]): Promise<{ ok: true; addedIds: string[] } | Failure> {
+  const wanted = [...new Set(inviteeIds)];
+  if (wanted.length === 0) return { ok: false, error: "needs_attendee" };
+  if (!isValidObjectId(id)) return { ok: false, error: "not_found" };
+  await connectToDatabase();
+  const existing = await Appointment.findById(id, "creatorId").lean();
+  if (!existing) return { ok: false, error: "not_found" };
+  if (!sameId(existing.creatorId, creatorId)) return { ok: false, error: "forbidden" };
+  // Only current, active friends: the same rule as the first invitation.
+  if ((await filterFriendIds(creatorId, wanted)).length !== wanted.length) return { ok: false, error: "not_friends" };
+
+  const result = await mutate(id, (doc) => {
+    if (!sameId(doc.creatorId, creatorId)) return { ok: false as const, error: "forbidden" as const };
+    if (doc.status !== "DRAFT" && !isOpenForReplies(doc.status)) return { ok: false as const, error: "bad_state" as const };
+    if (wanted.some((userId) => participantOf(doc, userId))) return { ok: false as const, error: "duplicate" as const };
+    if (doc.participants.length + wanted.length > MAX_INVITEES) return { ok: false as const, error: "limit" as const };
+    for (const userId of wanted) doc.participants.push({ userId, status: "invited" });
+    return { ok: true as const, addedIds: wanted, wasDraft: doc.status === "DRAFT" };
+  });
+  // A draft has told nobody yet; everyone on it is told when it is sent.
+  if (result.ok && !result.wasDraft) await notifyPeople(id, creatorId, "appointment_invited", result.addedIds);
+  return result.ok ? { ok: true, addedIds: result.addedIds } : result;
+}
+
 /** The invited person turns the whole invitation down (optionally saying why). They can still change their mind by voting. */
 export async function declineInvitation(userId: string, id: string, reason?: string): Promise<{ ok: true; creatorId: string } | Failure> {
   const text = reason?.trim().slice(0, MAX_DECLINE_REASON) || undefined;

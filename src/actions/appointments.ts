@@ -8,6 +8,8 @@ import {
   createAppointment,
   createAppointmentSchema,
   declineInvitation,
+  inviteMore,
+  inviteMoreSchema,
   lockParticipants,
   lockSchema,
   proposeOption,
@@ -86,4 +88,13 @@ export async function cancelAppointmentAction(id: string, reason?: string): Prom
   const result = await cancelAppointment(user.userId, id, reason);
   if (result.ok) refresh(id);
   return result.ok ? { ok: true } : result;
+}
+
+export async function inviteMoreAction(id: string, input: unknown): Promise<ActionResult<{ count: number }>> {
+  const user = await requireUser();
+  const parsed = inviteMoreSchema.safeParse(input);
+  if (!idSchema.safeParse(id).success || !parsed.success) return { ok: false, error: "validation" };
+  const result = await inviteMore(user.userId, id, parsed.data.inviteeIds);
+  if (result.ok) refresh(id);
+  return result.ok ? { ok: true, count: result.addedIds.length } : result;
 }

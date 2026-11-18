@@ -1376,6 +1376,12 @@
         "dropped": "Left",
         "excluded": "Not going"
       }
+    },
+    "invite": {
+      "title": "Invite more",
+      "groups": "Groups",
+      "button": "{count, plural, =0 {Invite more} one {Invite # more person} other {Invite # more people}}",
+      "done": "Invited {count, plural, one {# more person} other {# more people}}"
     }
   },
   "notifications": {
