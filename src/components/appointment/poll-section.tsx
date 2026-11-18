@@ -236,7 +236,7 @@ export function PollSection({ view, canVote, when, declineButton, onLock, onRemi
 
       {barVisible && barSlot
         ? createPortal(
-            <div className="mx-auto flex max-w-form items-center gap-stack">
+            <div className="mx-auto flex w-full max-w-form items-center gap-stack">
               {dirty ? (
                 <Button type="button" variant="outline" size="icon" disabled={pending} onClick={discard} aria-label={t("discard")} className="pointer-events-auto size-control shrink-0 rounded-full">
                   <Undo2 aria-hidden />
