@@ -22,7 +22,7 @@ export default async function AppointmentPage({ params }: { params: Promise<{ id
   const [overview, groups] = view.isCreator ? await Promise.all([getFriendOverview(user.userId), listGroups(user.userId)]) : [null, []];
   return (
     <div className="flex w-full flex-col gap-section p-inset">
-      <PageHeader title={t("title")} backHref="/appointments" />
+      <PageHeader title={t("title")} backHref="/appointments" hideTitle />
       <AppointmentDetail
         view={view}
         friends={overview?.friends.map((f) => ({ id: f.id, name: f.name }))}
