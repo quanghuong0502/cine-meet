@@ -27,7 +27,7 @@ interface Props {
 }
 
 /**
- * Asks before locking a time in: locking closes the list for good (nobody is added or removed afterwards), so it is a deliberate step.
+ * Asks before locking a time in (the time is the title, so what is being locked is clear at a glance): locking closes the list for good (nobody is added or removed afterwards), so it is a deliberate step.
  * Everyone who voted Yes is ticked; the creator can untick people who are not coming. The parent gives it a `key` per time,
  * so each time starts again with everybody ticked.
  */
@@ -40,12 +40,8 @@ export function LockDialog({ open, onOpenChange, timeText, voters, pending, onCo
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle className="type-item-title">{t("lockDialogTitle")}</AlertDialogTitle>
-          <AlertDialogDescription>
-            {/* Two lines of their own: which time, then what locking means. */}
-            <span className="block text-foreground">{timeText}</span>
-            <span className="block">{t("lockDialogDescription")}</span>
-          </AlertDialogDescription>
+          <AlertDialogTitle className="type-item-title tabular-nums">{timeText}</AlertDialogTitle>
+          <AlertDialogDescription>{t("lockDialogDescription")}</AlertDialogDescription>
         </AlertDialogHeader>
         <div role="group" aria-label={t("lockPickPeople")} className="flex flex-wrap gap-stack">
           {voters.map((voter) => (

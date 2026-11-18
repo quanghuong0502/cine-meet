@@ -1388,7 +1388,6 @@
       "declineShort": "Decline",
       "timesCreator": "Time slots",
       "lockThisTime": "Lock in this time",
-      "lockDialogTitle": "Lock in this time?",
       "lockDialogDescription": "Once locked, the list can't change."
     },
     "invite": {
