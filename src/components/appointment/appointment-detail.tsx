@@ -49,7 +49,8 @@ export function AppointmentDetail({ view, friends = [], groups = [] }: DetailPro
   const [dialog, setDialog] = useState<Dialog>(null);
 
   const open = isOpenForReplies(view.status);
-  const canVote = open && view.myStatus !== null;
+  // After the answer-by time the server refuses replies, so the controls are not offered at all.
+  const canVote = open && view.myStatus !== null && !view.deadlinePassed;
   const finished = isFinished(view.status);
   const locked = view.chosenOptionId !== undefined;
   const chosen = view.options.find((o) => o.id === view.chosenOptionId);
@@ -97,6 +98,12 @@ export function AppointmentDetail({ view, friends = [], groups = [] }: DetailPro
         <p role="status" className="rounded-xl border border-destructive/40 bg-destructive/10 p-inset-sm type-secondary">
           <Ban className="mr-stack inline size-icon-sm align-text-bottom" aria-hidden />
           {view.cancelReason ? t("cancelledWithReason", { reason: view.cancelReason }) : t("cancelled")}
+        </p>
+      ) : null}
+
+      {open && view.myStatus !== null && view.deadlinePassed ? (
+        <p role="status" className="rounded-xl border bg-card p-inset-sm type-secondary">
+          {t("deadlinePassed")}
         </p>
       ) : null}
 
@@ -156,7 +163,7 @@ export function AppointmentDetail({ view, friends = [], groups = [] }: DetailPro
         </ul>
       </section>
 
-      {view.isCreator && (open || view.status === "DRAFT") ? (
+      {view.isCreator && (open || view.status === "DRAFT") && !view.deadlinePassed ? (
         <InviteMore
           appointmentId={view.id}
           candidates={friends.filter((f) => f.id !== view.creator.id && !view.participants.some((p) => p.id === f.id))}

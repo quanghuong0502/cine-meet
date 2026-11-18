@@ -1289,7 +1289,8 @@
       "duplicate": "That time is already on the list.",
       "needs_attendee": "Pick at least one person who hasn't declined.",
       "late": "The showtime has started, so you can't leave anymore.",
-      "conflict": "Several people edited at once, please try again."
+      "conflict": "Several people edited at once, please try again.",
+      "deadline_passed": "The answer-by time has passed, so this can't change anymore."
     },
     "new": {
       "title": "Create plan",
@@ -1378,7 +1379,8 @@
         "declined": "Declined",
         "dropped": "Left",
         "excluded": "Not going"
-      }
+      },
+      "deadlinePassed": "The answer-by time has passed. Wait for the organizer to lock it in."
     },
     "invite": {
       "title": "Invite more",

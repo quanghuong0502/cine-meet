@@ -171,6 +171,40 @@ describe("appointment service", () => {
     });
   });
 
+  describe("answer-by time", () => {
+    it("after it, nobody can vote, suggest a time, decline or be invited; the creator can still lock", async () => {
+      const created = await svc.createAppointment(creator, { movieId: movie, options: [{ startAt: hours(48) }], inviteeIds: [u1, u2], responseDeadline: hours(1), send: true });
+      if (!created.ok) throw new Error();
+      const id = created.id;
+      const a = (await svc.getAppointment(creator, id))!.options[0]!;
+      await svc.setVote(u1, id, a.id, "yes"); // before the deadline: fine
+
+      const later = new Date(Date.now() + 2 * 3600_000);
+      expect(await svc.setVote(u1, id, a.id, "no", later)).toEqual({ ok: false, error: "deadline_passed" });
+      expect(await svc.setVote(u2, id, a.id, "yes", later)).toEqual({ ok: false, error: "deadline_passed" });
+      expect(await svc.proposeOption(u2, id, { startAt: hours(100) }, later)).toEqual({ ok: false, error: "deadline_passed" });
+      expect(await svc.declineInvitation(u2, id, "bận", later)).toEqual({ ok: false, error: "deadline_passed" });
+      const friend4 = String((await models.User.create({ name: "u4", username: "u4" }))._id);
+      await models.Friendship.create({ userA: creator, userB: friend4, status: "accepted", pairKey: friends.pairKey(creator, friend4) });
+      expect(await svc.inviteMore(creator, id, [friend4], later)).toEqual({ ok: false, error: "deadline_passed" });
+
+      const view = await svc.getAppointment(u2, id, later);
+      expect(view?.deadlinePassed).toBe(true);
+      expect(view?.options[0]?.votes).toEqual([{ userId: u1, vote: "yes" }]); // nothing changed
+      expect(view?.participants.find((p) => p.id === u2)?.status).toBe("invited");
+      expect((await svc.getAppointment(u2, id))?.deadlinePassed).toBe(false);
+      expect(await svc.lockParticipants(creator, id, { optionId: a.id, attendeeIds: [u1] })).toMatchObject({ ok: true });
+    });
+
+    it("with no answer-by time, replies are never closed", async () => {
+      const id = await inviting();
+      const a = (await svc.getAppointment(creator, id))!.options[0]!;
+      const farFuture = new Date(Date.now() + 365 * 24 * 3600_000);
+      expect(await svc.setVote(u1, id, a.id, "yes", farFuture)).toMatchObject({ ok: true });
+      expect((await svc.getAppointment(u1, id, farFuture))?.deadlinePassed).toBe(false);
+    });
+  });
+
   describe("locking", () => {
     it("locks the chosen time and list: others are excluded, declined stay declined", async () => {
       const id = await inviting();

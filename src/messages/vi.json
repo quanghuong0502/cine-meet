@@ -1289,7 +1289,8 @@
       "duplicate": "Giờ này có trong danh sách rồi.",
       "needs_attendee": "Chọn ít nhất một người chưa từ chối để chốt nha.",
       "late": "Suất chiếu bắt đầu rồi nên không rút lui được nữa.",
-      "conflict": "Nhiều người cùng sửa một lúc, thử lại giúp [me] nha."
+      "conflict": "Nhiều người cùng sửa một lúc, thử lại giúp [me] nha.",
+      "deadline_passed": "Đã hết hạn trả lời rồi nên không thay đổi được nữa."
     },
     "new": {
       "title": "Tạo lịch hẹn",
@@ -1378,7 +1379,8 @@
         "declined": "Từ chối",
         "dropped": "Đã rút",
         "excluded": "Không tham gia"
-      }
+      },
+      "deadlinePassed": "Đã hết hạn trả lời. Chờ người tạo chốt nha."
     },
     "invite": {
       "title": "Mời thêm",

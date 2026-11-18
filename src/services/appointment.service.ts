@@ -56,6 +56,7 @@ export type AppointmentError =
   | "duplicate"
   | "needs_attendee"
   | "late"
+  | "deadline_passed"
   | "conflict";
 /** Tells people about something that just happened. The movie and the actor's name are read here and stored with the notification. */
 async function notifyPeople(
@@ -99,6 +100,9 @@ async function mutate<T extends { ok: boolean }>(id: string, change: (doc: Doc) 
   }
   return { ok: false, error: "conflict" };
 }
+
+/** True once the answer-by time has passed: from then on invited people cannot vote, suggest a time or turn the invitation down. */
+const deadlinePassed = (doc: { responseDeadline?: Date | null }, now: Date): boolean => Boolean(doc.responseDeadline) && doc.responseDeadline!.getTime() <= now.getTime();
 
 const sameId = (a: { toString(): string } | undefined | null, b: string) => a?.toString() === b;
 /** Replaces one person's vote on an option (or removes it). The whole list is rewritten so the in-memory copy is always what gets saved. */
@@ -170,7 +174,7 @@ export const inviteMoreSchema = z.object({ inviteeIds: z.array(objectId).min(1).
  * The creator invites more friends while people can still answer (or while it is a draft). Only the new people are told; the ones
  * invited before get nothing. The list is still capped, and nobody already in the appointment (even someone who declined) is added again.
  */
-export async function inviteMore(creatorId: string, id: string, inviteeIds: string[]): Promise<{ ok: true; addedIds: string[] } | Failure> {
+export async function inviteMore(creatorId: string, id: string, inviteeIds: string[], now = new Date()): Promise<{ ok: true; addedIds: string[] } | Failure> {
   const wanted = [...new Set(inviteeIds)];
   if (wanted.length === 0) return { ok: false, error: "needs_attendee" };
   if (!isValidObjectId(id)) return { ok: false, error: "not_found" };
@@ -184,6 +188,8 @@ export async function inviteMore(creatorId: string, id: string, inviteeIds: stri
   const result = await mutate(id, (doc) => {
     if (!sameId(doc.creatorId, creatorId)) return { ok: false as const, error: "forbidden" as const };
     if (doc.status !== "DRAFT" && !isOpenForReplies(doc.status)) return { ok: false as const, error: "bad_state" as const };
+    // Someone invited now would have no time left to answer.
+    if (deadlinePassed(doc, now)) return { ok: false as const, error: "deadline_passed" as const };
     if (wanted.some((userId) => participantOf(doc, userId))) return { ok: false as const, error: "duplicate" as const };
     if (doc.participants.length + wanted.length > MAX_INVITEES) return { ok: false as const, error: "limit" as const };
     for (const userId of wanted) doc.participants.push({ userId, status: "invited" });
@@ -195,12 +201,13 @@ export async function inviteMore(creatorId: string, id: string, inviteeIds: stri
 }
 
 /** The invited person turns the whole invitation down (optionally saying why). They can still change their mind by voting. */
-export async function declineInvitation(userId: string, id: string, reason?: string): Promise<{ ok: true; creatorId: string } | Failure> {
+export async function declineInvitation(userId: string, id: string, reason?: string, now = new Date()): Promise<{ ok: true; creatorId: string } | Failure> {
   const text = reason?.trim().slice(0, MAX_DECLINE_REASON) || undefined;
   const result = await mutate(id, (doc) => {
     const me = participantOf(doc, userId);
     if (!me) return { ok: false as const, error: "not_found" as const };
     if (!isOpenForReplies(doc.status)) return { ok: false as const, error: "bad_state" as const };
+    if (deadlinePassed(doc, now)) return { ok: false as const, error: "deadline_passed" as const };
     me.status = "declined";
     me.declineReason = text;
     for (const option of doc.timeOptions) setOptionVote(option, userId, null);
@@ -216,11 +223,13 @@ export async function setVote(
   id: string,
   optionId: string,
   vote: "yes" | "no" | null,
+  now = new Date(),
 ): Promise<{ ok: true; creatorId: string; becameAccepted: boolean } | Failure> {
   const result = await mutate(id, (doc) => {
     const me = participantOf(doc, userId);
     if (!me) return { ok: false as const, error: "not_found" as const };
     if (!isOpenForReplies(doc.status)) return { ok: false as const, error: "bad_state" as const };
+    if (deadlinePassed(doc, now)) return { ok: false as const, error: "deadline_passed" as const };
     const option = doc.timeOptions.find((o) => sameId(o._id, optionId));
     if (!option) return { ok: false as const, error: "invalid_option" as const };
 
@@ -246,6 +255,7 @@ export async function proposeOption(
     const me = participantOf(doc, userId);
     if (!me) return { ok: false as const, error: "not_found" as const };
     if (!isOpenForReplies(doc.status)) return { ok: false as const, error: "bad_state" as const };
+    if (deadlinePassed(doc, now)) return { ok: false as const, error: "deadline_passed" as const };
     if (doc.timeOptions.length >= MAX_TIME_OPTIONS) return { ok: false as const, error: "limit" as const };
     const option = await resolveOption(doc.movieId.toString(), input, now);
     if (!option) return { ok: false as const, error: "invalid_option" as const };
@@ -364,6 +374,8 @@ export interface AppointmentView {
   creator: PersonView;
   movie: { id: string; title: string; posterUrl?: string };
   responseDeadline: string | null;
+  /** The answer-by time has passed: people can no longer reply (the creator can still lock). */
+  deadlinePassed: boolean;
   options: OptionView[];
   chosenOptionId?: string;
   participants: ParticipantView[];
@@ -411,6 +423,7 @@ export async function getAppointment(userId: string, id: string, now = new Date(
     creator: person(doc.creatorId.toString()),
     movie: { id: doc.movieId.toString(), title: movie?.title ?? "", posterUrl: movie?.posterUrl ?? undefined },
     responseDeadline: doc.responseDeadline?.toISOString() ?? null,
+    deadlinePassed: deadlinePassed(doc, now),
     options: doc.timeOptions.map((o) => ({
       id: o._id.toString(),
       startAt: o.startAt.toISOString(),
