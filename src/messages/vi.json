@@ -1367,10 +1367,7 @@
       "cancelDescription": "Mọi người đã đồng ý sẽ nhận thông báo hủy và không hoàn lại được.",
       "cancelConfirm": "Hủy lịch hẹn",
       "cancelledToast": "Đã hủy lịch hẹn",
-      "lockTitle": "Chốt người tham gia",
-      "lockPickTime": "Chọn giờ chốt",
       "lockPickPeople": "Ai đi nè",
-      "lockNobody": "Chưa giờ nào có người vote Có nên chưa chốt được. Chờ mọi người trả lời nha.",
       "lockButton": "{count, plural, one {Chốt # người} other {Chốt # người}}",
       "locked": "Đã chốt {count, plural, one {# người} other {# người}} tham gia",
       "participant": {
@@ -1388,7 +1385,11 @@
       "unsaved": "Chưa lưu",
       "proposedYes": "[you] vote Có giờ này",
       "removeProposal": "Bỏ giờ đề xuất này",
-      "declineShort": "Từ chối"
+      "declineShort": "Từ chối",
+      "timesCreator": "Khung giờ",
+      "lockThisTime": "Chốt giờ này",
+      "lockDialogTitle": "Chốt giờ này?",
+      "lockDialogDescription": "{time}. Bỏ chọn người không đi. Chốt xong danh sách sẽ khóa, không thêm bớt được nữa."
     },
     "invite": {
       "title": "Mời thêm",

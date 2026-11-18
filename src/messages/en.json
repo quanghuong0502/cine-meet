@@ -1367,10 +1367,7 @@
       "cancelDescription": "Everyone who joined will be told, and this can't be undone.",
       "cancelConfirm": "Cancel plan",
       "cancelledToast": "Plan cancelled",
-      "lockTitle": "Lock in attendees",
-      "lockPickTime": "Pick the time to lock",
       "lockPickPeople": "Who's going",
-      "lockNobody": "No time has a Yes vote yet, so there is nothing to lock in. Wait for replies.",
       "lockButton": "{count, plural, one {Lock in # person} other {Lock in # people}}",
       "locked": "Locked in {count, plural, one {# person} other {# people}}",
       "participant": {
@@ -1388,7 +1385,11 @@
       "unsaved": "Not saved",
       "proposedYes": "You vote Yes on this time",
       "removeProposal": "Remove this suggested time",
-      "declineShort": "Decline"
+      "declineShort": "Decline",
+      "timesCreator": "Time slots",
+      "lockThisTime": "Lock in this time",
+      "lockDialogTitle": "Lock in this time?",
+      "lockDialogDescription": "{time}. Untick anyone who isn't going. Once locked, the list can't change anymore."
     },
     "invite": {
       "title": "Invite more",

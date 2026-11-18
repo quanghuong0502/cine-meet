@@ -1,6 +1,6 @@
 "use client";
 
-import { Ban, LoaderCircle, LogOut, UserLock, XCircle } from "lucide-react";
+import { Ban, LogOut, XCircle } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -11,7 +11,6 @@ import {
   withdrawAction,
   type ActionResult,
 } from "@/actions/appointments";
-import { Chip } from "@/components/admin/auditorium-editor/chips";
 import { InviteMore } from "@/components/appointment/invite-more";
 import { AppointmentStatusBadge } from "@/components/appointment/status-badge";
 import { ReasonDialog } from "@/components/appointment/reason-dialog";
@@ -20,9 +19,9 @@ import { PersonRow } from "@/components/friends/person-row";
 import { ListThumb } from "@/components/list-thumb";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { canWithdraw, isFinished, isOpenForReplies, yesVoterIds } from "@/lib/appointment/state";
+import { canWithdraw, isFinished, isOpenForReplies } from "@/lib/appointment/state";
 import { formatDayCompact, formatDayLong, formatTime } from "@/lib/datetime";
-import type { AppointmentView, OptionView, ParticipantView } from "@/services/appointment.service";
+import type { AppointmentView, ParticipantView } from "@/services/appointment.service";
 
 type Dialog = "decline" | "withdraw" | "cancel" | null;
 
@@ -139,6 +138,9 @@ export function AppointmentDetail({ view, friends = [], groups = [] }: DetailPro
           canVote={canVote}
           nameOf={nameOf}
           when={when}
+          busy={pending}
+          // The creator locks a time straight from its card (the dialog there asks first and lets them untick people).
+          onLock={view.isCreator && open ? (optionId, attendeeIds) => run(() => lockParticipantsAction(view.id, { optionId, attendeeIds }), t("locked", { count: attendeeIds.length })) : undefined}
           // Turning the invitation down sits in the bottom bar beside "Save answers": both are ways to finish answering.
           declineButton={
             canVote && view.myStatus !== "declined" ? (
@@ -175,10 +177,6 @@ export function AppointmentDetail({ view, friends = [], groups = [] }: DetailPro
           candidates={friends.filter((f) => f.id !== view.creator.id && !view.participants.some((p) => p.id === f.id))}
           groups={groups}
         />
-      ) : null}
-
-      {view.isCreator && open ? (
-        <LockPanel view={view} pending={pending} onLock={(optionId, attendeeIds) => run(() => lockParticipantsAction(view.id, { optionId, attendeeIds }), t("locked", { count: attendeeIds.length }))} />
       ) : null}
 
       {!finished ? (
@@ -246,68 +244,6 @@ function ParticipantBadge({ participant }: { participant: ParticipantView }) {
     <Badge variant={participant.status === "accepted" ? "default" : "secondary"} className="h-auto py-hair type-tag">
       {t(key)}
     </Badge>
-  );
-}
-
-/**
- * Creator only: choose the time, then the final people, then lock. Only the people who voted Yes for the chosen time are offered
- * (all of them ticked); the creator can untick some, but cannot add someone who did not say yes to that time.
- */
-function LockPanel({ view, pending, onLock }: { view: AppointmentView; pending: boolean; onLock: (optionId: string, attendeeIds: string[]) => void }) {
-  const t = useTranslations("appointments.detail");
-  const locale = useLocale();
-  const [optionId, setOptionId] = useState<string | null>(null);
-  const [picked, setPicked] = useState<string[] | null>(null);
-  const hasVoters = (o: OptionView) => view.participants.some((p) => (p.status === "invited" || p.status === "accepted") && yesVoterIds(o.votes).includes(p.id));
-  const option = view.options.find((o) => o.id === optionId);
-  // Only people who said yes to this time (and have not turned the invitation down since).
-  const yesIds = option ? yesVoterIds(option.votes) : [];
-  const voters = view.participants.filter((p) => (p.status === "invited" || p.status === "accepted") && yesIds.includes(p.id));
-  const attendees = picked ?? voters.map((p) => p.id);
-
-  function chooseOption(id: string) {
-    setOptionId(id);
-    setPicked(null); // each time starts from the people who said yes to it
-  }
-  const toggle = (id: string) => setPicked(attendees.includes(id) ? attendees.filter((a) => a !== id) : [...attendees, id]);
-
-  return (
-    <section aria-labelledby="appt-lock" className="flex flex-col gap-item">
-      <h2 id="appt-lock" className="type-heading">
-        {t("lockTitle")}
-      </h2>
-      <div role="radiogroup" aria-label={t("lockPickTime")} className="flex flex-wrap gap-stack">
-        {view.options.map((o) => (
-          // A time nobody voted Yes for cannot be locked in: there would be nobody to go.
-          <Chip key={o.id} role="radio" selected={optionId === o.id} disabled={!hasVoters(o)} onClick={() => chooseOption(o.id)}>
-            {formatDayLong(o.startAt, locale)} · {formatTime(o.startAt, locale)}
-          </Chip>
-        ))}
-      </div>
-      {view.options.every((o) => !hasVoters(o)) ? <p className="type-secondary text-muted-foreground">{t("lockNobody")}</p> : null}
-      {option ? (
-        <>
-          <span id="appt-lock-people" className="type-label text-muted-foreground">
-            {t("lockPickPeople")}
-          </span>
-          {voters.length === 0 ? (
-            <p className="type-secondary text-muted-foreground">{t("lockNobody")}</p>
-          ) : (
-            <div role="group" aria-labelledby="appt-lock-people" className="flex flex-wrap gap-stack">
-              {voters.map((p) => (
-                <Chip key={p.id} selected={attendees.includes(p.id)} onClick={() => toggle(p.id)}>
-                  {p.name}
-                </Chip>
-              ))}
-            </div>
-          )}
-          <Button type="button" size="cta" disabled={pending || attendees.length === 0} onClick={() => onLock(option.id, attendees)}>
-            {pending ? <LoaderCircle className="motion-safe:animate-spin" aria-hidden /> : <UserLock aria-hidden />}
-            {t("lockButton", { count: attendees.length })}
-          </Button>
-        </>
-      ) : null}
-    </section>
   );
 }
 

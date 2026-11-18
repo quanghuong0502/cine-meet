@@ -1,16 +1,18 @@
 "use client";
 
-import { CalendarClock, LoaderCircle, Plus, Save, ThumbsDown, ThumbsUp, Undo2, X } from "lucide-react";
+import { CalendarClock, LoaderCircle, Plus, Save, ThumbsDown, ThumbsUp, Undo2, UserLock, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { submitResponseAction } from "@/actions/appointments";
 import { Chip } from "@/components/admin/auditorium-editor/chips";
+import { LockDialog } from "@/components/appointment/lock-dialog";
 import { DateTimeField } from "@/components/date-time-field";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { vietnamToIso } from "@/lib/appointment/datetime";
 import { MAX_TIME_OPTIONS } from "@/lib/appointment/limits";
+import { yesVoterIds } from "@/lib/appointment/state";
 import type { AppointmentView } from "@/services/appointment.service";
 
 type Vote = "yes" | "no" | null;
@@ -23,6 +25,10 @@ interface Props {
   when: (iso: string) => string;
   /** The "turn the invitation down" button (built by the screen, which owns its confirmation); it shares the bottom bar with Save. */
   declineButton?: React.ReactNode;
+  /** For the creator while people can still answer: locks this time in with the chosen people. Without it there is no lock button. */
+  onLock?: (optionId: string, attendeeIds: string[]) => void;
+  /** A write is running (the lock, in the creator's case). */
+  busy?: boolean;
 }
 
 /**
@@ -31,7 +37,7 @@ interface Props {
  * at once. The counts and names show the person's own draft straight away. The parent gives this a `key` that changes after a save,
  * so it starts again from what the server now has.
  */
-export function PollSection({ view, canVote, nameOf, when, declineButton }: Props) {
+export function PollSection({ view, canVote, nameOf, when, declineButton, onLock, busy = false }: Props) {
   const t = useTranslations("appointments.detail");
   const tc = useTranslations("appointments");
   const [pending, start] = useTransition();
@@ -40,6 +46,7 @@ export function PollSection({ view, canVote, nameOf, when, declineButton }: Prop
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [error, setError] = useState("");
+  const [locking, setLocking] = useState<string | null>(null);
 
   const changed = view.options.filter((o) => (draft[o.id] ?? null) !== (o.myVote ?? null));
   const dirty = changed.length > 0 || proposals.length > 0;
@@ -82,11 +89,18 @@ export function PollSection({ view, canVote, nameOf, when, declineButton }: Prop
   }
 
   const myName = nameOf.get(view.viewerId);
+  /** People who said Yes to a time and are still in (have not turned the invitation down). */
+  const votersOf = (optionId: string) => {
+    const option = view.options.find((o) => o.id === optionId);
+    const yes = option ? yesVoterIds(option.votes) : [];
+    return view.participants.filter((p) => (p.status === "invited" || p.status === "accepted") && yes.includes(p.id)).map((p) => ({ id: p.id, name: p.name }));
+  };
+  const lockingOption = view.options.find((o) => o.id === locking);
 
   return (
     <section aria-labelledby="appt-poll" className="flex flex-col gap-item">
       <h2 id="appt-poll" className="type-heading">
-        {t("times")}
+        {view.isCreator ? t("timesCreator") : t("times")}
       </h2>
       <ul className="flex flex-col gap-stack">
         {view.options.map((option) => {
@@ -98,10 +112,18 @@ export function PollSection({ view, canVote, nameOf, when, declineButton }: Prop
           const no = others.filter((v) => v.vote === "no").length + (mine === "no" ? 1 : 0);
           return (
             <li key={option.id} className="flex flex-col gap-stack rounded-xl border bg-card p-inset-sm">
-              <div className="flex flex-col gap-tight">
-                <span className="type-item-title tabular-nums">{when(option.startAt)}</span>
-                {option.place ? <span className="break-words type-secondary text-muted-foreground">{option.place}</span> : null}
-                {option.proposedBy ? <span className="type-secondary text-muted-foreground">{t("proposedBy", { name: option.proposedBy.name })}</span> : null}
+              <div className="flex items-start gap-stack">
+                <div className="flex min-w-0 flex-1 flex-col gap-tight">
+                  <span className="type-item-title tabular-nums">{when(option.startAt)}</span>
+                  {option.place ? <span className="break-words type-secondary text-muted-foreground">{option.place}</span> : null}
+                  {option.proposedBy ? <span className="type-secondary text-muted-foreground">{t("proposedBy", { name: option.proposedBy.name })}</span> : null}
+                </div>
+                {/* Creator: lock this time in. Nobody said Yes to it -> nobody could go, so it is off. */}
+                {onLock ? (
+                  <Button type="button" variant="outline" size="icon" disabled={busy || votersOf(option.id).length === 0} aria-label={t("lockThisTime")} onClick={() => setLocking(option.id)} className="shrink-0">
+                    <UserLock aria-hidden />
+                  </Button>
+                ) : null}
               </div>
               <p className="type-secondary text-muted-foreground">
                 {t("tally", { yes, no })}
@@ -160,6 +182,18 @@ export function PollSection({ view, canVote, nameOf, when, declineButton }: Prop
             </p>
           ) : null}
         </div>
+      ) : null}
+
+      {onLock && lockingOption ? (
+        <LockDialog
+          key={lockingOption.id}
+          open
+          onOpenChange={(next) => !next && setLocking(null)}
+          timeText={when(lockingOption.startAt)}
+          voters={votersOf(lockingOption.id)}
+          pending={busy}
+          onConfirm={(attendeeIds) => onLock(lockingOption.id, attendeeIds)}
+        />
       ) : null}
 
       {canVote && (dirty || declineButton) ? (
