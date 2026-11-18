@@ -53,6 +53,9 @@ export function AppointmentDetail({ view, friends = [], groups = [] }: DetailPro
   const canVote = open && view.myStatus !== null && !view.deadlinePassed;
   const finished = isFinished(view.status);
   const locked = view.chosenOptionId !== undefined;
+  // Leave / cancel float above the menu (like the poll bar) so they stay in thumb reach while the page scrolls.
+  const showWithdraw = view.myStatus === "accepted" && locked && canWithdraw(view.status);
+  const hasFloatingAction = !finished && (showWithdraw || view.isCreator);
   const chosen = view.options.find((o) => o.id === view.chosenOptionId);
   const nameOf = new Map(view.participants.map((p) => [p.id, p.name]));
 
@@ -77,7 +80,7 @@ export function AppointmentDetail({ view, friends = [], groups = [] }: DetailPro
   const when = (iso: string) => `${formatDayLong(iso, locale)} · ${formatTime(iso, locale)}`;
 
   return (
-    <div className={cn("flex flex-col gap-section", barVisible && "pb-action-clear")}>
+    <div className={cn("flex flex-col gap-section", (barVisible || hasFloatingAction) && "pb-action-clear")}>
       <section className="flex items-start gap-item">
         <ListThumb shape="poster" imageUrl={view.movie.posterUrl} />
         <div className="flex min-w-0 flex-1 flex-col gap-stack">
@@ -185,20 +188,22 @@ export function AppointmentDetail({ view, friends = [], groups = [] }: DetailPro
         />
       ) : null}
 
-      {!finished ? (
-        <div className="flex flex-col gap-stack">
-          {view.myStatus === "accepted" && locked && canWithdraw(view.status) ? (
-            <Button type="button" variant="destructive" size="cta-sm" disabled={pending} onClick={() => setDialog("withdraw")}>
-              <LogOut aria-hidden />
-              {t("withdraw")}
-            </Button>
-          ) : null}
-          {view.isCreator ? (
-            <Button type="button" variant="destructive" size="cta-sm" disabled={pending} onClick={() => setDialog("cancel")}>
-              <Ban aria-hidden />
-              {t("cancel")}
-            </Button>
-          ) : null}
+      {hasFloatingAction ? (
+        <div data-bottom-fixed className="pointer-events-none fixed inset-x-0 bottom-[var(--nav-clearance)] z-30 px-inset">
+          <div className="mx-auto flex max-w-form flex-col gap-stack">
+            {showWithdraw ? (
+              <Button type="button" variant="destructive" size="cta" disabled={pending} onClick={() => setDialog("withdraw")} className="pointer-events-auto">
+                <LogOut aria-hidden />
+                {t("withdraw")}
+              </Button>
+            ) : null}
+            {view.isCreator ? (
+              <Button type="button" variant="destructive" size="cta" disabled={pending} onClick={() => setDialog("cancel")} className="pointer-events-auto">
+                <Ban aria-hidden />
+                {t("cancel")}
+              </Button>
+            ) : null}
+          </div>
         </div>
       ) : null}
 
