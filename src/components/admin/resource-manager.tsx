@@ -159,16 +159,15 @@ export function ResourceManager({ items, basePath, query, labels, removeAction, 
         </>
       )}
 
-      {/* Room for the fixed button below, so the last item can scroll clear of it. */}
-      <div aria-hidden className="h-action-clear shrink-0" />
+      {/* Room for the floating button below, so the last item can scroll clear of it. */}
+      <div aria-hidden className="h-fab-clear shrink-0" />
 
-      {/* Primary action: fixed above the bottom menu (not inside the flow), so it stays in thumb reach, at the same
-          place whether the list is empty, short or long. On wide screens it starts after the sidebar. */}
-      <div data-bottom-fixed className="pointer-events-none fixed inset-x-0 bottom-[var(--bottom-nav-h,0px)] z-30 px-inset md:left-sidebar">
-        <Button asChild size="cta" className="pointer-events-auto mx-auto flex max-w-form">
-          <Link href={withBack(`${base}/new`)}>
-            <Plus aria-hidden />
-            {labels.addButton}
+      {/* Primary action: a round icon-only "+" fixed at the bottom right, above the bottom menu, within thumb reach and
+          out of the way of the list. The label stays for screen readers. On wide screens it starts after the sidebar. */}
+      <div data-bottom-fixed className="pointer-events-none fixed inset-x-0 bottom-[var(--bottom-nav-h,0px)] z-30 flex justify-end p-inset md:left-sidebar">
+        <Button asChild size="icon" className="pointer-events-auto size-control-lg rounded-full shadow-menu">
+          <Link href={withBack(`${base}/new`)} aria-label={labels.addButton}>
+            <Plus aria-hidden className="size-icon-lg" />
           </Link>
         </Button>
       </div>
