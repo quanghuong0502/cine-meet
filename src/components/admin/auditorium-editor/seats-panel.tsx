@@ -25,10 +25,12 @@ export function SeatsPanel({ seatTypes, selectedCount, allHaveFlag, allHaveType,
 
   return (
     <div className="flex flex-col gap-group" role="tabpanel">
-      <p role="status" className="type-secondary text-muted-foreground">
-        {t("selected", { count: selectedCount })}
-      </p>
-
+      {/* Nothing to say while no cell is picked; once some are, the count is the only feedback of the selection. */}
+      {idle ? null : (
+        <p role="status" className="type-secondary text-muted-foreground">
+          {t("selected", { count: selectedCount })}
+        </p>
+      )}
       <Section title={t("typeGroup")}>
         {seatTypes.map((type) => (
           <Chip key={type.id} disabled={idle} selected={!idle && allHaveType(type.id)} onClick={() => onType(type.id)}>
@@ -70,7 +72,7 @@ export function SeatsPanel({ seatTypes, selectedCount, allHaveFlag, allHaveType,
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div role="group" aria-label={title} className="flex flex-col gap-stack">
-      <p aria-hidden className="type-label text-muted-foreground">
+      <p aria-hidden className="type-item-title">
         {title}
       </p>
       <div className="flex flex-wrap gap-stack">{children}</div>
