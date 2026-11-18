@@ -35,7 +35,7 @@ export default async function CinemaPage({ params }: Props) {
 
   return (
     <div className="flex flex-1 flex-col gap-section p-inset">
-      <PageHeader title={branch.name} backHref="/cinemas" />
+      <PageHeader backHref="/cinemas" />
 
       {branch.imageUrl ? (
         <div className="relative aspect-video w-full overflow-hidden rounded-xl border bg-muted">
@@ -44,7 +44,10 @@ export default async function CinemaPage({ params }: Props) {
       ) : null}
 
       <section className="flex flex-col gap-item">
-        <p className="type-secondary text-muted-foreground">{brand.name}</p>
+        <div className="flex flex-col gap-tight">
+          <p className="type-secondary text-muted-foreground">{brand.name}</p>
+          <h1 className="type-heading">{branch.name}</h1>
+        </div>
         {branch.address ? (
           <p className="flex items-start gap-stack type-body">
             <MapPin className="mt-tight size-icon-sm shrink-0 text-muted-foreground" aria-hidden />
