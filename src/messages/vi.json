@@ -1385,7 +1385,7 @@
     "invite": {
       "title": "Mời thêm",
       "groups": "Nhóm",
-      "button": "{count, plural, =0 {Mời thêm} other {Mời thêm # người}}",
+      "button": "{count, plural, =0 {Gửi lời mời} other {Mời # người}}",
       "done": "Đã mời thêm {count, plural, one {# người} other {# người}}"
     },
     "answered": "{answered}/{total} đã trả lời",

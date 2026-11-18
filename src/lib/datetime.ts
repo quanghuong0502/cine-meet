@@ -26,11 +26,14 @@ export function formatDayKey(key: string, locale: string): string {
  * Short day for a card: "Hôm nay", "Ngày mai", otherwise weekday and date ("Th 7, 21/11"), in Vietnam time and the language in use.
  * Follows the display rule in `.claude/rules/ui.md`. `now` is a parameter so tests do not depend on the clock.
  */
-export function formatDayCompact(iso: string, locale: string, now: Date = new Date()): string {
+export function formatDayCompact(iso: string, locale: string, now: Date = new Date(), options: { midSentence?: boolean } = {}): string {
   const days = Math.round((Date.parse(`${vietnamDayKey(iso)}T00:00:00Z`) - Date.parse(`${vietnamDayKey(now.toISOString())}T00:00:00Z`)) / 86_400_000);
   if (days === 0 || days === 1) {
     const word = new Intl.RelativeTimeFormat(intlLocale(locale), { numeric: "auto" }).format(days, "day");
-    return word.charAt(0).toUpperCase() + word.slice(1);
+    // At the start of a line it is "Hôm nay"; inside a sentence ("trả lời trước hôm nay") it keeps its small letter.
+    // (The browser's own word may already start with a capital in Vietnamese, so the letter is set explicitly both ways.)
+    const first = options.midSentence ? word.charAt(0).toLowerCase() : word.charAt(0).toUpperCase();
+    return first + word.slice(1);
   }
   return new Intl.DateTimeFormat(intlLocale(locale), { timeZone: ZONE, weekday: "short", day: "2-digit", month: "2-digit" }).format(new Date(iso));
 }

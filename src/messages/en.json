@@ -1385,7 +1385,7 @@
     "invite": {
       "title": "Invite more",
       "groups": "Groups",
-      "button": "{count, plural, =0 {Invite more} one {Invite # more person} other {Invite # more people}}",
+      "button": "{count, plural, =0 {Send invitations} one {Invite # person} other {Invite # people}}",
       "done": "Invited {count, plural, one {# more person} other {# more people}}"
     },
     "answered": "{answered}/{total} replied",

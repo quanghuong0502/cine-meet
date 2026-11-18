@@ -11,6 +11,10 @@ describe("formatDayCompact", () => {
     expect(formatDayCompact("2026-11-18T11:30:00Z", "en", now)).toBe("Today");
     expect(formatDayCompact("2026-11-19T02:00:00Z", "en", now)).toBe("Tomorrow");
   });
+  it("keeps the small letter inside a sentence", () => {
+    expect(formatDayCompact("2026-11-19T02:00:00Z", "vi", now, { midSentence: true })).toBe("ngày mai");
+    expect(formatDayCompact("2026-11-18T11:30:00Z", "en", now, { midSentence: true })).toBe("today");
+  });
   it("late evening UTC is already the next day in Vietnam", () => {
     // 20:00 UTC on the 18th = 03:00 on the 19th in Vietnam
     expect(formatDayCompact("2026-11-18T20:00:00Z", "vi", now)).toBe("Ngày mai");

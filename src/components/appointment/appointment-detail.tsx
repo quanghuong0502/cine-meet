@@ -24,7 +24,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { vietnamToIso } from "@/lib/appointment/datetime";
 import { canWithdraw, isFinished, isOpenForReplies, yesVoterIds } from "@/lib/appointment/state";
-import { formatDayLong, formatTime } from "@/lib/datetime";
+import { formatDayCompact, formatDayLong, formatTime } from "@/lib/datetime";
 import type { AppointmentView, OptionView, ParticipantView } from "@/services/appointment.service";
 
 type Dialog = "decline" | "withdraw" | "cancel" | null;
@@ -82,13 +82,14 @@ export function AppointmentDetail({ view, friends = [], groups = [] }: DetailPro
         <ListThumb shape="poster" imageUrl={view.movie.posterUrl} />
         <div className="flex min-w-0 flex-1 flex-col gap-stack">
           <h2 className="break-words type-heading">{view.movie.title}</h2>
-          <span className="type-secondary text-muted-foreground">{view.isCreator ? tc("byMe") : tc("byName", { name: view.creator.name })}</span>
-          <span className="flex flex-wrap items-center gap-stack">
+          {/* The creator knows it is theirs (their name is in the list below), so "made by" is only said for other people's plans. */}
+          {view.isCreator ? null : <span className="type-secondary text-muted-foreground">{tc("byName", { name: view.creator.name })}</span>}
+          <span className="flex flex-wrap items-center gap-x-stack gap-y-tight">
             <AppointmentStatusBadge status={view.status} />
             {view.responseDeadline && open ? (
-              <Badge variant="outline" className="h-auto py-hair type-tag">
-                {t("answerBy", { time: when(view.responseDeadline) })}
-              </Badge>
+              <span className="type-secondary text-muted-foreground tabular-nums">
+                {t("answerBy", { time: `${formatDayCompact(view.responseDeadline, locale, new Date(), { midSentence: true })} · ${formatTime(view.responseDeadline, locale)}` })}
+              </span>
             ) : null}
           </span>
         </div>
