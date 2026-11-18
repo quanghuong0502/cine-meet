@@ -30,8 +30,8 @@ export function PersonChip({ selected, onClick, person, icon, label, trailing }:
       <span className="type-label">{person?.name ?? label}</span>
       {trailing ? (
         <>
-          <span aria-hidden className="type-label opacity-60">
-            ·
+          <span aria-hidden className="type-label">
+            •
           </span>
           <span className="type-label tabular-nums">{trailing}</span>
         </>
