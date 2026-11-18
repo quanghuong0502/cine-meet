@@ -86,8 +86,9 @@ export function SeatPlanner({ view, room, onSave, busy, onDraft, initialSeats }:
       next.set(active, seat.code);
     }
     save(next, draft);
-    const following = firstFree(next);
-    if (next.has(active) && following && following !== active) setActive(following);
+    // Move on only while somebody still has no seat; once everyone is seated the choice stays where it is.
+    const unseated = view.attendees.find((p) => !next.has(p.id));
+    if (next.has(active) && unseated && unseated.id !== active) setActive(unseated.id);
   }
 
   function suggest() {
