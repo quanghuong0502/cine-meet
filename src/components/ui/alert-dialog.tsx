@@ -2,10 +2,16 @@
 
 import * as React from "react"
 import { cn } from "cn"
-import { AlertDialog as AlertDialogPrimitive } from "radix-ui"
+import { Dialog as AlertDialogPrimitive } from "radix-ui"
 
 import { Button } from "@/components/ui/button"
 
+/**
+ * Confirmation dialogs. Built on Radix `Dialog` (not `AlertDialog`) on purpose: Radix's own alert dialog ignores a tap on the dim area
+ * around it, but on a phone people expect that tap (and Esc) to dismiss, the same as the Back button. The role stays `alertdialog`.
+ * While an action is running its Cancel button is disabled, and then the dim area and Esc do nothing either, so a save cannot be
+ * walked away from by accident. Every dialog in the app goes through this file, so the behaviour is the same everywhere.
+ */
 function AlertDialog({
   ...props
 }: React.ComponentProps<typeof AlertDialogPrimitive.Root>) {
@@ -51,12 +57,26 @@ function AlertDialogContent({
 }: React.ComponentProps<typeof AlertDialogPrimitive.Content> & {
   size?: "default" | "sm"
 }) {
+  const ref = React.useRef<HTMLDivElement>(null)
+  // A running action disables Cancel: that is the signal not to let a tap outside or Esc close the dialog.
+  const busy = () => ref.current?.querySelector('[data-slot="alert-dialog-cancel"]:disabled') != null
   return (
     <AlertDialogPortal>
       <AlertDialogOverlay />
       <AlertDialogPrimitive.Content
+        ref={ref}
+        role="alertdialog"
         data-slot="alert-dialog-content"
         data-size={size}
+        onPointerDownOutside={(event) => {
+          if (busy()) event.preventDefault()
+        }}
+        onInteractOutside={(event) => {
+          if (busy()) event.preventDefault()
+        }}
+        onEscapeKeyDown={(event) => {
+          if (busy()) event.preventDefault()
+        }}
         className={cn(
           "group/alert-dialog-content fixed top-1/2 left-1/2 z-50 grid w-full -translate-x-1/2 -translate-y-1/2 gap-group rounded-xl bg-popover p-inset text-popover-foreground ring-1 ring-foreground/10 duration-100 outline-none data-[size=default]:max-w-hint data-[size=sm]:max-w-hint data-[size=default]:sm:max-w-form data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
           className
@@ -152,11 +172,11 @@ function AlertDialogAction({
   variant = "default",
   size = "default",
   ...props
-}: React.ComponentProps<typeof AlertDialogPrimitive.Action> &
+}: React.ComponentProps<typeof AlertDialogPrimitive.Close> &
   Pick<React.ComponentProps<typeof Button>, "variant" | "size">) {
   return (
     <Button variant={variant} size={size} asChild>
-      <AlertDialogPrimitive.Action
+      <AlertDialogPrimitive.Close
         data-slot="alert-dialog-action"
         className={cn(className)}
         {...props}
@@ -170,11 +190,11 @@ function AlertDialogCancel({
   variant = "outline",
   size = "default",
   ...props
-}: React.ComponentProps<typeof AlertDialogPrimitive.Cancel> &
+}: React.ComponentProps<typeof AlertDialogPrimitive.Close> &
   Pick<React.ComponentProps<typeof Button>, "variant" | "size">) {
   return (
     <Button variant={variant} size={size} asChild>
-      <AlertDialogPrimitive.Cancel
+      <AlertDialogPrimitive.Close
         data-slot="alert-dialog-cancel"
         className={cn(className)}
         {...props}
