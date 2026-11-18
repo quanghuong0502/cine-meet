@@ -3,6 +3,7 @@ import Link from "next/link";
 import { AppointmentStatusBadge } from "@/components/appointment/status-badge";
 import { ListThumb } from "@/components/list-thumb";
 import { formatDayCompact, formatTime } from "@/lib/datetime";
+import { cn } from "@/lib/utils";
 import type { AppointmentSummary } from "@/services/appointment.service";
 
 /**
@@ -28,6 +29,10 @@ export function AppointmentCard({ item }: { item: AppointmentSummary }) {
       ? t("needsReply")
       : t("byName", { name: item.creatorName });
 
+  // The note is the fact to act on, so it is a step heavier than the time above it (medium weight): waiting for my answer stands out in the
+  // accent colour, the creator's progress in normal text, and "made by" stays quiet.
+  const noteColor = item.isCreator ? "text-foreground" : item.needsReply ? "text-primary-text" : "text-muted-foreground";
+
   return (
     <li>
       <Link href={`/appointments/${item.id}`} className="flex min-h-row items-center gap-item rounded-xl border bg-card p-inset-sm">
@@ -37,7 +42,7 @@ export function AppointmentCard({ item }: { item: AppointmentSummary }) {
           <span className="type-secondary text-muted-foreground tabular-nums">{when}</span>
           <span className="flex flex-wrap items-center gap-x-stack gap-y-tight">
             <AppointmentStatusBadge status={item.status} />
-            {note ? <span className={item.needsReply && !item.isCreator ? "type-secondary text-primary-text" : "type-secondary text-muted-foreground"}>{note}</span> : null}
+            {note ? <span className={cn("type-label", noteColor)}>{note}</span> : null}
           </span>
         </div>
       </Link>
