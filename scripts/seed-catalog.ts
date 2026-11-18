@@ -9,6 +9,7 @@
  */
 import { existsSync } from "node:fs";
 import mongoose from "mongoose";
+import { cloudinaryConfig, createBranchImageUploadTicket, createBrandLogoUploadTicket, type UploadTicket } from "@/lib/cloudinary";
 import { connectToDatabase } from "@/lib/db";
 import { defaultRatingColor } from "@/lib/age-rating-color";
 import { AgeRating } from "@/models/age-rating";
@@ -83,6 +84,8 @@ function sampleRooms(types: { standard: string; vip: string; couple: string }): 
   ];
 }
 
+import { makeBranchImage, makeBrandLogo } from "./sample-images";
+
 const ENV_FILE = ".env.local";
 const SAMPLE = "(mẫu)";
 
@@ -147,6 +150,51 @@ async function insertIfMissing<T>(label: string, model: { exists(filter: Record<
   if (await model.exists(filter)) return;
   await model.create(doc);
   counter[label] = (counter[label] ?? 0) + 1;
+}
+
+/** Sends one picture to Cloudinary the way the admin form does (a signed ticket), and returns its address; null when it fails. */
+async function uploadImage(ticket: UploadTicket, file: Buffer, type: string, filename: string): Promise<string | null> {
+  const form = new FormData();
+  for (const [name, value] of Object.entries(ticket.fields)) form.append(name, value);
+  form.append("file", new Blob([new Uint8Array(file)], { type }), filename);
+  const response = await fetch(ticket.uploadUrl, { method: "POST", body: form });
+  const body = (await response.json()) as { secure_url?: string; error?: { message?: string } };
+  if (!response.ok || !body.secure_url) {
+    console.warn(`Không tải được ${filename}: ${body.error?.message ?? response.status}`);
+    return null;
+  }
+  return body.secure_url;
+}
+
+/**
+ * Gives every sample brand without a logo, and every sample branch without a photo, one drawn picture (`sample-images.ts`).
+ * Ones that already have a picture are left alone; without Cloudinary settings it only says so.
+ */
+async function addMissingImages(): Promise<void> {
+  const config = cloudinaryConfig();
+  if (!config) {
+    console.log("Chưa cấu hình Cloudinary: bỏ qua logo và ảnh chi nhánh mẫu.");
+    return;
+  }
+  const noImage = (field: string) => ({ $or: [{ [field]: { $exists: false } }, { [field]: null }, { [field]: "" }] });
+  for (const sample of BRANDS) {
+    const brandDoc = await Brand.findOne({ name: sample.name, ...noImage("logoUrl") }).collation({ locale: "vi", strength: 1 }).lean();
+    if (!brandDoc) continue;
+    const url = await uploadImage(createBrandLogoUploadTicket(config), await makeBrandLogo(sample.name, sample.color), "image/png", "logo.png");
+    if (!url) continue;
+    await Brand.updateOne({ _id: brandDoc._id }, { logoUrl: url });
+    console.log(`Đã thêm logo: ${sample.name}`);
+  }
+  for (const sample of BRANDS) {
+    const brandDoc = await Brand.findOne({ name: sample.name }).collation({ locale: "vi", strength: 1 }).lean();
+    if (!brandDoc) continue;
+    const branch = await Branch.findOne({ brandId: brandDoc._id, name: `${brandDoc.name} ${SAMPLE}`, ...noImage("imageUrl") }).lean();
+    if (!branch) continue;
+    const url = await uploadImage(createBranchImageUploadTicket(config), await makeBranchImage(sample.name, sample.color), "image/jpeg", "branch.jpg");
+    if (!url) continue;
+    await Branch.updateOne({ _id: branch._id }, { imageUrl: url });
+    console.log(`Đã thêm ảnh chi nhánh: ${branch.name}`);
+  }
 }
 
 async function seedCatalog(): Promise<void> {
@@ -280,6 +328,8 @@ async function seedCatalog(): Promise<void> {
       else console.warn(`Không tạo được ${name} (${branch.name}): ${result.error}`);
     }
   }
+
+  await addMissingImages();
 
   const summary = Object.entries(added).map(([label, count]) => `${count} ${label}`);
   console.log(summary.length ? `Đã thêm: ${summary.join(", ")}.` : "Danh mục mẫu đã có đủ. Không có thay đổi.");
