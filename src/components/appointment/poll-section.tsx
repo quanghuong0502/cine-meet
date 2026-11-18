@@ -119,6 +119,10 @@ export function PollSection({ view, canVote, nameOf, when, declineButton, onLock
           const yesNames = [...others.filter((v) => v.vote === "yes").map((v) => nameOf.get(v.userId) ?? view.creator.name), ...(mine === "yes" && myName ? [myName] : [])];
           const yes = others.filter((v) => v.vote === "yes").length + (mine === "yes" ? 1 : 0);
           const no = others.filter((v) => v.vote === "no").length + (mine === "no" ? 1 : 0);
+          // Who has not answered this time yet (this person's unsaved pick counts as an answer).
+          const waiting = view.participants.filter(
+            (p) => (p.status === "invited" || p.status === "accepted") && (p.id === view.viewerId ? mine === null : !others.some((v) => v.userId === p.id)),
+          ).length;
           return (
             <li key={option.id} className="flex flex-col gap-stack rounded-xl border bg-card p-inset-sm">
               <div className="flex items-start gap-stack">
@@ -128,8 +132,9 @@ export function PollSection({ view, canVote, nameOf, when, declineButton, onLock
                   {option.proposedBy ? <span className="type-secondary text-muted-foreground">{t("proposedBy", { name: option.proposedBy.name })}</span> : null}
                   <p className="pt-stack type-secondary text-muted-foreground">
                     {t("tally", { yes, no })}
-                    {yesNames.length > 0 ? ` · ${yesNames.join(", ")}` : ""}
+                    {waiting > 0 ? ` · ${t("tallyWaiting", { count: waiting })}` : ""}
                   </p>
+                  {yesNames.length > 0 ? <p className="break-words type-secondary text-muted-foreground">{t("yesNames", { names: yesNames.join(", ") })}</p> : null}
                 </div>
                 {/* Creator: nudge the people who have not voted on this time, or lock it in (nobody said Yes -> nobody could go, so it is off). */}
                 {onLock || onRemind ? (

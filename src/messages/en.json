@@ -1338,6 +1338,8 @@
       "people": "Attendees",
       "proposedBy": "Suggested by {name}",
       "tally": "{yes} yes · {no} no",
+      "tallyWaiting": "{count} not answered",
+      "yesNames": "Yes: {names}",
       "yourVote": "Your vote",
       "yes": "Yes",
       "no": "No",

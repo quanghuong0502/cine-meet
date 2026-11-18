@@ -1338,6 +1338,8 @@
       "people": "Người tham gia",
       "proposedBy": "{name} đề xuất",
       "tally": "{yes} có · {no} không",
+      "tallyWaiting": "{count} chưa trả lời",
+      "yesNames": "Có: {names}",
       "yourVote": "[you] vote",
       "yes": "Có",
       "no": "Không",
