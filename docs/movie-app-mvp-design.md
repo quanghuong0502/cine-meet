@@ -227,6 +227,7 @@ bị đếm trùng khi một người trả hộ cả nhóm. Công nợ lấy t�
 - Tag nhanh cho ghế: gần lối đi, sát cửa, bị che, ghế lỏng, gần loa.
 - Đánh giá phòng: âm thanh, điều hòa, độ sạch.
 - Lịch sử ngồi: "Bạn đã ngồi phòng này 3 lần: F7, F8, G9".
+- **Nhóm "Thường tới" ở đầu danh sách rạp:** các chi nhánh user hay đến nhất, nhiều buổi nhất trước, bằng nhau thì buổi gần nhất trước. Chỉ tính buổi đã hoàn thành (lịch hẹn COMPLETED và buổi ghi lại thủ công), làm ở Sprint 6; chưa có buổi nào thì không hiện nhóm.
 
 ### 3.3 Trang lịch chiếu
 - Lọc theo ngày, phim, chi nhánh, thể loại, định dạng, khung giờ.

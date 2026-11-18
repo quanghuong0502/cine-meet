@@ -254,6 +254,7 @@ giới hạn tra cứu, kết bạn cần chấp nhận (thiết kế mục 6 v�
 - Ghi lại buổi đã xem (xem một mình hoặc đặt ngoài app), ghi vào `expenses`.
 - Đánh giá phim, đánh giá ghế và phòng sau buổi xem (lưu cá nhân).
 - Lịch sử ngồi ở trang phòng ("bạn đã ngồi phòng này 3 lần: F7, F8, G9").
+- **Nhóm "Thường tới" ở đầu danh sách rạp** (`/cinemas`, thêm 2026-11-18 theo yêu cầu của chủ dự án): các chi nhánh user hay đến nhất, xếp nhiều buổi nhất trước, bằng nhau thì buổi gần nhất trước. **Chỉ tính buổi đã hoàn thành** (lịch hẹn COMPLETED, cộng buổi ghi lại thủ công ở mục trên), không tính lượt mở trang hay ghim tay. Chưa có buổi nào thì không hiện nhóm. Dữ liệu cá nhân nên không cache qua request (`caching.md` quy tắc 1). Dùng chung nguồn đếm với thống kê rạp hay đi và lịch sử ngồi.
 - Báo cáo sai thông tin phòng (user gửi, admin xem).
 - Thông báo #9 (nhắc nhập chi phí/đánh giá) và #11 (ngân sách).
 
@@ -263,6 +264,7 @@ giới hạn tra cứu, kết bạn cần chấp nhận (thiết kế mục 6 v�
 - [ ] Số liệu dashboard khớp với dữ liệu chi phí đã nhập, không đếm trùng khi một người trả hộ cả nhóm (có test cho các hàm tổng hợp).
 - [ ] Cảnh báo ngân sách hiện đúng ở 80% và 100%.
 - [ ] Đánh giá ghế sau buổi xem hiện ở lịch sử ngồi của chính user.
+- [ ] Nhóm "Thường tới" ở `/cinemas` chỉ gồm rạp user đã xem xong, đúng thứ tự (nhiều buổi trước, bằng nhau thì gần nhất trước), mỗi người chỉ thấy của mình; chưa có buổi nào thì không hiện nhóm.
 
 ---
 
