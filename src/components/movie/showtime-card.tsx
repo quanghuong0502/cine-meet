@@ -1,13 +1,15 @@
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
+import { CalendarPlus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { formatTime } from "@/lib/datetime";
 import { formatVnd, formatVndRange } from "@/lib/money";
 import type { ShowtimeRow } from "@/services/showtime.service";
 
 /**
- * One screening: when (3 lines on the left), then branch, room with format, and price (3 rows on the right, so both columns end together). The "Create plan" button comes back with plans (Sprint 4); a disabled
- * copy on every card only took height (about a third of the card), so it is left out until then.
+ * One screening: when (3 lines on the left), then branch, room with format, and price (3 rows in the middle, so both columns end together),
+ * and a small round "plan this showtime" button on the right (an icon, so it adds width rather than the height a full button would).
  * `showMovie` adds the movie title (when the list is not already grouped by movie).
  */
 export function ShowtimeCard({ row, showMovie = false }: { row: ShowtimeRow; showMovie?: boolean }) {
@@ -41,6 +43,11 @@ export function ShowtimeCard({ row, showMovie = false }: { row: ShowtimeRow; sho
         </span>
         <span className="type-secondary">{priceText}</span>
       </div>
+      <Button asChild variant="outline" size="icon" className="shrink-0 rounded-full">
+        <Link href={`/appointments/new?showtimeId=${row.id}`} aria-label={t("createPlan")}>
+          <CalendarPlus aria-hidden />
+        </Link>
+      </Button>
     </li>
   );
 }

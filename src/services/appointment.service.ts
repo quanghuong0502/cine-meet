@@ -12,6 +12,8 @@ import {
   type ParticipantStatus,
 } from "@/lib/appointment/state";
 import { Appointment, type AppointmentDoc } from "@/models/appointment";
+import { Auditorium } from "@/models/auditorium";
+import { Branch } from "@/models/branch";
 import { Movie } from "@/models/movie";
 import { Showtime } from "@/models/showtime";
 import { User } from "@/models/user";
@@ -271,6 +273,8 @@ export interface OptionView {
   id: string;
   startAt: string;
   showtimeId?: string;
+  /** "Branch · Room" of the showtime this time points at. */
+  place?: string;
   proposedBy?: PersonView;
   votes: { userId: string; vote: "yes" | "no" }[];
   myVote?: "yes" | "no";
@@ -301,6 +305,17 @@ async function loadPeople(ids: string[]): Promise<Map<string, PersonView>> {
   return new Map(users.map((u) => [u._id.toString(), { id: u._id.toString(), name: u.name, avatar: u.avatar ?? undefined }]));
 }
 
+/** "Branch · Room" for each showtime id. */
+async function loadPlaces(showtimeIds: string[]): Promise<Map<string, string>> {
+  if (showtimeIds.length === 0) return new Map();
+  const showtimes = await Showtime.find({ _id: { $in: showtimeIds } }, "auditoriumId").lean();
+  const rooms = await Auditorium.find({ _id: { $in: showtimes.map((s) => s.auditoriumId) } }, "name branchId").lean();
+  const branches = await Branch.find({ _id: { $in: rooms.map((r) => r.branchId) } }, "name").lean();
+  const branchName = new Map(branches.map((b) => [b._id.toString(), b.name]));
+  const roomText = new Map(rooms.map((r) => [r._id.toString(), [branchName.get(r.branchId.toString()), r.name].filter(Boolean).join(" · ")]));
+  return new Map(showtimes.map((s) => [s._id.toString(), roomText.get(s.auditoriumId.toString()) ?? ""]));
+}
+
 /** One appointment as the signed-in person may see it, or null when it does not exist or they are not part of it. */
 export async function getAppointment(userId: string, id: string, now = new Date()): Promise<AppointmentView | null> {
   if (!isValidObjectId(id)) return null;
@@ -314,6 +329,7 @@ export async function getAppointment(userId: string, id: string, now = new Date(
 
   const people = await loadPeople([doc.creatorId.toString(), ...doc.participants.map((p) => p.userId.toString()), ...doc.timeOptions.map((o) => o.proposedBy.toString())]);
   const movie = await Movie.findById(doc.movieId, "title posterUrl").lean();
+  const places = await loadPlaces(doc.timeOptions.flatMap((o) => (o.showtimeId ? [o.showtimeId.toString()] : [])));
   const unknown = (pid: string): PersonView => ({ id: pid, name: "?" });
   const person = (pid: string) => people.get(pid) ?? unknown(pid);
 
@@ -329,6 +345,7 @@ export async function getAppointment(userId: string, id: string, now = new Date(
       id: o._id.toString(),
       startAt: o.startAt.toISOString(),
       showtimeId: o.showtimeId?.toString(),
+      place: o.showtimeId ? places.get(o.showtimeId.toString()) : undefined,
       proposedBy: o.proposedBy.toString() === doc.creatorId.toString() ? undefined : person(o.proposedBy.toString()),
       votes: o.votes.map((v) => ({ userId: v.userId.toString(), vote: v.vote })),
       myVote: o.votes.find((v) => v.userId.toString() === userId)?.vote,

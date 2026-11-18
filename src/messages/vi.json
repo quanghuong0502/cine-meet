@@ -873,10 +873,6 @@
       }
     },
     "user": {
-      "appointments": {
-        "title": "Lịch hẹn",
-        "description": "Sắp có: mời bạn bè, chốt người tham gia và xếp ghế."
-      },
       "chat": {
         "title": "Chat",
         "description": "Sắp có: trợ lý AI giúp chọn ghế và tra cứu."
@@ -1013,7 +1009,8 @@
         "format": "Định dạng",
         "slot": "Khung giờ"
       }
-    }
+    },
+    "createPlan": "Tạo lịch hẹn từ suất này"
   },
   "movie": {
     "posterAlt": "Poster phim {title}",
@@ -1174,6 +1171,131 @@
         "too_many": "Nhiều nhóm quá rồi, xóa bớt một nhóm cũ trước nha.",
         "invalid": "Chỉ thêm được người đang là bạn bè.",
         "not_found": "Không tìm thấy nhóm này."
+      }
+    }
+  },
+  "appointments": {
+    "title": "Lịch hẹn",
+    "listTitle": "Lịch hẹn của [you]",
+    "add": "Tạo lịch hẹn",
+    "emptyTitle": "Chưa có kèo nào hết",
+    "emptyDescription": "Chọn phim, chọn giờ rồi rủ bạn bè đi xem thôi!",
+    "pastTitle": "Đã kết thúc",
+    "byMe": "[you] tạo",
+    "byName": "{name} tạo",
+    "needsReply": "Chờ [you] trả lời",
+    "timesCount": "{count, plural, one {# giờ để chọn} other {# giờ để chọn}}",
+    "networkError": "Mạng đang chập chờn, thử lại giúp [me] nha. Chưa có gì bị mất đâu.",
+    "status": {
+      "DRAFT": "Nháp",
+      "INVITING": "Đang mời",
+      "PARTICIPANTS_LOCKED": "Đã chốt người",
+      "PLANNING": "Đang lên kế hoạch",
+      "CONFIRMED": "Đã xác nhận",
+      "COMPLETED": "Đã xem xong",
+      "CANCELLED": "Đã hủy"
+    },
+    "errors": {
+      "validation": "Thông tin chưa đúng, kiểm tra lại giúp [me] nha.",
+      "not_found": "Không tìm thấy lịch hẹn này.",
+      "forbidden": "Chỉ người tạo mới làm được việc này.",
+      "bad_state": "Lịch hẹn đã sang bước khác rồi, tải lại trang để xem nha.",
+      "movie_not_found": "Không tìm thấy phim này.",
+      "invalid_option": "Giờ này không dùng được. Chọn giờ chưa qua, hoặc suất chiếu của đúng phim nha.",
+      "not_friends": "Chỉ mời được người đã là bạn bè và đang dùng được tài khoản.",
+      "invalid_deadline": "Hạn trả lời phải ở tương lai nha.",
+      "limit": "Nhiều giờ quá rồi, bỏ bớt một giờ trước nha.",
+      "duplicate": "Giờ này có trong danh sách rồi.",
+      "needs_attendee": "Chọn ít nhất một người chưa từ chối để chốt nha.",
+      "late": "Suất chiếu bắt đầu rồi nên không rút lui được nữa.",
+      "conflict": "Nhiều người cùng sửa một lúc, thử lại giúp [me] nha."
+    },
+    "new": {
+      "title": "Tạo lịch hẹn",
+      "movieLabel": "Phim",
+      "moviePlaceholder": "Chọn phim",
+      "timesLabel": "Giờ xem",
+      "noShowtimes": "Phim này chưa có suất chiếu sắp tới. Nhập giờ bên dưới nha.",
+      "customLabel": "Giờ khác",
+      "customDate": "Ngày",
+      "customTime": "Giờ",
+      "addTime": "Thêm giờ này",
+      "removeTime": "Bỏ giờ này",
+      "inviteesLabel": "Mời ai",
+      "groupsLabel": "Nhóm",
+      "noFriends": "Chưa có bạn bè để mời. Thêm bạn bè trong Hồ sơ trước nha.",
+      "deadlineLabel": "Trả lời trước",
+      "deadlineDate": "Ngày trả lời trước",
+      "deadlineTime": "Giờ trả lời trước",
+      "submit": "Gửi lời mời",
+      "sent": "Đã gửi lời mời!",
+      "errors": {
+        "movie": "Chọn phim trước nha.",
+        "times": "Chọn hoặc nhập ít nhất một giờ.",
+        "invitees": "Mời ít nhất một người nha.",
+        "deadline": "Hạn trả lời phải ở tương lai, nhập đủ cả ngày và giờ nha.",
+        "customInvalid": "Nhập đủ ngày và giờ nha.",
+        "past": "Giờ này đã qua rồi.",
+        "duplicate": "Giờ này có trong danh sách rồi.",
+        "tooManyTimes": "Tối đa {max} giờ thôi nha."
+      }
+    },
+    "detail": {
+      "title": "Lịch hẹn",
+      "answerBy": "Trả lời trước {time}",
+      "creator": "Người tạo",
+      "times": "Chọn giờ",
+      "chosenTime": "Giờ đã chốt",
+      "people": "Người tham gia",
+      "proposedBy": "{name} đề xuất",
+      "tally": "{yes} có · {no} không",
+      "yourVote": "[you] vote",
+      "yes": "Có",
+      "no": "Không",
+      "voteSaved": "Đã lưu lựa chọn của [you]",
+      "proposeLabel": "Đề xuất giờ khác",
+      "proposeDate": "Ngày đề xuất",
+      "proposeTime": "Giờ đề xuất",
+      "proposeButton": "Thêm giờ đề xuất",
+      "proposeInvalid": "Nhập đủ ngày và giờ chưa qua nha.",
+      "proposed": "Đã thêm giờ mới và [you] vote Có luôn rồi",
+      "youDeclined": "[you] đã từ chối lời mời này. Đổi ý thì vote Có một giờ nào đó là vào lại nha.",
+      "youExcluded": "Lần này người tạo chưa xếp [you] vào danh sách.",
+      "youLeft": "[you] đã rút lui khỏi lịch hẹn này.",
+      "cancelled": "Lịch hẹn này đã bị hủy.",
+      "cancelledWithReason": "Lịch hẹn đã bị hủy: {reason}",
+      "decline": "Từ chối lời mời",
+      "declineTitle": "Từ chối lời mời này?",
+      "declineDescription": "Các vote của [you] sẽ bị xóa và người tạo sẽ biết. [you] vẫn vào lại được bằng cách vote Có.",
+      "declineConfirm": "Từ chối",
+      "declined": "Đã từ chối lời mời",
+      "reasonLabel": "Lý do",
+      "reasonPlaceholder": "vd. Tối đó mình bận",
+      "cancelReasonPlaceholder": "vd. Rạp hết vé",
+      "back": "Quay lại",
+      "withdraw": "Rút lui",
+      "withdrawTitle": "Rút lui khỏi lịch hẹn?",
+      "withdrawDescription": "Người tạo sẽ được báo. Chỗ của [you] sẽ trả lại cho nhóm.",
+      "withdrawConfirm": "Rút lui",
+      "withdrew": "Đã rút lui khỏi lịch hẹn",
+      "cancel": "Hủy lịch hẹn",
+      "cancelTitle": "Hủy lịch hẹn này?",
+      "cancelDescription": "Mọi người đã đồng ý sẽ nhận thông báo hủy và không hoàn lại được.",
+      "cancelConfirm": "Hủy lịch hẹn",
+      "cancelledToast": "Đã hủy lịch hẹn",
+      "lockTitle": "Chốt người tham gia",
+      "lockPickTime": "Chọn giờ chốt",
+      "lockPickPeople": "Ai đi nè",
+      "lockNobody": "Chưa có ai để chốt, chờ mọi người trả lời nha.",
+      "lockButton": "{count, plural, one {Chốt # người} other {Chốt # người}}",
+      "locked": "Đã chốt {count, plural, one {# người} other {# người}} tham gia",
+      "participant": {
+        "invited": "Chưa trả lời",
+        "overdue": "Quá hạn",
+        "accepted": "Đồng ý",
+        "declined": "Từ chối",
+        "dropped": "Đã rút",
+        "excluded": "Không tham gia"
       }
     }
   }

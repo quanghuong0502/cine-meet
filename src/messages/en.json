@@ -873,10 +873,6 @@
       }
     },
     "user": {
-      "appointments": {
-        "title": "Plans",
-        "description": "Coming soon: invite friends, lock in attendees and assign seats."
-      },
       "chat": {
         "title": "Chat",
         "description": "Coming soon: an AI assistant to help you pick seats and look things up."
@@ -1013,7 +1009,8 @@
         "format": "Format",
         "slot": "Time of day"
       }
-    }
+    },
+    "createPlan": "Plan a movie night for this showtime"
   },
   "movie": {
     "posterAlt": "Poster of {title}",
@@ -1174,6 +1171,131 @@
         "too_many": "That's a lot of groups. Delete an old one first.",
         "invalid": "You can only add people who are your friends.",
         "not_found": "Couldn't find this group."
+      }
+    }
+  },
+  "appointments": {
+    "title": "Plans",
+    "listTitle": "Your plans",
+    "add": "Create plan",
+    "emptyTitle": "No plans yet",
+    "emptyDescription": "Pick a movie, pick a time, and invite your friends!",
+    "pastTitle": "Finished",
+    "byMe": "You made this",
+    "byName": "By {name}",
+    "needsReply": "Waiting for you",
+    "timesCount": "{count, plural, one {# time to pick} other {# times to pick}}",
+    "networkError": "Network is shaky, please try again. Nothing was lost.",
+    "status": {
+      "DRAFT": "Draft",
+      "INVITING": "Inviting",
+      "PARTICIPANTS_LOCKED": "People locked",
+      "PLANNING": "Planning",
+      "CONFIRMED": "Confirmed",
+      "COMPLETED": "Watched",
+      "CANCELLED": "Cancelled"
+    },
+    "errors": {
+      "validation": "Something looks off, please check it again.",
+      "not_found": "Couldn't find this plan.",
+      "forbidden": "Only the person who made it can do this.",
+      "bad_state": "The plan has moved on, reload the page to see it.",
+      "movie_not_found": "Couldn't find this movie.",
+      "invalid_option": "That time can't be used. Pick a time in the future, or a showtime of the same movie.",
+      "not_friends": "You can only invite friends whose accounts are active.",
+      "invalid_deadline": "The answer-by time has to be in the future.",
+      "limit": "That's a lot of times, remove one first.",
+      "duplicate": "That time is already on the list.",
+      "needs_attendee": "Pick at least one person who hasn't declined.",
+      "late": "The showtime has started, so you can't leave anymore.",
+      "conflict": "Several people edited at once, please try again."
+    },
+    "new": {
+      "title": "Create plan",
+      "movieLabel": "Movie",
+      "moviePlaceholder": "Pick a movie",
+      "timesLabel": "Times",
+      "noShowtimes": "No upcoming showtimes for this movie. Type a time below.",
+      "customLabel": "Another time",
+      "customDate": "Date",
+      "customTime": "Time",
+      "addTime": "Add this time",
+      "removeTime": "Remove this time",
+      "inviteesLabel": "Invite",
+      "groupsLabel": "Groups",
+      "noFriends": "No friends to invite yet. Add some in Profile first.",
+      "deadlineLabel": "Answer by",
+      "deadlineDate": "Answer-by date",
+      "deadlineTime": "Answer-by time",
+      "submit": "Send invitations",
+      "sent": "Invitations sent!",
+      "errors": {
+        "movie": "Pick a movie first.",
+        "times": "Pick or type at least one time.",
+        "invitees": "Invite at least one person.",
+        "deadline": "The answer-by time has to be in the future, with both date and time.",
+        "customInvalid": "Fill in both date and time.",
+        "past": "That time has already passed.",
+        "duplicate": "That time is already on the list.",
+        "tooManyTimes": "Up to {max} times."
+      }
+    },
+    "detail": {
+      "title": "Plan",
+      "answerBy": "Answer by {time}",
+      "creator": "Organizer",
+      "times": "Pick a time",
+      "chosenTime": "Chosen time",
+      "people": "Attendees",
+      "proposedBy": "Suggested by {name}",
+      "tally": "{yes} yes · {no} no",
+      "yourVote": "Your vote",
+      "yes": "Yes",
+      "no": "No",
+      "voteSaved": "Your choice is saved",
+      "proposeLabel": "Suggest another time",
+      "proposeDate": "Suggested date",
+      "proposeTime": "Suggested time",
+      "proposeButton": "Add suggested time",
+      "proposeInvalid": "Fill in a date and a time that hasn't passed.",
+      "proposed": "New time added, and you voted Yes on it",
+      "youDeclined": "You turned this invitation down. Changed your mind? Vote Yes on any time to join back.",
+      "youExcluded": "The organizer didn't put you on the list this time.",
+      "youLeft": "You left this plan.",
+      "cancelled": "This plan was cancelled.",
+      "cancelledWithReason": "This plan was cancelled: {reason}",
+      "decline": "Decline invitation",
+      "declineTitle": "Decline this invitation?",
+      "declineDescription": "Your votes will be removed and the organizer will know. You can join back by voting Yes.",
+      "declineConfirm": "Decline",
+      "declined": "Invitation declined",
+      "reasonLabel": "Reason",
+      "reasonPlaceholder": "e.g. I'm busy that night",
+      "cancelReasonPlaceholder": "e.g. Tickets sold out",
+      "back": "Go back",
+      "withdraw": "Leave",
+      "withdrawTitle": "Leave this plan?",
+      "withdrawDescription": "The organizer will be told. Your spot goes back to the group.",
+      "withdrawConfirm": "Leave",
+      "withdrew": "You left the plan",
+      "cancel": "Cancel plan",
+      "cancelTitle": "Cancel this plan?",
+      "cancelDescription": "Everyone who joined will be told, and this can't be undone.",
+      "cancelConfirm": "Cancel plan",
+      "cancelledToast": "Plan cancelled",
+      "lockTitle": "Lock in attendees",
+      "lockPickTime": "Pick the time to lock",
+      "lockPickPeople": "Who's going",
+      "lockNobody": "Nobody to lock in yet, wait for replies.",
+      "lockButton": "{count, plural, one {Lock in # person} other {Lock in # people}}",
+      "locked": "Locked in {count, plural, one {# person} other {# people}}",
+      "participant": {
+        "invited": "No answer",
+        "overdue": "Overdue",
+        "accepted": "Going",
+        "declined": "Declined",
+        "dropped": "Left",
+        "excluded": "Not going"
       }
     }
   }
