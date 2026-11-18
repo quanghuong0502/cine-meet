@@ -10,14 +10,14 @@ interface ListThumbProps {
   imageUrl?: string;
   /** Fallback fill when there is no picture. */
   color?: string;
-  /** `poster` keeps a movie poster's 2:3 shape (same width, taller) instead of cropping it square. */
+  /** `poster` keeps a movie poster's 2:3 shape (a little wider than the square, so taller) instead of cropping it square. */
   shape?: "square" | "poster";
   className?: string;
 }
 
 /**
- * The small picture of an item in a list: one width (`thumb`) for every list in the app, user and admin alike, so a branch, a brand or a movie
- * looks the same wherever it is listed. A rounded square by default; a movie poster uses `shape="poster"` to keep its 2:3 shape (not cropped).
+ * The small picture of an item in a list, the same in every list of the app, user and admin alike, so a branch, a brand or a movie looks the same
+ * wherever it is listed: a rounded square of `thumb` by default; a movie poster uses `shape="poster"` (`thumb-poster` wide, 2:3, not cropped).
  * Renders nothing when there is neither a picture nor a colour, so a card without them keeps no empty box.
  */
 export function ListThumb({ imageUrl, color, shape = "square", className }: ListThumbProps) {
@@ -27,10 +27,10 @@ export function ListThumb({ imageUrl, color, shape = "square", className }: List
   return (
     <span
       aria-hidden
-      className={cn("relative block w-thumb shrink-0 overflow-hidden rounded-lg border bg-muted", shape === "poster" ? "aspect-[2/3]" : "aspect-square", className)}
+      className={cn("relative block shrink-0 overflow-hidden rounded-lg border bg-muted", shape === "poster" ? "aspect-[2/3] w-thumb-poster" : "aspect-square w-thumb", className)}
       style={!showImage && color ? { backgroundColor: color } : undefined}
     >
-      {showImage ? <Image src={imageUrl} alt="" fill sizes={`${PX.thumb}px`} unoptimized onError={() => setFailed(true)} className="object-cover" /> : null}
+      {showImage ? <Image src={imageUrl} alt="" fill sizes={`${shape === "poster" ? PX.thumbPoster : PX.thumb}px`} unoptimized onError={() => setFailed(true)} className="object-cover" /> : null}
     </span>
   );
 }
