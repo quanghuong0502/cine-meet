@@ -67,11 +67,11 @@ export function ConfirmDialog({
           {description ? <AlertDialogDescription>{description}</AlertDialogDescription> : null}
         </AlertDialogHeader>
         {children}
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={pending}>{cancelLabel ?? t("cancel")}</AlertDialogCancel>
+        <AlertDialogFooter className="flex-row">
+          <AlertDialogCancel disabled={pending} className="min-w-0 flex-1">{cancelLabel ?? t("cancel")}</AlertDialogCancel>
           <AlertDialogAction
             disabled={pending || confirmDisabled}
-            className={tone === "destructive" ? "border border-destructive/40 bg-destructive/10 text-destructive hover:bg-destructive/20" : undefined}
+            className={cn("min-w-0 flex-1", tone === "destructive" && "border border-destructive/40 bg-destructive/10 text-destructive hover:bg-destructive/20")}
             onClick={(event) => {
               // The popup stays open until the work is done; the parent closes it.
               event.preventDefault();
