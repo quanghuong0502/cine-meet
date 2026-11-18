@@ -1315,11 +1315,8 @@
       "movieLabel": "Phim",
       "moviePlaceholder": "Chọn phim",
       "timesLabel": "Giờ xem",
-      "noShowtimes": "Phim này chưa có suất chiếu sắp tới. Nhập giờ bên dưới nha.",
-      "customLabel": "Giờ khác",
       "customDate": "Ngày",
       "customTime": "Giờ",
-      "addTime": "Thêm giờ này",
       "removeTime": "Bỏ giờ này",
       "inviteesLabel": "Mời ai",
       "groupsLabel": "Nhóm",
@@ -1331,16 +1328,20 @@
       "sent": "Đã gửi lời mời!",
       "errors": {
         "movie": "Chọn phim trước nha.",
-        "times": "Chọn hoặc nhập ít nhất một giờ.",
+        "times": "Nhập giờ muốn xem rồi chọn một suất chiếu nha.",
         "invitees": "Mời ít nhất một người nha.",
         "deadline": "Hạn trả lời phải ở tương lai, nhập đủ cả ngày và giờ nha.",
         "customInvalid": "Nhập đủ ngày và giờ nha.",
         "past": "Giờ này đã qua rồi.",
         "duplicate": "Giờ này có trong danh sách rồi.",
         "tooManyTimes": "Tối đa {max} giờ thôi nha.",
-        "deadlineBeforeStart": "Hạn trả lời phải trước giờ xem sớm nhất, và phải ở tương lai nha."
+        "deadlineBeforeStart": "Hạn trả lời phải trước giờ xem sớm nhất, và phải ở tương lai nha.",
+        "searchFailed": "Chưa tải được các suất chiếu, thử lại nha."
       },
-      "noShowtimesFilter": "Ngày này chưa có suất nào ở rạp đã chọn."
+      "noShowtimesFilter": "Ngày này chưa có suất nào ở rạp đã chọn.",
+      "pickTimeLabel": "Nhập ngày và giờ muốn xem",
+      "pickMovieFirst": "Chọn phim trước, rồi nhập giờ muốn xem nha.",
+      "noneFromThen": "Không có suất nào từ giờ này trở đi trong ngày. Thử giờ khác nha."
     },
     "detail": {
       "title": "Lịch hẹn",

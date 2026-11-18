@@ -24,6 +24,22 @@ export interface ShowtimeChoice {
   priceMax: number | null;
 }
 
+/** A showtime row as the picker lists it (the cinema is shown as "Brand · Branch"). */
+export function toShowtimeChoice(row: import("@/services/showtime.service").ShowtimeRow): ShowtimeChoice {
+  return {
+    id: row.id,
+    startAt: row.startAt,
+    endAt: row.endAt,
+    branchId: row.branch.id,
+    branchName: [row.branch.brandName, row.branch.name].filter(Boolean).join(" · "),
+    roomName: row.auditorium.name,
+    formatName: row.format.name,
+    price: row.price,
+    priceMin: row.priceMin,
+    priceMax: row.priceMax,
+  };
+}
+
 interface Props {
   showtimes: ShowtimeChoice[];
   selectedIds: string[];
@@ -32,13 +48,15 @@ interface Props {
   initialDay?: string;
   /** The day is already decided: no day strip, only that day's showtimes. */
   hideDays?: boolean;
+  /** The branch choice is made outside (the list is already narrowed): no branch chips here. */
+  hideBranchFilter?: boolean;
 }
 
 /**
  * Picks showtimes of one movie without listing them all: a strip of the days that have showtimes (one day at a time), a cinema filter
  * when there is more than one, then that day's showtimes. A picked showtime is shown by the check on its own row.
  */
-export function ShowtimePicker({ showtimes, selectedIds, onToggle, initialDay, hideDays = false }: Props) {
+export function ShowtimePicker({ showtimes, selectedIds, onToggle, initialDay, hideDays = false, hideBranchFilter = false }: Props) {
   const t = useTranslations("showtimes");
   const ta = useTranslations("appointments.new");
   const locale = useLocale();
@@ -81,7 +99,7 @@ export function ShowtimePicker({ showtimes, selectedIds, onToggle, initialDay, h
         </ul>
       </nav>}
 
-      {branches.length > 1 ? (
+      {branches.length > 1 && !hideBranchFilter ? (
         <div role="group" aria-label={t("filters.labels.branch")} className="scroll-strip flex gap-stack pb-tight">
           <Chip selected={branch === null} onClick={() => setBranch(null)}>
             {t("filters.all")}

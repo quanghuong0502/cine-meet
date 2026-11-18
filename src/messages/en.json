@@ -1315,11 +1315,8 @@
       "movieLabel": "Movie",
       "moviePlaceholder": "Pick a movie",
       "timesLabel": "Times",
-      "noShowtimes": "No upcoming showtimes for this movie. Type a time below.",
-      "customLabel": "Another time",
       "customDate": "Date",
       "customTime": "Time",
-      "addTime": "Add this time",
       "removeTime": "Remove this time",
       "inviteesLabel": "Invite",
       "groupsLabel": "Groups",
@@ -1331,16 +1328,20 @@
       "sent": "Invitations sent!",
       "errors": {
         "movie": "Pick a movie first.",
-        "times": "Pick or type at least one time.",
+        "times": "Enter a time, then pick a showtime.",
         "invitees": "Invite at least one person.",
         "deadline": "The answer-by time has to be in the future, with both date and time.",
         "customInvalid": "Fill in both date and time.",
         "past": "That time has already passed.",
         "duplicate": "That time is already on the list.",
         "tooManyTimes": "Up to {max} times.",
-        "deadlineBeforeStart": "The answer-by time has to be in the future and before the earliest viewing time."
+        "deadlineBeforeStart": "The answer-by time has to be in the future and before the earliest viewing time.",
+        "searchFailed": "Could not load the showtimes, try again."
       },
-      "noShowtimesFilter": "No showtimes on this day at the chosen cinema."
+      "noShowtimesFilter": "No showtimes on this day at the chosen cinema.",
+      "pickTimeLabel": "Enter the day and time to watch",
+      "pickMovieFirst": "Pick a movie first, then enter the time you want.",
+      "noneFromThen": "No showtimes from that time on that day. Try another time."
     },
     "detail": {
       "title": "Plan",

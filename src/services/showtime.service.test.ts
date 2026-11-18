@@ -118,6 +118,19 @@ describe("searchShowtimes", () => {
   });
 });
 
+describe("searchShowtimesFrom", () => {
+  it("returns the movie's showtimes on that day from the typed time on, never earlier ones or other days", async () => {
+    await svc.createShowtimesBulk(bulk({ dates: ["2099-12-01", "2099-12-02"], times: ["10:00", "15:00", "19:30"] }), ACTOR);
+    // 15:00 Vietnam time on 2099-12-01 is 08:00 UTC.
+    const rows = await svc.searchShowtimesFrom(movieId, new Date("2099-12-01T08:00:00.000Z"));
+    expect(rows.map((r) => r.startAt)).toEqual(["2099-12-01T08:00:00.000Z", "2099-12-01T12:30:00.000Z"]);
+    // Nothing from late in the evening on: the caller cannot add a time with no showtime to pick.
+    expect(await svc.searchShowtimesFrom(movieId, new Date("2099-12-01T16:00:00.000Z"))).toEqual([]);
+    // A time that has passed finds nothing.
+    expect(await svc.searchShowtimesFrom(movieId, new Date("2020-01-01T08:00:00.000Z"))).toEqual([]);
+  });
+});
+
 describe("switched-off master data", () => {
   it("hides showtimes of an off branch, brand or format from users, but not from the admin view", async () => {
     await svc.createShowtimesBulk(bulk({ dates: ["2099-12-01"], times: ["10:00"] }), ACTOR);

@@ -15,6 +15,7 @@ import {
   setFoodSchema,
   setPersonCost,
 } from "@/services/appointment-plan.service";
+import { searchShowtimesFrom, type ShowtimeRow } from "@/services/showtime.service";
 import {
   cancelAppointment,
   createAppointment,
@@ -192,4 +193,12 @@ export async function setPersonCostAction(id: string, input: unknown): Promise<A
   const result = await setPersonCost(user.userId, id, parsed.data);
   if (result.ok) refresh(id);
   return result.ok ? { ok: true } : result;
+}
+
+/** The showtimes of a movie on the day of the typed time, from that time on: what the person can pick when creating an appointment. */
+export async function findShowtimesFromAction(movieId: string, startAt: string): Promise<{ ok: true; showtimes: ShowtimeRow[] } | { ok: false; error: "validation" }> {
+  await requireUser();
+  const when = new Date(startAt);
+  if (!idSchema.safeParse(movieId).success || Number.isNaN(when.getTime())) return { ok: false, error: "validation" };
+  return { ok: true, showtimes: await searchShowtimesFrom(movieId, when) };
 }

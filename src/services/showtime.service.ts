@@ -399,6 +399,17 @@ export async function searchShowtimes(filters: ShowtimeFilters = {}): Promise<Sh
 }
 
 /**
+ * The showtimes of one movie on the same day as `after`, starting at `after` or later (soonest first), with the same visibility rules
+ * as `searchShowtimes`. Used when someone types the time they want to watch and then picks a showtime from what is on from then.
+ */
+export async function searchShowtimesFrom(movieId: string, after: Date): Promise<ShowtimeRow[]> {
+  if (Number.isNaN(after.getTime()) || after.getTime() <= Date.now()) return [];
+  const day = new Date(after.getTime() + 7 * 3600_000).toISOString().slice(0, 10);
+  const rows = await searchShowtimes({ movieId, date: day, limit: 300 });
+  return rows.filter((row) => new Date(row.startAt).getTime() >= after.getTime());
+}
+
+/**
  * Movies a person could actually watch: at least one showtime that has not started, in a cinema and format that are switched on
  * (the same rule `searchShowtimes` uses for users). A movie with none is left out of lists where picking it would lead nowhere.
  */
