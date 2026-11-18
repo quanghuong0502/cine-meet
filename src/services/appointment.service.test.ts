@@ -373,6 +373,16 @@ describe("appointment service", () => {
       expect((await svc.listAppointments(stranger)).active).toEqual([]);
     });
 
+    it("counts how many invited people have answered (a yes or a decline)", async () => {
+      const id = await inviting();
+      const a = (await svc.getAppointment(creator, id))!.options[0]!;
+      expect((await svc.listAppointments(creator)).active[0]).toMatchObject({ participantCount: 3, answeredCount: 0 });
+      await svc.setVote(u1, id, a.id, "yes");
+      await svc.declineInvitation(u2, id);
+      await svc.setVote(u3, id, a.id, "no"); // voting no everywhere is not yet an answer
+      expect((await svc.listAppointments(creator)).active[0]).toMatchObject({ participantCount: 3, answeredCount: 2 });
+    });
+
     it("someone not involved cannot read an appointment", async () => {
       const id = await inviting();
       expect(await svc.getAppointment(stranger, id)).toBeNull();

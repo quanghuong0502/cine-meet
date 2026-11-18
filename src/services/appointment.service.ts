@@ -456,6 +456,9 @@ export interface AppointmentSummary {
   startAt: string;
   optionCount: number;
   attendeeCount: number;
+  /** Invited people, and how many of them have answered (said yes to a time, or declined): "2/3 answered" while inviting. */
+  participantCount: number;
+  answeredCount: number;
 }
 
 /** The signed-in person's appointments, split into current and finished (watched or cancelled). */
@@ -486,6 +489,8 @@ export async function listAppointments(userId: string): Promise<{ active: Appoin
       startAt: (chosen?.startAt ?? new Date(Math.min(...times))).toISOString(),
       optionCount: doc.timeOptions.length,
       attendeeCount: doc.participants.filter((p) => p.status === "accepted").length + 1,
+      participantCount: doc.participants.length,
+      answeredCount: doc.participants.filter((p) => p.status === "accepted" || p.status === "declined").length,
     };
   });
   const byTime = (a: AppointmentSummary, b: AppointmentSummary) => a.startAt.localeCompare(b.startAt);
