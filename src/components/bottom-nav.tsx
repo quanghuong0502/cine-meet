@@ -42,7 +42,7 @@ export function BottomNav({ label, items, className }: BottomNavProps) {
       )}
     >
       <ul
-        className="pointer-events-auto mx-auto grid max-w-nav rounded-full border border-white/15 bg-card/70 px-inset-xs shadow-[0_8px_32px_-8px_rgb(0_0_0/0.6),inset_0_1px_0_rgb(255_255_255/0.12)] backdrop-blur-xl backdrop-saturate-150"
+        className="pointer-events-auto mx-auto grid max-w-menu rounded-full border border-white/15 bg-card/70 px-inset-xs shadow-[0_8px_32px_-8px_rgb(0_0_0/0.6),inset_0_1px_0_rgb(255_255_255/0.12)] backdrop-blur-xl backdrop-saturate-150"
         style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}
       >
         {items.map((item) => {

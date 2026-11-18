@@ -36,7 +36,7 @@ describe("design tokens", () => {
       "--spacing-section", "--spacing-group", "--spacing-item", "--spacing-stack", "--spacing-tight", "--spacing-hair",
       "--spacing-inset-xs", "--spacing-inset-sm", "--spacing-inset", "--spacing-inset-lg", "--spacing-inset-xl",
       "--spacing-icon-xs", "--spacing-icon-sm", "--spacing-icon", "--spacing-icon-lg",
-      "--container-app", "--container-page", "--container-form", "--container-nav", "--container-media", "--container-hint",
+      "--container-app", "--container-page", "--container-form", "--container-menu", "--container-media", "--container-hint",
     ];
     expect(required.filter((token) => !css.includes(`${token}:`))).toEqual([]);
   });
@@ -122,5 +122,12 @@ describe("design tokens", () => {
         .flatMap((line, index) => [...line.matchAll(new RegExp(arbitrary.source, "g"))].filter((match) => bare(match[1] ?? "")).map(() => `${relative(SRC, path)}:${index + 1}`)),
     );
     expect(bad).toEqual([]);
+  });
+  it("never gives a spacing token and a container token the same name", () => {
+    // `max-w-<name>` looks in both groups: a clash silently picks the wrong one (max-w-menu once became 68px wide).
+    const css = readFileSync(join(SRC, "app", "globals.css"), "utf8");
+    const names = (prefix: string) => new Set([...css.matchAll(new RegExp(`--${prefix}-([a-z0-9-]+):`, "g"))].map((match) => match[1] as string));
+    const containers = names("container");
+    expect([...names("spacing")].filter((name) => containers.has(name))).toEqual([]);
   });
 });

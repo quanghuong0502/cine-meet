@@ -31,7 +31,7 @@ export default async function AdminShowtimesPage() {
 
       <div aria-hidden className="h-action-clear shrink-0" />
       <div data-bottom-fixed className="pointer-events-none fixed inset-x-0 bottom-[var(--bottom-nav-h,0px)] z-30 px-inset md:left-64">
-        <div className="mx-auto flex max-w-nav gap-stack">
+        <div className="mx-auto flex max-w-menu gap-stack">
           <Button asChild size="cta" className="pointer-events-auto min-w-0 flex-1">
             <Link href="/admin/movies/showtimes/bulk?back=/admin/movies/showtimes">
               <CalendarPlus aria-hidden />

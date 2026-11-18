@@ -54,7 +54,7 @@ Muốn chỉnh cỡ chữ hay kích thước cho cả app thì sửa đúng ở 
 
 Icon: `size-icon-xs` 12, `size-icon-sm` 16 (cạnh chữ phụ), `size-icon` 20 (trong nút), `size-icon-lg` 24 (thanh tab, nút quay lại).
 Kích thước cố định có tên: `stepper` 32, `swatch` 80, `track` 8, `area-lg` 192 và `area-max` 288 (ô nhiều dòng lớn), `poster` 136, `mascot-max` 176, `fab-clear` 80, `action-clear` 88; cộng các token cũ `target`, `control`, `control-lg`, `row`, `avatar`, `nav`.
-Cột (`max-w-*`): `app` 672 (cột người dùng), `page` 768 (trang admin), `form` 384 (thẻ form, thanh Lưu), `nav` 448, `media` 576, `hint` 320.
+Cột (`max-w-*`): `app` 672 (cột người dùng), `page` 768 (trang admin), `form` 384 (thẻ form, thanh Lưu), `menu` 448, `media` 576, `hint` 320.
 
 **Cách dùng:**
 - Chọn vai trò theo việc nó làm, không theo số. Hai chỗ cùng việc phải cùng vai trò (hai trang có khối cách nhau đều `section`).

@@ -137,7 +137,7 @@
   --container-app: 42rem; /* 672: the user app column */
   --container-page: 48rem; /* 768: an admin page */
   --container-form: 24rem; /* 384: a form card, the save bar, the auth card */
-  --container-nav: 28rem; /* 448: the bottom menu pill */
+  --container-menu: 28rem; /* 448: the bottom menu pill */
   --container-media: 36rem; /* 576: the trailer */
   --container-hint: 20rem; /* 320: a short explanation under a picture */
 
