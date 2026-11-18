@@ -126,6 +126,7 @@
   --spacing-time-field: 8rem; /* 128: width of a time field (hh:mm) beside a date field */
   --spacing-stepper: 2rem; /* 32: width of the quantity between the + and - buttons */
   --spacing-thumb-poster: 4rem; /* 64: width of a movie poster in a list (height 96 by its 2:3 shape) */
+  --spacing-thumb-poster-lg: 6rem; /* 96: width of the movie poster at the top of the appointment screen (height 144 by its 2:3 shape) */
   --spacing-thumb: 3.5rem; /* 56: the small picture of an item in a list (logo, branch, poster), the same in every list of the app */
   --spacing-swatch: 5rem; /* 80: a colour input, an image preview */
   --spacing-track: 0.5rem; /* 8: thickness of a slider or heat bar */

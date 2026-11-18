@@ -98,7 +98,7 @@ export function AppointmentDetail({ view, friends = [], groups = [], plan = null
   return (
     <div ref={contentRef} style={{ paddingBottom: clear }} className="flex flex-col gap-section">
       <section className="flex items-start gap-item">
-        <ListThumb shape="poster" imageUrl={view.movie.posterUrl} />
+        <ListThumb shape="poster-lg" imageUrl={view.movie.posterUrl} />
         <div className="flex min-w-0 flex-1 flex-col gap-stack">
           <h2 className="break-words type-heading">{view.movie.title}</h2>
           {/* The creator knows it is theirs (their name is in the list below), so "made by" is only said for other people's plans. */}

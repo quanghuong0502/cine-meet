@@ -10,8 +10,8 @@ interface ListThumbProps {
   imageUrl?: string;
   /** Fallback fill when there is no picture. */
   color?: string;
-  /** `poster` keeps a movie poster's 2:3 shape (a little wider than the square, so taller) instead of cropping it square. */
-  shape?: "square" | "poster";
+  /** `poster` keeps a movie poster's 2:3 shape (a little wider than the square, so taller) instead of cropping it square; `poster-lg` is the same shape, bigger (the top of a screen). */
+  shape?: "square" | "poster" | "poster-lg";
   className?: string;
 }
 
@@ -27,10 +27,10 @@ export function ListThumb({ imageUrl, color, shape = "square", className }: List
   return (
     <span
       aria-hidden
-      className={cn("relative block shrink-0 overflow-hidden rounded-lg border bg-muted", shape === "poster" ? "aspect-[2/3] w-thumb-poster" : "aspect-square w-thumb", className)}
+      className={cn("relative block shrink-0 overflow-hidden rounded-lg border bg-muted", shape === "poster" ? "aspect-[2/3] w-thumb-poster" : shape === "poster-lg" ? "aspect-[2/3] w-thumb-poster-lg" : "aspect-square w-thumb", className)}
       style={!showImage && color ? { backgroundColor: color } : undefined}
     >
-      {showImage ? <Image src={imageUrl} alt="" fill sizes={`${shape === "poster" ? PX.thumbPoster : PX.thumb}px`} unoptimized onError={() => setFailed(true)} className="object-cover" /> : null}
+      {showImage ? <Image src={imageUrl} alt="" fill sizes={`${shape === "poster" ? PX.thumbPoster : shape === "poster-lg" ? PX.thumbPosterLg : PX.thumb}px`} unoptimized onError={() => setFailed(true)} className="object-cover" /> : null}
     </span>
   );
 }
