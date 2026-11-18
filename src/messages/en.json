@@ -1045,7 +1045,7 @@
         "obstructed": "view blocked"
       },
       "kindLabel": "Kind of mark",
-      "kindRequired": "Choose Like or Avoid to save.",
+      "kindRequired": "Like this seat or skip it? Pick one!",
       "favorite": "Like",
       "avoid": "Avoid",
       "tagsLabel": "Quick notes",

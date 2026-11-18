@@ -1045,7 +1045,7 @@
         "obstructed": "bị che tầm nhìn"
       },
       "kindLabel": "Loại đánh dấu",
-      "kindRequired": "Chọn Thích hoặc Tránh để lưu.",
+      "kindRequired": "Ghế này bạn thích hay tránh nè?",
       "favorite": "Thích",
       "avoid": "Tránh",
       "tagsLabel": "Ghi chú nhanh",

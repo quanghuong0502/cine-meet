@@ -9,6 +9,15 @@ paths:
 
 Áp dụng cho mọi chữ ngắn: tiêu đề, nhãn, gợi ý, nút, placeholder, thông báo lỗi, toast, trạng thái rỗng. Áp dụng cho cả tiếng Việt và tiếng Anh.
 
+**Giọng điệu: thân thiện, kiểu GenZ và dễ thương (chủ dự án chọn, 2026-11-18).** App làm cho nhóm bạn bè của chủ dự án nên không cần trang trọng.
+Mọi chữ mới (thông báo lỗi, toast, trạng thái rỗng, nhãn nhắc, thông báo đẩy, câu trả lời chatbot) viết như bạn bè nhắn nhau: gần gũi, vui, nhẹ nhàng, cả tiếng Việt và tiếng Anh.
+- Ví dụ: "Chọn Thích hoặc Tránh để lưu." thành "Ghế này bạn thích hay tránh nè?"; "Chưa có lịch hẹn." thành "Chưa có kèo nào hết, rủ bạn đi xem phim thôi!". Đây chỉ là ví dụ về giọng, mỗi chỗ tự viết cho hợp ngữ cảnh.
+- Dùng câu hỏi, từ đệm nhẹ ("nè", "nha", "thôi") và từ quen miệng của người trẻ ở mức vừa phải; không lạm dụng tiếng lóng, không viết tắt khó hiểu, không dùng từ có thể bị hiểu sai nghĩa.
+- **Vẫn phải rõ ràng trước, dễ thương sau:** người đọc vẫn biết chuyện gì xảy ra và làm gì tiếp theo. Lỗi vẫn nói cách sửa, không đổ lỗi, không đùa cợt khi có hậu quả (mất tiền, xóa dữ liệu, hủy lịch hẹn): hành động nguy hiểm vẫn nêu thẳng hậu quả, giọng nhẹ nhưng không mơ hồ.
+- Vẫn giữ các quy tắc dưới đây về độ ngắn, một khái niệm một tên, không nối chuỗi, không viết hoa toàn bộ, không dấu chấm than liên tiếp, không emoji thay cho chữ.
+- Chữ cũ chưa đổi giọng thì chuyển dần khi chạm vào màn đó; không cần sửa hàng loạt một lúc, trừ khi chủ dự án yêu cầu.
+- Các ví dụ trong bảng bên dưới minh họa **cấu trúc** (ngắn, đủ ngữ cảnh), chưa phải giọng điệu; viết theo giọng ở trên.
+
 **Nguyên tắc chung: ngắn gọn nhưng đủ ngữ cảnh.** Người đọc phải biết *cái gì*, *với đối tượng nào* và *bước kế tiếp* mà không cần nhìn chỗ khác.
 Mỗi chuỗi phải tự đủ nghĩa khi tách khỏi màn hình (đọc bằng trình đọc màn hình, hiện trong toast, trong thông báo đẩy).
 - Cắt chữ thừa ("Vui lòng", "Hãy", "Xin", "Bạn có thể"), nhưng không cắt đối tượng: "Chọn ghế" tốt hơn "Chọn"; "Chốt người tham gia" tốt hơn "Xác nhận".
