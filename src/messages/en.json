@@ -163,23 +163,7 @@
           "title": "Food types",
           "description": "Popcorn, drinks, snacks..."
         },
-        "fnbCategories": {
-      "title": "Food types",
-      "createTitle": "Add type",
-      "editTitle": "Edit type",
-      "addButton": "Add type",
-      "emptyTitle": "No types yet",
-      "emptyDescription": "Add types like Popcorn or Drinks to filter items when picking food.",
-      "fields": {
-        "name": {
-          "label": "Name"
-        },
-        "nameEn": {
-          "label": "English name"
-        }
-      }
-    },
-    "fnbItems": {
+        "fnbItems": {
           "title": "Food & drinks",
           "description": "Popcorn and drinks by brand."
         },
@@ -207,10 +191,6 @@
       "emptyTitle": "No brands yet",
       "emptyDescription": "Add cinema chains like CGV, BHD or Beta to get started.",
       "fields": {
-        "categoryId": {
-          "label": "Type",
-          "placeholder": "Pick a type"
-        },
         "name": {
           "label": "Name"
         },
@@ -394,6 +374,10 @@
         "brandId": {
           "label": "Brand",
           "placeholder": "Select a brand"
+        },
+        "categoryId": {
+          "label": "Type",
+          "placeholder": "Pick a type"
         },
         "name": {
           "label": "Name"
@@ -905,6 +889,22 @@
         "network": "Network is shaky, please try again.",
         "not_configured": "The server has no VAPID keys.",
         "not_found": "Couldn't find this user."
+      }
+    },
+    "fnbCategories": {
+      "title": "Food types",
+      "createTitle": "Add type",
+      "editTitle": "Edit type",
+      "addButton": "Add type",
+      "emptyTitle": "No types yet",
+      "emptyDescription": "Add types like Popcorn or Drinks to filter items when picking food.",
+      "fields": {
+        "name": {
+          "label": "Name"
+        },
+        "nameEn": {
+          "label": "English name"
+        }
       }
     }
   },
