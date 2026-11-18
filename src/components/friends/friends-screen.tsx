@@ -3,7 +3,7 @@
 import { Check, Copy, LoaderCircle, Share2, UserMinus, UserPlus, Users, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
-import { useState, useTransition } from "react";
+import { useState, useSyncExternalStore, useTransition } from "react";
 import { toast } from "sonner";
 import { removeFriendAction, respondRequestAction, sendFriendRequestAction } from "@/actions/friends";
 import { PersonRow } from "@/components/friends/person-row";
@@ -23,6 +23,8 @@ import { Label } from "@/components/ui/label";
 import { Mascot } from "@/components/mascot";
 import { PX } from "@/lib/ui-sizes";
 import type { FriendOverview, PersonView } from "@/services/friend.service";
+
+const subscribeNothing = () => () => undefined;
 
 interface Props {
   overview: FriendOverview;
@@ -102,7 +104,8 @@ export function FriendsScreen({ overview, inviteCode }: Props) {
     }
   }
 
-  const canShare = typeof navigator !== "undefined" && typeof navigator.share === "function";
+  // The share sheet exists only in the browser: the server draws no button, and the client adds it without a mismatch.
+  const canShare = useSyncExternalStore(subscribeNothing, () => typeof navigator.share === "function", () => false);
   const empty = overview.friends.length === 0 && overview.incoming.length === 0 && overview.outgoing.length === 0;
 
   return (
