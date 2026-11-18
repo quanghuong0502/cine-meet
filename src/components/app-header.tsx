@@ -36,7 +36,8 @@ export function AppHeader({ area, name, image, unread }: AppHeaderProps) {
       <Logo size={area === "admin" ? PX.logoCompact : PX.logo} wordmarkClassName="type-heading" />
       <div className="flex items-center gap-stack">
         {area === "app" && unread !== undefined ? <NotificationBell unread={unread} /> : null}
-        <UserMenu area={area} name={name} image={image} />
+        {/* The user app reaches Profile from the bottom bar; only admin keeps the avatar here. */}
+        {area === "admin" ? <UserMenu area={area} name={name} image={image} /> : null}
       </div>
     </header>
   );

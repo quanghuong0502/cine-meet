@@ -64,7 +64,8 @@
     "appointments": "Lịch hẹn",
     "cinemas": "Rạp",
     "chat": "Chat",
-    "back": "Quay lại"
+    "back": "Quay lại",
+    "profile": "Hồ sơ"
   },
   "admin": {
     "menuLabel": "Menu quản trị",

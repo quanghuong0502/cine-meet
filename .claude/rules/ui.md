@@ -7,7 +7,7 @@ paths:
 # Quy tắc UI
 
 - Mobile-first: bố cục cho 390 đến 393px (iPhone 13 và iPhone 14 Pro, xem `devices.md`), sau đó mới mở rộng. Vùng chạm tối thiểu 44px.
-- Điều hướng dưới cùng cho user: Tổng quan · Lịch chiếu · Lịch hẹn · Rạp · Chat.
+- Điều hướng dưới cùng cho user: Tổng quan · Lịch chiếu · Lịch hẹn · Rạp · Chat · Hồ sơ (tối đa 5 mục hiện cùng lúc; mục chưa có tính năng thì ẩn).
 - Chỉ dùng component shadcn (Drawer cho bottom sheet, Sheet, Dialog, Tabs, Calendar, Sonner cho toast).
   Cần component mới thì tra bằng shadcn MCP rồi cài bằng CLI.
 - Icon: lucide-react. Animation: Motion, chỉ dùng khi có lý do (chuyển màn, chọn ghế).
@@ -43,7 +43,7 @@ Mục đang chọn thể hiện bằng **ba dấu hiệu, không chỉ đổi m�
 Việc cấu hình gộp thành một trang (ví dụ mọi master data trong trang Danh mục, chia bằng tab) để menu chỉ cần một liên kết. Trang chủ khu vực tự chuyển tới trang đầu tiên đã sẵn sàng.
 Nội dung trang chừa nav + 2 khoảng cách (biến `--bottom-nav-h`), nút hành động cố định đặt phía trên thanh. Header và thanh không cuộn theo trang: chỉ `main` cuộn.
 
-**Avatar** (góc trên bên phải): bấm vào **mở thẳng trang Hồ sơ**, không có menu bật lên: người dùng `/profile`, admin `/admin/profile` (cùng component `ProfileOverview`, hiện là placeholder). Từ Hồ sơ vào Cài đặt và Đăng xuất; Cài đặt quay lại về Hồ sơ. Mọi thiết lập tài khoản (ngôn ngữ, đổi mật khẩu, thông báo...) là một thẻ trong trang Cài đặt, không đặt thành mục riêng ở Hồ sơ.
+**Hồ sơ:** người dùng mở từ **tab Hồ sơ ở thanh dưới** (`/profile`, chủ dự án chọn 2026-11-18; header người dùng chỉ còn logo và chuông thông báo, không có avatar); **admin vẫn bấm avatar** ở góc trên bên phải để mở `/admin/profile`; không có menu bật lên (cùng component `ProfileOverview`, hiện là placeholder). Từ Hồ sơ vào Cài đặt và Đăng xuất; Cài đặt quay lại về Hồ sơ. Mọi thiết lập tài khoản (ngôn ngữ, đổi mật khẩu, thông báo...) là một thẻ trong trang Cài đặt, không đặt thành mục riêng ở Hồ sơ.
 Admin chỉ có khu quản trị: không có nút "Về ứng dụng" hay liên kết sang trang người dùng.
 
 **Logo app = ảnh `duo-watching` (Bubu và Dudu) kèm wordmark**, dùng component `Logo` (`src/components/logo.tsx`) ở header và thanh bên.

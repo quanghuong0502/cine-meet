@@ -64,7 +64,8 @@
     "appointments": "Plans",
     "cinemas": "Cinemas",
     "chat": "Chat",
-    "back": "Back"
+    "back": "Back",
+    "profile": "Profile"
   },
   "admin": {
     "menuLabel": "Admin menu",

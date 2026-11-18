@@ -11,6 +11,8 @@ export interface BottomNavItem {
   icon: LucideIcon;
   /** Active only on this exact path (for a root tab such as "/" or "/admin"); otherwise any path below it counts. */
   exact?: boolean;
+  /** Other paths that light this tab up (screens opened from it that live outside its own path). */
+  alsoActive?: string[];
 }
 
 interface BottomNavProps {
@@ -20,7 +22,8 @@ interface BottomNavProps {
 }
 
 function isActive(pathname: string, item: BottomNavItem): boolean {
-  return item.exact ? pathname === item.href : pathname === item.href || pathname.startsWith(`${item.href}/`);
+  const under = (base: string) => pathname === base || pathname.startsWith(`${base}/`);
+  return item.exact ? pathname === item.href : under(item.href) || (item.alsoActive ?? []).some(under);
 }
 
 /**

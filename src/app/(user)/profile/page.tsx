@@ -20,7 +20,6 @@ export default async function ProfilePage() {
       avatar={profile?.avatar}
       phone={profile?.phone}
       seatPreference={profile?.seatPreference}
-      backHref="/"
       settingsHref="/settings"
       editHref="/profile/edit"
       friendsHref="/friends"

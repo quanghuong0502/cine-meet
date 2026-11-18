@@ -19,7 +19,8 @@ interface ProfileOverviewProps {
   /** Stored form, 84xxxxxxxxx. */
   phone?: string;
   seatPreference?: SeatPreference;
-  backHref: string;
+  /** Omitted for the user app (Profile is a tab there, with no back arrow); admin goes back to the admin home. */
+  backHref?: string;
   settingsHref: string;
   editHref: string;
   /** The Friends screen; only the user app has one (admin has no friends). */
