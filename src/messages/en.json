@@ -1389,7 +1389,7 @@
       "timesCreator": "Time slots",
       "lockThisTime": "Lock in this time",
       "lockDialogTitle": "Lock in this time?",
-      "lockDialogDescription": "{time}. Untick anyone who isn't going. Once locked, the list can't change anymore."
+      "lockDialogDescription": "{time}. Once locked, the list can't change."
     },
     "invite": {
       "title": "Invite more",
