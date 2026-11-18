@@ -113,7 +113,7 @@ export function PollSection({ view, canVote, nameOf, when, declineButton, onLock
           const yes = others.filter((v) => v.vote === "yes").length + (mine === "yes" ? 1 : 0);
           const no = others.filter((v) => v.vote === "no").length + (mine === "no" ? 1 : 0);
           return (
-            <li key={option.id} className="flex flex-col gap-stack rounded-xl border bg-card p-inset-sm">
+            <li key={option.id} className="flex flex-col gap-stack rounded-xl border bg-card p-inset-sm pb-inset">
               <div className="flex items-start gap-stack">
                 <div className="flex min-w-0 flex-1 flex-col gap-tight">
                   <span className="type-item-title tabular-nums">{when(option.startAt)}</span>
