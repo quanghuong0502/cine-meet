@@ -33,8 +33,8 @@ Nguồn chi tiết: `docs/movie-app-mvp-design.md` (số mục ghi ở từng sp
 | 2 | Editor phòng chiếu, sơ đồ ghế, điểm ghế, versioning | 1 | Xong |
 | 3 | Phim (trailer), suất chiếu, trang rạp & lịch chiếu cho user, đánh dấu ghế cá nhân | 2 | Xong |
 | 4 | Lịch hẹn giai đoạn 1 (mời, vote, chốt người), bạn bè, thông báo in-app, worker, Web Push | 3 | Xong |
-| 5A | Lịch hẹn giai đoạn 2: chọn suất, xếp ghế, đồ ăn, chi phí, xác nhận | 4 | Chờ kiểm tra |
-| 5B | Nhắc lịch và các thông báo theo giờ (#3, #8), tự hoàn thành | 5A | Chưa bắt đầu |
+| 5A | Lịch hẹn giai đoạn 2: chọn suất, xếp ghế, đồ ăn, chi phí, xác nhận | 4 | Xong |
+| 5B | Nhắc lịch và các thông báo theo giờ (#3, #8), tự hoàn thành | 5A | Đang làm |
 | 6 | Dashboard, ngân sách, ghi lại buổi đã xem, đánh giá cá nhân | 5B | Chưa bắt đầu |
 | 7 | Chatbot AI (tầng provider, tool, lưu context) | 6 | Chưa bắt đầu |
 | 8 | Production & hardening: môi trường production, sao lưu, rà soát cuối | 7 | Chưa bắt đầu |
@@ -414,5 +414,9 @@ Mỗi sprint xong thêm 3 đến 6 dòng: đã làm gì, còn dở gì, quyết 
 - Người tạo không nằm trong `participants`; danh sách người đi = người tạo + người `accepted` (`attendeeIdsOf`).
 - Giao diện: `PlanSection` (chọn suất bằng `ShowtimePicker`, `SeatPlanner`, `FoodPlanner`, `EstimateList`), `CostSection`; `SeatMap` thêm `reservedCodes`, `holderLabels`; nút Xác nhận kế hoạch và Đã xem xong cố định phía trên menu cùng nút Hủy.
 - **Ảnh nhân vật:** màn mới không đặt nhân vật (màn dày dữ liệu); chưa cần ảnh thêm. Tư thế `đang chọn ghế` và `đang tính tiền` vẫn chưa có.
-- Còn dở: chưa đo cỡ chữ 125% và 150%, chưa đo 320px; thử trên iPhone và Android; thông báo #3 và #8 và tự chuyển COMPLETED làm ở Sprint 5B (nút Đã xem xong chỉ hiện sau giờ chiếu); đánh giá phim và đánh giá ghế sau buổi xem để Sprint 6.
+- Còn dở: chưa đo cỡ chữ 125% và 150%, chưa đo 320px; thông báo #3 và #8 và tự chuyển COMPLETED làm ở Sprint 5B (nút Đã xem xong chỉ hiện sau giờ chiếu); đánh giá phim và đánh giá ghế sau buổi xem để Sprint 6.
 - File chính: `src/services/appointment-{plan,estimate}.service.ts` (estimate không có đuôi `.service`), `src/lib/appointment/{cost,suggest}.ts`, `src/models/{seat-claim,expense}.ts`, `src/components/appointment/{plan-section,seat-planner,food-planner,estimate-list,cost-section}.tsx`, `scripts/seed-appointment.ts`.
+- **Chủ dự án đã thử bằng tay (2026-11-19, Chromium headless:false, giả lập cảm ứng iPhone 13 390×844 và iPhone 14 Pro 393×852): 16/18 ca đạt** — vòng đời lịch hẹn, tranh ghế (transaction), rút lui trả ghế, chi phí thực tế (`actualCost` khớp tổng `expenses`), nút quay lại, trạng thái tải/rỗng/lỗi.
+- Lỗi tìm thấy khi thử tay, đã sửa: tải phòng chiếu thất bại rồi chọn lại đúng suất đó không gửi request mới, sơ đồ ghế trống (do `showtimeId` set lạc quan trước khi biết kết quả tải); sửa bằng `loadedFor` ref chỉ cập nhật khi tải thành công (`src/components/appointment/use-plan-draft.ts`).
+- Ghi nhận không phải lỗi: nút "Đã xem xong" hiện ngay khi suất **bắt đầu** là đúng thiết kế (mục 3.4: bấm tay sau giờ chiếu, tự động chuyển COMPLETED ở Sprint 5B mới dùng giờ kết thúc).
+- **Chốt 2026-11-19: Sprint 5A xong.**
