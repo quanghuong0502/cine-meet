@@ -24,6 +24,7 @@ import { recomputeEstimate, releaseUnusedClaims } from "@/services/appointment-e
 import { getSystemSettings } from "@/services/settings.service";
 import { enqueueNotifications } from "@/notifications/outbox";
 import type { NotificationPayload, NotificationType } from "@/notifications/types";
+import { cancelScheduled, scheduleDeadlineWarning } from "@/services/scheduled-notification.service";
 
 export type Doc = HydratedDocument<AppointmentDoc>;
 
@@ -183,7 +184,10 @@ export async function createAppointment(creatorId: string, input: CreateAppointm
     timeOptions: options.map((o) => ({ ...o, proposedBy: creatorId, votes: [] })),
     participants: inviteeIds.map((userId) => ({ userId, status: "invited" })),
   });
-  if (input.send) await notifyPeople(doc._id.toString(), creatorId, "appointment_invited", inviteeIds);
+  if (input.send) {
+    await notifyPeople(doc._id.toString(), creatorId, "appointment_invited", inviteeIds);
+    if (doc.responseDeadline) await scheduleDeadlineWarning(doc._id.toString(), doc.responseDeadline);
+  }
   return { ok: true, id: doc._id.toString(), status: doc.status };
 }
 
@@ -193,9 +197,12 @@ export async function sendInvitations(creatorId: string, id: string): Promise<{ 
     if (!sameId(doc.creatorId, creatorId)) return { ok: false as const, error: "forbidden" as const };
     if (!canTransition(doc.status, "INVITING")) return { ok: false as const, error: "bad_state" as const };
     doc.status = "INVITING";
-    return { ok: true as const, recipientIds: doc.participants.map((p) => p.userId.toString()) };
+    return { ok: true as const, recipientIds: doc.participants.map((p) => p.userId.toString()), responseDeadline: doc.responseDeadline };
   });
-  if (result.ok) await notifyPeople(id, creatorId, "appointment_invited", result.recipientIds);
+  if (result.ok) {
+    await notifyPeople(id, creatorId, "appointment_invited", result.recipientIds);
+    if (result.responseDeadline) await scheduleDeadlineWarning(id, result.responseDeadline);
+  }
   return result;
 }
 
@@ -424,6 +431,7 @@ export async function lockParticipants(
     return { ok: true as const, attendeeIds, excludedIds };
   });
   if (result.ok) {
+    await cancelScheduled(id, ["deadline_warning"]);
     await notifyPeople(id, creatorId, "participants_locked", result.attendeeIds, { included: true });
     await notifyPeople(id, creatorId, "participants_locked", result.excludedIds, { included: false });
   }
@@ -467,6 +475,7 @@ export async function cancelAppointment(creatorId: string, id: string, reason?: 
   });
   if (result.ok) {
     await SeatClaim.deleteMany({ appointmentId: id });
+    await cancelScheduled(id);
     await notifyPeople(id, creatorId, "appointment_cancelled", result.recipientIds, { reason: text });
   }
   return result;

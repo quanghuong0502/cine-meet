@@ -15,6 +15,7 @@ import { SeatClaim } from "@/models/seat-claim";
 import { Showtime } from "@/models/showtime";
 import { attendeeIdsOf, loadSeatPrices, recomputeEstimate } from "@/services/appointment-estimate";
 import { mutate, notifyPeople, sameId, type Doc, type Failure } from "@/services/appointment.service";
+import { cancelScheduled, scheduleReminders } from "@/services/scheduled-notification.service";
 import { generateGrid } from "@/lib/seat-layout/generate";
 import type { LayoutConfig, LayoutGeometry, LayoutSeat, SeatTypeInfo } from "@/lib/seat-layout/types";
 import { SeatType } from "@/models/seat-type";
@@ -30,7 +31,8 @@ function chosenOption(doc: Doc) {
   return doc.timeOptions.find((o) => sameId(o._id, doc.chosenOptionId?.toString() ?? ""));
 }
 
-async function placeOf(showtimeId: string | undefined): Promise<string> {
+/** "Branch · Room" of a showtime, for notification bodies. */
+export async function placeOf(showtimeId: string | undefined): Promise<string> {
   if (!showtimeId) return "";
   const showtime = await Showtime.findById(showtimeId, "auditoriumId").lean();
   const room = showtime ? await Auditorium.findById(showtime.auditoriumId, "name branchId").lean() : null;
@@ -255,6 +257,7 @@ export async function confirmAppointment(creatorId: string, id: string): Promise
   if (!result.ok) return result;
   const place = await placeOf(result.showtimeId);
   for (const [userId, seatCode] of result.seats) await notifyPeople(id, creatorId, "appointment_confirmed", [userId], { slotAt: result.slotAt, place, seatCode });
+  if (result.slotAt) await scheduleReminders(id, new Date(result.slotAt));
   return { ok: true };
 }
 
@@ -307,6 +310,7 @@ export async function completeAppointment(creatorId: string, id: string, now = n
     return { ok: true as const, start, estimate: doc.estimate.map((e) => ({ userId: e.userId.toString(), ticket: e.ticket, fnb: e.fnb, other: e.other })) };
   });
   if (!result.ok) return result;
+  await cancelScheduled(id, ["reminder"]);
   for (const e of result.estimate) {
     for (const category of EXPENSE_CATEGORIES) {
       if (e[category] <= 0) continue;
