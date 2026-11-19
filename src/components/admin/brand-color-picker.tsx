@@ -1,19 +1,10 @@
 "use client";
 
-import { LoaderCircle, RotateCcw } from "lucide-react";
+import { RotateCcw } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState, useTransition, type CSSProperties } from "react";
 import { toast } from "sonner";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DEFAULT_BRAND_HEX, defaultBrandTheme, deriveBrandTheme, parseHex } from "@/lib/brand-theme";
@@ -73,17 +64,17 @@ export function BrandColorPicker({
     <div className="flex flex-col gap-field">
       <input type="hidden" name="color" value={hex} />
 
-      <div className="flex flex-col gap-3">
-        <label htmlFor="brand-hex" className="text-sm font-medium text-muted-foreground">
+      <div className="flex flex-col gap-item">
+        <label htmlFor="brand-hex" className="type-label text-muted-foreground">
           {label}
         </label>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-item">
           <input
             type="color"
             aria-label={t("pickColor")}
             value={pickerValue}
             onChange={(event) => setHex(event.target.value.toUpperCase())}
-            className="h-control w-20 shrink-0 cursor-pointer rounded-xl border bg-card p-1"
+            className="h-control w-swatch shrink-0 cursor-pointer rounded-xl border bg-card p-tight"
           />
           <Input
             id="brand-hex"
@@ -96,11 +87,11 @@ export function BrandColorPicker({
             spellCheck={false}
             autoComplete="off"
             aria-invalid={!derived.ok || undefined}
-            className="h-control rounded-xl bg-card px-4 text-base tabular-nums"
+            className="h-control rounded-xl bg-card px-inset type-body tabular-nums"
           />
         </div>
         {!derived.ok ? (
-          <p role="alert" className="-mt-1 text-sm text-destructive">
+          <p role="alert" className="-mt-tight type-secondary text-destructive">
             {tv(derived.error)}
           </p>
         ) : null}
@@ -108,45 +99,34 @@ export function BrandColorPicker({
           type="button"
           variant="outline"
           size="cta-sm"
-          className="w-auto self-start px-4"
+          className="w-auto self-start px-inset"
           disabled={hex === DEFAULT_BRAND_HEX && savedHex === DEFAULT_BRAND_HEX}
           onClick={() => setConfirmOpen(true)}
         >
           <RotateCcw aria-hidden />
           {t("reset")}
         </Button>
-        <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>{t("resetTitle")}</AlertDialogTitle>
-              <AlertDialogDescription>{t("resetDescription")}</AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel disabled={isResetting}>{tc("cancel")}</AlertDialogCancel>
-              <AlertDialogAction
-                disabled={isResetting}
-                onClick={(event) => {
-                  event.preventDefault();
-                  reset();
-                }}
-              >
-                {isResetting ? <LoaderCircle className="motion-safe:animate-spin" aria-hidden /> : <RotateCcw aria-hidden />}
-                {t("resetConfirm")}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        <ConfirmDialog
+          open={confirmOpen}
+          onOpenChange={setConfirmOpen}
+          title={t("resetTitle")}
+          description={t("resetDescription")}
+          icon={<RotateCcw aria-hidden />}
+          confirmLabel={t("resetConfirm")}
+          pending={isResetting}
+          onConfirm={reset}
+        />
       </div>
 
-      <div className="flex flex-col gap-3" aria-hidden>
-        <span className="text-sm font-medium text-muted-foreground">{t("preview.label")}</span>
-        <div className="dark flex flex-col gap-4 rounded-xl border bg-background p-4 text-foreground" style={previewStyle}>
-          <div className="flex items-center justify-between gap-3 rounded-xl border bg-card p-4">
-            <span className="text-base font-semibold">{t("preview.heading")}</span>
-            <span className="rounded-full bg-accent px-3 py-1 text-sm font-medium text-accent-foreground">{t("preview.seats")}</span>
+      <div className="flex flex-col gap-item" aria-hidden>
+        <span className="type-label text-muted-foreground">{t("preview.label")}</span>
+        <div className="dark flex flex-col gap-group rounded-xl border bg-background p-inset text-foreground" style={previewStyle}>
+          <div className="flex items-center justify-between gap-item rounded-xl border bg-card p-inset">
+            <span className="type-item-title">{t("preview.heading")}</span>
+            <span className="rounded-full bg-accent px-inset-sm py-tight type-label text-accent-foreground">{t("preview.seats")}</span>
           </div>
-          <span className="text-base font-medium text-primary-text">{t("preview.link")}</span>
-          <div className="flex h-control items-center justify-center rounded-full bg-primary px-8 text-base font-semibold text-primary-foreground">{t("preview.button")}</div>
+          <span className="type-body font-medium! text-primary-text">{t("preview.link")}</span>
+          <div className="flex h-control items-center justify-center rounded-full bg-primary px-inset-xl type-item-title text-primary-foreground">{t("preview.button")}</div>
         </div>
       </div>
     </div>

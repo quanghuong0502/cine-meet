@@ -1,4 +1,5 @@
-import { model, models, Schema, type InferSchemaType, type Model } from "mongoose";
+import { Schema, type InferSchemaType, type Model } from "mongoose";
+import { defineModel } from "@/lib/define-model";
 
 /** One system-wide setting (design 2.7): a stable key and its value. Defaults live in code, so a missing row is fine. */
 const systemSettingSchema = new Schema(
@@ -12,5 +13,4 @@ const systemSettingSchema = new Schema(
 export type SystemSettingDoc = InferSchemaType<typeof systemSettingSchema>;
 
 export const SystemSetting: Model<SystemSettingDoc> =
-  (models.SystemSetting as Model<SystemSettingDoc> | undefined) ??
-  model<SystemSettingDoc>("SystemSetting", systemSettingSchema);
+  defineModel<SystemSettingDoc>("SystemSetting", systemSettingSchema);

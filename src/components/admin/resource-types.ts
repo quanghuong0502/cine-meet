@@ -2,7 +2,7 @@ import type { TicketResult } from "@/lib/upload-types";
 
 /** Shapes shared by the master-data list, the entry screen and the server pages that feed them. */
 
-export type ResourceFieldKind = "text" | "textarea" | "url" | "color" | "number" | "select" | "switch" | "date" | "time" | "email" | "tel" | "image" | "comboItems";
+export type ResourceFieldKind = "text" | "textarea" | "url" | "color" | "number" | "select" | "switch" | "date" | "time" | "email" | "tel" | "image" | "comboItems" | "multiSelect" | "timeSlots";
 
 /** One form field. All text is already translated by the server page, so the form holds no entity wording. */
 export interface ResourceField {
@@ -21,6 +21,8 @@ export interface ResourceField {
   maxLength?: number;
   /** For `image` fields: the server action that signs the upload. */
   uploadTicket?: () => Promise<TicketResult>;
+  /** For `image` fields: `poster` previews the picture in a movie poster's 2:3 shape instead of cropping it square (a logo stays square). */
+  imageShape?: "poster";
   /** An identifier or code: no auto-capitalisation, auto-correct or spell-check. */
   plain?: boolean;
   /** For `comboItems` fields: what the items editor needs. */
@@ -61,6 +63,8 @@ export interface ResourceItem {
   meta?: string[];
   /** A picture shown in the round marker (a logo); the colour shows when there is none. */
   imageUrl?: string;
+  /** `poster` shows the picture in a movie poster's 2:3 shape instead of cropping it square. */
+  imageShape?: "poster";
   /** Letters shown inside the round marker (initials of a person). */
   avatarText?: string;
   /** Colour dot, as #rrggbb. */

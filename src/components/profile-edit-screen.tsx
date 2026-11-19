@@ -29,7 +29,7 @@ export async function ProfileEditScreen({ backHref }: { backHref: string }) {
   ];
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-4 p-4">
+    <div className="mx-auto flex w-full max-w-page flex-1 flex-col gap-section p-inset">
       <PageHeader title={t("editTitle")} backHref={backHref} />
       <ResourceForm
         itemId={null}

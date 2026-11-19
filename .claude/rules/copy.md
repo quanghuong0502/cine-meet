@@ -9,11 +9,20 @@ paths:
 
 Áp dụng cho mọi chữ ngắn: tiêu đề, nhãn, gợi ý, nút, placeholder, thông báo lỗi, toast, trạng thái rỗng. Áp dụng cho cả tiếng Việt và tiếng Anh.
 
+**Giọng điệu: thân thiện, kiểu GenZ và dễ thương (chủ dự án chọn, 2026-11-18).** App làm cho nhóm bạn bè của chủ dự án nên không cần trang trọng.
+Mọi chữ mới (thông báo lỗi, toast, trạng thái rỗng, nhãn nhắc, thông báo đẩy, câu trả lời chatbot) viết như bạn bè nhắn nhau: gần gũi, vui, nhẹ nhàng, cả tiếng Việt và tiếng Anh.
+- Ví dụ: "Chọn Thích hoặc Tránh để lưu." thành "Ghế này bạn thích hay tránh nè?"; "Chưa có lịch hẹn." thành "Chưa có kèo nào hết, rủ bạn đi xem phim thôi!". Đây chỉ là ví dụ về giọng, mỗi chỗ tự viết cho hợp ngữ cảnh.
+- Dùng câu hỏi, từ đệm nhẹ ("nè", "nha", "thôi") và từ quen miệng của người trẻ ở mức vừa phải; không lạm dụng tiếng lóng, không viết tắt khó hiểu, không dùng từ có thể bị hiểu sai nghĩa.
+- **Vẫn phải rõ ràng trước, dễ thương sau:** người đọc vẫn biết chuyện gì xảy ra và làm gì tiếp theo. Lỗi vẫn nói cách sửa, không đổ lỗi, không đùa cợt khi có hậu quả (mất tiền, xóa dữ liệu, hủy lịch hẹn): hành động nguy hiểm vẫn nêu thẳng hậu quả, giọng nhẹ nhưng không mơ hồ.
+- Vẫn giữ các quy tắc dưới đây về độ ngắn, một khái niệm một tên, không nối chuỗi, không viết hoa toàn bộ, không dấu chấm than liên tiếp, không emoji thay cho chữ.
+- Chữ cũ chưa đổi giọng thì chuyển dần khi chạm vào màn đó; không cần sửa hàng loạt một lúc, trừ khi chủ dự án yêu cầu.
+- Các ví dụ trong bảng bên dưới minh họa **cấu trúc** (ngắn, đủ ngữ cảnh), chưa phải giọng điệu; viết theo giọng ở trên.
+
 **Nguyên tắc chung: ngắn gọn nhưng đủ ngữ cảnh.** Người đọc phải biết *cái gì*, *với đối tượng nào* và *bước kế tiếp* mà không cần nhìn chỗ khác.
 Mỗi chuỗi phải tự đủ nghĩa khi tách khỏi màn hình (đọc bằng trình đọc màn hình, hiện trong toast, trong thông báo đẩy).
 - Cắt chữ thừa ("Vui lòng", "Hãy", "Xin", "Bạn có thể"), nhưng không cắt đối tượng: "Chọn ghế" tốt hơn "Chọn"; "Chốt người tham gia" tốt hơn "Xác nhận".
 - Dùng từ người dùng quen (lịch hẹn, suất chiếu, ghế, bắp rang), không dùng thuật ngữ kỹ thuật hay mã lỗi.
-- Câu chủ động, xưng "bạn" (tiếng Việt) và "you" (tiếng Anh). Không đổ lỗi cho người dùng.
+- Câu chủ động. Không đổ lỗi cho người dùng. **Cách xưng hô tiếng Việt do admin cấu hình** (Cài đặt, Cách xưng hô; mặc định bạn và tôi): **không viết "bạn", "tôi", "mình" (khi là ngôi xưng) trần trong `vi.json`**, dùng token `[you]` (gọi người dùng) và `[me]` (app tự xưng). **Từ xưng hô lưu chữ thường ("tôi") và viết hoa theo vị trí**: đứng đầu chuỗi, sau dấu chấm, chấm hỏi, chấm than hoặc xuống dòng thì ra "Tôi"; giữa câu thì chữ thường (dù viết `[you]` hay `[You]`, `[me]` hay `[Me]`, không phân biệt). **Nếu admin bật "Là tên riêng" cho một từ** (ví dụ "Bubu", "Quang Huong") thì luôn viết hoa chữ cái đầu của từng chữ ở mọi nơi. Token được thay khi tải chuỗi (`src/i18n/request.ts`, `src/lib/pronouns.ts`), cũng dùng cho thông báo đẩy và chatbot sau này (gọi `applyPronounsToText` với cặp lấy từ `getPronounsCached()`). "Bạn bè" (danh từ) viết bình thường. Nhãn nói từ phía người dùng về chính họ ("Đánh dấu của mình") dùng "mình" cố định. Tiếng Anh luôn "you" và "I", không dùng token. `messages.test.ts` báo đỏ nếu còn "bạn" hoặc "tôi" trần.
 - Một khái niệm chỉ có một tên trong toàn app (xem từ điển trong `.claude/rules/i18n.md`); không lúc "lịch hẹn" lúc "cuộc hẹn".
 
 **Theo từng loại chữ:**

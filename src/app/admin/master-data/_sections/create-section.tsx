@@ -14,6 +14,10 @@ export type SectionT = (key: string, values?: Record<string, string | number>) =
 
 export interface SectionContext {
   t: SectionT;
+  /** Shared admin strings (`admin.common`): the on/off switch label, the "off" badge. */
+  tc: SectionT;
+  /** Brands that are switched off: left out of the brand pick-list unless the record being edited already uses one. */
+  inactiveBrandIds: Set<string>;
   locale: string;
   /** Brands as select options (loaded when the section depends on a brand). */
   brandOptions: { value: string; label: string }[];
@@ -36,6 +40,8 @@ interface SectionConfig<Doc extends { _id: { toString(): string } }, Extra exten
   item: (doc: Doc, context: SectionContext & Extra) => Omit<ResourceItem, "id">;
   /** Starting form values by field name, all strings. */
   values: (doc: Doc) => Record<string, string>;
+  /** Starting values of a NEW record (for example the "active" switch starts on). */
+  defaults?: Record<string, string>;
   name: (doc: Doc) => string;
 }
 
@@ -58,13 +64,16 @@ export function formatValidity(from: string | null | undefined, to: string | nul
 }
 
 async function buildBaseContext(key: MasterDataSectionKey, needsBrand: boolean): Promise<SectionContext> {
-  const [t, locale, brands] = await Promise.all([
+  const [t, tc, locale, brands] = await Promise.all([
     getTranslations(`admin.${key}` as "admin.brands") as unknown as Promise<SectionT>,
+    getTranslations("admin.common") as unknown as Promise<SectionT>,
     getLocale(),
     needsBrand ? getBrandOptions() : Promise.resolve([]),
   ]);
   return {
     t,
+    tc,
+    inactiveBrandIds: new Set(brands.filter((brand) => !brand.active).map((brand) => brand.id)),
     locale,
     brandOptions: brands.map((brand) => ({ value: brand.id, label: brand.name })),
     brandNames: new Map(brands.map((brand) => [brand.id, brand.name])),
@@ -96,6 +105,7 @@ export function createSection<Doc extends { _id: { toString(): string } }, Extra
         return (
           <EmptyState
             mascot="bubu-sleepy"
+            className="flex-1 justify-center"
             title={tc("needBrand.title")}
             description={tc("needBrand.description")}
             action={
@@ -124,10 +134,13 @@ export function createSection<Doc extends { _id: { toString(): string } }, Extra
       const doc = id ? await config.service.getById(id) : null;
       if (id && !doc) return null;
 
+      const values = doc ? config.values(doc) : (config.defaults ?? {});
+      // A switched-off brand cannot be picked for a new record, but a record that already uses it keeps showing it.
+      const brandOptions = context.brandOptions.filter((option) => !context.inactiveBrandIds.has(option.value) || option.value === values.brandId);
       return {
         title: context.t(doc ? "editTitle" : "createTitle"),
-        fields: config.fields(context),
-        values: doc ? config.values(doc) : {},
+        fields: config.fields({ ...context, brandOptions }),
+        values,
         itemName: doc ? config.name(doc) : undefined,
         saveAction: config.saveAction,
         removeAction: config.removeAction,

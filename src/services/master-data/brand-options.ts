@@ -7,6 +7,8 @@ export const BRAND_OPTIONS_TAG = "master-data:brand-options";
 export interface BrandOption {
   id: string;
   name: string;
+  /** Off brands are hidden from users and from new pick-lists. */
+  active: boolean;
 }
 
 /**
@@ -15,7 +17,7 @@ export interface BrandOption {
  * Plain strings only (no ObjectId or Date), so it survives the cache's JSON round trip. Falls back to a fresh read after 5 minutes.
  */
 export const getBrandOptions = unstable_cache(
-  async (): Promise<BrandOption[]> => (await brandService.list({})).map((brand) => ({ id: brand._id.toString(), name: brand.name })),
+  async (): Promise<BrandOption[]> => (await brandService.list({})).map((brand) => ({ id: brand._id.toString(), name: brand.name, active: brand.active !== false })),
   ["master-data-brand-options"],
   { tags: [BRAND_OPTIONS_TAG], revalidate: 300 },
 );

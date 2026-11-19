@@ -6,7 +6,9 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ComboItemsField } from "@/components/admin/combo-items-field";
 import { DeleteRecordButton } from "@/components/admin/delete-record-button";
+import { Chip } from "@/components/admin/auditorium-editor/chips";
 import { ImageUpload } from "@/components/image-upload";
+import { TimeSlotsField } from "@/components/admin/time-slots-field";
 import { RequiredMark } from "@/components/required-mark";
 import { useActionState, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -24,12 +26,29 @@ import {
   type ValidationCode,
 } from "@/lib/admin/action-result";
 import type { ResourceField } from "./resource-types";
+import { PX } from "@/lib/ui-sizes";
 
 function isValidationCode(code: string): code is ValidationCode {
   return VALIDATION_CODES.some((known) => known === code);
 }
 
-const CONTROL_CLASS = "h-control rounded-xl bg-card px-4 text-base";
+const CONTROL_CLASS = "h-control rounded-xl bg-card px-inset type-body";
+
+/** Pick any number of options (chips); the choice travels as one comma-separated hidden field. */
+function MultiSelectField({ name, label, options, initial }: { name: string; label: string; options: { value: string; label: string }[]; initial: string }) {
+  const [chosen, setChosen] = useState<string[]>(() => initial.split(",").filter(Boolean));
+  const toggle = (value: string) => setChosen((current) => (current.includes(value) ? current.filter((v) => v !== value) : [...current, value]));
+  return (
+    <div role="group" aria-label={label} className="flex flex-wrap gap-stack">
+      <input type="hidden" name={name} value={chosen.join(",")} />
+      {options.map((option) => (
+        <Chip key={option.value} selected={chosen.includes(option.value)} onClick={() => toggle(option.value)}>
+          {option.label}
+        </Chip>
+      ))}
+    </div>
+  );
+}
 
 interface FieldControlProps {
   field: ResourceField;
@@ -53,14 +72,14 @@ function FieldControl({ field, value, invalid, last, onSelect, selected, sibling
 
   switch (field.kind) {
     case "textarea":
-      return <Textarea {...common} defaultValue={value} maxLength={field.maxLength} rows={3} placeholder={field.placeholder} className="resize-none rounded-xl bg-card px-4 py-3 text-base" />;
+      return <Textarea {...common} defaultValue={value} maxLength={field.maxLength} rows={3} placeholder={field.placeholder} className="resize-none overflow-y-auto rounded-xl bg-card px-inset py-inset-sm type-body" />;
     case "color":
       return (
         <input
           {...common}
           type="color"
           defaultValue={value || "#c61583"}
-          className="h-control w-20 cursor-pointer rounded-xl border bg-card p-1"
+          className="h-control w-swatch cursor-pointer rounded-xl border bg-card p-tight"
         />
       );
     case "comboItems":
@@ -82,12 +101,17 @@ function FieldControl({ field, value, invalid, last, onSelect, selected, sibling
           initialUrl={value || undefined}
           getTicket={field.uploadTicket ?? (async () => ({ ok: false, error: "not_configured" }))}
           preview={(url) => (
-            <span aria-hidden className="flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-xl border bg-card">
-              {url ? <Image src={url} alt="" width={80} height={80} unoptimized className="size-full object-cover" /> : <ImageIcon className="size-6 text-muted-foreground" />}
+            // A logo previews as a square; a movie poster keeps its 2:3 shape (same width, taller) so it is not cropped.
+            <span aria-hidden className={`relative flex w-swatch shrink-0 items-center justify-center overflow-hidden rounded-xl border bg-card ${field.imageShape === "poster" ? "aspect-[2/3]" : "aspect-square"}`}>
+              {url ? <Image src={url} alt="" fill sizes={`${PX.swatch}px`} unoptimized className="object-cover" /> : <ImageIcon className="size-icon-lg text-muted-foreground" />}
             </span>
           )}
         />
       );
+    case "timeSlots":
+      return <TimeSlotsField name={field.name} initial={value} invalid={invalid} />;
+    case "multiSelect":
+      return <MultiSelectField name={field.name} label={field.label} options={field.options ?? []} initial={value} />;
     case "switch":
       return <Switch {...common} defaultChecked={value === "on"} />;
     case "select":
@@ -177,7 +201,7 @@ export function ResourceForm({ itemId, fields, values, backHref, saveAction, del
   // After a failed save, start from what the user typed; otherwise from the saved record.
   const typed = state.status === "error" ? state.values : undefined;
   const formError = state.status === "error" && state.error !== "validation" ? state.error : null;
-  const lastTypingField = fields.findLast((field) => !["switch", "color", "select", "textarea"].includes(field.kind))?.name;
+  const lastTypingField = fields.findLast((field) => !["switch", "color", "select", "textarea", "multiSelect", "image", "timeSlots"].includes(field.kind))?.name;
 
   // noValidate on the form: the server validates and returns translated messages, so the browser must not show its own.
   return (
@@ -189,8 +213,8 @@ export function ResourceForm({ itemId, fields, values, backHref, saveAction, del
         const code = fieldErrors[field.name];
         const horizontal = field.kind === "switch";
         return (
-          <div key={field.name} className={horizontal ? "flex min-h-target items-center justify-between gap-4" : "flex flex-col gap-3"}>
-            <div className="flex flex-col gap-0.5">
+          <div key={field.name} className={horizontal ? "flex min-h-target items-center justify-between gap-group" : "flex min-w-0 flex-col gap-item"}>
+            <div className="flex flex-col gap-tight">
               <Label htmlFor={field.name} className="text-muted-foreground">
                 <span>
                   {field.label}
@@ -211,7 +235,7 @@ export function ResourceForm({ itemId, fields, values, backHref, saveAction, del
               discountError={field.kind === "comboItems" && fieldErrors.discountValue ? tv(isValidationCode(fieldErrors.discountValue) ? fieldErrors.discountValue : "invalid") : undefined}
             />
             {code ? (
-              <p role="alert" className="-mt-1 text-sm text-destructive">
+              <p role="alert" className="-mt-tight type-secondary text-destructive">
                 {tv(isValidationCode(code) ? code : "invalid")}
               </p>
             ) : null}
@@ -220,18 +244,18 @@ export function ResourceForm({ itemId, fields, values, backHref, saveAction, del
       })}
 
       {formError ? (
-        <p role="alert" className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+        <p role="alert" className="rounded-xl border border-destructive/30 bg-destructive/10 px-inset py-inset-sm type-secondary text-destructive">
           {t(`errors.${formError}`)}
         </p>
       ) : null}
 
       {/* Room for the fixed Save button, so the last field can scroll clear of it. */}
-      <div aria-hidden className="h-[calc(var(--spacing-control)+2.5rem)] shrink-0" />
+      <div aria-hidden className="h-save-clear shrink-0" />
 
       {/* Fixed to the bottom, in thumb reach. It stays while the keyboard is open: on the installed app the keyboard shrinks the page, so
           the bar rides just above it and Save is always reachable while typing (unlike the menu and the list's Add button, which hide). */}
-      <div data-save-bar className="pointer-events-none fixed inset-x-0 bottom-0 z-30 bg-gradient-to-t from-background via-background to-transparent px-4 pt-6 pb-[max(1rem,env(safe-area-inset-bottom))] md:left-64">
-        <div className="mx-auto flex max-w-sm items-center gap-2">
+      <div data-save-bar className="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-inset pb-(--inset-bottom) md:left-sidebar">
+        <div className="mx-auto flex max-w-form items-center gap-stack">
           {deleteItem ? <DeleteRecordButton id={deleteItem.id} name={deleteItem.name} backHref={backHref} removeAction={deleteItem.removeAction} /> : null}
           <Button type="submit" size="cta" disabled={isPending} className="pointer-events-auto min-w-0 flex-1">
             {isPending ? (

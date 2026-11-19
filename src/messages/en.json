@@ -64,7 +64,8 @@
     "appointments": "Plans",
     "cinemas": "Cinemas",
     "chat": "Chat",
-    "back": "Back"
+    "back": "Back",
+    "profile": "Profile"
   },
   "admin": {
     "menuLabel": "Admin menu",
@@ -103,8 +104,13 @@
         "unknown": "Couldn't save. Try again.",
         "last_admin": "At least one active admin must remain.",
         "self": "You can't do this to your own account.",
-        "no_password": "This account has no password (Google sign-in only)."
-      }
+        "no_password": "This account has no password (Google sign-in only).",
+        "invalid_config": "The seat map settings are not valid. Check rows, columns and aisles.",
+        "branch_not_found": "This cinema no longer exists. Choose another.",
+        "seat_type_not_found": "A seat type no longer exists. Choose again."
+      },
+      "activeLabel": "Active",
+      "inactiveBadge": "Off"
     },
     "validation": {
       "required": "This can't be empty",
@@ -152,6 +158,10 @@
         "holidays": {
           "title": "Holidays",
           "description": "Days priced as holidays."
+        },
+        "fnbCategories": {
+          "title": "Food types",
+          "description": "Popcorn, drinks, snacks..."
         },
         "fnbItems": {
           "title": "Food & drinks",
@@ -302,6 +312,9 @@
         },
         "minAge": {
           "label": "Minimum age"
+        },
+        "color": {
+          "label": "Tag colour"
         }
       },
       "minAgeBadge": "Age {age}+"
@@ -361,6 +374,10 @@
         "brandId": {
           "label": "Brand",
           "placeholder": "Select a brand"
+        },
+        "categoryId": {
+          "label": "Type",
+          "placeholder": "Pick a type"
         },
         "name": {
           "label": "Name"
@@ -567,6 +584,23 @@
       "unlocked": "Account unlocked",
       "resetPassword": "Reset password"
     },
+    "pronouns": {
+      "title": "Forms of address",
+      "cardDescription": "Choose what the app calls people and itself (Vietnamese only).",
+      "open": "Change forms of address",
+      "presets": "Quick pairs",
+      "fields": {
+        "you": {
+          "label": "The app calls the user"
+        },
+        "me": {
+          "label": "The app calls itself"
+        }
+      },
+      "isName": "Is a proper name",
+      "preview": "Preview",
+      "sample": "{You} locked seat D8! {Me} will remind {you} before the show."
+    },
     "appearance": {
       "title": "Brand color",
       "cardDescription": "The main color of the whole app.",
@@ -592,18 +626,284 @@
     },
     "systemSettings": {
       "title": "System settings",
-      "cardDescription": "Reminders, invitation deadline, ad time.",
+      "cardDescription": "Reminders, response deadline, ads, movie filter and showtime slots.",
       "open": "Open system settings",
       "fields": {
         "reminderMinutesBefore": {
           "label": "Remind before showtime (minutes)",
           "placeholder": "e.g. 1440, 20"
         },
-        "responseDeadlineHours": {
-          "label": "Invitation deadline (hours)"
-        },
         "adMinutes": {
           "label": "Ads before the movie (minutes)"
+        },
+        "movieUpcomingDays": {
+          "label": "Upcoming movies in the filter (days ahead)"
+        },
+        "timeSlots": {
+          "label": "Showtime slots (filter)"
+        },
+        "pushTtlHours": {
+          "label": "Keep push for offline phones (hours)"
+        },
+        "responseDeadlineMinutes": {
+          "label": "Answer-by time before the showtime (minutes)"
+        }
+      },
+      "slots": {
+        "empty": "No slots: the time filter is hidden.",
+        "slotNumber": "Slot {number}",
+        "name": "Name",
+        "nameEn": "English name",
+        "from": "From",
+        "to": "To",
+        "add": "Add slot",
+        "remove": "Remove slot"
+      }
+    },
+    "auditoriums": {
+      "title": "Auditoriums",
+      "description": "Set up the seat map of each room.",
+      "addButton": "Add auditorium",
+      "emptyTitle": "No auditoriums yet",
+      "emptyDescription": "Add the first room to build its seat map.",
+      "searchPlaceholder": "Search room, cinema or brand",
+      "searchLabel": "Search auditoriums",
+      "seatCount": "{count, plural, one {# seat} other {# seats}}",
+      "newTitle": "Add auditorium",
+      "needSetup": {
+        "title": "Add the basics first",
+        "description": "An auditorium needs a cinema and a seat type. Add them in Catalog.",
+        "action": "Open Catalog"
+      },
+      "editor": {
+        "tabsLabel": "Editing section",
+        "tabs": {
+          "settings": "Settings",
+          "seats": "Seats"
+        },
+        "heatmap": "Heatmap",
+        "mapHint": "Pinch to zoom the map",
+        "fields": {
+          "name": {
+            "label": "Room name",
+            "placeholder": "e.g. Room 1"
+          },
+          "branch": {
+            "label": "Cinema",
+            "placeholder": "Choose a cinema"
+          },
+          "rows": {
+            "label": "Rows"
+          },
+          "cols": {
+            "label": "Columns"
+          },
+          "rowLabelOrder": {
+            "label": "Row labels"
+          },
+          "colNumbering": {
+            "label": "Column numbering"
+          },
+          "defaultSeatType": {
+            "label": "Default seat type",
+            "placeholder": "Choose a seat type"
+          },
+          "screenPosition": {
+            "label": "Screen position (%)"
+          },
+          "screenWidth": {
+            "label": "Screen width (%)"
+          },
+          "screenDistance": {
+            "label": "Screen to front row"
+          },
+          "stadiumFromRow": {
+            "label": "Steps start at row",
+            "placeholder": "e.g. 3"
+          },
+          "stepsPerRow": {
+            "label": "Steps between two rows"
+          },
+          "verticalAisles": {
+            "label": "Vertical aisles (after column)"
+          },
+          "horizontalAisles": {
+            "label": "Horizontal aisles (after row)"
+          },
+          "entrances": {
+            "label": "Entrances"
+          }
+        },
+        "options": {
+          "rowLabelOrder": {
+            "nearScreen": "A near the screen",
+            "farScreen": "A far from the screen"
+          },
+          "colNumbering": {
+            "leftToRight": "Left to right",
+            "rightToLeft": "Right to left"
+          },
+          "distance": {
+            "near": "Near",
+            "medium": "Medium",
+            "far": "Far"
+          },
+          "side": {
+            "left": "Left",
+            "center": "Center",
+            "right": "Right"
+          },
+          "position": {
+            "front": "Front",
+            "back": "Back"
+          },
+          "entrance": "{side} · {position}"
+        },
+        "seats": {
+          "selected": "{count, plural, =0 {Tap seats on the map to select} one {# cell selected} other {# cells selected}}",
+          "none": "No seat",
+          "broken": "Broken",
+          "obstructed": "View blocked",
+          "recommended": "Recommended",
+          "clear": "Deselect",
+          "reset": "Reset cells",
+          "actionGroup": "Actions",
+          "typeGroup": "Seat type",
+          "flagGroup": "Condition"
+        }
+      }
+    },
+    "movies": {
+      "title": "Movies & showtimes",
+      "description": "Movies, trailers and cinema schedules.",
+      "tabs": {
+        "label": "Lists",
+        "movies": "Movies",
+        "showtimes": "Showtimes"
+      },
+      "addButton": "Add movie",
+      "emptyTitle": "No movies yet",
+      "emptyDescription": "Add the first movie to create showtimes.",
+      "searchPlaceholder": "Search by title",
+      "searchLabel": "Search movies",
+      "createTitle": "Add movie",
+      "editTitle": "Edit movie",
+      "fields": {
+        "title": "Title",
+        "originalTitle": "Original title",
+        "posterUrl": "Poster",
+        "trailerUrl": "YouTube trailer link",
+        "durationMin": "Length (minutes)",
+        "releaseDate": "Release date",
+        "endDate": "Expected end date",
+        "genreIds": "Genres",
+        "ageRatingId": "Age rating",
+        "ageRatingPlaceholder": "Choose a rating",
+        "noAgeRating": "None",
+        "formatIds": "Formats",
+        "language": "Language",
+        "director": "Director",
+        "cast": "Cast",
+        "synopsis": "Synopsis"
+      },
+      "showtimes": {
+        "emptyTitle": "No showtimes yet",
+        "emptyDescription": "Create them in bulk or import a CSV file.",
+        "bulkButton": "Create in bulk",
+        "importButton": "Import CSV",
+        "noPrice": "No price yet",
+        "deleteTitle": "Delete the {time} showtime of \"{movie}\"?"
+      },
+      "bulk": {
+        "title": "Create showtimes in bulk",
+        "movie": "Movie",
+        "moviePlaceholder": "Choose a movie",
+        "format": "Format",
+        "formatPlaceholder": "Choose a format",
+        "rooms": "Auditoriums",
+        "from": "From",
+        "to": "To",
+        "times": "Start times",
+        "addTime": "Add",
+        "removeTime": "Remove {time}",
+        "price": "Own price (VND)",
+        "summary": "{count, plural, =0 {Nothing to create yet} one {Will create # showtime} other {Will create # showtimes}}",
+        "submit": "Create showtimes",
+        "creating": "Creating...",
+        "created": "Created {created} {created, plural, one {showtime} other {showtimes}}{skipped, plural, =0 {} other { ({skipped} skipped for overlapping)}}",
+        "needSetup": {
+          "title": "Set up the basics first",
+          "description": "You need a movie that is showing or upcoming, a screening format and an auditorium with a seat map.",
+          "action": "Open movies"
+        },
+        "errors": {
+          "not_found": "Nothing found.",
+          "movie_not_found": "That movie no longer exists. Choose again.",
+          "auditorium_not_found": "An auditorium no longer exists. Choose again.",
+          "no_layout": "An auditorium has no seat map yet.",
+          "format_not_found": "That format no longer exists. Choose again.",
+          "invalid": "Invalid date or time.",
+          "validation": "Check the highlighted fields.",
+          "too_many": "At most {max} showtimes at a time. Use fewer days or auditoriums."
+        }
+      },
+      "import": {
+        "title": "Import showtimes from CSV",
+        "csv": "CSV content",
+        "pickFile": "Choose a CSV file",
+        "submit": "Import showtimes",
+        "importing": "Importing...",
+        "done": "Imported {count, plural, one {# showtime} other {# showtimes}}",
+        "errorsTitle": "{count, plural, one {# line is wrong} other {# lines are wrong}}. No showtime was created.",
+        "moreErrors": "And {count} more.",
+        "errors": {
+          "columns": "Line {line}: a column is missing (need movie, cinema, auditorium, start, format).",
+          "movie_not_found": "Line {line}: movie \"{value}\" not found.",
+          "movie_ambiguous": "Line {line}: several movies are called \"{value}\".",
+          "branch_not_found": "Line {line}: cinema \"{value}\" not found.",
+          "branch_ambiguous": "Line {line}: several cinemas are called \"{value}\".",
+          "auditorium_not_found": "Line {line}: auditorium \"{value}\" not found in that cinema.",
+          "no_layout": "Line {line}: auditorium \"{value}\" has no seat map yet.",
+          "format_not_found": "Line {line}: format \"{value}\" not found.",
+          "invalid_start": "Line {line}: start \"{value}\" is not valid (use 2026-12-01 19:30).",
+          "invalid_price": "Line {line}: price \"{value}\" is not valid.",
+          "overlap": "Line {line}: overlaps another showtime in the same auditorium.",
+          "too_many": "At most 500 lines per import."
+        }
+      }
+    },
+    "pushTest": {
+      "title": "Test push",
+      "cardDescription": "Send a test notification to a user's devices to check push works.",
+      "open": "Open",
+      "targetLabel": "Send to",
+      "targetPlaceholder": "Pick a user",
+      "targetOption": "{name} ({count, plural, =0 {no devices on} other {# devices}})",
+      "send": "Send test",
+      "sent": "Sent to {name}, {count, plural, one {# device} other {# devices}}",
+      "noDevice": "{name} hasn't turned push on for any device.",
+      "allFailed": "Couldn't reach {name}. Reason: {reason}. Turn notifications off and on again on that device if the VAPID keys just changed.",
+      "notConfigured": "The server has no VAPID keys, so nothing can be sent. Add VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY and VAPID_SUBJECT, then restart the server.",
+      "errors": {
+        "pick": "Pick who to send to first.",
+        "network": "Network is shaky, please try again.",
+        "not_configured": "The server has no VAPID keys.",
+        "not_found": "Couldn't find this user."
+      }
+    },
+    "fnbCategories": {
+      "title": "Food types",
+      "createTitle": "Add type",
+      "editTitle": "Edit type",
+      "addButton": "Add type",
+      "emptyTitle": "No types yet",
+      "emptyDescription": "Add types like Popcorn or Drinks to filter items when picking food.",
+      "fields": {
+        "name": {
+          "label": "Name"
+        },
+        "nameEn": {
+          "label": "English name"
         }
       }
     }
@@ -614,35 +914,15 @@
         "title": "Admin overview",
         "description": "Coming soon: system overview numbers."
       },
-      "auditoriums": {
-        "title": "Auditoriums",
-        "description": "Coming soon: auditorium editor and seat maps."
-      },
-      "movies": {
-        "title": "Movies & showtimes",
-        "description": "Coming soon: manage movies, trailers and showtimes."
-      },
       "settings": {
         "title": "Settings",
         "description": "Coming soon: AI and notification settings."
       }
     },
     "user": {
-      "appointments": {
-        "title": "Plans",
-        "description": "Coming soon: invite friends, lock in attendees and assign seats."
-      },
       "chat": {
         "title": "Chat",
         "description": "Coming soon: an AI assistant to help you pick seats and look things up."
-      },
-      "cinemas": {
-        "title": "Cinemas",
-        "description": "Coming soon: cinema list and auditorium seat maps."
-      },
-      "showtimes": {
-        "title": "Showtimes",
-        "description": "Coming soon: showtime list and movie trailers."
       }
     }
   },
@@ -696,7 +976,8 @@
       "seatPreference": {
         "label": "Preferred seats"
       }
-    }
+    },
+    "friends": "Friends"
   },
   "mascot": {
     "alt": {
@@ -718,6 +999,67 @@
       "title": "Security",
       "description": "Your sign-in password.",
       "changePassword": "Change password"
+    },
+    "notifications": {
+      "title": "Push notifications",
+      "notConfigured": "The server doesn't have push notifications turned on. Ask the admin to set it up. In-app notifications still work.",
+      "needsInstall": "On iPhone and iPad, push only works once the app is on the home screen. Follow the steps below, then open the app from the home screen and come back here.",
+      "unsupported": "This browser doesn't support push notifications. In-app notifications still work.",
+      "denied": "You're blocking notifications for this app. Allow them again in your browser or phone settings.",
+      "turnOn": "Turn on for this device",
+      "on": "This device gets push notifications, even when the app is closed.",
+      "turnedOn": "Notifications are on for this device",
+      "removed": "Notifications turned off on that device",
+      "devicesTitle": "Devices that get notifications",
+      "thisDevice": "This device",
+      "since": "Since {date}",
+      "removeDevice": "Turn off notifications on {name}",
+      "devices": {
+        "iphone": "iPhone",
+        "ipad": "iPad",
+        "android": "Android phone",
+        "mac": "Mac",
+        "windows": "Windows PC",
+        "linux": "Linux PC",
+        "other": "Other device"
+      },
+      "typesTitle": "Kinds of notification to push",
+      "types": {
+        "appointment_invited": "Invited to a plan",
+        "appointment_reply": "Replies to your plan",
+        "participants_locked": "Guest list final",
+        "appointment_cancelled": "Plan cancelled",
+        "participant_withdrew": "Someone drops out",
+        "friend_request": "Friend requests",
+        "friend_accepted": "Requests accepted",
+        "poll_reminder": "Vote reminders",
+        "appointment_confirmed": "Plan confirmed",
+        "appointment_changed": "Seat or time changed"
+      },
+      "errors": {
+        "network": "Network is shaky, please try again.",
+        "saveFailed": "Couldn't save this device, please try again.",
+        "subscribeFailed": "Couldn't turn on notifications here. Try again or check the notification permission.",
+        "notConfigured": "The server doesn't have push notifications turned on."
+      },
+      "insecure": "Push notifications only work when the app is opened over https or localhost. This address is plain http, so the browser has switched the feature off."
+    },
+    "install": {
+      "title": "Install the app",
+      "why": "Installed, the app opens fast like any other app and can send you push notifications, especially on iPhone.",
+      "ios": {
+        "step1": "Open this page in Safari and tap the Share button",
+        "shareIcon": "Share",
+        "step2": "Choose Add to Home Screen",
+        "step3": "Tap Add, then open the app from your home screen"
+      },
+      "android": {
+        "step1": "Tap the browser's three-dot menu",
+        "step2": "Choose Install app or Add to Home screen"
+      },
+      "other": {
+        "step1": "Look for the Install app button in the browser's address bar."
+      }
     }
   },
   "imageUpload": {
@@ -732,5 +1074,535 @@
       "network": "Connection lost while uploading. Try again.",
       "not_configured": "Cloudinary isn't set up yet, so photos can't be uploaded."
     }
+  },
+  "seatMap": {
+    "label": "Seat map",
+    "screen": "SCREEN",
+    "door": "Door",
+    "seat": "Seat {code}, {type}",
+    "score": "score {score}",
+    "broken": "broken",
+    "obstructed": "view blocked",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "zoomReset": "Reset",
+    "heatLow": "Low score",
+    "recommended": "recommended",
+    "recommendedLegend": "Recommended seat",
+    "heatHigh": "High score",
+    "doorLabel": "Entrance",
+    "markFavorite": "marked as favourite",
+    "markAvoid": "marked to avoid"
+  },
+  "showtimes": {
+    "title": "Showtimes",
+    "movies": "Movies",
+    "dayStrip": "Pick a day",
+    "today": "Today",
+    "until": "to {time}",
+    "price": "{amount}",
+    "noPrice": "No price yet",
+    "emptyTitle": "No showtimes",
+    "emptyDescription": "Try another day or remove some filters.",
+    "filters": {
+      "title": "Filters",
+      "titleCount": "Filters ({count})",
+      "show": "{count, plural, =0 {No showtimes} one {Show # showtime} other {Show # showtimes}}",
+      "remove": "Remove filter {name}",
+      "clear": "Clear",
+      "all": "All",
+      "labels": {
+        "branch": "Cinema",
+        "genre": "Genre",
+        "format": "Format",
+        "slot": "Time of day"
+      }
+    },
+    "createPlan": "Plan a movie night for this showtime"
+  },
+  "movie": {
+    "posterAlt": "Poster of {title}",
+    "duration": "{minutes} min",
+    "status": {
+      "upcoming": "Upcoming",
+      "showing": "Now showing",
+      "ended": "Ended"
+    },
+    "synopsis": "Synopsis",
+    "director": "Director",
+    "cast": "Cast",
+    "language": "Language",
+    "showtimes": "Showtimes",
+    "trailer": {
+      "watch": "Watch trailer",
+      "play": "Watch trailer of {title}",
+      "playerTitle": "Trailer of {title}",
+      "pause": "Pause",
+      "resume": "Resume",
+      "seek": "Seek in trailer",
+      "mute": "Mute",
+      "unmute": "Unmute",
+      "showControls": "Show controls",
+      "hideControls": "Hide controls",
+      "fullscreen": "Full screen",
+      "exitFullscreen": "Exit full screen",
+      "openYoutube": "Watch on YouTube"
+    },
+    "releaseOn": "Opens {date}",
+    "noMatch": "No matching showtimes. Try another day or fewer filters.",
+    "genres": "Genres",
+    "formats": "Formats"
+  },
+  "cinemas": {
+    "title": "Cinemas",
+    "emptyTitle": "No cinemas yet",
+    "emptyDescription": "Cinemas show up here once an admin adds branches and auditoriums.",
+    "roomCount": "{count, plural, one {# auditorium} other {# auditoriums}}",
+    "seatCount": "{count, plural, one {# seat} other {# seats}}",
+    "markedSeats": "{count, plural, one {# seat marked} other {# seats marked}}",
+    "parkingFee": "Parking {fee}",
+    "directions": "Get directions",
+    "rooms": "Auditoriums",
+    "room": {
+      "layers": "Layers",
+      "layerScore": "Seat score",
+      "layerMine": "My marks",
+      "tapSeat": "Tap a seat to see its score and mark it.",
+      "seatTitle": "Seat {code}",
+      "score": "score {score}",
+      "close": "Close",
+      "flags": {
+        "broken": "broken",
+        "obstructed": "view blocked",
+        "recommended": "recommended"
+      },
+      "kindLabel": "Kind of mark",
+      "kindRequired": "Like this seat or skip it? Pick one!",
+      "favorite": "Like",
+      "avoid": "Avoid",
+      "tagsLabel": "Quick notes",
+      "tags": {
+        "aisle": "Near aisle",
+        "near_door": "Next to door",
+        "obstructed": "Blocked",
+        "loose": "Loose seat",
+        "near_speaker": "Near speaker"
+      },
+      "noteLabel": "Note",
+      "notePlaceholder": "Your note",
+      "saveMark": "Save mark",
+      "removeMark": "Remove",
+      "saved": "Mark saved",
+      "removed": "Mark removed",
+      "saveFailed": "Could not save. Check your connection and try again.",
+      "oldMarks": "Old marks",
+      "oldMarksDescription": "Seats that moved or were removed when the auditorium changed its seat map."
+    }
+  },
+  "friends": {
+    "title": "Friends",
+    "phoneLabel": "Friend's phone number",
+    "phonePlaceholder": "e.g. 0912 345 678",
+    "addButton": "Add friend",
+    "requestSent": "Done! If that number has an account, the request is on its way.",
+    "networkError": "Network is shaky, please try again.",
+    "errors": {
+      "invalid_phone": "That phone number doesn't look right. Use a 10-digit mobile number, e.g. 0912 345 678.",
+      "throttled": "That's a lot of searching. Take a break and try again in about an hour.",
+      "not_found": "This request is gone."
+    },
+    "linkTitle": "Friend invite link",
+    "copyLink": "Copy link",
+    "shareLink": "Share link",
+    "linkCopied": "Link copied, send it to your friends",
+    "linkCopyFailed": "Couldn't copy the link. Try again.",
+    "shareTitle": "Be friends on SeatMate",
+    "incomingTitle": "Friend requests",
+    "accept": "Accept {name}'s request",
+    "decline": "Decline {name}'s request",
+    "accepted": "You and {name} are friends now",
+    "declined": "Request declined",
+    "listTitle": "Your friends",
+    "groupsLink": "Groups",
+    "emptyTitle": "Nobody here yet",
+    "emptyDescription": "Add friends by phone number or send an invite link, then plan a movie night!",
+    "noFriendsYet": "Nobody has accepted yet.",
+    "remove": "Remove {name} from friends",
+    "removeTitle": "Remove {name} from friends?",
+    "removeDescription": "You won't see each other in your friends lists anymore. To be friends again, send a new request.",
+    "removeConfirm": "Remove",
+    "cancel": "Cancel",
+    "removed": "{name} removed from friends",
+    "outgoingTitle": "Waiting for a reply",
+    "cancelRequest": "Withdraw request to {name}",
+    "requestCancelled": "Request withdrawn",
+    "invite": {
+      "title": "Friend request",
+      "prompt": "{name} wants to be friends with you",
+      "button": "Send friend request",
+      "networkError": "Network is shaky, please try again.",
+      "notFoundTitle": "This link doesn't work anymore",
+      "notFoundDescription": "The link may be mistyped or its owner stopped using it. Ask your friend for a new one.",
+      "toFriends": "Back to friends",
+      "selfTitle": "This is your own link",
+      "selfDescription": "Send this link to friends so they can send you a request.",
+      "errors": {
+        "not_found": "This link doesn't work anymore.",
+        "self": "This is your own link."
+      },
+      "done": {
+        "sent": "Request sent to {name}, waiting for them to accept",
+        "accepted": "You and {name} are friends now",
+        "already_friends": "You and {name} are already friends",
+        "already_requested": "You already sent {name} a request, waiting for them to accept"
+      }
+    },
+    "groups": {
+      "title": "Friend groups",
+      "newTitle": "New group",
+      "editTitle": "Edit group",
+      "emptyTitle": "No groups yet",
+      "emptyDescription": "Put the people you often watch with into a group to invite them faster.",
+      "memberCount": "{count, plural, one {# person} other {# people}}",
+      "add": "Add group",
+      "nameLabel": "Group name",
+      "namePlaceholder": "e.g. Weekend crew",
+      "membersLabel": "Members",
+      "noFriends": "Add some friends first, then come back to build a group.",
+      "save": "Save group",
+      "delete": "Delete group",
+      "saved": "Group saved",
+      "deleted": "Group deleted",
+      "networkError": "Network is shaky, please try again.",
+      "errors": {
+        "required": "Give the group a name.",
+        "too_many": "That's a lot of groups. Delete an old one first.",
+        "invalid": "You can only add people who are your friends.",
+        "not_found": "Couldn't find this group."
+      }
+    }
+  },
+  "appointments": {
+    "title": "Plans",
+    "listTitle": "Your plans",
+    "add": "Create plan",
+    "emptyTitle": "No plans yet",
+    "emptyDescription": "Pick a movie, pick a time, and invite your friends!",
+    "pastTitle": "Finished",
+    "byMe": "You made this",
+    "byName": "By {name}",
+    "needsReply": "Waiting for you",
+    "timesCount": "{count, plural, one {# time to pick} other {# times to pick}}",
+    "networkError": "Network is shaky, please try again. Nothing was lost.",
+    "status": {
+      "DRAFT": "Draft",
+      "INVITING": "Inviting",
+      "PARTICIPANTS_LOCKED": "People locked",
+      "PLANNING": "Planning",
+      "CONFIRMED": "Confirmed",
+      "COMPLETED": "Watched",
+      "CANCELLED": "Cancelled"
+    },
+    "errors": {
+      "validation": "Something looks off, please check it again.",
+      "not_found": "Couldn't find this plan.",
+      "forbidden": "Only the person who made it can do this.",
+      "bad_state": "The plan has moved on, reload the page to see it.",
+      "movie_not_found": "Couldn't find this movie.",
+      "invalid_option": "That time can't be used. Pick a time in the future, or a showtime of the same movie.",
+      "not_friends": "You can only invite friends whose accounts are active.",
+      "invalid_deadline": "The answer-by time has to be in the future.",
+      "limit": "That's a lot of times, remove one first.",
+      "duplicate": "That time is already on the list.",
+      "needs_attendee": "Pick at least one person who hasn't declined.",
+      "late": "The showtime has started, so you can't leave anymore.",
+      "conflict": "Several people edited at once, please try again.",
+      "deadline_passed": "The answer-by time has passed, so this can't change anymore.",
+      "deadline_too_late": "The answer-by time has to be before the earliest viewing time.",
+      "option_before_deadline": "That time is before the answer-by time, so it can't be suggested.",
+      "nobody_to_remind": "Everyone has voted on this time, nobody to remind.",
+      "reminder_too_soon": "You just sent a reminder, wait a bit before the next one.",
+      "no_showtime": "That showtime can't be picked, try another one.",
+      "seat_taken": "Someone just took that seat, pick another one.",
+      "invalid_seat": "That seat can't be used (broken, missing or already full).",
+      "needs_seat": "Someone still has no seat. Seat everyone, then confirm.",
+      "not_attendee": "That person isn't on the list going.",
+      "invalid_food": "That item isn't sold at this cinema, pick another.",
+      "too_early": "The movie hasn't started yet, so it can't be marked as watched.",
+      "invalid_amount": "That amount doesn't look right, check it again.",
+      "wrong_day": "That showtime is not on the agreed day, pick one on that day.",
+      "before_agreed": "That showtime is earlier than the agreed time, pick one from then on.",
+      "showtime_fixed": "The showtime was picked when the plan was made, so it can not be changed. Make a new plan for another one."
+    },
+    "new": {
+      "title": "Create plan",
+      "movieLabel": "Movie",
+      "moviePlaceholder": "Pick a movie",
+      "timesLabel": "Times",
+      "customDate": "Date",
+      "customTime": "Time",
+      "removeTime": "Remove this time",
+      "inviteesLabel": "Invite",
+      "groupsLabel": "Groups",
+      "noFriends": "No friends to invite yet. Add some in Profile first.",
+      "deadlineLabel": "Answer by",
+      "deadlineDate": "Answer-by date",
+      "deadlineTime": "Answer-by time",
+      "submit": "Send invitations",
+      "sent": "Invitations sent!",
+      "errors": {
+        "movie": "Pick a movie first.",
+        "times": "Enter a time, then pick a showtime.",
+        "invitees": "Invite at least one person.",
+        "deadline": "The answer-by time has to be in the future, with both date and time.",
+        "customInvalid": "Fill in both date and time.",
+        "past": "That time has already passed.",
+        "duplicate": "That time is already on the list.",
+        "tooManyTimes": "Up to {max} times.",
+        "deadlineBeforeStart": "The answer-by time must be at least {minutes} minutes before the earliest showtime, and in the future.",
+        "searchFailed": "Could not load the showtimes, try again."
+      },
+      "noShowtimesFilter": "No showtimes on this day at the chosen cinema.",
+      "pickTimeLabel": "Enter the day and time to watch",
+      "pickMovieFirst": "Pick a movie first, then enter the time you want.",
+      "noneFromThen": "No showtimes from that time on that day. Try another time."
+    },
+    "detail": {
+      "title": "Plan",
+      "answerBy": "Answer by {time}",
+      "creator": "Organizer",
+      "times": "Pick a time",
+      "chosenTime": "Chosen time",
+      "people": "Attendees",
+      "proposedBy": "Suggested by {name}",
+      "countYes": "{count} voted yes",
+      "countNo": "{count} voted no",
+      "countWaiting": "{count} not answered",
+      "yourVote": "Your vote",
+      "yes": "Yes",
+      "no": "No",
+      "proposeLabel": "Suggest another time",
+      "proposeDate": "Suggested date",
+      "proposeTime": "Suggested time",
+      "proposeButton": "Add suggested time",
+      "proposeInvalid": "Fill in a date and a time that hasn't passed.",
+      "youDeclined": "You turned this invitation down. Changed your mind? Vote Yes on any time to join back.",
+      "youExcluded": "The organizer didn't put you on the list this time.",
+      "youLeft": "You left this plan.",
+      "cancelled": "This plan was cancelled.",
+      "cancelledWithReason": "This plan was cancelled: {reason}",
+      "decline": "Decline invitation",
+      "declineTitle": "Decline this invitation?",
+      "declineDescription": "Your votes will be removed and the organizer will know. You can join back by voting Yes.",
+      "declineConfirm": "Decline",
+      "declined": "Invitation declined",
+      "reasonLabel": "Reason",
+      "reasonPlaceholder": "e.g. I'm busy that night",
+      "cancelReasonPlaceholder": "e.g. Tickets sold out",
+      "back": "Go back",
+      "withdraw": "Leave",
+      "withdrawTitle": "Leave this plan?",
+      "withdrawDescription": "The organizer will be told. Your spot goes back to the group.",
+      "withdrawConfirm": "Leave",
+      "withdrew": "You left the plan",
+      "cancel": "Cancel plan",
+      "cancelTitle": "Cancel this plan?",
+      "cancelDescription": "Everyone who joined will be told it was cancelled.",
+      "cancelConfirm": "Cancel plan",
+      "cancelledToast": "Plan cancelled",
+      "lockPickPeople": "Who's going",
+      "lockButton": "{count, plural, one {Lock in # person} other {Lock in # people}}",
+      "locked": "Locked in {count, plural, one {# person} other {# people}}",
+      "participant": {
+        "invited": "No answer",
+        "overdue": "Overdue",
+        "accepted": "Going",
+        "declined": "Declined",
+        "dropped": "Left",
+        "excluded": "Not going"
+      },
+      "deadlinePassed": "The answer-by time has passed. Wait for the organizer to lock it in.",
+      "save": "Save answers",
+      "discard": "Discard changes",
+      "saved": "Your answers are saved",
+      "unsaved": "Not saved",
+      "proposedYes": "You vote Yes on this time",
+      "removeProposal": "Remove this suggested time",
+      "declineShort": "Decline",
+      "timesCreator": "Time slots",
+      "lockThisTime": "Lock in this time",
+      "lockDialogDescription": "Once locked, the list can't change.",
+      "remindThisTime": "Remind people who haven't voted on this time",
+      "reminded": "Reminded {count, plural, one {# person} other {# people}}",
+      "plan": {
+        "begin": "Plan the details",
+        "begun": "Let's pick a showtime and seats",
+        "waitingForCreator": "The organizer is picking the showtime and seats, hang tight.",
+        "showtimeTitle": "Showtime",
+        "changeShowtime": "Change showtime",
+        "showtimeSaved": "Showtime picked, seats start over",
+        "seatsTitle": "Seating",
+        "whoIsSeated": "Pick who to seat",
+        "noSeat": "No seat yet",
+        "seatsSaved": "Seating saved",
+        "roomFailed": "Couldn't load that room, try picking the showtime again",
+        "foodFilter": "Filter by type",
+        "foodAll": "All",
+        "foodCombos": "Combos",
+        "foodOther": "Other",
+        "layerScore": "Seat score",
+        "seatTakenByOthers": "Another plan already holds this seat.",
+        "seatBroken": "That seat is broken, pick another.",
+        "seatFull": "That seat is full.",
+        "noRunTogether": "No free row has enough seats together, seat people by hand.",
+        "suggest": "Suggest seats together",
+        "foodTitle": "Food and drinks",
+        "foodFor": "Whose is it",
+        "foodShared": "Whole group",
+        "noFood": "This cinema has no items yet, skip this step.",
+        "less": "Fewer {name}",
+        "more": "More {name}",
+        "saveFood": "Save food",
+        "foodSaved": "Food saved",
+        "whereTitle": "Who sits where",
+        "estimateTitle": "Estimated cost",
+        "estimateTitleDone": "First estimate",
+        "ticketLine": "Ticket {amount}",
+        "foodLine": "Food {amount}",
+        "total": "Whole group",
+        "confirm": "Confirm",
+        "confirmed": "Confirmed, everyone will be told",
+        "complete": "Mark as watched",
+        "completed": "Watched! Add what it cost"
+      },
+      "cost": {
+        "title": "What it cost",
+        "breakdown": "Ticket {ticket} · Food {food} · Other {other}",
+        "edit": "Edit cost for {name}",
+        "ticket": "Ticket (VND)",
+        "food": "Food (VND)",
+        "other": "Other (VND)",
+        "reason": "Reason for the change",
+        "reasonPlaceholder": "e.g. Got a free ticket",
+        "cancel": "Cancel",
+        "save": "Save cost",
+        "saved": "Cost saved",
+        "groupTotal": "Whole group"
+      }
+    },
+    "invite": {
+      "title": "Invite more",
+      "groups": "Groups",
+      "button": "{count, plural, =0 {Send invitations} one {Invite # person} other {Invite # people}}",
+      "done": "Invited {count, plural, one {# more person} other {# more people}}"
+    },
+    "answered": "{answered}/{total} replied",
+    "peopleGoing": "{count, plural, one {# going} other {# going}}"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "bell": "Notifications",
+    "bellUnread": "Notifications, {count, plural, one {# unread} other {# unread}}",
+    "emptyTitle": "No notifications yet",
+    "emptyDescription": "When someone invites you or replies to a plan, it shows up here.",
+    "markAll": "Mark all read",
+    "allRead": "All marked as read",
+    "new": "New.",
+    "networkError": "Network is shaky, please try again.",
+    "types": {
+      "appointment_invited": {
+        "title": "New plan!",
+        "body": "{actorName} invited you to watch {movieTitle}. Come pick a time!"
+      },
+      "appointment_reply": {
+        "agree": {
+          "title": "{actorName} is in",
+          "body": "{actorName} agreed to watch {movieTitle}."
+        },
+        "decline": {
+          "title": "{actorName} can't make it",
+          "body": "{actorName} turned down the invitation to watch {movieTitle}."
+        },
+        "declineReason": {
+          "title": "{actorName} can't make it",
+          "body": "{actorName} turned down {movieTitle}: {reason}"
+        },
+        "propose": {
+          "title": "{actorName} suggested another time",
+          "body": "Take a look and vote on the new time for {movieTitle}."
+        }
+      },
+      "participants_locked": {
+        "included": {
+          "title": "People are locked in",
+          "body": "You're on the list to watch {movieTitle}."
+        },
+        "excluded": {
+          "title": "People are locked in",
+          "body": "You're not on the list for {movieTitle} this time. Next time!"
+        }
+      },
+      "appointment_cancelled": {
+        "plain": {
+          "title": "Plan cancelled",
+          "body": "{actorName} cancelled the plan to watch {movieTitle}."
+        },
+        "reason": {
+          "title": "Plan cancelled",
+          "body": "{actorName} cancelled the plan to watch {movieTitle}: {reason}"
+        }
+      },
+      "participant_withdrew": {
+        "title": "{actorName} left",
+        "body": "{actorName} can't watch {movieTitle} anymore."
+      },
+      "friend_request": {
+        "title": "New friend request",
+        "body": "{actorName} wants to be friends with you. Take a look!"
+      },
+      "friend_accepted": {
+        "title": "{actorName} accepted",
+        "body": "You and {actorName} are friends now. Time to plan a movie night!"
+      },
+      "poll_reminder": {
+        "title": "Vote reminder",
+        "body": "{actorName} is waiting for your vote on {time} for {movieTitle}."
+      },
+      "appointment_confirmed": {
+        "title": "It's a plan",
+        "body": "{movieTitle} at {time}, {place}. Your seat: {seatCode}."
+      },
+      "appointment_changed": {
+        "seat": {
+          "title": "Your seat changed",
+          "body": "{actorName} put you in seat {seatCode} for {movieTitle} ({place})."
+        },
+        "seatNone": {
+          "title": "Your seat changed",
+          "body": "{actorName} is rearranging seats for {movieTitle}, you have no seat yet."
+        },
+        "time": {
+          "title": "Showtime changed",
+          "body": "{movieTitle} is now at {time}, {place}. Check your seat."
+        }
+      }
+    },
+    "test": {
+      "title": "Test notification",
+      "body": "Push notifications are working!"
+    }
+  },
+  "offline": {
+    "title": "You're offline",
+    "description": "Check your Wi-Fi or mobile data and try again.",
+    "retry": "Try again"
+  },
+  "dateTimeField": {
+    "pickDate": "Pick date",
+    "pickTime": "Pick time"
+  },
+  "confirmDialog": {
+    "cancel": "Cancel",
+    "pending": "Working..."
   }
 }

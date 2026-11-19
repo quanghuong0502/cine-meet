@@ -55,10 +55,10 @@ export function ImageUpload({ name, initialUrl, getTicket, preview }: ImageUploa
   }
 
   return (
-    <div className="flex items-end gap-4">
+    <div className="flex items-end gap-group">
       <input type="hidden" name={name} value={url} />
       {preview(url)}
-      <div className="flex min-w-0 flex-wrap gap-2">
+      <div className="flex min-w-0 flex-wrap gap-stack">
         <input
           ref={inputRef}
           type="file"
@@ -71,12 +71,12 @@ export function ImageUpload({ name, initialUrl, getTicket, preview }: ImageUploa
             if (file) void upload(file);
           }}
         />
-        <Button type="button" variant="outline" size="cta-sm" disabled={uploading} onClick={() => inputRef.current?.click()} className="w-auto px-4">
+        <Button type="button" variant="outline" size="cta-sm" disabled={uploading} onClick={() => inputRef.current?.click()} className="w-auto px-inset">
           {uploading ? <LoaderCircle className="motion-safe:animate-spin" aria-hidden /> : <Camera aria-hidden />}
           {uploading ? t("uploading") : t(url ? "change" : "choose")}
         </Button>
         {url && !uploading ? (
-          <Button type="button" variant="ghost" size="cta-sm" onClick={() => setUrl("")} className="w-auto px-4 text-muted-foreground">
+          <Button type="button" variant="ghost" size="cta-sm" onClick={() => setUrl("")} className="w-auto px-inset text-muted-foreground">
             <Trash2 aria-hidden />
             {t("remove")}
           </Button>

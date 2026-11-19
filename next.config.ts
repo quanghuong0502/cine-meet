@@ -6,7 +6,8 @@ const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 const nextConfig: NextConfig = {
   // Lets a phone on the same Wi-Fi use the dev server (http://<LAN IP>:3000). Without this Next blocks the dev scripts
   // for any other origin than localhost, the page never hydrates and every link becomes a full page load.
-  allowedDevOrigins: ["192.168.*.*", "10.*.*.*"],
+  // *.trycloudflare.com: a quick HTTPS tunnel (`npx cloudflared tunnel --url http://localhost:3000`) for trying push and the installed app on a phone.
+  allowedDevOrigins: ["192.168.*.*", "10.*.*.*", "*.trycloudflare.com"],
   reactCompiler: true,
   // Client Router Cache: a page seen in the last 30 s opens at once when you come back to it (tabs, menu), with no loader.
   // Any server action that calls revalidatePath/updateTag clears this cache, so an edit made here always shows up straight away.

@@ -7,7 +7,7 @@ paths:
 # Quy tắc UI
 
 - Mobile-first: bố cục cho 390 đến 393px (iPhone 13 và iPhone 14 Pro, xem `devices.md`), sau đó mới mở rộng. Vùng chạm tối thiểu 44px.
-- Điều hướng dưới cùng cho user: Tổng quan · Lịch chiếu · Lịch hẹn · Rạp · Chat.
+- Điều hướng dưới cùng cho user: Tổng quan · Lịch chiếu · Lịch hẹn · Rạp · Chat · Hồ sơ (tối đa 5 mục hiện cùng lúc; mục chưa có tính năng thì ẩn).
 - Chỉ dùng component shadcn (Drawer cho bottom sheet, Sheet, Dialog, Tabs, Calendar, Sonner cho toast).
   Cần component mới thì tra bằng shadcn MCP rồi cài bằng CLI.
 - Icon: lucide-react. Animation: Motion, chỉ dùng khi có lý do (chuyển màn, chọn ghế).
@@ -15,7 +15,7 @@ paths:
 - Dark mode là mặc định; màu và bo góc đi qua CSS variables của shadcn, không hard-code màu trong component.
 - Form dài chia thành nhiều bước. Mọi trạng thái cần có: loading, rỗng, lỗi.
 - Sơ đồ ghế là SVG tự viết trong `src/components/seat-map/`, hỗ trợ pinch-zoom và chạm từng ghế.
-  Heatmap dùng thang màu cố định, không phụ thuộc theme.
+  Heatmap dùng một dải theo màu chủ đạo (`heat-color.ts`): tông tối, `--primary`, tông nhạt của màu thương hiệu, nên tự đổi theo màu admin chọn.
 - Văn bản hiển thị đi qua i18n (`vi`, `en`) và theo quy tắc viết chữ ở `.claude/rules/copy.md`; ngày giờ theo múi giờ Asia/Ho_Chi_Minh.
 
 - Không phụ thuộc hover: mọi tương tác phải dùng được bằng chạm.
@@ -35,7 +35,7 @@ Hướng thị giác tham khảo: app đặt vé/chọn chỗ hiện đại, s�
 - Mỗi màn hình hay component mới phải kiểm tra ở cả hai theme (390px và 1280px) trước khi báo xong.
 - Cặp màu mới phải đạt tương phản WCAG ở cả hai theme.
 - Không viết class màu theo kiểu `dark:` để vá từng chỗ; để token tự đổi theo theme.
-- Poster và heatmap giữ nguyên màu ở cả hai theme (heatmap dùng thang cố định).
+- Poster giữ nguyên màu ở cả hai theme. Heatmap theo màu thương hiệu (cùng một sắc độ ở cả hai theme).
 
 **Thanh điều hướng dưới (điện thoại):** component `BottomNav` dùng cho cả khu người dùng (`UserBottomNav`) và khu quản trị (`AdminBottomNav`). Là **viên thuốc nổi, kính mờ** (`rounded-full`, nền `card` 55% + `backdrop-blur`), cách mép 12px (`--spacing-nav-gap`) và cách thanh home iPhone (`env(safe-area-inset-bottom)`); mỗi mục cao tối thiểu 56px, biểu tượng 24px, nhãn `text-xs`.
 Mục đang chọn thể hiện bằng **ba dấu hiệu, không chỉ đổi màu chữ**: biểu tượng **tô đặc**, màu nhấn `primary-text`, nhãn đậm (`aria-current="page"`); mục còn lại là biểu tượng viền màu `muted-foreground`.
@@ -43,7 +43,7 @@ Mục đang chọn thể hiện bằng **ba dấu hiệu, không chỉ đổi m�
 Việc cấu hình gộp thành một trang (ví dụ mọi master data trong trang Danh mục, chia bằng tab) để menu chỉ cần một liên kết. Trang chủ khu vực tự chuyển tới trang đầu tiên đã sẵn sàng.
 Nội dung trang chừa nav + 2 khoảng cách (biến `--bottom-nav-h`), nút hành động cố định đặt phía trên thanh. Header và thanh không cuộn theo trang: chỉ `main` cuộn.
 
-**Avatar** (góc trên bên phải): bấm vào **mở thẳng trang Hồ sơ**, không có menu bật lên: người dùng `/profile`, admin `/admin/profile` (cùng component `ProfileOverview`, hiện là placeholder). Từ Hồ sơ vào Cài đặt và Đăng xuất; Cài đặt quay lại về Hồ sơ. Mọi thiết lập tài khoản (ngôn ngữ, đổi mật khẩu, thông báo...) là một thẻ trong trang Cài đặt, không đặt thành mục riêng ở Hồ sơ.
+**Hồ sơ:** người dùng mở từ **tab Hồ sơ ở thanh dưới** (`/profile`, chủ dự án chọn 2026-11-18; header người dùng chỉ còn logo và chuông thông báo, không có avatar); **admin vẫn bấm avatar** ở góc trên bên phải để mở `/admin/profile`; không có menu bật lên (cùng component `ProfileOverview`, hiện là placeholder). Từ Hồ sơ vào Cài đặt và Đăng xuất; Cài đặt quay lại về Hồ sơ. Mọi thiết lập tài khoản (ngôn ngữ, đổi mật khẩu, thông báo...) là một thẻ trong trang Cài đặt, không đặt thành mục riêng ở Hồ sơ.
 Admin chỉ có khu quản trị: không có nút "Về ứng dụng" hay liên kết sang trang người dùng.
 
 **Logo app = ảnh `duo-watching` (Bubu và Dudu) kèm wordmark**, dùng component `Logo` (`src/components/logo.tsx`) ở header và thanh bên.
@@ -56,6 +56,8 @@ Chỗ nào đặt ảnh cạnh chữ cũng dùng `Logo` hoặc `items-center`, k
 **Tên app: SeatMate.** Luôn hiển thị bằng `<Wordmark />` (`src/components/wordmark.tsx`): "Seat" màu chữ thường, "Mate" màu `primary-text`.
 Không viết tay chữ tên app trong giao diện; dùng hằng `APP_NAME` khi cần tên dạng chữ thuần (tiêu đề trang, manifest, thông báo).
 
+**Hộp thoại xác nhận: một component duy nhất, `ConfirmDialog` (`src/components/confirm-dialog.tsx`)** cho mọi "bạn chắc không" (xóa, hủy, rời, khóa, chốt, đặt lại...). Không tự ghép `AlertDialog` ở nơi dùng; `src/confirm-dialog.test.ts` báo đỏ nếu có. Nhờ vậy tiêu đề (`type-item-title`), mô tả, cặp nút (Hủy bên trái, nút xác nhận bên phải), nút phá hủy màu đỏ (`tone="destructive"`), spinner kèm chữ "Đang xử lý..." trong nút khi đang chạy đều giống nhau mọi nơi. Nhãn nút xác nhận là động từ nói rõ việc làm; chỉ đổi nhãn Hủy thành "Quay lại" khi nhãn xác nhận đã có chữ "Hủy". Phần cần hỏi thêm (ô lý do, chọn người) đặt vào `children`.
+
 **Màu thương hiệu cấu hình được (2026-11-17):** admin chọn **một** màu ở Cài đặt > Màu thương hiệu (`/admin/settings/appearance`), lưu ở `systemSettings` khóa `brandColor` (mặc định `#C61583`). `deriveBrandTheme` (`src/lib/brand-theme.ts`) đổi nó thành các biến `--brand-h`, `--brand-c`, `--brand-l`, `--brand-fg`, `--brand-ink`; layout chèn `<style>` đặt chúng ở `:root` từ lần vẽ đầu. **Mọi token màu khác tính từ `--brand-h`** (nền, thẻ, viền, chữ phụ, accent, ghế): token mới viết `oklch(L C var(--brand-h))`, **không viết cứng sắc độ 350**. Màu bị từ chối khi quá xám (không có sắc để dựng nền) hoặc quá tối (nút không nổi trên thẻ tối, dưới 3:1); chữ trên nút luôn đạt 4.5:1. Icon màn hình chính và ảnh splash là ảnh tĩnh nên **không đổi theo**: muốn đồng bộ thì xuất lại (`pwa.md`). Khi thêm chỗ cần màu nền PWA, dùng `getBrandTheme()` (`src/services/brand-theme-cache.ts`), không viết `#13080d`.
 
 **Màu (token trong `src/app/globals.css`, không hard-code):**
@@ -66,20 +68,20 @@ Không viết tay chữ tên app trong giao diện; dùng hằng `APP_NAME` khi 
 - Chữ phụ dùng `muted-foreground`. Trạng thái dùng `success`, `warning`, `info`, `destructive`; không tự chế màu mới.
 - Đánh dấu ghế dùng token `seat-*`: `seat-favorite` (⭐), `seat-avoid` (🚫), `seat-available`, `seat-reserved`, `seat-selected`.
 - Màu không được là cách duy nhất truyền đạt trạng thái: luôn kèm biểu tượng, nhãn hoặc hình dạng (ghế trống = viền, ghế đã đặt = nền đặc mờ).
-- Heatmap điểm ghế dùng thang tuần tự cố định (xanh lam sẫm → xanh ngọc → vàng), tránh đỏ, hồng và xanh lục để không trùng `primary`/`destructive`.
+- Heatmap điểm ghế dùng màu chủ đạo của app (chủ dự án chọn, 2026-11-17): dải một sắc độ `--brand-h` đi qua ba mốc: tông tối (thấp), `--primary` (giữa), tông rất nhạt (cao), để độ sáng đi một quãng dài và các mức kề nhau vẫn phân biệt được. Đầu nhạt dùng chữ tối. Màu không phải cách duy nhất: có chú thích thấp/cao dưới sơ đồ. Ghế đang chọn dùng viền `foreground`, không dùng `primary`, để không lẫn với điểm cao.
 - Hồng (`primary`) và đỏ (`destructive`) khá gần nhau: hành động nguy hiểm (xóa, hủy) luôn kèm biểu tượng và chữ, không chỉ dựa vào màu.
 - Cặp màu mới phải đạt tương phản WCAG: chữ thường 4.5:1, chữ lớn và thành phần giao diện 3:1.
 
 **Bố cục & hình khối:**
 - Lưới 4px; lề trang 16px; khoảng cách giữa các khối 24px; padding thẻ 16px.
 - Bo góc theo `--radius` của theme (thẻ `rounded-xl`, ô nhập `rounded-lg`, chip `rounded-full`). Không trộn kiểu bo khác.
-- Mỗi trang có tiêu đề trang thống nhất: nút quay lại tròn, tiêu đề ở giữa hoặc trái, hành động phụ bên phải.
-  Màn con (có nút quay lại) dùng `PageHeader` dạng thanh điều hướng: tiêu đề `text-xl`, dính đầu màn khi cuộn (`sticky`, nền mờ); màn tab giữ tiêu đề lớn `text-2xl` cuộn theo trang. Trang chứa `PageHeader` phải là khung `p-4` (thanh dùng lề âm để chạm mép màn).
+- Màn con dùng `PageHeader` dạng thanh quay lại, dính đầu màn khi cuộn (`sticky`, nền mờ). Tiêu đề và mô tả của `PageHeader` dùng `sr-only` cho trình đọc màn hình. Trang chứa `PageHeader` dùng `p-inset` để thanh quay lại chạm mép màn.
 - Hành động chính của màn hình là nút toàn chiều rộng, cao tối thiểu 48px, bo tròn hết cỡ, đặt ở dưới cùng
   (cố định, chừa safe-area). Mỗi màn hình tối đa một nút chính.
 - Poster là nhân vật chính: tỉ lệ 2:3, bo góc, lớp phủ gradient khi có chữ đè lên.
 
 **Nút (đồng bộ giữa mọi màn, không tự viết lại chuỗi class):** chỉ dùng các cỡ có tên của `Button` (`src/components/ui/button.tsx`):
+- **Kiểu nút (chủ dự án chọn, 2026-11-17): mọi nút hành động trong suốt như nút Xóa**: `variant="default"` dùng công thức của `destructive` nhưng màu thương hiệu và đặc hơn một chút (`bg-primary/50`, dark `/60`, chữ `primary-foreground` (trắng đặc, để chữ không bị mờ trên nền hồng), không viền, không làm mờ); `destructive` là bản màu đỏ. **Độ trong suốt chỉ ở nền** (`bg-primary/..`, không dùng `opacity-*` lên cả nút): chữ và biểu tượng trong nút luôn 100%. Nút cố định (phía trên menu dưới, và thanh Lưu ở màn nhập) không có dải nền riêng phía sau, để nút nhìn xuyên được; nút gửi của form không bị vô hiệu lúc mới mở (nút mờ 50% trông như hỏng), máy chủ trả lỗi từng ô khi thiếu. Không tự viết nền đặc `bg-primary` cho nút mới (chip đang chọn vẫn đặc vì là trạng thái, không phải hành động).
 - `size="cta"`: nút chính duy nhất của form hoặc màn hình (Lưu, Đăng nhập, Thêm), toàn chiều rộng, 48px, bo tròn, chữ semibold. Nút phụ cùng nhóm là `variant="outline"` cùng cỡ (đăng nhập Google).
 - `size="cta-sm"` + `variant="ghost"`: hành động nhẹ nằm ngay dưới nút chính (Hủy), toàn chiều rộng, 44px. Thứ tự luôn là nút chính trên, Hủy dưới.
 - `size="pill"`: nút chính đứng một mình, giữ chiều rộng riêng (Thử lại, Về trang chủ, mở một trang), 48px, `px-8`.
@@ -93,13 +95,14 @@ cả hai ngôn ngữ, có và không có khung lỗi.
 
 **Form (mẫu theo màn đăng nhập), quy tắc của chủ dự án (2026-11-17):**
 - **Không có gợi ý, mô tả hay chú thích dưới nhãn và dưới ô nhập, và không có mô tả dưới tiêu đề màn nhập.** Form chỉ gồm nhãn, ô, lỗi. Thông tin cần để điền đúng thì đưa vào: nhãn (đơn vị, ví dụ "Giá vé (đồng)"), placeholder (ví dụ giá trị, "vd. 95000") hoặc thông báo lỗi sau khi gửi.
+- **Ô nhiều dòng (`Textarea`) luôn có chiều cao tối đa** (mặc định `max-h-40` đã nằm sẵn trong `components/ui/textarea.tsx`, quá thì cuộn trong ô): ô tự giãn theo chữ (`field-sizing-content`) sẽ đẩy form dài vô hạn và đẩy nút Lưu xa. Ô cần rộng hơn (dán CSV) tự đặt `max-h-*` lớn hơn, không bao giờ để không giới hạn.
 - **Ô bắt buộc: dấu `*` ngay sau nhãn (`RequiredMark`, màu đỏ, ẩn với trình đọc màn hình; ô có `aria-required`). Ô không bắt buộc: không ghi gì** (không có chữ "Không bắt buộc").
 - Khung dùng chung `ResourceForm` đã áp dụng sẵn; form tự dựng (đăng nhập, đổi mật khẩu) dùng `RequiredMark` và không thêm gợi ý.
-- Khoảng cách nhãn tới ô nhập **12px** (`gap-3`), giữa hai trường 24px (token `gap-field`, chủ dự án chọn cho thoáng, dùng cho mọi form hiện tại và sau này): nhãn luôn gần ô của nó hơn trường phía trên; thông báo lỗi sát dưới ô (8px).
+- Khoảng cách nhãn tới ô nhập **12px** (`gap-item`), giữa hai trường 24px (token `gap-field`, chủ dự án chọn cho thoáng, dùng cho mọi form hiện tại và sau này): nhãn luôn gần ô của nó hơn trường phía trên; thông báo lỗi sát dưới ô (8px).
 - Không bọc trong thẻ; nhãn phía trên ô nhập (`text-muted-foreground`); ô nhập nền `card`, `h-control rounded-xl text-base`; ô mật khẩu có nút hiện/ẩn (vùng chạm 44px, `aria-pressed`); lỗi hiện trong khung `destructive` nhạt kèm biểu tượng; nút gửi `size="cta"`, đang xử lý thì hiện spinner (`motion-safe:`);
   đăng nhập bằng nhà cung cấp ngoài là nút viền `rounded-full` bên dưới dòng phân cách "hoặc".
 
-**Chữ (thang cỡ cố định, dùng đúng vai trò, không tự chọn cỡ khác). Giá trị nằm ở một chỗ duy nhất là khối `@theme` trong `globals.css`; chi tiết và nguồn tham khảo ở `.claude/rules/design-tokens.md`:**
+**Chữ: mọi chữ chọn một vai trò `type-*` (không viết rời `text-xl font-semibold`). Bảng vai trò, cỡ, nguồn Apple và Material và cách dùng nằm ở mục "Cỡ chữ theo vai trò" trong `.claude/rules/design-tokens.md`; giá trị của thang nằm ở khối `@theme` và các `@utility type-*` trong `globals.css`. Bảng dưới là bản cũ theo cỡ, giữ để đối chiếu:**
 
 | Vai trò | Class | Cỡ / dòng | Độ đậm | Tham chiếu |
 |---|---|---|---|---|

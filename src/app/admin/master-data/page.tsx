@@ -31,7 +31,7 @@ export default async function MasterDataPage({
   ) as Record<MasterDataSectionKey, string>;
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-4 p-4">
+    <div className="mx-auto flex w-full max-w-page flex-1 flex-col gap-section p-inset">
       <PageHeader title={t("title")} description={t("description")} />
 
       <MasterDataTabs label={t("tabsLabel")} labels={labels} activeKey={active.key} />

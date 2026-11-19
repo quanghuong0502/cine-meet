@@ -81,4 +81,20 @@ describe("messages", () => {
       );
     expect(mismatched).toEqual([]);
   });
+
+  it("Vietnamese messages address the person with pronoun tokens, never a bare 'bạn' or 'tôi'", () => {
+    // "bạn bè" (friends) is a noun, not a form of address.
+    const bare = Object.entries(viFlat)
+      .filter(([key]) => !key.startsWith("admin.pronouns."))
+      .filter(([, message]) => /(?<![\p{L}])(bạn(?!\s+bè)|tôi)(?![\p{L}])/iu.test(message))
+      .map(([key]) => key);
+    expect(bare, "use [you], [You], [me] or [Me] (docs: .claude/rules/copy.md)").toEqual([]);
+  });
+
+  it("English messages hold no pronoun tokens", () => {
+    const tokens = Object.entries(enFlat)
+      .filter(([, message]) => /\[(you|me)\]/i.test(message))
+      .map(([key]) => key);
+    expect(tokens).toEqual([]);
+  });
 });

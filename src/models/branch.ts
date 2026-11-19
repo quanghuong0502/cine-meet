@@ -1,4 +1,5 @@
-import { model, models, Schema, type InferSchemaType, type Model } from "mongoose";
+import { Schema, type InferSchemaType, type Model } from "mongoose";
+import { defineModel } from "@/lib/define-model";
 
 /** One cinema location of a brand. */
 const branchSchema = new Schema(
@@ -15,6 +16,8 @@ const branchSchema = new Schema(
     parkingFee: { type: Number, min: 0 },
     parkingLocation: { type: String, trim: true },
     parkingEntrance: { type: String, trim: true },
+    // Off = hidden from the user app and from new pick-lists (a missing value counts as on).
+    active: { type: Boolean, default: true },
   },
   { timestamps: true },
 );
@@ -24,4 +27,4 @@ branchSchema.index({ brandId: 1, name: 1 }, { unique: true, collation: { locale:
 export type BranchDoc = InferSchemaType<typeof branchSchema>;
 
 export const Branch: Model<BranchDoc> =
-  (models.Branch as Model<BranchDoc> | undefined) ?? model<BranchDoc>("Branch", branchSchema);
+  defineModel<BranchDoc>("Branch", branchSchema);

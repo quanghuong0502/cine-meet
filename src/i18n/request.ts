@@ -1,6 +1,8 @@
 import { cookies, headers } from "next/headers";
 import { getRequestConfig } from "next-intl/server";
 import { getActiveUser } from "@/lib/auth/guards";
+import { applyPronouns } from "@/lib/pronouns";
+import { getPronounsCached } from "@/services/pronouns-cache";
 import { LOCALE_COOKIE } from "./config";
 import { resolveLocale } from "./resolve-locale";
 
@@ -18,9 +20,13 @@ export default getRequestConfig(async () => {
     headerStore.get("accept-language"),
   );
 
+  const messages = (await import(`../messages/${locale}.json`)).default;
+  // Vietnamese messages hold pronoun tokens; the admin's pair (default bạn / tôi) is put in here, once per pair, not per request.
+  const spoken = locale === "vi" ? applyPronouns(messages, await getPronounsCached()) : messages;
+
   return {
     locale,
-    messages: (await import(`../messages/${locale}.json`)).default,
+    messages: spoken,
     // Dates are always shown in Vietnam time, whatever the language.
     timeZone: "Asia/Ho_Chi_Minh",
   };

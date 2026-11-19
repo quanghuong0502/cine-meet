@@ -33,7 +33,7 @@ export function EntryLoading({ holdBar = true }: { holdBar?: boolean }) {
   const labels = Object.fromEntries(MASTER_DATA_SECTIONS.map(({ key }) => [key, t(`sections.${key}.title`)])) as Record<MasterDataSectionKey, string>;
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-4 p-4" aria-busy="true">
+    <div className="mx-auto flex w-full max-w-page flex-1 flex-col gap-section p-inset" aria-busy="true">
       <PageHeader title={t("title")} description={t("description")} />
       <MasterDataTabs label={t("tabsLabel")} labels={labels} activeKey={active} />
       <RouteLoading inline={<LoadingState compact />} />

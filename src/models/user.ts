@@ -1,4 +1,5 @@
-import { model, models, Schema, type InferSchemaType, type Model } from "mongoose";
+import { Schema, type InferSchemaType, type Model } from "mongoose";
+import { defineModel } from "@/lib/define-model";
 import { LOCALES } from "@/i18n/config";
 import {
   AUTH_PROVIDERS,
@@ -45,6 +46,10 @@ const userSchema = new Schema(
     // Left unset until the user chooses, so the browser language still applies on first sign-in.
     locale: { type: String, enum: LOCALES },
     seatPreference: { type: String, enum: SEAT_PREFERENCES },
+    // Kinds of notification this person does not want pushed to their devices (in-app messages are always kept). Names are NotificationType.
+    pushOff: { type: [String], default: [] },
+    // Random code in this person's friend-invite link; made the first time they open "Friends". Unique when present.
+    inviteCode: { type: String, unique: true, sparse: true },
   },
   { timestamps: true },
 );
@@ -61,5 +66,4 @@ userSchema.pre("validate", function requireUsernameOrEmail() {
 export type UserDoc = InferSchemaType<typeof userSchema>;
 
 export const User: Model<UserDoc> =
-  (models.User as Model<UserDoc> | undefined) ??
-  model<UserDoc>("User", userSchema);
+  defineModel<UserDoc>("User", userSchema);

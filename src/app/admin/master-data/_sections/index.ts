@@ -2,6 +2,7 @@ import type { MasterDataSectionKey } from "@/lib/master-data-sections";
 import { ageRatingsSection } from "./age-ratings/section";
 import { branchesSection } from "./branches/section";
 import { brandsSection } from "./brands/section";
+import { fnbCategoriesSection } from "./fnb-categories/section";
 import { fnbCombosSection } from "./fnb-combos/section";
 import { fnbItemsSection } from "./fnb-items/section";
 import { formatsSection } from "./formats/section";
@@ -20,6 +21,7 @@ export const SECTIONS: Record<MasterDataSectionKey, SectionDefinition> = {
   ageRatings: ageRatingsSection,
   seatTypes: seatTypesSection,
   holidays: holidaysSection,
+  fnbCategories: fnbCategoriesSection,
   fnbItems: fnbItemsSection,
   fnbCombos: fnbCombosSection,
   priceRules: priceRulesSection,

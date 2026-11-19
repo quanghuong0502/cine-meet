@@ -1,4 +1,5 @@
-import { model, models, Schema, type InferSchemaType, type Model } from "mongoose";
+import { Schema, type InferSchemaType, type Model } from "mongoose";
+import { defineModel } from "@/lib/define-model";
 
 /** Failed-login counter per identifier (username or email). Documents delete themselves via the TTL index. */
 const loginAttemptSchema = new Schema({
@@ -12,5 +13,4 @@ const loginAttemptSchema = new Schema({
 export type LoginAttemptDoc = InferSchemaType<typeof loginAttemptSchema>;
 
 export const LoginAttempt: Model<LoginAttemptDoc> =
-  (models.LoginAttempt as Model<LoginAttemptDoc> | undefined) ??
-  model<LoginAttemptDoc>("LoginAttempt", loginAttemptSchema);
+  defineModel<LoginAttemptDoc>("LoginAttempt", loginAttemptSchema);

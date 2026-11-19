@@ -1,4 +1,5 @@
-import { model, models, Schema, type InferSchemaType, type Model } from "mongoose";
+import { Schema, type InferSchemaType, type Model } from "mongoose";
+import { defineModel } from "@/lib/define-model";
 
 export const AUDIT_ACTIONS = ["create", "update", "delete"] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
@@ -19,5 +20,4 @@ const auditLogSchema = new Schema(
 export type AuditLogDoc = InferSchemaType<typeof auditLogSchema>;
 
 export const AuditLog: Model<AuditLogDoc> =
-  (models.AuditLog as Model<AuditLogDoc> | undefined) ??
-  model<AuditLogDoc>("AuditLog", auditLogSchema);
+  defineModel<AuditLogDoc>("AuditLog", auditLogSchema);

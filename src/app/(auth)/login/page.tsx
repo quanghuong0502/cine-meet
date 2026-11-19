@@ -5,6 +5,7 @@ import { Wordmark } from "@/components/wordmark";
 import { getSafeRedirectPath } from "@/lib/redirect";
 import { LoginForm } from "./login-form";
 import { loginErrorKey } from "./login-errors";
+import { PX } from "@/lib/ui-sizes";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("auth.login");
@@ -24,24 +25,24 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
     // The screen is exactly one viewport tall and never scrolls: the illustration absorbs the spare
     // space (and shrinks on short phones). If the viewport is shorter than the form itself the page can
     // still scroll, but the scrollbar stays hidden.
-    <main className="mx-auto flex h-dvh w-full max-w-sm flex-col gap-4 overflow-y-auto [@media(max-height:600px)]:gap-2 px-6 pt-[max(1.25rem,env(safe-area-inset-top))] pb-[max(1.25rem,env(safe-area-inset-bottom))] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-      <header className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2">
+    <main className="mx-auto flex h-dvh w-full max-w-form flex-col gap-group overflow-y-auto [@media(max-height:600px)]:gap-stack px-inset-lg pt-(--inset-top) pb-(--inset-bottom) [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <header className="flex min-h-0 flex-1 flex-col items-center justify-center gap-stack">
         <div className="flex min-h-0 w-full flex-1 items-center justify-center">
           <Mascot
             pose="duo-watching"
-            size={200}
+            size={PX.mascotLg}
             decorative
             priority
             fillHeight
-            className="max-h-[175px]"
+            className="max-h-mascot-max"
           />
         </div>
-        <Wordmark className="text-3xl" />
+        <Wordmark className="type-display" />
       </header>
 
-      <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
-        <p className="text-sm text-muted-foreground [@media(max-height:640px)]:hidden">
+      <div className="flex flex-col gap-tight">
+        <h1 className="type-title">{t("title")}</h1>
+        <p className="type-secondary text-muted-foreground [@media(max-height:640px)]:hidden">
           {t("subtitle")}
         </p>
       </div>

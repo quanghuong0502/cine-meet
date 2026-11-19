@@ -90,9 +90,70 @@
   --spacing-control-lg: 3.5rem; /* 56px: roomy controls */
   --spacing-row: 4rem; /* 64px: list rows with a title and a subtitle */
   --spacing-avatar: 2.5rem; /* 40px: the round avatar picture inside its 44px touch target */
-  --spacing-nav: 3.5rem; /* 56px: one tab of the floating bottom navigation pill */
+  --spacing-nav: 4.25rem; /* 68px: height of the floating bottom navigation pill (every tab fills it) */
   --spacing-field: 1.5rem; /* 24px: gap between two fields (blocks) of a form, in every form of the app */
-  --spacing-nav-gap: 0.75rem; /* 12px: space around the floating pill (the bar adds the home-bar inset); content clears it by nav + 2 gaps */
+  --spacing-nav-gap: 0.75rem; /* 12px: space kept above the floating pill; content clears the pill by `--nav-clearance` */
+
+  /*
+   * SPACING ROLES: every gap, margin and padding in the app takes one of these names, never a loose number (`gap-3`, `px-4`, `mt-1`...).
+   * Same role, same space on every screen; change a value here and the whole app follows. All are multiples of 4 (the 4/8 grid of
+   * iOS and Material; steps 8 / 16 / 24 are the common ones). Between things (gap, margin):
+   *   section  24  between the blocks of a page, and between two form fields' groups (`field` is the same 24 for form fields)
+   *   group    16  between related parts inside one block or card
+   *   item     12  between two cards or rows of a list; a label and its control
+   *   stack     8  things that sit next to each other: chips, two buttons, an icon and its text
+   *   tight     4  two lines of one thing (a name and its second line)
+   *   hair      2  the smallest nudge (a badge's vertical padding)
+   * Inside things (padding): inset-xs 8, inset-sm 12, inset 16 (the page margin and the card padding), inset-lg 24, inset-xl 32.
+   */
+  --spacing-section: 1.5rem;
+  --spacing-group: 1rem;
+  --spacing-item: 0.75rem;
+  --spacing-stack: 0.5rem;
+  --spacing-tight: 0.25rem;
+  --spacing-hair: 0.125rem;
+  --spacing-inset-xs: 0.5rem;
+  --spacing-inset-sm: 0.75rem;
+  --spacing-inset: 1rem;
+  --spacing-inset-lg: 1.5rem;
+  --spacing-inset-xl: 2rem;
+
+  /* SIZE ROLES for icons (the 4px steps of the icon sizes in design-tokens.md) and for the few fixed-size parts. */
+  --spacing-icon-xs: 0.75rem; /* 12: a colour dot */
+  --spacing-icon-sm: 1rem; /* 16: icon next to small text */
+  --spacing-icon: 1.25rem; /* 20: icon in a button, a count badge */
+  --spacing-icon-lg: 1.5rem; /* 24: icon on the tab bar and the back button */
+  --spacing-time-field: 8rem; /* 128: width of a time field (hh:mm) beside a date field */
+  --spacing-stepper: 2rem; /* 32: width of the quantity between the + and - buttons */
+  --spacing-thumb-poster: 4rem; /* 64: width of a movie poster in a list (height 96 by its 2:3 shape) */
+  --spacing-thumb-poster-lg: 7rem; /* 112: width of the movie poster at the top of the appointment screen (height 168 by its 2:3 shape) */
+  --spacing-thumb: 3.5rem; /* 56: the small picture of an item in a list (logo, branch, poster), the same in every list of the app */
+  --spacing-swatch: 5rem; /* 80: a colour input, an image preview */
+  --spacing-track: 0.5rem; /* 8: thickness of a slider or heat bar */
+  --spacing-area-lg: 12rem; /* 192: minimum height of a big text area (pasting CSV) */
+  --spacing-area-max: 18rem; /* 288: maximum height of that text area */
+  --spacing-poster: 8.5rem; /* 136: poster on the movie page */
+  --spacing-mascot-max: 11rem; /* 176: tallest the mascot may be on a screen that must fit */
+  --spacing-sheet-gap: 6rem; /* 96: the least a bottom sheet leaves free at the top of the screen */
+  --spacing-grabber: 6.25rem; /* 100: width of the grab handle on top of a bottom sheet */
+  --spacing-menu-min: 9rem; /* 144: narrowest a drop-down list opens */
+  --spacing-area-cap: 10rem; /* 160: tallest a text area grows before it scrolls */
+  --spacing-switch: 3.25rem; /* 52: width of a switch (its height is `stepper`) */
+  --spacing-switch-thumb: 1.75rem; /* 28: the knob of a switch */
+  --spacing-sidebar: 16rem; /* 256: the admin sidebar on a wide screen (fixed bars start after it) */
+  --spacing-action-clear: calc(var(--spacing-control) + var(--spacing-inset-xl) + var(--spacing-stack)); /* 88: room at the page end under a button floating above the menu (filter button, poll bar, admin Add button) */
+  --spacing-save-clear: calc(var(--spacing-control) + var(--inset-bottom) + var(--spacing-group)); /* 48 + home-bar gap + 16: room at the page end under a Save bar fixed to the screen bottom (bar height plus 16 of air) */
+
+  /* WIDTH ROLES (max-w-*) of the columns a page is made of. */
+  --container-app: 42rem; /* 672: the user app column */
+  --container-page: 48rem; /* 768: an admin page */
+  --container-form: 24rem; /* 384: a form card, the save bar, the auth card */
+  --container-menu: 28rem; /* 448: the bottom menu pill */
+  --container-media: 36rem; /* 576: the trailer */
+  --container-hint: 20rem; /* 320: a short explanation under a picture */
+
+  /* Shadows have names too. */
+  --shadow-menu: 0 8px 32px -8px rgb(0 0 0 / 0.6), inset 0 1px 0 rgb(255 255 255 / 0.12); /* the floating bottom menu */
 
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
@@ -121,8 +182,17 @@
   /* Text on the main button, and the brand colour used as text on the light theme: chosen by the admin's colour for contrast. */
   --brand-fg: oklch(0.99 0.005 var(--brand-h));
   --brand-ink: oklch(var(--brand-l) var(--brand-c) var(--brand-h));
+  /*
+   * The floating bottom menu sits low: 8px above the screen edge, or on an iPhone with a home bar 20px less than the bar's inset (the
+   * pill reaches down into the home-bar zone, the way the iOS tab bar does). Content and fixed buttons clear it by `--nav-clearance`.
+   */
+  --nav-bottom: max(0.5rem, calc(env(safe-area-inset-bottom) - 1.25rem));
+  /* Bottom and top padding that also clears the iPhone home bar and notch (use `pb-(--inset-bottom)`, `pt-(--inset-top)`). */
+  --inset-bottom: max(var(--spacing-inset), env(safe-area-inset-bottom));
+  --inset-top: max(var(--spacing-inset), env(safe-area-inset-top));
+  --nav-clearance: calc(var(--spacing-nav) + var(--spacing-nav-gap) + var(--nav-bottom));
   /* Where toasts sit on phones: above the floating bottom menu and the fixed "Add" button, never on top of them. */
-  --toast-offset: calc(var(--spacing-nav) + 2 * var(--spacing-nav-gap) + var(--spacing-control) + 1.5rem + env(safe-area-inset-bottom));
+  --toast-offset: calc(var(--nav-clearance) + var(--spacing-control) + 1.5rem);
   --background: oklch(0.99 0.006 var(--brand-h));
   --foreground: oklch(0.22 0.03 var(--brand-h));
   --card: oklch(1 0 0);
@@ -238,6 +308,32 @@
     @apply bg-background text-foreground;
   }
   /*
+   * Safari on iPhone gives date and time inputs a native width of their own that ignores `width: 100%`, so they poke out of the
+   * form beside the other fields. Dropping the native look lets them follow the width of their container like any text input
+   * (the picker still opens on tap).
+   */
+  input[type="date"],
+  input[type="time"],
+  input[type="datetime-local"] {
+    -webkit-appearance: none;
+    appearance: none;
+    /* Flex centres the value up and down: without the native look Safari draws it at the top of the box. */
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    padding-block: 0;
+    text-align: left;
+  }
+  input[type="date"]::-webkit-date-and-time-value,
+  input[type="time"]::-webkit-date-and-time-value,
+  input[type="datetime-local"]::-webkit-date-and-time-value {
+    text-align: left;
+    min-height: 1.5em;
+    margin: 0;
+  }
+  /*
    * No pinch zoom and no double-tap zoom, only scrolling (pan). Works on Chrome/Android and Safari/iOS 13+.
    * A child that needs its own gestures (the seat map) sets `touch-action: none` on itself.
    */
@@ -300,4 +396,103 @@ html[data-keyboard="open"]:has([data-slot="drawer-content"]) body {
   inset: 0;
   width: 100%;
   overflow: hidden;
+}
+
+/*
+ * A row that scrolls sideways inside a page (chips, days, posters). It stays INSIDE the page's 16px side padding: the same
+ * 16px on the left and on the right whatever the scroll position, chips are cut at that edge instead of running to the screen
+ * edge. At the start the first chip sits on the left edge of the box, at the end the last one sits on the right edge.
+ */
+@utility scroll-strip {
+  overflow-x: auto;
+  scrollbar-width: none;
+  /* Room for a focus ring, which the scroll box would otherwise cut off. */
+  padding-block: 0.25rem;
+  margin-block: -0.25rem;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/*
+ * Type roles. Every piece of text in the app takes ONE of these, by what it is, never a loose size + weight. The same role is the same
+ * size, weight and line height on every screen, so a title cannot be big here and small there. Colour stays a separate class
+ * (`text-muted-foreground`...), and so does `tabular-nums`. The sizes come from the scale in @theme above, which follows Apple's
+ * Dynamic Type styles and the Material 3 type scale (table and sources in .claude/rules/design-tokens.md).
+ * The roles are `!important` so that a role always wins over a size a shadcn component has by default (a DrawerTitle is 20px because it
+ * says `type-heading`, whatever it was before); a rare exception says so with `!` on the other class (`font-semibold!`, `leading-6!`).
+ *
+ *   display     30 semibold  big numbers, the wordmark on the auth screens          (iOS Large Title, M3 headline medium)
+ *   title       24 semibold  a screen's own title on a screen without a back bar     (iOS Title 2, M3 headline small)
+ *   heading     20 semibold  a section or a group of cards, sheet titles, the back bar, a time of day   (iOS Title 3, M3 title large)
+ *   item-title  16 semibold  the name on a card or a list row                       (iOS Headline, M3 title medium)
+ *   body        16           running text, the value in a detail row                (iOS Body, M3 body large)
+ *   secondary   15           the second line of a row, a description                (iOS Subheadline, M3 body medium)
+ *   label       15 medium    the name of a field or of a value (above the value)    (iOS Subheadline, M3 label large)
+ *   caption     13           a small note                                           (iOS Footnote)
+ *   micro       12           the smallest text that is allowed                      (iOS Caption 1, M3 label medium)
+ *   action      16 medium    the label of a button that is not a main action's heading (pill, the quiet action)   (iOS Body emphasised, M3 label large)
+ *   tag         12 medium    badges, chips, tab labels                              (iOS Caption 1 emphasised, M3 label medium)
+ */
+@utility type-display {
+  font-size: var(--text-3xl) !important;
+  line-height: var(--text-3xl--line-height) !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.025em !important;
+}
+@utility type-title {
+  font-size: var(--text-2xl) !important;
+  line-height: var(--text-2xl--line-height) !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.025em !important;
+}
+@utility type-heading {
+  font-size: var(--text-xl) !important;
+  line-height: var(--text-xl--line-height) !important;
+  font-weight: 600 !important;
+}
+@utility type-item-title {
+  font-size: var(--text-base) !important;
+  line-height: var(--text-base--line-height) !important;
+  font-weight: 600 !important;
+}
+@utility type-body {
+  font-size: var(--text-base) !important;
+  line-height: var(--text-base--line-height) !important;
+  font-weight: 400 !important;
+}
+@utility type-secondary {
+  font-size: var(--text-sm) !important;
+  line-height: var(--text-sm--line-height) !important;
+  font-weight: 400 !important;
+}
+@utility type-label {
+  font-size: var(--text-sm) !important;
+  line-height: var(--text-sm--line-height) !important;
+  font-weight: 500 !important;
+}
+@utility type-caption {
+  font-size: var(--text-footnote) !important;
+  line-height: var(--text-footnote--line-height) !important;
+  font-weight: 400 !important;
+}
+@utility type-micro {
+  font-size: var(--text-xs) !important;
+  line-height: var(--text-xs--line-height) !important;
+  font-weight: 400 !important;
+}
+@utility type-action {
+  font-size: var(--text-base) !important;
+  line-height: var(--text-base--line-height) !important;
+  font-weight: 500 !important;
+}
+@utility type-badge {
+  font-size: var(--text-footnote) !important;
+  line-height: var(--text-footnote--line-height) !important;
+  font-weight: 500 !important;
+}
+@utility type-tag {
+  font-size: var(--text-xs) !important;
+  line-height: var(--text-xs--line-height) !important;
+  font-weight: 500 !important;
 }

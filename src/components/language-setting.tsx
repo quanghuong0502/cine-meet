@@ -14,7 +14,7 @@ export async function LanguageSetting() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">{t("title")}</CardTitle>
+        <CardTitle className="type-item-title">{t("title")}</CardTitle>
         <CardDescription>{t("description")}</CardDescription>
       </CardHeader>
       <CardContent>

@@ -1,4 +1,5 @@
-import { model, models, Schema, type InferSchemaType, type Model } from "mongoose";
+import { Schema, type InferSchemaType, type Model } from "mongoose";
+import { defineModel } from "@/lib/define-model";
 
 /** A kind of seat (Standard, VIP, Sweetbox...). `capacity` 2 is a couple seat. */
 const seatTypeSchema = new Schema(
@@ -16,4 +17,4 @@ seatTypeSchema.index({ name: 1 }, { unique: true, collation: { locale: "vi", str
 export type SeatTypeDoc = InferSchemaType<typeof seatTypeSchema>;
 
 export const SeatType: Model<SeatTypeDoc> =
-  (models.SeatType as Model<SeatTypeDoc> | undefined) ?? model<SeatTypeDoc>("SeatType", seatTypeSchema);
+  defineModel<SeatTypeDoc>("SeatType", seatTypeSchema);

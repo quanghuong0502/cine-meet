@@ -33,8 +33,8 @@ export function MasterDataTabs({ label, labels, activeKey }: MasterDataTabsProps
   }, [shown]);
 
   return (
-    <nav aria-label={label} className="-mx-4">
-      <ul ref={listRef} className="relative flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <nav aria-label={label}>
+      <ul ref={listRef} className="scroll-strip relative flex gap-stack pb-tight">
         {MASTER_DATA_SECTIONS.map(({ key, icon: Icon }) => {
           const selected = key === shown;
           return (
@@ -44,11 +44,11 @@ export function MasterDataTabs({ label, labels, activeKey }: MasterDataTabsProps
                 aria-current={selected ? "page" : undefined}
                 onClick={() => setPending({ key, from: activeKey })}
                 className={cn(
-                  "flex h-target items-center gap-2 rounded-full border px-4 text-sm font-medium",
+                  "flex h-target items-center gap-stack rounded-full border px-inset type-label",
                   selected ? "border-transparent bg-primary text-primary-foreground" : "bg-card text-muted-foreground",
                 )}
               >
-                <Icon className="size-4" aria-hidden />
+                <Icon className="size-icon-sm" aria-hidden />
                 {labels[key]}
               </Link>
             </li>

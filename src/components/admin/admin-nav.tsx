@@ -17,7 +17,7 @@ export function AdminNav() {
 
   return (
     <nav aria-label={t("menuLabel")}>
-      <ul className="flex flex-col gap-1">
+      <ul className="flex flex-col gap-tight">
         {ENABLED_ADMIN_NAV_ITEMS.map(({ href, key, icon: Icon, exact }) => {
           const active = isActive(current, href, exact);
           return (
@@ -27,13 +27,13 @@ export function AdminNav() {
                 onClick={() => markPending(href)}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex min-h-target items-center gap-3 rounded-lg px-3 text-sm font-medium",
+                  "flex min-h-target items-center gap-item rounded-lg px-inset-sm type-label",
                   active
                     ? "bg-accent text-accent-foreground"
                     : "text-muted-foreground hover:bg-accent/50",
                 )}
               >
-                <Icon className={cn("size-4", active && "fill-current stroke-accent")} aria-hidden />
+                <Icon className={cn("size-icon-sm", active && "fill-current stroke-accent")} aria-hidden />
                 {t(`nav.${key}`)}
               </Link>
             </li>

@@ -1,10 +1,11 @@
 import { AppOpenedMarker } from "@/components/route-loading";
-import { Logo } from "@/components/logo";
+import { AppHeader } from "@/components/app-header";
 import { redirect } from "next/navigation";
-import { UserMenu } from "@/components/user-menu";
 import { UserBottomNav } from "@/components/user-bottom-nav";
+import { UserMain } from "@/components/user-main";
 import { requireUser } from "@/lib/auth/guards";
 import { ENABLED_NAV_ITEMS } from "@/lib/nav";
+import { countUnread } from "@/services/notification.service";
 
 export default async function UserLayout({
   children,
@@ -18,23 +19,13 @@ export default async function UserLayout({
   // Admins only have the admin area: the user app is for regular accounts.
   if (user.role === "admin") redirect("/admin");
   const hasBottomNav = ENABLED_NAV_ITEMS.length > 0;
+  // Personal, so read on every request and never cached; a failed count must not take the whole app down.
+  const unread = await countUnread(user.userId).catch(() => 0);
 
   return (
-    <div data-app-shell className="mx-auto flex h-dvh w-full max-w-2xl flex-col overflow-hidden">
-      <header className="flex shrink-0 items-center justify-between border-b px-4 py-1">
-        <Logo size={48} wordmarkClassName="text-xl" />
-        <UserMenu name={user.name} image={user.image} />
-      </header>
-      <main
-        data-app-scroll
-        className={
-          hasBottomNav
-            ? "flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain pb-[calc(var(--spacing-nav)+2*var(--spacing-nav-gap)+env(safe-area-inset-bottom))]"
-            : "flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain"
-        }
-      >
-        {children}
-      </main>
+    <div data-app-shell className="mx-auto flex h-dvh w-full max-w-app flex-col overflow-hidden">
+      <AppHeader area="app" name={user.name} image={user.image} unread={unread} />
+      <UserMain hasBottomNav={hasBottomNav}>{children}</UserMain>
       <UserBottomNav />
       <AppOpenedMarker />
     </div>

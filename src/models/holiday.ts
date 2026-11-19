@@ -1,4 +1,5 @@
-import { model, models, Schema, type InferSchemaType, type Model } from "mongoose";
+import { Schema, type InferSchemaType, type Model } from "mongoose";
+import { defineModel } from "@/lib/define-model";
 
 /** A public holiday. `date` is a Vietnam calendar day written YYYY-MM-DD (no time zone to get wrong). */
 const holidaySchema = new Schema(
@@ -15,4 +16,4 @@ holidaySchema.index({ date: 1 }, { unique: true });
 export type HolidayDoc = InferSchemaType<typeof holidaySchema>;
 
 export const Holiday: Model<HolidayDoc> =
-  (models.Holiday as Model<HolidayDoc> | undefined) ?? model<HolidayDoc>("Holiday", holidaySchema);
+  defineModel<HolidayDoc>("Holiday", holidaySchema);

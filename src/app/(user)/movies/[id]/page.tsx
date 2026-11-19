@@ -1,0 +1,116 @@
+import type { Metadata } from "next";
+import { getLocale, getTranslations } from "next-intl/server";
+import Image from "next/image";
+import { notFound } from "next/navigation";
+import { AgeRatingBadge } from "@/components/movie/age-rating-badge";
+import { MovieShowtimes } from "@/components/movie/movie-showtimes";
+import { TrailerPlayer } from "@/components/movie/trailer-player";
+import { PageHeader } from "@/components/page-header";
+import { Badge } from "@/components/ui/badge";
+import { requireUser } from "@/lib/auth/guards";
+import { formatDay } from "@/app/admin/master-data/_sections/create-section";
+import { ageRatingService } from "@/services/master-data/age-rating.service";
+import { formatService } from "@/services/master-data/format.service";
+import { genreService } from "@/services/master-data/genre.service";
+import { getMovie } from "@/services/movie.service";
+import { searchShowtimes } from "@/services/showtime.service";
+import { PX } from "@/lib/ui-sizes";
+
+type Props = { params: Promise<{ id: string }> };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params;
+  const movie = await getMovie(id);
+  return { title: movie?.title };
+}
+
+export default async function MovieDetailPage({ params }: Props) {
+  await requireUser();
+  const { id } = await params;
+  const movie = await getMovie(id);
+  if (!movie) notFound();
+  const t = await getTranslations("movie");
+  const locale = await getLocale();
+  const en = locale === "en";
+
+  const [genres, formats, ratings, showtimes] = await Promise.all([
+    genreService.list({}),
+    formatService.list({}),
+    ageRatingService.list({}),
+    searchShowtimes({ movieId: id, limit: 120 }),
+  ]);
+  const genreById = new Map(genres.map((g) => [g._id.toString(), g]));
+  const formatById = new Map(formats.map((f) => [f._id.toString(), f]));
+  const genreNames = (movie.genreIds ?? []).map((gid) => genreById.get(gid.toString())).filter((g) => g !== undefined).map((g) => (en && g.nameEn ? g.nameEn : g.name));
+  const formatNames = (movie.formatIds ?? []).map((fid) => formatById.get(fid.toString())?.name).filter(Boolean);
+  const rating = ratings.find((r) => r._id.toString() === movie.ageRatingId?.toString());
+
+  const facts: [string, string | undefined][] = [
+    [t("synopsis"), movie.synopsis ?? undefined],
+    [t("director"), movie.director ?? undefined],
+    [t("cast"), movie.cast ?? undefined],
+    [t("language"), movie.language ?? undefined],
+  ];
+
+  return (
+    <div className="flex flex-1 flex-col gap-section p-inset">
+      <PageHeader backHref="/showtimes" />
+
+      <section className="flex gap-group">
+        <div className="relative aspect-[2/3] w-poster shrink-0 overflow-hidden rounded-xl border bg-muted">
+          {movie.posterUrl ? <Image src={movie.posterUrl} alt={t("posterAlt", { title: movie.title })} fill sizes={`${PX.poster}px`} unoptimized className="object-cover" priority /> : null}
+        </div>
+        <div className="flex min-w-0 flex-1 flex-col gap-stack">
+          <h1 className="type-heading">{movie.title}</h1>
+          {movie.originalTitle ? <p className="type-secondary text-muted-foreground">{movie.originalTitle}</p> : null}
+          <div className="flex flex-wrap gap-stack">
+            <Badge variant={movie.status === "showing" ? "default" : "secondary"}>
+              {t(`status.${movie.status}`)}
+            </Badge>
+            {rating ? <AgeRatingBadge rating={rating} /> : null}
+          </div>
+          <p className="type-secondary">{t("duration", { minutes: movie.durationMin })}</p>
+          <p className="type-secondary text-muted-foreground">{t("releaseOn", { date: formatDay(movie.releaseDate, locale) })}</p>
+          {genreNames.length > 0 || formatNames.length > 0 ? (
+            <div className="flex flex-wrap gap-stack">
+              <span role="group" aria-label={t("genres")} className="contents">
+                {genreNames.map((name) => (
+                  <Badge key={name} variant="secondary">
+                    {name}
+                  </Badge>
+                ))}
+              </span>
+              <span role="group" aria-label={t("formats")} className="contents">
+                {formatNames.map((name) => (
+                  <Badge key={name} variant="secondary">
+                    {name}
+                  </Badge>
+                ))}
+              </span>
+            </div>
+          ) : null}
+          {movie.trailer ? <TrailerPlayer videoId={movie.trailer.videoId} title={movie.title} /> : null}
+        </div>
+      </section>
+
+      <dl className="flex flex-col gap-item type-secondary">
+        {facts
+          .filter((fact): fact is [string, string] => Boolean(fact[1]))
+          .map(([label, value]) => (
+            <div key={label} className="flex flex-col gap-stack">
+              <dt className="text-muted-foreground">{label}</dt>
+              <dd className="type-body whitespace-pre-line">{value}</dd>
+            </div>
+          ))}
+      </dl>
+
+      {/* No showtimes yet: the whole section is left out (a heading over an empty state only filled the screen). */}
+      {showtimes.length > 0 ? (
+        <section className="flex flex-col gap-item">
+          <h2 className="type-heading">{t("showtimes")}</h2>
+          <MovieShowtimes rows={showtimes} />
+        </section>
+      ) : null}
+    </div>
+  );
+}

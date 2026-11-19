@@ -1,5 +1,6 @@
 import { Mascot, type MascotPose } from "@/components/mascot";
 import { cn } from "@/lib/utils";
+import { PX } from "@/lib/ui-sizes";
 
 interface EmptyStateProps {
   title: string;
@@ -21,16 +22,16 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        "flex flex-col items-center gap-3 px-6 py-10 text-center",
+        "flex flex-col items-center gap-item px-inset-lg py-inset-xl text-center",
         className,
       )}
     >
-      <Mascot pose={mascot} size={140} decorative priority />
-      <h2 className="text-xl font-semibold">{title}</h2>
+      <Mascot pose={mascot} size={PX.mascot} decorative priority />
+      <h2 className="type-heading">{title}</h2>
       {description ? (
-        <p className="max-w-xs text-sm text-muted-foreground">{description}</p>
+        <p className="max-w-hint type-secondary text-muted-foreground">{description}</p>
       ) : null}
-      {action ? <div className="mt-2">{action}</div> : null}
+      {action ? <div className="mt-stack">{action}</div> : null}
     </div>
   );
 }

@@ -94,14 +94,14 @@ thì dùng giá đó, bỏ qua mọi rule. Giá ước tính của lịch hẹn 
 - **Vị trí màn hình**: thanh trượt 0–100%. **50% là chính giữa**, kéo sang trái nhỏ hơn 50, kéo sang phải lớn hơn 50. Sơ đồ xem trước cập nhật theo thời gian thực.
 - Chiều rộng màn hình so với chiều rộng dãy ghế (%).
 - Khoảng cách từ màn hình tới hàng đầu: gần / vừa / xa.
-- Bậc thang (stadium): bắt đầu dốc lên từ hàng nào.
+- Bậc thang (stadium): bắt đầu dốc lên từ hàng nào, và số bậc giữa hai hàng (1 đến 4, mặc định 2; mỗi bậc giả định khoảng 0,1 m để chấm điểm ghế).
 
 **Lối đi & vị trí đặc biệt**
 - Lối đi dọc: nằm sau cột nào (có thể nhiều lối).
 - Lối đi ngang: nằm sau hàng nào.
 - Cửa vào/ra: trái/phải/giữa × phía trước/phía sau.
 
-**Ghi đè từng ô ghế** (chạm trên sơ đồ): đổi loại ghế; đánh dấu "không có ghế" (ô trống, cột chịu lực); ghế hỏng hoặc bị che tầm nhìn.
+**Ghi đè từng ô ghế** (chạm trên sơ đồ): đổi loại ghế; đánh dấu "không có ghế" (ô trống, cột chịu lực); ghế hỏng hoặc bị che tầm nhìn; "khuyên ngồi" (admin gợi ý ghế đẹp, chỉ là ghi chú, không đổi điểm ghế; người dùng thấy huy hiệu ngón cái lên trên sơ đồ và dòng "khuyên ngồi" khi chạm ghế).
 
 **Versioning**: sửa layout sẽ tạo phiên bản mới (`auditoriumLayouts`) thay vì ghi đè. Lịch hẹn cũ vẫn trỏ đúng phiên bản layout của chúng.
 - **Đánh dấu ghế đi theo phòng, không mất khi có version mới:** `seatMarks` lưu cả `auditoriumId`, `layoutId` (version lúc đánh dấu)
@@ -118,6 +118,7 @@ Ví dụ dữ liệu layout:
   "colNumbering": "left_to_right",
   "screen": { "positionPct": 58, "widthPct": 85, "distance": "medium" },
   "stadiumFromRow": 3,
+  "stepsPerRow": 2,
   "aisles": { "verticalAfterCols": [3, 13], "horizontalAfterRows": [4] },
   "entrances": [{ "side": "right", "position": "back" }],
   "overrides": [
@@ -211,12 +212,12 @@ Nội dung template nằm ở phía Zalo và phải được Zalo duyệt. App c
 | Chi tiêu | Tổng theo ngày/tuần/tháng/năm, tách **vé và đồ ăn**, biểu đồ theo thời gian |
 | Ngân sách | Ngân sách tháng (vé, đồ ăn), thanh tiến độ, cảnh báo ở mức 80% và 100% |
 | Thống kê xem phim | Số phim đã xem, chi phí trung bình mỗi buổi, thể loại/rạp/khung giờ hay đi |
-| Bạn bè | Người hay đi cùng nhất, **công nợ** (ai nợ mình, mình nợ ai) |
+| Bạn bè | Người hay đi cùng nhất |
 | Lịch hẹn | Sắp tới, lời mời đang chờ phản hồi, lịch hẹn đang ở bước chọn ghế |
 | Gợi ý | Phim sắp chiếu thuộc thể loại hay xem |
 
-**Nguyên tắc số liệu:** chi tiêu của user = tổng `expenses` của chính họ (phần của mình, không phải số tiền đã ứng), nên không
-bị đếm trùng khi một người trả hộ cả nhóm. Công nợ lấy từ `expenseShares` (mục 3.4).
+**Nguyên tắc số liệu:** chi tiêu của user = tổng `expenses` của chính họ (phần của mình). App chỉ ghi **mỗi buổi xem tốn bao nhiêu**
+(vé, đồ ăn, khoản khác); **không theo dõi ai trả tiền hay ai nợ ai** (chủ dự án chốt 2026-11-18).
 
 ### 3.2 Trang rạp chiếu
 - Danh sách thương hiệu và chi nhánh, bản đồ, link chỉ đường, thông tin gửi xe.
@@ -227,6 +228,7 @@ bị đếm trùng khi một người trả hộ cả nhóm. Công nợ lấy t�
 - Tag nhanh cho ghế: gần lối đi, sát cửa, bị che, ghế lỏng, gần loa.
 - Đánh giá phòng: âm thanh, điều hòa, độ sạch.
 - Lịch sử ngồi: "Bạn đã ngồi phòng này 3 lần: F7, F8, G9".
+- **Nhóm "Thường tới" ở đầu danh sách rạp:** các chi nhánh user hay đến nhất, nhiều buổi nhất trước, bằng nhau thì buổi gần nhất trước. Chỉ tính buổi đã hoàn thành (lịch hẹn COMPLETED và buổi ghi lại thủ công), làm ở Sprint 6; chưa có buổi nào thì không hiện nhóm.
 
 ### 3.3 Trang lịch chiếu
 - Lọc theo ngày, phim, chi nhánh, thể loại, định dạng, khung giờ.
@@ -248,29 +250,28 @@ DRAFT → INVITING → PARTICIPANTS_LOCKED → PLANNING → CONFIRMED → COMPLE
 - **Đề xuất giờ khác:** thêm một phương án mới vào poll (có thể gắn suất chiếu của cùng phim); người đề xuất tự động vote Có,
   những người khác vote tiếp.
 - Người tạo xem bảng tổng hợp, chọn một phương án rồi bấm **Chốt**. Danh sách tham gia mặc định là những người vote Có phương án
-  đó; trước khi chốt, người tạo có thể bỏ bớt hoặc thêm bất kỳ người được mời chưa từ chối. Sau khi chốt, **người tạo không thêm
+  đó; trước khi chốt, người tạo chỉ thấy những người đã vote Có phương án đó (chủ dự án chốt 2026-11-18) và có thể bỏ bớt, **không thêm tay người chưa vote Có giờ đó**. **Cách chốt trên giao diện:** mỗi khung giờ có nút chốt ngay trên thẻ; bấm thì hiện hộp thoại xác nhận với mọi người đã vote Có giờ đó được chọn sẵn, người tạo bỏ tick người không đi rồi bấm Chốt. Khung giờ chưa ai vote Có thì nút chốt bị khóa. Sau khi chốt, **người tạo không thêm
   hay bớt người** nữa.
 - **Rút lui:** người tham gia tự rút được từ PARTICIPANTS_LOCKED đến CONFIRMED, trước giờ chiếu. Ghế được trả lại, tiền tính lại,
   người tạo nhận thông báo (#13). Người tạo muốn thôi thì hủy lịch hẹn.
-- **Quá hạn phản hồi:** lịch hẹn không tự hủy; người chưa trả lời hiện nhãn "Quá hạn", người tạo vẫn chốt được.
+- **Quá hạn phản hồi:** lịch hẹn không tự hủy; người chưa trả lời hiện nhãn "Quá hạn", người tạo vẫn chốt được. **Sau hạn, người được mời không còn vote, đề xuất giờ khác hay từ chối được nữa** (chủ dự án chốt 2026-11-18, khóa cứng); người tạo cũng không mời thêm được vì người mới không còn thời gian trả lời. Người chưa trả lời không tự đổi thành từ chối. **Hạn trả lời phải ở tương lai và trước giờ sớm nhất đang bình chọn; giờ được đề xuất thêm cũng không được sớm hơn hạn** (chủ dự án chốt 2026-11-18).
 
 **Giai đoạn 2: Chi tiết** (chỉ mở sau khi đã chốt người)
 - Chọn suất chiếu cụ thể (từ đó biết phòng chiếu). Nếu phương án đã chốt có `showtimeId` thì điền sẵn; nếu không, chọn trong các suất của phim gần giờ đã chốt, và giờ lịch hẹn cập nhật theo suất đó.
 - **Xếp ghế cho từng người**: kéo thả avatar vào ghế. Ghế đôi gán được 2 người. Hệ thống gợi ý dãy ghế liền nhau có tổng điểm cao nhất.
 - Chọn đồ ăn cho từng người hoặc combo chung.
-- Tính tiền từng người; chọn cách trả: một người trả hết rồi chia, hoặc mỗi người tự trả.
+- Tính tiền ước tính từng người (vé, đồ ăn); không có bước chọn cách trả.
 - Bấm **Xác nhận** để chuyển sang CONFIRMED, gửi thông báo cho cả nhóm và lên lịch nhắc.
 - **Chống trùng ghế:** chốt hoặc đổi ghế chạy trong transaction MongoDB; từ chối ghế đã có người, ghế hỏng hoặc không tồn tại.
 - **Sửa sau khi xác nhận:** chỉ người tạo đổi ghế/giờ; gửi #6 cho người bị ảnh hưởng và tính lại nhắc.
 
 **Sau buổi xem (COMPLETED)**
 - **Hoàn thành:** người tạo bấm "Đã xem xong" sau giờ chiếu; nếu không bấm, hệ thống tự chuyển sau giờ kết thúc suất.
-- **Nhập chi phí thực tế** (người tạo): tiền vé và đồ ăn **của từng người** (mặc định bằng ước tính, sửa được) và ai là người
-  trả. Mỗi người tham gia thấy phần của mình và được chỉnh số tiền phần của mình (kèm lý do).
+- **Nhập chi phí thực tế** (người tạo): tiền vé, tiền đồ ăn và khoản khác (nếu có) **của từng người** (mặc định bằng ước tính, sửa được).
+  Không ghi ai là người trả. Mỗi người tham gia thấy phần của mình và được chỉnh số tiền phần của mình (kèm lý do).
+- **Lưu ở hai mức** (chủ dự án chốt 2026-11-18): chi phí **cả lần hẹn** (`actualCost` của lịch hẹn: tổng vé, đồ ăn, khác của cả nhóm, luôn bằng tổng phần của mọi người) và chi phí **từng người** (`expenses`, chia theo vé, đồ ăn, khác). Mục đích duy nhất là lưu lại chi phí xem phim; app không có logic trả tiền hay nợ.
 - Phần của mỗi người ghi thành `expenses` của chính người đó. Đây là nguồn duy nhất cho dashboard.
-- **Một người trả hết:** tạo `expenseShares` cho từng người còn lại, nợ người trả. Người nợ bấm "Tôi đã trả", người được nợ
-  bấm "Đã nhận" để xác nhận (người được nợ cũng đánh dấu đã nhận thẳng được). **Mỗi người tự trả:** không có công nợ.
-- MVP chỉ theo dõi đã trả/chưa trả, chưa tạo mã VietQR.
+- **Không có công nợ, không có "Tôi đã trả"/"Đã nhận", không có mã VietQR** (chủ dự án chốt 2026-11-18): app chỉ cho biết buổi đó tốn bao nhiêu.
 - Đánh giá phim và đánh giá ghế đã ngồi (lưu cá nhân, hiện ở lịch sử ngồi; điểm cộng đồng để giai đoạn sau).
 
 **Bổ sung**
@@ -301,7 +302,7 @@ DRAFT → INVITING → PARTICIPANTS_LOCKED → PLANNING → CONFIRMED → COMPLE
 | 7 | Hủy lịch hẹn | Cả nhóm | Web Push + in-app | ✅ |
 | 8 | **Nhắc trước giờ chiếu N phút** (admin cấu hình, mặc định 15–20) | Cả nhóm | Web Push + in-app | ✅ |
 | 9 | Nhắc nhập chi phí và đánh giá ghế (sau suất chiếu khoảng 3h) | Người tạo / cả nhóm | Web Push + in-app | ✅ |
-| 10 | Nhắc trả tiền | Người còn nợ | Web Push + in-app | Giai đoạn 2 |
+| 10 | ~~Nhắc trả tiền~~ | (bỏ: không theo dõi công nợ) | — | Bỏ |
 | 11 | Chi tiêu chạm 80% / 100% ngân sách | Chính user | Web Push + in-app | ✅ |
 | 12 | Phim thể loại yêu thích sắp khởi chiếu | User | Web Push + in-app | Giai đoạn 2 |
 | 13 | Người tham gia rút lui | Người tạo | Web Push + in-app | ✅ |
@@ -388,11 +389,9 @@ appointments             { creatorId, movieId, status, responseDeadline,
                                           declineReason? }],
                            showtimeId?, seats[{ userId, seatCode }],
                            fnb[{ userId?, itemId, qty, price }],
-                           payment{ mode, payerId? }, estimatedCost, actualCost }
-expenses                 { userId, appointmentId?, category: ticket|fnb, amount, date }
-                         // chi tiêu CÁ NHÂN (phần của chính userId); nguồn duy nhất cho dashboard
-expenseShares            { appointmentId, debtorId, creditorId (người đã trả), amount,
-                           status: unpaid|claimed|paid }   // chỉ khi một người trả hết
+                           estimatedCost, actualCost{ ticket, fnb, other, total } }  // actualCost = tổng phần của mọi người
+expenses                 { userId, appointmentId?, category: ticket|fnb|other, amount, date }
+                         // chi tiêu CÁ NHÂN (phần của chính userId); nguồn duy nhất cho dashboard. Không lưu ai trả tiền.
 
 notifications            { type, recipientId, payload, createdAt }
 notificationDeliveries   { notificationId, channel: inapp|webpush (zalo: giai đoạn sau), status, attempts, error? }
@@ -589,11 +588,12 @@ Chi tiết phạm vi, ranh giới và tiêu chí hoàn thành từng sprint nằ
 | 2 | Editor phòng chiếu, render sơ đồ, điểm ghế, versioning layout |
 | 3 | Phim (trailer nhúng), suất chiếu (tạo hàng loạt, CSV), trang rạp & lịch chiếu phía user, đánh dấu ghế |
 | 4 | Lịch hẹn giai đoạn 1 (mời, vote, chốt người), bạn bè, thông báo in-app, worker, Web Push |
-| 5A | Lịch hẹn giai đoạn 2: chọn suất, xếp ghế, đồ ăn, chi phí, công nợ, xác nhận |
+| 5A | Lịch hẹn giai đoạn 2: chọn suất, xếp ghế, đồ ăn, chi phí, xác nhận |
 | 5B | Nhắc lịch và các thông báo theo giờ, tự hoàn thành |
 | 6 | Dashboard, ngân sách, ghi lại buổi đã xem, đánh giá cá nhân |
 | 7 | Chatbot: tầng provider, tools, lưu context |
 | 8 | Production & hardening: môi trường production, sao lưu, rà soát cuối |
+| 9 | Công tắc tính năng theo môi trường (nút debug, hướng dẫn, tính năng thử nghiệm) |
 
 ## 9. Câu hỏi còn mở
 
@@ -602,5 +602,5 @@ Chi tiết phạm vi, ranh giới và tiêu chí hoàn thành từng sprint nằ
 3. **Hosting**: chọn VPS/Railway/Render (tiến trình chạy liên tục) hay serverless kèm cron bên ngoài? **Đã chốt:** dịch vụ Node chạy liên tục, không serverless; có staging từ Sprint 0 (mục 1).
 4. **Đánh dấu ghế công khai**: có cần admin duyệt trước khi hiển thị cho người khác không? **Hoãn:** lớp cộng đồng không làm trong MVP (nhóm nhỏ).
 5. **Lời mời người chưa có tài khoản**: có hỗ trợ mời qua link để người đó đăng ký rồi tham gia không? **Đã chốt:** không hỗ trợ (không có đăng ký công khai, xem 6.1). Link mời chỉ dùng để kết bạn với người đã có tài khoản; người chưa có tài khoản phải nhờ admin tạo.
-6. **Chia tiền**: chỉ theo dõi đã trả/chưa trả, hay muốn tạo mã QR chuyển khoản (VietQR) cho từng người? **Đã chốt (mặc định):** chỉ theo dõi đã trả/chưa trả; VietQR để giai đoạn sau.
+6. **Chia tiền**: **Đã chốt (2026-11-18):** không theo dõi ai trả, không công nợ, không VietQR; app chỉ ghi chi phí mỗi buổi xem (vé, đồ ăn, khác).
 7. **Dữ liệu suất chiếu**: nhập tay/CSV là đủ cho MVP, hay cần cân nhắc lấy tự động từ website rạp ở giai đoạn sau? Mặc định cho MVP: nhập tay hoặc CSV.

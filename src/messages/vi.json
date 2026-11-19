@@ -22,17 +22,17 @@
         "invalidInput": "Nhập tên đăng nhập (hoặc email) và mật khẩu.",
         "invalidCredentials": "Tên đăng nhập/email hoặc mật khẩu không đúng.",
         "accountLocked": "Tài khoản đã bị khóa. Hãy liên hệ quản trị viên.",
-        "tooManyAttempts": "Bạn đã nhập sai quá nhiều lần. Thử lại sau {minutes, plural, other {# phút}}.",
+        "tooManyAttempts": "[You] đã nhập sai quá nhiều lần. Thử lại sau {minutes, plural, other {# phút}}.",
         "emailUnverified": "Email Google chưa được xác minh nên không thể đăng nhập.",
         "notRegistered": "Tài khoản chưa được cấp quyền. Hãy liên hệ quản trị viên.",
         "sessionExpired": "Phiên đăng nhập đã hết hiệu lực. Hãy đăng nhập lại.",
-        "accessDenied": "Bạn không có quyền đăng nhập bằng tài khoản này.",
+        "accessDenied": "[You] không có quyền đăng nhập bằng tài khoản này.",
         "fallback": "Không đăng nhập được. Hãy thử lại."
       }
     },
     "changePassword": {
       "title": "Đổi mật khẩu",
-      "descriptionRequired": "Đây là lần đăng nhập đầu hoặc mật khẩu vừa được đặt lại. Hãy đặt mật khẩu mới của riêng bạn.",
+      "descriptionRequired": "Đây là lần đăng nhập đầu hoặc mật khẩu vừa được đặt lại. Hãy đặt mật khẩu mới của riêng [you].",
       "description": "Nhập mật khẩu hiện tại và mật khẩu mới.",
       "currentLabel": "Mật khẩu hiện tại",
       "newLabel": "Mật khẩu mới",
@@ -64,7 +64,8 @@
     "appointments": "Lịch hẹn",
     "cinemas": "Rạp",
     "chat": "Chat",
-    "back": "Quay lại"
+    "back": "Quay lại",
+    "profile": "Hồ sơ"
   },
   "admin": {
     "menuLabel": "Menu quản trị",
@@ -102,9 +103,14 @@
         "not_found": "Mục này không còn tồn tại. Hãy tải lại trang.",
         "unknown": "Không lưu được. Hãy thử lại.",
         "last_admin": "Phải còn ít nhất một quản trị viên đang hoạt động.",
-        "self": "Bạn không thể tự thực hiện thao tác này với tài khoản của mình.",
-        "no_password": "Tài khoản này không dùng mật khẩu (chỉ đăng nhập bằng Google)."
-      }
+        "self": "[You] không thể tự thực hiện thao tác này với tài khoản của mình.",
+        "no_password": "Tài khoản này không dùng mật khẩu (chỉ đăng nhập bằng Google).",
+        "invalid_config": "Cấu hình sơ đồ không hợp lệ. Kiểm tra lại số hàng, số cột và lối đi.",
+        "branch_not_found": "Chi nhánh không còn tồn tại. Hãy chọn lại.",
+        "seat_type_not_found": "Có loại ghế không còn tồn tại. Hãy chọn lại."
+      },
+      "activeLabel": "Đang bật",
+      "inactiveBadge": "Đang tắt"
     },
     "validation": {
       "required": "Không được để trống",
@@ -152,6 +158,10 @@
         "holidays": {
           "title": "Ngày lễ",
           "description": "Ngày giá vé theo mức ngày lễ."
+        },
+        "fnbCategories": {
+          "title": "Loại đồ ăn",
+          "description": "Bắp rang, nước uống, đồ ăn vặt..."
         },
         "fnbItems": {
           "title": "Đồ ăn",
@@ -302,6 +312,9 @@
         },
         "minAge": {
           "label": "Tuổi tối thiểu"
+        },
+        "color": {
+          "label": "Màu thẻ"
         }
       },
       "minAgeBadge": "Từ {age} tuổi"
@@ -361,6 +374,10 @@
         "brandId": {
           "label": "Thương hiệu",
           "placeholder": "Chọn thương hiệu"
+        },
+        "categoryId": {
+          "label": "Loại",
+          "placeholder": "Chọn loại"
         },
         "name": {
           "label": "Tên"
@@ -560,12 +577,29 @@
       "lock": "Khóa tài khoản",
       "unlock": "Mở khóa tài khoản",
       "lockTitle": "Khóa {name}?",
-      "lockDescription": "Họ bị đăng xuất ở thao tác kế tiếp và không đăng nhập lại được cho tới khi bạn mở khóa.",
+      "lockDescription": "Họ bị đăng xuất ở thao tác kế tiếp và không đăng nhập lại được cho tới khi [you] mở khóa.",
       "unlockTitle": "Mở khóa {name}?",
       "unlockDescription": "Họ đăng nhập lại được bình thường.",
       "lockedToast": "Đã khóa tài khoản",
       "unlocked": "Đã mở khóa tài khoản",
       "resetPassword": "Đặt lại mật khẩu"
+    },
+    "pronouns": {
+      "title": "Cách xưng hô",
+      "cardDescription": "Chọn cách app gọi người dùng và tự xưng.",
+      "open": "Đổi cách xưng hô",
+      "presets": "Cặp gợi ý",
+      "fields": {
+        "you": {
+          "label": "App gọi người dùng là"
+        },
+        "me": {
+          "label": "App tự xưng là"
+        }
+      },
+      "isName": "Là tên riêng",
+      "preview": "Xem trước",
+      "sample": "{You} đã chốt ghế D8 rồi nè. {Me} sẽ nhắc {you} trước giờ chiếu nha!"
     },
     "appearance": {
       "title": "Màu thương hiệu",
@@ -579,7 +613,7 @@
       "pickColor": "Chọn màu",
       "reset": "Đặt lại màu mặc định",
       "resetTitle": "Đặt lại về màu mặc định?",
-      "resetDescription": "Mọi người dùng sẽ thấy bộ màu mặc định ngay. Bạn vẫn chọn lại được màu khác sau đó.",
+      "resetDescription": "Mọi người dùng sẽ thấy bộ màu mặc định ngay. [You] vẫn chọn lại được màu khác sau đó.",
       "resetConfirm": "Đặt lại",
       "resetDone": "Đã đặt lại màu mặc định",
       "preview": {
@@ -592,18 +626,284 @@
     },
     "systemSettings": {
       "title": "Cài đặt hệ thống",
-      "cardDescription": "Nhắc lịch, hạn phản hồi lời mời, thời gian quảng cáo.",
+      "cardDescription": "Nhắc lịch, hạn phản hồi, quảng cáo, lọc phim và khung giờ chiếu.",
       "open": "Mở cài đặt hệ thống",
       "fields": {
         "reminderMinutesBefore": {
           "label": "Nhắc trước giờ chiếu (phút)",
           "placeholder": "vd. 1440, 20"
         },
-        "responseDeadlineHours": {
-          "label": "Hạn phản hồi lời mời (giờ)"
-        },
         "adMinutes": {
           "label": "Quảng cáo trước phim (phút)"
+        },
+        "movieUpcomingDays": {
+          "label": "Phim sắp chiếu hiện trong bộ lọc (ngày tới)"
+        },
+        "timeSlots": {
+          "label": "Khung giờ chiếu (bộ lọc)"
+        },
+        "pushTtlHours": {
+          "label": "Giữ thông báo đẩy khi máy offline (giờ)"
+        },
+        "responseDeadlineMinutes": {
+          "label": "Hạn trả lời trước giờ chiếu (phút)"
+        }
+      },
+      "slots": {
+        "empty": "Chưa có khung giờ: bộ lọc Khung giờ sẽ ẩn.",
+        "slotNumber": "Khung giờ {number}",
+        "name": "Tên",
+        "nameEn": "Tên tiếng Anh",
+        "from": "Từ",
+        "to": "Đến",
+        "add": "Thêm khung giờ",
+        "remove": "Xóa khung giờ"
+      }
+    },
+    "auditoriums": {
+      "title": "Phòng chiếu",
+      "description": "Cấu hình sơ đồ ghế từng phòng.",
+      "addButton": "Thêm phòng chiếu",
+      "emptyTitle": "Chưa có phòng chiếu",
+      "emptyDescription": "Thêm phòng đầu tiên để dựng sơ đồ ghế.",
+      "searchPlaceholder": "Tìm phòng, rạp hoặc thương hiệu",
+      "searchLabel": "Tìm phòng chiếu",
+      "seatCount": "{count, plural, other {# ghế}}",
+      "newTitle": "Thêm phòng chiếu",
+      "needSetup": {
+        "title": "Cần thêm dữ liệu nền trước",
+        "description": "Phòng chiếu cần có chi nhánh và loại ghế. Hãy thêm ở Danh mục.",
+        "action": "Mở Danh mục"
+      },
+      "editor": {
+        "tabsLabel": "Phần chỉnh sửa",
+        "tabs": {
+          "settings": "Thông số",
+          "seats": "Ghế"
+        },
+        "heatmap": "Heatmap",
+        "mapHint": "Kéo hai ngón để phóng to sơ đồ",
+        "fields": {
+          "name": {
+            "label": "Tên phòng",
+            "placeholder": "vd. Phòng 1"
+          },
+          "branch": {
+            "label": "Chi nhánh",
+            "placeholder": "Chọn chi nhánh"
+          },
+          "rows": {
+            "label": "Số hàng"
+          },
+          "cols": {
+            "label": "Số cột"
+          },
+          "rowLabelOrder": {
+            "label": "Nhãn hàng"
+          },
+          "colNumbering": {
+            "label": "Đánh số cột"
+          },
+          "defaultSeatType": {
+            "label": "Loại ghế mặc định",
+            "placeholder": "Chọn loại ghế"
+          },
+          "screenPosition": {
+            "label": "Vị trí màn hình (%)"
+          },
+          "screenWidth": {
+            "label": "Độ rộng màn hình (%)"
+          },
+          "screenDistance": {
+            "label": "Màn hình cách hàng đầu"
+          },
+          "stadiumFromRow": {
+            "label": "Bậc bắt đầu từ hàng",
+            "placeholder": "vd. 3"
+          },
+          "stepsPerRow": {
+            "label": "Số bậc giữa hai hàng"
+          },
+          "verticalAisles": {
+            "label": "Lối đi dọc (sau cột)"
+          },
+          "horizontalAisles": {
+            "label": "Lối đi ngang (sau hàng)"
+          },
+          "entrances": {
+            "label": "Cửa ra vào"
+          }
+        },
+        "options": {
+          "rowLabelOrder": {
+            "nearScreen": "A gần màn hình",
+            "farScreen": "A xa màn hình"
+          },
+          "colNumbering": {
+            "leftToRight": "Trái sang phải",
+            "rightToLeft": "Phải sang trái"
+          },
+          "distance": {
+            "near": "Gần",
+            "medium": "Vừa",
+            "far": "Xa"
+          },
+          "side": {
+            "left": "Trái",
+            "center": "Giữa",
+            "right": "Phải"
+          },
+          "position": {
+            "front": "Trước",
+            "back": "Sau"
+          },
+          "entrance": "{side} · {position}"
+        },
+        "seats": {
+          "selected": "{count, plural, =0 {Chạm ghế trên sơ đồ để chọn} other {Đã chọn # ô}}",
+          "none": "Không có ghế",
+          "broken": "Ghế hỏng",
+          "obstructed": "Che tầm nhìn",
+          "recommended": "Khuyên ngồi",
+          "clear": "Bỏ chọn",
+          "reset": "Đặt lại ô",
+          "actionGroup": "Thao tác",
+          "typeGroup": "Loại ghế",
+          "flagGroup": "Tình trạng"
+        }
+      }
+    },
+    "movies": {
+      "title": "Phim & suất chiếu",
+      "description": "Phim, trailer và lịch chiếu của các rạp.",
+      "tabs": {
+        "label": "Danh sách",
+        "movies": "Phim",
+        "showtimes": "Suất chiếu"
+      },
+      "addButton": "Thêm phim",
+      "emptyTitle": "Chưa có phim",
+      "emptyDescription": "Thêm phim đầu tiên để tạo suất chiếu.",
+      "searchPlaceholder": "Tìm theo tên phim",
+      "searchLabel": "Tìm phim",
+      "createTitle": "Thêm phim",
+      "editTitle": "Sửa phim",
+      "fields": {
+        "title": "Tên phim",
+        "originalTitle": "Tên gốc",
+        "posterUrl": "Poster",
+        "trailerUrl": "Link trailer YouTube",
+        "durationMin": "Thời lượng (phút)",
+        "releaseDate": "Ngày khởi chiếu",
+        "endDate": "Ngày kết thúc dự kiến",
+        "genreIds": "Thể loại",
+        "ageRatingId": "Phân loại tuổi",
+        "ageRatingPlaceholder": "Chọn phân loại",
+        "noAgeRating": "Chưa có",
+        "formatIds": "Định dạng",
+        "language": "Ngôn ngữ",
+        "director": "Đạo diễn",
+        "cast": "Diễn viên",
+        "synopsis": "Nội dung"
+      },
+      "showtimes": {
+        "emptyTitle": "Chưa có suất chiếu",
+        "emptyDescription": "Tạo hàng loạt hoặc nhập từ file CSV.",
+        "bulkButton": "Tạo hàng loạt",
+        "importButton": "Nhập CSV",
+        "noPrice": "Chưa có giá",
+        "deleteTitle": "Xóa suất {time} của \"{movie}\"?"
+      },
+      "bulk": {
+        "title": "Tạo suất hàng loạt",
+        "movie": "Phim",
+        "moviePlaceholder": "Chọn phim",
+        "format": "Định dạng",
+        "formatPlaceholder": "Chọn định dạng",
+        "rooms": "Phòng chiếu",
+        "from": "Từ ngày",
+        "to": "Đến ngày",
+        "times": "Giờ chiếu",
+        "addTime": "Thêm",
+        "removeTime": "Bỏ giờ {time}",
+        "price": "Giá riêng (VND)",
+        "summary": "{count, plural, =0 {Chưa có suất nào để tạo} other {Sẽ tạo # suất}}",
+        "submit": "Tạo suất chiếu",
+        "creating": "Đang tạo...",
+        "created": "Đã tạo {created} suất{skipped, plural, =0 {} other { (bỏ qua # suất trùng giờ)}}",
+        "needSetup": {
+          "title": "Cần thêm dữ liệu trước",
+          "description": "Cần có phim đang hoặc sắp chiếu, định dạng chiếu và phòng chiếu đã dựng sơ đồ.",
+          "action": "Mở danh sách phim"
+        },
+        "errors": {
+          "not_found": "Không tìm thấy dữ liệu.",
+          "movie_not_found": "Phim không còn tồn tại. Hãy chọn lại.",
+          "auditorium_not_found": "Có phòng chiếu không còn tồn tại. Hãy chọn lại.",
+          "no_layout": "Có phòng chưa có sơ đồ ghế.",
+          "format_not_found": "Định dạng không còn tồn tại. Hãy chọn lại.",
+          "invalid": "Ngày hoặc giờ không hợp lệ.",
+          "validation": "Kiểm tra lại các ô được đánh dấu.",
+          "too_many": "Tối đa {max} suất mỗi lần. Hãy chia nhỏ khoảng ngày hoặc số phòng."
+        }
+      },
+      "import": {
+        "title": "Nhập suất từ CSV",
+        "csv": "Nội dung CSV",
+        "pickFile": "Chọn file CSV",
+        "submit": "Nhập suất chiếu",
+        "importing": "Đang nhập...",
+        "done": "Đã nhập {count} suất",
+        "errorsTitle": "{count, plural, other {# dòng chưa đúng}}. Chưa có suất nào được tạo.",
+        "moreErrors": "Và {count} dòng khác.",
+        "errors": {
+          "columns": "Dòng {line}: thiếu cột (cần phim, rạp, phòng, giờ bắt đầu, định dạng).",
+          "movie_not_found": "Dòng {line}: không tìm thấy phim \"{value}\".",
+          "movie_ambiguous": "Dòng {line}: có nhiều phim tên \"{value}\".",
+          "branch_not_found": "Dòng {line}: không tìm thấy chi nhánh \"{value}\".",
+          "branch_ambiguous": "Dòng {line}: có nhiều chi nhánh tên \"{value}\".",
+          "auditorium_not_found": "Dòng {line}: không tìm thấy phòng \"{value}\" ở chi nhánh này.",
+          "no_layout": "Dòng {line}: phòng \"{value}\" chưa có sơ đồ ghế.",
+          "format_not_found": "Dòng {line}: không tìm thấy định dạng \"{value}\".",
+          "invalid_start": "Dòng {line}: giờ bắt đầu \"{value}\" không hợp lệ (cần dạng 2026-12-01 19:30).",
+          "invalid_price": "Dòng {line}: giá \"{value}\" không hợp lệ.",
+          "overlap": "Dòng {line}: trùng giờ với một suất khác trong cùng phòng.",
+          "too_many": "Tối đa 500 dòng mỗi lần nhập."
+        }
+      }
+    },
+    "pushTest": {
+      "title": "Thử thông báo đẩy",
+      "cardDescription": "Gửi một thông báo thử tới thiết bị của một người dùng để kiểm tra push.",
+      "open": "Mở",
+      "targetLabel": "Gửi tới",
+      "targetPlaceholder": "Chọn người dùng",
+      "targetOption": "{name} ({count, plural, =0 {chưa bật thiết bị nào} other {# thiết bị}})",
+      "send": "Gửi thử",
+      "sent": "Đã gửi tới {name}, {count, plural, one {# thiết bị} other {# thiết bị}}",
+      "noDevice": "{name} chưa bật thông báo đẩy trên thiết bị nào.",
+      "allFailed": "Chưa gửi được tới {name}. Lý do: {reason}. Thử bật lại thông báo trên thiết bị đó nếu vừa đổi khóa VAPID.",
+      "notConfigured": "Máy chủ chưa có khóa VAPID nên chưa gửi được. Thêm VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT rồi chạy lại máy chủ.",
+      "errors": {
+        "pick": "Chọn người nhận trước nha.",
+        "network": "Mạng đang chập chờn, thử lại giúp [me] nha.",
+        "not_configured": "Máy chủ chưa có khóa VAPID.",
+        "not_found": "Không tìm thấy người dùng này."
+      }
+    },
+    "fnbCategories": {
+      "title": "Loại đồ ăn",
+      "createTitle": "Thêm loại",
+      "editTitle": "Sửa loại",
+      "addButton": "Thêm loại",
+      "emptyTitle": "Chưa có loại nào",
+      "emptyDescription": "Thêm loại như Bắp rang, Nước uống để lọc món khi chọn đồ ăn.",
+      "fields": {
+        "name": {
+          "label": "Tên"
+        },
+        "nameEn": {
+          "label": "Tên tiếng Anh"
         }
       }
     }
@@ -614,35 +914,15 @@
         "title": "Tổng quan quản trị",
         "description": "Sắp có: số liệu tổng quan hệ thống."
       },
-      "auditoriums": {
-        "title": "Phòng chiếu",
-        "description": "Sắp có: chỉnh sửa phòng chiếu và sơ đồ ghế."
-      },
-      "movies": {
-        "title": "Phim & suất chiếu",
-        "description": "Sắp có: quản lý phim, trailer và suất chiếu."
-      },
       "settings": {
         "title": "Cài đặt",
         "description": "Sắp có: cài đặt AI và thông báo."
       }
     },
     "user": {
-      "appointments": {
-        "title": "Lịch hẹn",
-        "description": "Sắp có: mời bạn bè, chốt người tham gia và xếp ghế."
-      },
       "chat": {
         "title": "Chat",
         "description": "Sắp có: trợ lý AI giúp chọn ghế và tra cứu."
-      },
-      "cinemas": {
-        "title": "Rạp",
-        "description": "Sắp có: danh sách rạp và sơ đồ phòng chiếu."
-      },
-      "showtimes": {
-        "title": "Lịch chiếu",
-        "description": "Sắp có: danh sách suất chiếu và trailer phim."
       }
     }
   },
@@ -650,12 +930,12 @@
     "comingSoon": "Đang phát triển",
     "loading": "Đang tải...",
     "welcome": {
-      "title": "Chào mừng bạn!",
+      "title": "Chào mừng [you]!",
       "description": "Các tính năng sẽ lần lượt xuất hiện ở đây."
     },
     "notFound": {
       "title": "Không tìm thấy trang",
-      "description": "Trang bạn tìm không tồn tại hoặc đã được chuyển đi.",
+      "description": "Trang [you] tìm không tồn tại hoặc đã được chuyển đi.",
       "action": "Về trang chủ"
     },
     "error": {
@@ -696,7 +976,8 @@
       "seatPreference": {
         "label": "Chỗ ngồi hay chọn"
       }
-    }
+    },
+    "friends": "Bạn bè"
   },
   "mascot": {
     "alt": {
@@ -712,12 +993,73 @@
     "title": "Cài đặt",
     "language": {
       "title": "Ngôn ngữ",
-      "description": "Dùng cho giao diện và thông báo gửi cho bạn."
+      "description": "Dùng cho giao diện và thông báo gửi cho [you]."
     },
     "security": {
       "title": "Bảo mật",
-      "description": "Mật khẩu đăng nhập của bạn.",
+      "description": "Mật khẩu đăng nhập của [you].",
       "changePassword": "Đổi mật khẩu"
+    },
+    "notifications": {
+      "title": "Thông báo đẩy",
+      "notConfigured": "Máy chủ chưa bật thông báo đẩy. Nhờ quản trị viên cài đặt giúp [me] nha. Thông báo trong app vẫn chạy bình thường.",
+      "needsInstall": "Trên iPhone và iPad, thông báo đẩy chỉ chạy khi app đã nằm ở màn hình chính. Làm theo hướng dẫn bên dưới, rồi mở app từ màn hình chính và quay lại đây nha.",
+      "unsupported": "Trình duyệt này chưa hỗ trợ thông báo đẩy. Thông báo trong app vẫn chạy bình thường.",
+      "denied": "[you] đang chặn thông báo của app này. Mở cài đặt của trình duyệt hoặc điện thoại để cho phép lại nha.",
+      "turnOn": "Bật thông báo trên thiết bị này",
+      "on": "Thiết bị này đang nhận thông báo đẩy, kể cả khi đã đóng app.",
+      "turnedOn": "Đã bật thông báo trên thiết bị này",
+      "removed": "Đã tắt thông báo trên thiết bị đó",
+      "devicesTitle": "Thiết bị nhận thông báo",
+      "thisDevice": "Thiết bị này",
+      "since": "Từ {date}",
+      "removeDevice": "Tắt thông báo trên {name}",
+      "devices": {
+        "iphone": "iPhone",
+        "ipad": "iPad",
+        "android": "Điện thoại Android",
+        "mac": "Máy Mac",
+        "windows": "Máy Windows",
+        "linux": "Máy Linux",
+        "other": "Thiết bị khác"
+      },
+      "typesTitle": "Loại thông báo được đẩy",
+      "types": {
+        "appointment_invited": "Có người rủ [you] đi xem",
+        "appointment_reply": "Bạn bè trả lời kèo",
+        "participants_locked": "Đã chốt người",
+        "appointment_cancelled": "Kèo bị hủy",
+        "participant_withdrew": "Có người hủy kèo",
+        "friend_request": "Có lời mời bạn bè",
+        "friend_accepted": "Được chấp nhận bạn bè",
+        "poll_reminder": "Nhắc vote giờ",
+        "appointment_confirmed": "Kèo đã xác nhận",
+        "appointment_changed": "Đổi ghế hoặc giờ"
+      },
+      "errors": {
+        "network": "Mạng đang chập chờn, thử lại giúp [me] nha.",
+        "saveFailed": "Chưa lưu được thiết bị này, thử lại nha.",
+        "subscribeFailed": "Chưa bật được thông báo trên thiết bị này. Thử lại hoặc kiểm tra quyền thông báo nha.",
+        "notConfigured": "Máy chủ chưa bật thông báo đẩy."
+      },
+      "insecure": "Thông báo đẩy chỉ chạy khi mở app bằng địa chỉ https hoặc localhost. Địa chỉ hiện tại là http thường nên trình duyệt đã tắt tính năng này."
+    },
+    "install": {
+      "title": "Cài app ra màn hình chính",
+      "why": "Cài app thì mở nhanh như app thường và nhận được thông báo đẩy, nhất là trên iPhone.",
+      "ios": {
+        "step1": "Mở trang này bằng Safari rồi bấm nút Chia sẻ",
+        "shareIcon": "Chia sẻ",
+        "step2": "Chọn Thêm vào Màn hình chính",
+        "step3": "Bấm Thêm, rồi mở app từ màn hình chính"
+      },
+      "android": {
+        "step1": "Bấm nút menu ba chấm của trình duyệt",
+        "step2": "Chọn Cài đặt ứng dụng hoặc Thêm vào màn hình chính"
+      },
+      "other": {
+        "step1": "Tìm nút Cài đặt ứng dụng trên thanh địa chỉ của trình duyệt."
+      }
     }
   },
   "imageUpload": {
@@ -732,5 +1074,535 @@
       "network": "Mất kết nối khi tải ảnh. Hãy thử lại.",
       "not_configured": "Chưa cấu hình Cloudinary nên chưa tải ảnh được."
     }
+  },
+  "seatMap": {
+    "label": "Sơ đồ ghế",
+    "screen": "MÀN HÌNH",
+    "door": "Cửa",
+    "seat": "Ghế {code}, {type}",
+    "score": "điểm {score}",
+    "broken": "ghế hỏng",
+    "obstructed": "bị che tầm nhìn",
+    "zoomIn": "Phóng to",
+    "zoomOut": "Thu nhỏ",
+    "zoomReset": "Đặt lại",
+    "heatLow": "Điểm thấp",
+    "recommended": "khuyên ngồi",
+    "recommendedLegend": "Ghế khuyên ngồi",
+    "heatHigh": "Điểm cao",
+    "doorLabel": "Cửa ra vào",
+    "markFavorite": "đã đánh dấu thích",
+    "markAvoid": "đã đánh dấu tránh"
+  },
+  "showtimes": {
+    "title": "Lịch chiếu",
+    "movies": "Phim",
+    "dayStrip": "Chọn ngày",
+    "today": "Hôm nay",
+    "until": "đến {time}",
+    "price": "{amount}",
+    "noPrice": "Chưa có giá",
+    "emptyTitle": "Không có suất chiếu",
+    "emptyDescription": "Thử chọn ngày khác hoặc bỏ bớt bộ lọc.",
+    "filters": {
+      "title": "Bộ lọc",
+      "titleCount": "Bộ lọc ({count})",
+      "show": "{count, plural, =0 {Không có suất chiếu} other {Xem # suất chiếu}}",
+      "remove": "Bỏ lọc {name}",
+      "clear": "Xóa lọc",
+      "all": "Tất cả",
+      "labels": {
+        "branch": "Rạp",
+        "genre": "Thể loại",
+        "format": "Định dạng",
+        "slot": "Khung giờ"
+      }
+    },
+    "createPlan": "Tạo lịch hẹn từ suất này"
+  },
+  "movie": {
+    "posterAlt": "Poster phim {title}",
+    "duration": "{minutes} phút",
+    "status": {
+      "upcoming": "Sắp chiếu",
+      "showing": "Đang chiếu",
+      "ended": "Đã ngừng chiếu"
+    },
+    "synopsis": "Nội dung",
+    "director": "Đạo diễn",
+    "cast": "Diễn viên",
+    "language": "Ngôn ngữ",
+    "showtimes": "Suất chiếu",
+    "trailer": {
+      "watch": "Xem trailer",
+      "play": "Xem trailer {title}",
+      "playerTitle": "Trailer {title}",
+      "pause": "Tạm dừng",
+      "resume": "Phát tiếp",
+      "seek": "Tua trailer",
+      "mute": "Tắt tiếng",
+      "unmute": "Bật tiếng",
+      "showControls": "Hiện điều khiển",
+      "hideControls": "Ẩn điều khiển",
+      "fullscreen": "Toàn màn hình",
+      "exitFullscreen": "Thu nhỏ",
+      "openYoutube": "Xem trên YouTube"
+    },
+    "releaseOn": "Khởi chiếu {date}",
+    "noMatch": "Không có suất phù hợp. Thử đổi ngày hoặc bỏ bớt bộ lọc.",
+    "genres": "Thể loại",
+    "formats": "Định dạng"
+  },
+  "cinemas": {
+    "title": "Rạp",
+    "emptyTitle": "Chưa có rạp",
+    "emptyDescription": "Rạp sẽ hiện ở đây khi quản trị viên thêm chi nhánh và phòng chiếu.",
+    "roomCount": "{count, plural, other {# phòng}}",
+    "seatCount": "{count, plural, other {# ghế}}",
+    "markedSeats": "{count, plural, other {# ghế đã đánh dấu}}",
+    "parkingFee": "Gửi xe {fee}",
+    "directions": "Chỉ đường",
+    "rooms": "Phòng chiếu",
+    "room": {
+      "layers": "Lớp hiển thị",
+      "layerScore": "Điểm ghế",
+      "layerMine": "Đánh dấu của mình",
+      "tapSeat": "Chạm một ghế để xem điểm và đánh dấu.",
+      "seatTitle": "Ghế {code}",
+      "score": "điểm {score}",
+      "close": "Đóng",
+      "flags": {
+        "broken": "ghế hỏng",
+        "obstructed": "bị che tầm nhìn",
+        "recommended": "khuyên ngồi"
+      },
+      "kindLabel": "Loại đánh dấu",
+      "kindRequired": "Ghế này [you] thích hay tránh nè?",
+      "favorite": "Thích",
+      "avoid": "Tránh",
+      "tagsLabel": "Ghi chú nhanh",
+      "tags": {
+        "aisle": "Gần lối đi",
+        "near_door": "Sát cửa",
+        "obstructed": "Bị che",
+        "loose": "Ghế lỏng",
+        "near_speaker": "Gần loa"
+      },
+      "noteLabel": "Ghi chú",
+      "notePlaceholder": "Ghi chú của [you]",
+      "saveMark": "Lưu đánh dấu",
+      "removeMark": "Bỏ",
+      "saved": "Đã lưu đánh dấu",
+      "removed": "Đã bỏ đánh dấu",
+      "saveFailed": "Chưa lưu được. Kiểm tra mạng rồi thử lại.",
+      "oldMarks": "Đánh dấu cũ",
+      "oldMarksDescription": "Ghế đã dời hoặc bị xóa khi phòng đổi sơ đồ."
+    }
+  },
+  "friends": {
+    "title": "Bạn bè",
+    "phoneLabel": "Số điện thoại của bạn bè",
+    "phonePlaceholder": "vd. 0912 345 678",
+    "addButton": "Thêm",
+    "requestSent": "Xong rồi nè! Nếu số này có tài khoản thì lời mời đã bay tới.",
+    "networkError": "Mạng đang chập chờn, thử lại giúp [me] nha.",
+    "errors": {
+      "invalid_phone": "Số điện thoại chưa đúng. Nhập số di động 10 chữ số, vd. 0912 345 678.",
+      "throttled": "Tìm nhiều quá rồi nè. Nghỉ chút, khoảng 1 giờ nữa thử lại nha.",
+      "not_found": "Lời mời này không còn nữa."
+    },
+    "linkTitle": "Link mời bạn bè",
+    "copyLink": "Sao chép link",
+    "shareLink": "Chia sẻ link",
+    "linkCopied": "Đã chép link, gửi cho bạn bè nha",
+    "linkCopyFailed": "Chưa chép được link. Thử lại nha.",
+    "shareTitle": "Cùng xem phim trên SeatMate",
+    "incomingTitle": "Lời mời bạn bè",
+    "accept": "Đồng ý lời mời của {name}",
+    "decline": "Từ chối lời mời của {name}",
+    "accepted": "Giờ [you] và {name} là bạn bè rồi",
+    "declined": "Đã từ chối lời mời",
+    "listTitle": "Bạn bè của [you]",
+    "groupsLink": "Nhóm",
+    "emptyTitle": "Chưa có ai trong danh sách",
+    "emptyDescription": "Thêm bạn bè bằng số điện thoại hoặc gửi link mời, rồi rủ nhau đi xem phim thôi!",
+    "noFriendsYet": "Chưa ai đồng ý lời mời.",
+    "remove": "Xóa {name} khỏi bạn bè",
+    "removeTitle": "Xóa {name} khỏi bạn bè?",
+    "removeDescription": "Hai người sẽ không còn thấy nhau trong danh sách bạn bè. Muốn làm bạn bè lại thì gửi lời mời mới.",
+    "removeConfirm": "Xóa",
+    "cancel": "Hủy",
+    "removed": "Đã xóa {name} khỏi bạn bè",
+    "outgoingTitle": "Đang chờ trả lời",
+    "cancelRequest": "Thu hồi lời mời gửi {name}",
+    "requestCancelled": "Đã thu hồi lời mời",
+    "invite": {
+      "title": "Lời mời bạn bè",
+      "prompt": "{name} muốn làm bạn bè với [you]",
+      "button": "Gửi lời mời",
+      "networkError": "Mạng đang chập chờn, thử lại giúp [me] nha.",
+      "notFoundTitle": "Link này không dùng được nữa",
+      "notFoundDescription": "Link có thể bị gõ sai hoặc chủ link không còn dùng. Nhờ bạn bè gửi lại link mới nha.",
+      "toFriends": "Về danh sách bạn bè",
+      "selfTitle": "Đây là link của chính [you]",
+      "selfDescription": "Gửi link này cho bạn bè để họ gửi lời mời tới [you].",
+      "errors": {
+        "not_found": "Link này không dùng được nữa.",
+        "self": "Đây là link của chính [you] nè."
+      },
+      "done": {
+        "sent": "Đã gửi lời mời cho {name}, chờ người ấy đồng ý nha",
+        "accepted": "Giờ [you] và {name} là bạn bè rồi",
+        "already_friends": "[you] và {name} đã là bạn bè từ trước rồi",
+        "already_requested": "[you] đã gửi lời mời cho {name} rồi, chờ người ấy đồng ý nha"
+      }
+    },
+    "groups": {
+      "title": "Nhóm bạn bè",
+      "newTitle": "Thêm nhóm",
+      "editTitle": "Sửa nhóm",
+      "emptyTitle": "Chưa có nhóm nào",
+      "emptyDescription": "Gom những người hay đi xem cùng vào một nhóm để mời nhanh hơn.",
+      "memberCount": "{count, plural, one {# người} other {# người}}",
+      "add": "Thêm nhóm",
+      "nameLabel": "Tên nhóm",
+      "namePlaceholder": "vd. Hội cuối tuần",
+      "membersLabel": "Thành viên",
+      "noFriends": "Thêm bạn bè trước rồi quay lại lập nhóm nha.",
+      "save": "Lưu nhóm",
+      "delete": "Xóa nhóm",
+      "saved": "Đã lưu nhóm",
+      "deleted": "Đã xóa nhóm",
+      "networkError": "Mạng đang chập chờn, thử lại giúp [me] nha.",
+      "errors": {
+        "required": "Đặt tên cho nhóm nha.",
+        "too_many": "Nhiều nhóm quá rồi, xóa bớt một nhóm cũ trước nha.",
+        "invalid": "Chỉ thêm được người đang là bạn bè.",
+        "not_found": "Không tìm thấy nhóm này."
+      }
+    }
+  },
+  "appointments": {
+    "title": "Lịch hẹn",
+    "listTitle": "Lịch hẹn của [you]",
+    "add": "Tạo lịch hẹn",
+    "emptyTitle": "Chưa có kèo nào hết",
+    "emptyDescription": "Chọn phim, chọn giờ rồi rủ bạn bè đi xem thôi!",
+    "pastTitle": "Đã kết thúc",
+    "byMe": "[you] tạo",
+    "byName": "{name} tạo",
+    "needsReply": "Chờ [you] trả lời",
+    "timesCount": "{count, plural, one {# giờ để chọn} other {# giờ để chọn}}",
+    "networkError": "Mạng đang chập chờn, thử lại giúp [me] nha. Chưa có gì bị mất đâu.",
+    "status": {
+      "DRAFT": "Nháp",
+      "INVITING": "Đang mời",
+      "PARTICIPANTS_LOCKED": "Đã chốt người",
+      "PLANNING": "Đang lên kế hoạch",
+      "CONFIRMED": "Đã xác nhận",
+      "COMPLETED": "Đã xem xong",
+      "CANCELLED": "Đã hủy"
+    },
+    "errors": {
+      "validation": "Thông tin chưa đúng, kiểm tra lại giúp [me] nha.",
+      "not_found": "Không tìm thấy lịch hẹn này.",
+      "forbidden": "Chỉ người tạo mới làm được việc này.",
+      "bad_state": "Lịch hẹn đã sang bước khác rồi, tải lại trang để xem nha.",
+      "movie_not_found": "Không tìm thấy phim này.",
+      "invalid_option": "Giờ này không dùng được. Chọn giờ chưa qua, hoặc suất chiếu của đúng phim nha.",
+      "not_friends": "Chỉ mời được người đã là bạn bè và đang dùng được tài khoản.",
+      "invalid_deadline": "Hạn trả lời phải ở tương lai nha.",
+      "limit": "Nhiều giờ quá rồi, bỏ bớt một giờ trước nha.",
+      "duplicate": "Giờ này có trong danh sách rồi.",
+      "needs_attendee": "Chọn ít nhất một người chưa từ chối để chốt nha.",
+      "late": "Suất chiếu bắt đầu rồi nên không rút lui được nữa.",
+      "conflict": "Nhiều người cùng sửa một lúc, thử lại giúp [me] nha.",
+      "deadline_passed": "Đã hết hạn trả lời rồi nên không thay đổi được nữa.",
+      "deadline_too_late": "Hạn trả lời phải trước giờ xem sớm nhất nha.",
+      "option_before_deadline": "Giờ này sớm hơn hạn trả lời nên chưa đề xuất được.",
+      "nobody_to_remind": "Ai cũng vote giờ này rồi nè, không còn ai để nhắc.",
+      "reminder_too_soon": "Vừa nhắc xong, đợi một lúc rồi nhắc lại nha.",
+      "no_showtime": "Suất chiếu này không chọn được nha, thử suất khác.",
+      "seat_taken": "Ghế này vừa có người giữ rồi, chọn ghế khác nha.",
+      "invalid_seat": "Ghế này không chọn được (hỏng, không có hoặc quá số chỗ).",
+      "needs_seat": "Còn người chưa có ghế, xếp đủ ghế rồi xác nhận nha.",
+      "not_attendee": "Người này không nằm trong danh sách đi xem.",
+      "invalid_food": "Món này không có ở rạp này, chọn món khác nha.",
+      "too_early": "Phim chưa chiếu nên chưa đóng lịch hẹn được nha.",
+      "invalid_amount": "Số tiền chưa đúng, kiểm tra lại nha.",
+      "wrong_day": "Suất này không cùng ngày đã chốt nha, chọn suất trong ngày đó.",
+      "before_agreed": "Suất này sớm hơn giờ đã chốt nha, chọn suất từ giờ đó trở đi.",
+      "showtime_fixed": "Suất chiếu đã chọn từ lúc tạo lịch hẹn nên không đổi được nha. Muốn suất khác thì tạo lịch hẹn mới."
+    },
+    "new": {
+      "title": "Tạo lịch hẹn",
+      "movieLabel": "Phim",
+      "moviePlaceholder": "Chọn phim",
+      "timesLabel": "Giờ xem",
+      "customDate": "Ngày",
+      "customTime": "Giờ",
+      "removeTime": "Bỏ giờ này",
+      "inviteesLabel": "Mời ai",
+      "groupsLabel": "Nhóm",
+      "noFriends": "Chưa có bạn bè để mời. Thêm bạn bè trong Hồ sơ trước nha.",
+      "deadlineLabel": "Trả lời trước",
+      "deadlineDate": "Ngày trả lời trước",
+      "deadlineTime": "Giờ trả lời trước",
+      "submit": "Gửi lời mời",
+      "sent": "Đã gửi lời mời!",
+      "errors": {
+        "movie": "Chọn phim trước nha.",
+        "times": "Nhập giờ muốn xem rồi chọn một suất chiếu nha.",
+        "invitees": "Mời ít nhất một người nha.",
+        "deadline": "Hạn trả lời phải ở tương lai, nhập đủ cả ngày và giờ nha.",
+        "customInvalid": "Nhập đủ ngày và giờ nha.",
+        "past": "Giờ này đã qua rồi.",
+        "duplicate": "Giờ này có trong danh sách rồi.",
+        "tooManyTimes": "Tối đa {max} giờ thôi nha.",
+        "deadlineBeforeStart": "Hạn trả lời phải trước giờ chiếu sớm nhất ít nhất {minutes} phút, và phải ở tương lai nha.",
+        "searchFailed": "Chưa tải được các suất chiếu, thử lại nha."
+      },
+      "noShowtimesFilter": "Ngày này chưa có suất nào ở rạp đã chọn.",
+      "pickTimeLabel": "Nhập ngày và giờ muốn xem",
+      "pickMovieFirst": "Chọn phim trước, rồi nhập giờ muốn xem nha.",
+      "noneFromThen": "Không có suất nào từ giờ này trở đi trong ngày. Thử giờ khác nha."
+    },
+    "detail": {
+      "title": "Lịch hẹn",
+      "answerBy": "Trả lời trước {time}",
+      "creator": "Người tạo",
+      "times": "Chọn giờ",
+      "chosenTime": "Giờ đã chốt",
+      "people": "Người tham gia",
+      "proposedBy": "{name} đề xuất",
+      "countYes": "{count} người vote Có",
+      "countNo": "{count} người vote Không",
+      "countWaiting": "{count} người chưa trả lời",
+      "yourVote": "[you] vote",
+      "yes": "Có",
+      "no": "Không",
+      "proposeLabel": "Đề xuất giờ khác",
+      "proposeDate": "Ngày đề xuất",
+      "proposeTime": "Giờ đề xuất",
+      "proposeButton": "Thêm giờ đề xuất",
+      "proposeInvalid": "Nhập đủ ngày và giờ chưa qua nha.",
+      "youDeclined": "[you] đã từ chối lời mời này. Đổi ý thì vote Có một giờ nào đó là vào lại nha.",
+      "youExcluded": "Lần này người tạo chưa xếp [you] vào danh sách.",
+      "youLeft": "[you] đã rút lui khỏi lịch hẹn này.",
+      "cancelled": "Lịch hẹn này đã bị hủy.",
+      "cancelledWithReason": "Lịch hẹn đã bị hủy: {reason}",
+      "decline": "Từ chối lời mời",
+      "declineTitle": "Từ chối lời mời này?",
+      "declineDescription": "Các vote của [you] sẽ bị xóa và người tạo sẽ biết. [you] vẫn vào lại được bằng cách vote Có.",
+      "declineConfirm": "Từ chối",
+      "declined": "Đã từ chối lời mời",
+      "reasonLabel": "Lý do",
+      "reasonPlaceholder": "vd. Tối đó mình bận",
+      "cancelReasonPlaceholder": "vd. Rạp hết vé",
+      "back": "Quay lại",
+      "withdraw": "Rút lui",
+      "withdrawTitle": "Rút lui khỏi lịch hẹn?",
+      "withdrawDescription": "Người tạo sẽ được báo. Chỗ của [you] sẽ trả lại cho nhóm.",
+      "withdrawConfirm": "Rút lui",
+      "withdrew": "Đã rút lui khỏi lịch hẹn",
+      "cancel": "Hủy lịch hẹn",
+      "cancelTitle": "Hủy lịch hẹn này?",
+      "cancelDescription": "Mọi người đã đồng ý sẽ nhận thông báo hủy.",
+      "cancelConfirm": "Hủy lịch hẹn",
+      "cancelledToast": "Đã hủy lịch hẹn",
+      "lockPickPeople": "Ai đi nè",
+      "lockButton": "{count, plural, one {Chốt # người} other {Chốt # người}}",
+      "locked": "Đã chốt {count, plural, one {# người} other {# người}} tham gia",
+      "participant": {
+        "invited": "Chưa trả lời",
+        "overdue": "Quá hạn",
+        "accepted": "Đồng ý",
+        "declined": "Từ chối",
+        "dropped": "Đã rút",
+        "excluded": "Không tham gia"
+      },
+      "deadlinePassed": "Đã hết hạn trả lời. Chờ người tạo chốt nha.",
+      "save": "Lưu trả lời",
+      "discard": "Bỏ thay đổi",
+      "saved": "Đã lưu trả lời của [you]",
+      "unsaved": "Chưa lưu",
+      "proposedYes": "[you] vote Có giờ này",
+      "removeProposal": "Bỏ giờ đề xuất này",
+      "declineShort": "Từ chối",
+      "timesCreator": "Khung giờ",
+      "lockThisTime": "Chốt giờ này",
+      "lockDialogDescription": "Chốt xong không đổi người được nữa.",
+      "remindThisTime": "Nhắc người chưa vote giờ này",
+      "reminded": "Đã nhắc {count, plural, one {# người} other {# người}}",
+      "plan": {
+        "begin": "Lên kế hoạch chi tiết",
+        "begun": "Bắt đầu chọn suất và ghế nha",
+        "waitingForCreator": "Người tạo đang chọn suất và xếp ghế, chờ xíu nha.",
+        "showtimeTitle": "Suất chiếu",
+        "changeShowtime": "Đổi suất chiếu",
+        "showtimeSaved": "Đã chọn suất chiếu, ghế xếp lại từ đầu nha",
+        "seatsTitle": "Xếp ghế",
+        "whoIsSeated": "Chọn người để xếp ghế",
+        "noSeat": "Chưa có ghế",
+        "seatsSaved": "Đã lưu chỗ ngồi",
+        "roomFailed": "Chưa tải được phòng chiếu này, thử chọn lại suất nha",
+        "foodFilter": "Lọc theo loại",
+        "foodAll": "Tất cả",
+        "foodCombos": "Combo",
+        "foodOther": "Khác",
+        "layerScore": "Điểm ghế",
+        "seatTakenByOthers": "Ghế này có kèo khác giữ rồi nè.",
+        "seatBroken": "Ghế này đang hỏng, chọn ghế khác nha.",
+        "seatFull": "Ghế này hết chỗ rồi nè.",
+        "noRunTogether": "Không còn dãy ghế liền nhau đủ chỗ, [you] xếp tay nha.",
+        "suggest": "Gợi ý ghế ngồi cạnh nhau",
+        "foodTitle": "Đồ ăn",
+        "foodFor": "Món này của ai",
+        "foodShared": "Chung cả nhóm",
+        "noFood": "Rạp này chưa có món nào, bỏ qua bước này nha.",
+        "less": "Bớt {name}",
+        "more": "Thêm {name}",
+        "saveFood": "Lưu đồ ăn",
+        "foodSaved": "Đã lưu đồ ăn",
+        "whereTitle": "Ai ngồi đâu",
+        "estimateTitle": "Tiền ước tính",
+        "estimateTitleDone": "Tiền ước tính ban đầu",
+        "ticketLine": "Vé {amount}",
+        "foodLine": "Đồ ăn {amount}",
+        "total": "Cả nhóm",
+        "confirm": "Xác nhận",
+        "confirmed": "Đã xác nhận, cả nhóm sẽ nhận thông báo",
+        "complete": "Đã xem xong",
+        "completed": "Xem xong rồi, nhập chi phí nha"
+      },
+      "cost": {
+        "title": "Chi phí thực tế",
+        "breakdown": "Vé {ticket} · Đồ ăn {food} · Khác {other}",
+        "edit": "Sửa chi phí của {name}",
+        "ticket": "Tiền vé (đồng)",
+        "food": "Tiền đồ ăn (đồng)",
+        "other": "Khoản khác (đồng)",
+        "reason": "Lý do đổi",
+        "reasonPlaceholder": "vd. Được tặng vé",
+        "cancel": "Hủy",
+        "save": "Lưu chi phí",
+        "saved": "Đã lưu chi phí",
+        "groupTotal": "Cả nhóm"
+      }
+    },
+    "invite": {
+      "title": "Mời thêm",
+      "groups": "Nhóm",
+      "button": "{count, plural, =0 {Gửi lời mời} other {Mời # người}}",
+      "done": "Đã mời thêm {count, plural, one {# người} other {# người}}"
+    },
+    "answered": "{answered}/{total} đã trả lời",
+    "peopleGoing": "{count, plural, one {# người đi} other {# người đi}}"
+  },
+  "notifications": {
+    "title": "Thông báo",
+    "bell": "Thông báo",
+    "bellUnread": "Thông báo, {count, plural, one {# cái chưa đọc} other {# cái chưa đọc}}",
+    "emptyTitle": "Chưa có thông báo nào",
+    "emptyDescription": "Có ai rủ đi xem phim hay trả lời kèo là báo ở đây liền.",
+    "markAll": "Đọc hết",
+    "allRead": "Đã đánh dấu đọc hết",
+    "new": "Mới.",
+    "networkError": "Mạng đang chập chờn, thử lại giúp [me] nha.",
+    "types": {
+      "appointment_invited": {
+        "title": "Có kèo mới nè",
+        "body": "{actorName} rủ [you] xem {movieTitle}. Vào chọn giờ thôi!"
+      },
+      "appointment_reply": {
+        "agree": {
+          "title": "{actorName} đi nè",
+          "body": "{actorName} đã đồng ý đi xem {movieTitle}."
+        },
+        "decline": {
+          "title": "{actorName} không đi được",
+          "body": "{actorName} đã từ chối lời mời xem {movieTitle}."
+        },
+        "declineReason": {
+          "title": "{actorName} không đi được",
+          "body": "{actorName} từ chối đi xem {movieTitle}: {reason}"
+        },
+        "propose": {
+          "title": "{actorName} đề xuất giờ khác",
+          "body": "Vào xem và vote giờ mới cho {movieTitle} nha."
+        }
+      },
+      "participants_locked": {
+        "included": {
+          "title": "Đã chốt người rồi",
+          "body": "[you] có tên trong danh sách xem {movieTitle}."
+        },
+        "excluded": {
+          "title": "Đã chốt người",
+          "body": "Lần này danh sách xem {movieTitle} chưa có [you]. Hẹn kèo sau nha."
+        }
+      },
+      "appointment_cancelled": {
+        "plain": {
+          "title": "Kèo bị hủy rồi",
+          "body": "{actorName} đã hủy lịch hẹn xem {movieTitle}."
+        },
+        "reason": {
+          "title": "Kèo bị hủy rồi",
+          "body": "{actorName} đã hủy lịch hẹn xem {movieTitle}: {reason}"
+        }
+      },
+      "participant_withdrew": {
+        "title": "{actorName} rút lui",
+        "body": "{actorName} không đi xem {movieTitle} được nữa."
+      },
+      "friend_request": {
+        "title": "Có lời mời bạn bè",
+        "body": "{actorName} muốn làm bạn bè với [you]. Vào xem nha!"
+      },
+      "friend_accepted": {
+        "title": "{actorName} đã đồng ý",
+        "body": "[you] và {actorName} đã là bạn bè rồi. Rủ đi xem phim thôi!"
+      },
+      "poll_reminder": {
+        "title": "Nhắc vote nè",
+        "body": "{actorName} đang chờ [you] vote giờ {time} cho {movieTitle}."
+      },
+      "appointment_confirmed": {
+        "title": "Kèo chốt rồi nè",
+        "body": "{movieTitle} lúc {time}, {place}. Ghế của [you]: {seatCode}."
+      },
+      "appointment_changed": {
+        "seat": {
+          "title": "Ghế của [you] đổi rồi",
+          "body": "{actorName} xếp [you] ghế {seatCode} khi xem {movieTitle} ({place})."
+        },
+        "seatNone": {
+          "title": "Ghế của [you] đổi rồi",
+          "body": "{actorName} đang xếp lại ghế xem {movieTitle}, [you] chưa có ghế."
+        },
+        "time": {
+          "title": "Đổi giờ chiếu rồi",
+          "body": "{movieTitle} giờ là {time}, {place}. Xem lại ghế của [you] nha."
+        }
+      }
+    },
+    "test": {
+      "title": "Thử thông báo",
+      "body": "Thông báo đẩy chạy ngon lành rồi nè!"
+    }
+  },
+  "offline": {
+    "title": "Mất mạng rồi",
+    "description": "Kiểm tra Wi-Fi hoặc 4G rồi thử lại nha.",
+    "retry": "Thử lại"
+  },
+  "dateTimeField": {
+    "pickDate": "Chọn ngày",
+    "pickTime": "Chọn giờ"
+  },
+  "confirmDialog": {
+    "cancel": "Hủy",
+    "pending": "Đang xử lý..."
   }
 }

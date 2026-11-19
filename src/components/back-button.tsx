@@ -15,9 +15,9 @@ interface BackButtonProps {
 export function BackButton({ href, className }: BackButtonProps) {
   const t = useTranslations("nav");
   return (
-    <Button asChild variant="ghost" size="icon" className={`-ml-2 shrink-0 rounded-full ${className ?? ""}`} aria-label={t("back")}>
+    <Button asChild variant="ghost" size="icon" className={`-ml-stack shrink-0 rounded-full ${className ?? ""}`} aria-label={t("back")}>
       <Link href={href}>
-        <ArrowLeft aria-hidden />
+        <ArrowLeft className="size-icon-lg" aria-hidden />
       </Link>
     </Button>
   );

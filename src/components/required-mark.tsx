@@ -4,7 +4,7 @@
  */
 export function RequiredMark() {
   return (
-    <span aria-hidden className="ml-1 text-destructive">
+    <span aria-hidden className="ml-tight text-destructive">
       *
     </span>
   );

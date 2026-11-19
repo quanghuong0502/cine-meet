@@ -6,7 +6,7 @@ interface LogoProps {
   /** Width of the duo illustration in px (the picture is cropped tight, so it is about 1.35x wider than tall). */
   size?: number;
   className?: string;
-  /** Text size class for the wordmark, e.g. "text-xl". */
+  /** Text size class for the wordmark, e.g. "type-heading". */
   wordmarkClassName?: string;
 }
 
@@ -17,7 +17,7 @@ interface LogoProps {
  */
 export function Logo({ size = 48, className, wordmarkClassName }: LogoProps) {
   return (
-    <span className={cn("inline-flex items-center gap-2", className)}>
+    <span className={cn("inline-flex items-center gap-stack", className)}>
       <Mascot pose="duo-watching" size={size} decorative priority />
       {/* leading-none: the text box is as tall as the font, so its centre lines up with the image centre. */}
       <Wordmark className={cn("leading-none", wordmarkClassName)} />

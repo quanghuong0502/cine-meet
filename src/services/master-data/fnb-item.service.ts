@@ -9,6 +9,7 @@ import { createMasterDataService } from "./crud";
 export const fnbItemInputSchema = z
   .object({
     brandId: objectIdField,
+    categoryId: objectIdField.optional(),
     name: requiredText(80),
     nameEn: optionalText(80),
     size: optionalText(30),
@@ -23,7 +24,7 @@ export const fnbItemService = createMasterDataService({
   model: FnbItem,
   searchFields: ["name", "nameEn"],
   sort: { name: 1, size: 1 },
-  editableFields: ["brandId", "name", "nameEn", "size", "price", "validFrom", "validTo"],
+  editableFields: ["brandId", "categoryId", "name", "nameEn", "size", "price", "validFrom", "validTo"],
   // An item that a combo contains cannot be deleted.
   dependents: () => [{ model: FnbCombo, field: "items.itemId" }],
 });

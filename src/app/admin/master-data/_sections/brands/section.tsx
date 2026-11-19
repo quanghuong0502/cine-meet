@@ -9,7 +9,7 @@ import { removeBrand, saveBrand } from "./actions";
 /** The "Brands" tab of the Catalog page, and its entry screen. */
 export const brandsSection: SectionDefinition = {
   async List({ q }) {
-    const t = await getTranslations("admin.brands");
+    const [t, tc] = await Promise.all([getTranslations("admin.brands"), getTranslations("admin.common")]);
     const brands = await brandService.list({ q });
     return (
       <ResourceManager
@@ -22,6 +22,7 @@ export const brandsSection: SectionDefinition = {
           subtitle: brand.websiteUrl ? new URL(brand.websiteUrl).host : undefined,
           color: brand.color ?? undefined,
           imageUrl: brand.logoUrl ?? undefined,
+          meta: brand.active === false ? [tc("inactiveBadge")] : undefined,
         }))}
         removeAction={removeBrand}
       />
@@ -29,7 +30,7 @@ export const brandsSection: SectionDefinition = {
   },
 
   async loadForm(id) {
-    const t = await getTranslations("admin.brands");
+    const [t, tc] = await Promise.all([getTranslations("admin.brands"), getTranslations("admin.common")]);
     const brand = id ? await brandService.getById(id) : null;
     if (id && !brand) return null;
 
@@ -39,6 +40,7 @@ export const brandsSection: SectionDefinition = {
       { name: "logoUrl", kind: "image", label: t("fields.logoUrl.label"), uploadTicket: getBrandLogoUploadTicket },
       { name: "websiteUrl", kind: "url", label: t("fields.websiteUrl.label"), maxLength: 300 },
       { name: "appUrl", kind: "url", label: t("fields.appUrl.label"), maxLength: 300 },
+      { name: "active", kind: "switch", label: tc("activeLabel") },
     ];
 
     return {
@@ -50,6 +52,7 @@ export const brandsSection: SectionDefinition = {
         logoUrl: brand?.logoUrl ?? "",
         websiteUrl: brand?.websiteUrl ?? "",
         appUrl: brand?.appUrl ?? "",
+        active: brand && brand.active === false ? "" : "on",
       },
       itemName: brand?.name,
       saveAction: saveBrand,

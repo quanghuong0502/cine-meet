@@ -17,10 +17,11 @@ Căn cứ: [Apple HIG, tab bars](https://developer.apple.com/design/human-interf
 
 1. **Mọi màn không phải tab đều có nút quay lại trong app** (`PageHeader` với `backHref`): PWA không có nút Back của trình duyệt, và có thể không có bottom nav (chưa tab nào bật).
    Không để người dùng kẹt ở một màn.
-2. **Thanh tab dưới chỉ để chuyển mục, không chứa hành động** (Apple HIG); tối đa 5 mục. Điều hướng luôn hiện sẵn, không giấu sau menu hamburger
+2. **Mỗi màn chỉ có một thanh trên cùng, để dành chỗ cho nội dung** (2026-11-17): thanh app (logo + chuông thông báo, và avatar ở admin; `AppHeader`) chỉ hiện ở màn gốc của tab (`isUserTabRoot`, `isAdminTabRoot`); màn con đã có thanh quay lại (`PageHeader` với `backHref`) thì ẩn thanh app, vì hai thanh chồng nhau tốn khoảng 56px. Màn gốc mới thêm vào menu phải nằm trong danh sách nav để được hiện thanh app; màn con mới không cần làm gì.
+3. **Thanh tab dưới chỉ để chuyển mục, không chứa hành động** (Apple HIG); tối đa 5 mục. Điều hướng luôn hiện sẵn, không giấu sau menu hamburger
    (NN/g, qua nguồn thứ cấp: điều hướng ẩn làm khả năng được tìm thấy giảm gần một nửa).
-3. **Giữ trạng thái khi chuyển tab** (vị trí cuộn, bộ lọc, ô tìm kiếm) khi màn đó có; không bắt người dùng làm lại.
-4. **Mỗi màn có URL riêng** và mở thẳng được (thông báo đẩy, chia sẻ). Bộ lọc, tab trong trang nằm trên URL (`?tab=`).
+4. **Giữ trạng thái khi chuyển tab** (vị trí cuộn, bộ lọc, ô tìm kiếm) khi màn đó có; không bắt người dùng làm lại.
+5. **Mỗi màn có URL riêng** và mở thẳng được (thông báo đẩy, chia sẻ). Bộ lọc, tab trong trang nằm trên URL (`?tab=`).
 
 ## 2. Vùng chạm và ngón cái
 
@@ -60,6 +61,11 @@ Căn cứ: [Apple HIG, tab bars](https://developer.apple.com/design/human-interf
 2. Chuyển động 150 đến 250ms, tôn trọng `prefers-reduced-motion`, không gây xô lệch bố cục; không tự chạy animation lặp ở màn loading.
 3. Không thu phóng trang (xem `devices.md`); không kéo giãn ở đầu và cuối trang (`overscroll-behavior: none`).
 4. Tương phản đạt WCAG ở cả light và dark; màu không phải cách duy nhất truyền đạt trạng thái.
+5. **Trang luôn vừa chiều ngang màn hình:** khung cuộn của app (`main[data-app-scroll]` ở khu admin và khu user) có `min-w-0 overflow-x-hidden`, nên không bao giờ cuộn ngang; phần tử con vẫn phải tự vừa (ô chọn cắt chữ bằng `truncate`, chip `max-w-full`, hàng flex có `min-w-0`), vì `overflow-x-hidden` chỉ che chỗ tràn chứ không sửa nó. Khi báo xong một màn, đo `document.querySelector('[data-app-scroll]').scrollWidth` bằng `clientWidth` ở 320, 360, 390, 393 và 430px (phạm vi hỗ trợ ở `devices.md`: mọi điện thoại cài PWA, iPhone 13 và 14 Pro chỉ là ưu tiên đầu).
+
+## 6. Hàng cuộn ngang trong trang (chip, dải ngày, poster)
+
+Dùng class `scroll-strip` (`globals.css`) cho hàng cuộn ngang, đặt trực tiếp lên phần tử cuộn bên trong khung `p-4` của trang. **Hàng nằm trong lề 16px của trang, không chạy tràn sát mép màn hình:** lề trái và lề phải luôn bằng nhau (16px) dù hàng đang ở vị trí cuộn nào, chip bị cắt ở mép lề thay vì trượt ra mép màn hình (chủ dự án yêu cầu, 2026-11-17). Không tự viết `-mx-4 overflow-x-auto px-4` (cách này làm chip tràn ra mép và Safari bỏ đệm cuối).
 
 ## Trước khi báo xong một màn hình
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { Radio } from "lucide-react";
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -52,6 +52,34 @@ function writeOn(value: boolean) {
   }
   listeners.forEach((listener) => listener());
 }
+
+// Where the person dragged the button to ("x,y" in px from the top-left of the screen), kept the same way as the switch.
+// Empty = the default spot (middle of the right edge).
+const POSITION_KEY = "devDomRecorderPosition";
+let memoryPosition = "";
+function readPosition(): string {
+  try {
+    return localStorage.getItem(POSITION_KEY) ?? "";
+  } catch {
+    return memoryPosition;
+  }
+}
+function writePosition(value: string, persist: boolean) {
+  memoryPosition = value;
+  if (persist) {
+    try {
+      localStorage.setItem(POSITION_KEY, value);
+    } catch {
+      // Private mode: the variable above is used instead.
+    }
+  }
+  listeners.forEach((listener) => listener());
+}
+/** Button size (44px) plus a margin, so a saved spot still shows after the window got smaller. */
+const BUTTON_PX = 44;
+const EDGE_PX = 8;
+/** Finger or mouse travel beyond which a press is a drag, not a click. */
+const DRAG_SLOP_PX = 6;
 
 const TRACE_MS = 1_800;
 
@@ -104,9 +132,62 @@ function traceFrames(label: string): Promise<{ label: string; samples: TraceSamp
   });
 }
 
+interface ScrollSample {
+  t: number;
+  scrollTop: number;
+  /** Top and height of the element marked `data-scroll-probe` (a sticky block). If it is really sticky `probeTop` stays put. */
+  probeTop: number | null;
+  probeHeight: number | null;
+  /** Bottom of the sticky page header; `probeTop - headerBottom` is the gap between the two (0 when they meet exactly, negative if they overlap). */
+  headerBottom: number | null;
+  gap: number | null;
+}
+
+/** Stop this long after the last scroll event (momentum scrolling keeps firing), and never run past the cap. */
+const SCROLL_QUIET_MS = 400;
+const SCROLL_TRACE_CAP_MS = 5_000;
+
+/**
+ * Every animation frame while the app scrolls: where the sticky block and the sticky header are. A sticky block that judders
+ * shows up as `probeTop` or `gap` changing from frame to frame while it should not change at all.
+ */
+function traceScroll(lastScrollAt: { current: number }): Promise<{ label: string; samples: ScrollSample[] }> {
+  return new Promise((resolve) => {
+    const samples: ScrollSample[] = [];
+    const started = performance.now();
+    const round = (n: number) => Math.round(n * 10) / 10;
+    const tick = () => {
+      const now = performance.now();
+      const t = now - started;
+      const main = document.querySelector<HTMLElement>("[data-app-scroll]");
+      const probe = document.querySelector("[data-scroll-probe]");
+      const header = main?.querySelector("header.sticky");
+      const probeBox = probe?.getBoundingClientRect();
+      const headerBottom = header ? header.getBoundingClientRect().bottom : null;
+      const sample: ScrollSample = {
+        t: Math.round(t),
+        scrollTop: round(main?.scrollTop ?? 0),
+        probeTop: probeBox ? round(probeBox.top) : null,
+        probeHeight: probeBox ? round(probeBox.height) : null,
+        headerBottom: headerBottom === null ? null : round(headerBottom),
+        gap: probeBox && headerBottom !== null ? round(probeBox.top - headerBottom) : null,
+      };
+      const last = samples[samples.length - 1];
+      if (!last || JSON.stringify({ ...last, t: 0 }) !== JSON.stringify({ ...sample, t: 0 })) samples.push(sample);
+      if (now - lastScrollAt.current < SCROLL_QUIET_MS && t < SCROLL_TRACE_CAP_MS) requestAnimationFrame(tick);
+      else resolve({ label: "scroll", samples });
+    };
+    requestAnimationFrame(tick);
+  });
+}
+
 export function DomRecorder() {
   const on = useSyncExternalStore(subscribe, readOn, () => false);
   const [link, setLink] = useState<"ok" | "sending" | "lost">("ok");
+  const position = useSyncExternalStore(subscribe, readPosition, () => "");
+  const drag = useRef<{ dx: number; dy: number; startX: number; startY: number; moved: boolean } | null>(null);
+  /** A drag ends with a click event on the button; this swallows it so dropping the button does not toggle recording. */
+  const swallowClick = useRef(false);
 
   useEffect(() => {
     if (!on) return;
@@ -199,9 +280,28 @@ export function DomRecorder() {
       schedule();
     };
     const onResize = () => note(`~ window resized: ${innerWidth}x${innerHeight}, visual ${visualViewport ? `${Math.round(visualViewport.width)}x${Math.round(visualViewport.height)}` : "n/a"}`);
+    const lastScrollAt = { current: 0 };
+    let scrollTracing = false;
     const onScroll = (event: Event) => {
       const target = event.target;
-      if (target instanceof Element && target.matches("[data-app-scroll]")) note(`~ scrolled main to ${Math.round(target.scrollTop)}`);
+      if (!(target instanceof Element) || !target.matches("[data-app-scroll]")) return;
+      note(`~ scrolled main to ${Math.round(target.scrollTop)}`);
+      // A page with a sticky block to watch (`data-scroll-probe`): follow it frame by frame for as long as the scroll lasts.
+      lastScrollAt.current = performance.now();
+      if (scrollTracing || !document.querySelector("[data-scroll-probe]")) return;
+      scrollTracing = true;
+      void traceScroll(lastScrollAt)
+        .then((trace) =>
+          fetch("/api/dev/dom", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ trace: { at: new Date().toISOString(), path: `${location.pathname}${location.search}`, ...trace } }),
+          }),
+        )
+        .catch(() => undefined)
+        .finally(() => {
+          scrollTracing = false;
+        });
     };
     window.addEventListener("resize", onResize);
     visualViewport?.addEventListener("resize", onResize);
@@ -225,7 +325,38 @@ export function DomRecorder() {
     };
   }, [on]);
 
+  function startDrag(event: React.PointerEvent<HTMLButtonElement>) {
+    swallowClick.current = false; // a click left over from an earlier drag must not eat this press
+    const box = event.currentTarget.getBoundingClientRect();
+    drag.current = { dx: event.clientX - box.left, dy: event.clientY - box.top, startX: event.clientX, startY: event.clientY, moved: false };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+
+  function moveDrag(event: React.PointerEvent<HTMLButtonElement>) {
+    const d = drag.current;
+    if (!d) return;
+    if (!d.moved && Math.hypot(event.clientX - d.startX, event.clientY - d.startY) < DRAG_SLOP_PX) return;
+    d.moved = true;
+    const x = Math.min(window.innerWidth - BUTTON_PX - EDGE_PX, Math.max(EDGE_PX, event.clientX - d.dx));
+    const y = Math.min(window.innerHeight - BUTTON_PX - EDGE_PX, Math.max(EDGE_PX, event.clientY - d.dy));
+    writePosition(`${Math.round(x)},${Math.round(y)}`, false);
+  }
+
+  function endDrag(event: React.PointerEvent<HTMLButtonElement>) {
+    const d = drag.current;
+    drag.current = null;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+    if (d?.moved) {
+      swallowClick.current = true;
+      writePosition(memoryPosition, true);
+    }
+  }
+
   function toggle() {
+    if (swallowClick.current) {
+      swallowClick.current = false;
+      return;
+    }
     const next = !on;
     writeOn(next);
     if (!next) {
@@ -246,11 +377,26 @@ export function DomRecorder() {
       size="icon"
       variant={on ? "default" : "secondary"}
       onClick={toggle}
+      onPointerDown={startDrag}
+      onPointerMove={moveDrag}
+      onPointerUp={endDrag}
+      onPointerCancel={endDrag}
       aria-pressed={on}
       aria-label={on ? "Stop recording DOM changes (dev)" : "Record DOM changes (dev)"}
       // pointer-events-auto: an open sheet or dialog turns off touches on everything outside it.
+      // The saved spot is clamped by CSS, so it stays on screen when the window is smaller than when it was saved.
+      style={
+        position
+          ? {
+              left: `min(${position.split(",")[0]}px, calc(100vw - ${BUTTON_PX + EDGE_PX}px))`,
+              top: `min(${position.split(",")[1]}px, calc(100dvh - ${BUTTON_PX + EDGE_PX}px))`,
+            }
+          : undefined
+      }
       className={cn(
-        "pointer-events-auto fixed top-1/2 right-2 z-[60] rounded-full shadow-lg",
+        // touch-none: dragging the button must not scroll the page. Hold and drag to move it; a tap still toggles.
+        "pointer-events-auto fixed z-[60] touch-none rounded-full shadow-lg",
+        !position && "top-1/2 right-inset-xs",
         !on && "opacity-60",
         // On: a ring while a snapshot is being sent; red when the dev server cannot be reached.
         on && link === "sending" && "ring-4 ring-ring",

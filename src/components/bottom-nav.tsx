@@ -11,6 +11,8 @@ export interface BottomNavItem {
   icon: LucideIcon;
   /** Active only on this exact path (for a root tab such as "/" or "/admin"); otherwise any path below it counts. */
   exact?: boolean;
+  /** Other paths that light this tab up (screens opened from it that live outside its own path). */
+  alsoActive?: string[];
 }
 
 interface BottomNavProps {
@@ -20,12 +22,13 @@ interface BottomNavProps {
 }
 
 function isActive(pathname: string, item: BottomNavItem): boolean {
-  return item.exact ? pathname === item.href : pathname === item.href || pathname.startsWith(`${item.href}/`);
+  const under = (base: string) => pathname === base || pathname.startsWith(`${base}/`);
+  return item.exact ? pathname === item.href : under(item.href) || (item.alsoActive ?? []).some(under);
 }
 
 /**
- * Bottom navigation for phones: a floating pill of frosted glass that sits above the content with a gap
- * around it (and above the iPhone home bar), so the page scrolls visibly behind it.
+ * Bottom navigation for phones: a floating pill of frosted glass, 68px tall and 16px in from the sides, low on the screen (`--nav-bottom`),
+ * so the page scrolls visibly behind it.
  * The selected tab shows its state three ways, not just by colour: a filled icon, the accent colour and a bolder label.
  */
 export function BottomNav({ label, items, className }: BottomNavProps) {
@@ -37,12 +40,12 @@ export function BottomNav({ label, items, className }: BottomNavProps) {
       aria-label={label}
       data-bottom-fixed
       className={cn(
-        "pointer-events-none fixed inset-x-0 bottom-0 z-40 px-3 pb-[calc(var(--spacing-nav-gap)+env(safe-area-inset-bottom))]",
+        "pointer-events-none fixed inset-x-0 bottom-0 z-40 px-inset pb-[var(--nav-bottom)]",
         className,
       )}
     >
       <ul
-        className="pointer-events-auto mx-auto grid max-w-md rounded-full border border-white/15 bg-card/55 px-2 shadow-[0_8px_32px_-8px_rgb(0_0_0/0.6),inset_0_1px_0_rgb(255_255_255/0.12)] backdrop-blur-xl backdrop-saturate-150"
+        className="pointer-events-auto mx-auto grid max-w-menu rounded-full border border-white/15 bg-card/70 px-inset-xs shadow-menu backdrop-blur-xl backdrop-saturate-150"
         style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}
       >
         {items.map((item) => {
@@ -55,13 +58,13 @@ export function BottomNav({ label, items, className }: BottomNavProps) {
                 onClick={() => markPending(item.href)}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex min-h-nav flex-col items-center justify-center gap-1 rounded-full text-xs",
-                  active ? "font-semibold text-primary-text" : "font-medium text-muted-foreground",
+                  "flex min-h-nav flex-col items-center justify-center gap-tight rounded-full type-tag",
+                  active ? "font-semibold! text-primary-text" : "text-muted-foreground",
                 )}
               >
                 {/* Active: filled with the tab colour; the bar colour as stroke carves the icon's details out of the fill. */}
-                <Icon className={cn("size-6", active && "fill-current stroke-card")} aria-hidden />
-                <span className="max-w-full truncate px-0.5">{item.label}</span>
+                <Icon className={cn("size-icon-lg", active && "fill-current stroke-card")} aria-hidden />
+                <span className="max-w-full truncate px-hair">{item.label}</span>
               </Link>
             </li>
           );

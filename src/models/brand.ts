@@ -1,4 +1,5 @@
-import { model, models, Schema, type InferSchemaType, type Model } from "mongoose";
+import { Schema, type InferSchemaType, type Model } from "mongoose";
+import { defineModel } from "@/lib/define-model";
 
 /** A cinema chain (CGV, BHD, Beta, Lotte, Galaxy...). */
 const brandSchema = new Schema(
@@ -9,6 +10,8 @@ const brandSchema = new Schema(
     color: { type: String, trim: true },
     websiteUrl: { type: String, trim: true },
     appUrl: { type: String, trim: true },
+    // Off = hidden from the user app and from new pick-lists; records that point at it stay as they are. A missing value counts as on.
+    active: { type: Boolean, default: true },
   },
   { timestamps: true },
 );
@@ -19,4 +22,4 @@ brandSchema.index({ name: 1 }, { unique: true, collation: { locale: "vi", streng
 export type BrandDoc = InferSchemaType<typeof brandSchema>;
 
 export const Brand: Model<BrandDoc> =
-  (models.Brand as Model<BrandDoc> | undefined) ?? model<BrandDoc>("Brand", brandSchema);
+  defineModel<BrandDoc>("Brand", brandSchema);

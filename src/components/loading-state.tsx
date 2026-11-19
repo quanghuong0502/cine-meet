@@ -1,6 +1,7 @@
 import { useTranslations } from "next-intl";
 import { Mascot } from "@/components/mascot";
 import { cn } from "@/lib/utils";
+import { PX } from "@/lib/ui-sizes";
 
 interface LoadingStateProps {
   /** Fills a whole screen instead of just the area it is placed in. */
@@ -21,13 +22,13 @@ export function LoadingState({ fullScreen = false, compact = false, className }:
       role="status"
       aria-live="polite"
       className={cn(
-        "flex flex-col items-center justify-center gap-3",
-        fullScreen ? "min-h-dvh" : "min-h-48 flex-1",
+        "flex flex-col items-center justify-center gap-item",
+        fullScreen ? "min-h-dvh" : "min-h-area-lg flex-1",
         className,
       )}
     >
-      <Mascot pose="bubu-sleepy" size={compact ? 80 : 112} decorative priority />
-      <p className="text-sm text-muted-foreground">{t("loading")}</p>
+      <Mascot pose="bubu-sleepy" size={compact ? PX.mascotXs : PX.mascotSm} decorative priority />
+      <p className="type-secondary text-muted-foreground">{t("loading")}</p>
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/user-avatar";
+import { PX } from "@/lib/ui-sizes";
 
 interface UserMenuProps {
   name: string;
@@ -16,7 +17,7 @@ export function UserMenu({ name, image, area = "app" }: UserMenuProps) {
   return (
     <Button asChild variant="ghost" size="icon" className="size-target rounded-full">
       <Link href={area === "admin" ? "/admin/profile" : "/profile"} aria-label={t("profile")}>
-        <UserAvatar name={name} image={image} size={40} />
+        <UserAvatar name={name} image={image} size={PX.avatar} />
       </Link>
     </Button>
   );

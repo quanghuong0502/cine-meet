@@ -8,9 +8,11 @@ export const formatsSection = createSection({
   saveAction: saveFormat,
   removeAction: removeFormat,
   name: (format) => format.name,
-  item: (format) => ({ title: format.name }),
-  values: (format) => ({ name: format.name }),
-  fields: ({ t }) => [
+  item: (format, { tc }) => ({ title: format.name, meta: format.active === false ? [tc("inactiveBadge")] : undefined }),
+  values: (format) => ({ name: format.name, active: format.active === false ? "" : "on" }),
+  defaults: { active: "on" },
+  fields: ({ t, tc }) => [
     { name: "name", kind: "text", label: t("fields.name.label"), placeholder: t("fields.name.placeholder"), required: true, maxLength: 30 },
+    { name: "active", kind: "switch", label: tc("activeLabel") },
   ],
 });

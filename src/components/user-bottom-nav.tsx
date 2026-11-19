@@ -18,6 +18,7 @@ export function UserBottomNav() {
         label: t(item.key),
         icon: item.icon,
         exact: item.href === "/",
+        alsoActive: item.alsoActive,
       }))}
     />
   );

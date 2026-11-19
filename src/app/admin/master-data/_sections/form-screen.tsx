@@ -15,7 +15,7 @@ export async function SectionFormScreen({ section, id, back }: { section: string
   const backHref = resolveBackHref(back, `/admin/master-data?tab=${definition.key}`);
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-4 p-4">
+    <div className="mx-auto flex w-full max-w-page flex-1 flex-col gap-section p-inset">
       <PageHeader title={form.title} backHref={backHref} />
       <ResourceForm
         itemId={id}

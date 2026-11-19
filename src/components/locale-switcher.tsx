@@ -27,7 +27,7 @@ export function LocaleSwitcher({ className }: { className?: string }) {
     <div
       role="group"
       aria-label={t("label")}
-      className={cn("inline-flex rounded-full border bg-card p-0.5", className)}
+      className={cn("inline-flex rounded-full border bg-card p-hair", className)}
     >
       {LOCALES.map((locale) => {
         const selected = locale === current;
@@ -42,7 +42,7 @@ export function LocaleSwitcher({ className }: { className?: string }) {
             disabled={isPending}
             onClick={() => choose(locale)}
             className={cn(
-              "h-target min-w-14 rounded-full px-4 text-sm font-semibold tracking-wide",
+              "h-target min-w-control-lg rounded-full px-inset type-secondary font-semibold! tracking-wide",
               !selected && "text-muted-foreground",
             )}
           >

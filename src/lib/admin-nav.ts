@@ -29,8 +29,8 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
   { href: "/admin", key: "overview", icon: LayoutDashboard, enabled: false, exact: true }, // later: dashboard
   { href: "/admin/users", key: "users", icon: Users, enabled: true },
   { href: "/admin/master-data", key: "masterData", icon: Database, enabled: true },
-  { href: "/admin/auditoriums", key: "auditoriums", icon: Projector, enabled: false }, // Sprint 2
-  { href: "/admin/movies", key: "movies", icon: Clapperboard, enabled: false }, // Sprint 3
+  { href: "/admin/auditoriums", key: "auditoriums", icon: Projector, enabled: true },
+  { href: "/admin/movies", key: "movies", icon: Clapperboard, enabled: true },
   { href: "/admin/settings", key: "settings", icon: Settings, enabled: true },
 ];
 
@@ -45,10 +45,19 @@ export const MAX_BOTTOM_NAV_ITEMS = 5;
  * the Save button takes its place and the person is working on one thing. Their parent list is the page just above them.
  */
 export function isFocusedAdminRoute(pathname: string): boolean {
-  return /^\/admin\/(master-data|users)\/.+/.test(pathname) || pathname.startsWith("/admin/settings/") || pathname.startsWith("/admin/profile/");
+  // The showtimes list itself is a tab of the Movies page and keeps the bar; its entry screens (bulk, import) hide it.
+  return /^\/admin\/(master-data|users|auditoriums)\/.+/.test(pathname) || /^\/admin\/movies\/(?!showtimes$).+/.test(pathname) || pathname.startsWith("/admin/settings/") || pathname.startsWith("/admin/profile/");
 }
 
 /** The bottom bar shows on every page except entry screens, and also while an entry screen is still loading (`holding`). */
 export function showsAdminBar(pathname: string, holding: boolean): boolean {
   return !isFocusedAdminRoute(pathname) || holding;
+}
+
+/**
+ * Root screens of the admin area: the ones that show the phone app bar (logo and avatar). Inner screens (entry forms, profile,
+ * settings pages) have their own back bar instead. The showtimes list is a tab of the Movies page, so it is a root too.
+ */
+export function isAdminTabRoot(pathname: string): boolean {
+  return pathname === "/admin" || pathname === "/admin/movies/showtimes" || ENABLED_ADMIN_NAV_ITEMS.some((item) => item.href === pathname);
 }

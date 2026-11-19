@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { EmptyState } from "@/components/empty-state";
 import { AppearanceSettingsCard } from "@/components/admin/appearance-settings-card";
+import { PushSettingsCard } from "@/components/admin/push-settings-card";
+import { PronounsSettingsCard } from "@/components/admin/pronouns-settings-card";
 import { SystemSettingsCard } from "@/components/admin/system-settings-card";
 import { PageHeader } from "@/components/page-header";
 import { LanguageSetting } from "@/components/language-setting";
@@ -18,11 +20,13 @@ export default async function AdminSettingsPage() {
   const states = await getTranslations("states");
   const admin = await requireAdmin();
   return (
-    <div className="flex flex-col gap-4 p-4">
+    <div className="flex flex-col gap-group p-inset">
       <PageHeader title={t("title")} backHref="/admin/profile" />
       <LanguageSetting />
       <SystemSettingsCard />
       <AppearanceSettingsCard />
+      <PronounsSettingsCard />
+      <PushSettingsCard />
       <SecuritySetting hasPassword={admin.hasPassword} />
       <EmptyState
         title={states("comingSoon")}

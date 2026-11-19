@@ -30,14 +30,15 @@ Nguồn chi tiết: `docs/movie-app-mvp-design.md` (số mục ghi ở từng sp
 |---|---|---|---|
 | 0 | Khung nền: scaffold, auth, layout, theme, i18n (vi, en) | — | Xong |
 | 1 | Master data, quản lý người dùng, cài đặt hệ thống, hồ sơ cơ bản | 0 | Xong |
-| 2 | Editor phòng chiếu, sơ đồ ghế, điểm ghế, versioning | 1 | Chưa bắt đầu |
-| 3 | Phim (trailer), suất chiếu, trang rạp & lịch chiếu cho user, đánh dấu ghế cá nhân | 2 | Chưa bắt đầu |
-| 4 | Lịch hẹn giai đoạn 1 (mời, vote, chốt người), bạn bè, thông báo in-app, worker, Web Push | 3 | Chưa bắt đầu |
-| 5A | Lịch hẹn giai đoạn 2: chọn suất, xếp ghế, đồ ăn, chi phí, công nợ, xác nhận | 4 | Chưa bắt đầu |
+| 2 | Editor phòng chiếu, sơ đồ ghế, điểm ghế, versioning | 1 | Xong |
+| 3 | Phim (trailer), suất chiếu, trang rạp & lịch chiếu cho user, đánh dấu ghế cá nhân | 2 | Xong |
+| 4 | Lịch hẹn giai đoạn 1 (mời, vote, chốt người), bạn bè, thông báo in-app, worker, Web Push | 3 | Xong |
+| 5A | Lịch hẹn giai đoạn 2: chọn suất, xếp ghế, đồ ăn, chi phí, xác nhận | 4 | Chờ kiểm tra |
 | 5B | Nhắc lịch và các thông báo theo giờ (#3, #8), tự hoàn thành | 5A | Chưa bắt đầu |
 | 6 | Dashboard, ngân sách, ghi lại buổi đã xem, đánh giá cá nhân | 5B | Chưa bắt đầu |
 | 7 | Chatbot AI (tầng provider, tool, lưu context) | 6 | Chưa bắt đầu |
 | 8 | Production & hardening: môi trường production, sao lưu, rà soát cuối | 7 | Chưa bắt đầu |
+| 9 | Công tắc tính năng theo môi trường: bật/tắt nút debug, hướng dẫn trong Cài đặt và mọi thứ thêm sau này | 8 | Chưa bắt đầu |
 
 Trạng thái: Chưa bắt đầu · Đang làm · Chờ kiểm tra · Xong
 
@@ -122,10 +123,10 @@ Trạng thái: Chưa bắt đầu · Đang làm · Chờ kiểm tra · Xong
 **Ngoài phạm vi:** đánh dấu ghế của user, xếp ghế theo lịch hẹn, điểm cộng đồng.
 
 **Tiêu chí hoàn thành**
-- [ ] Tạo một phòng mới, kéo thanh trượt màn hình thì sơ đồ và heatmap đổi theo.
-- [ ] Sửa phòng tạo ra version mới, version cũ vẫn xem được.
-- [ ] Test điểm ghế: ghế gần tâm lý tưởng điểm cao hơn ghế lệch; ghế hỏng bị phạt.
-- [ ] Dùng được trên điện thoại (cấu hình và xem sơ đồ).
+- [x] Tạo một phòng mới, kéo thanh trượt màn hình thì sơ đồ và heatmap đổi theo (chủ dự án đã thử trên điện thoại và duyệt, 2026-11-17).
+- [x] Sửa phòng tạo ra version mới, version cũ vẫn được giữ nguyên (test service `auditorium.service.test.ts`). **Giao diện không hiển thị phiên bản** (chủ dự án bỏ tab Phiên bản, 2026-11-17); dữ liệu vẫn tạo phiên bản mới mỗi lần lưu để suất chiếu và lịch hẹn sau này trỏ đúng sơ đồ cũ.
+- [x] Test điểm ghế: ghế gần tâm lý tưởng điểm cao hơn ghế lệch; ghế hỏng bị phạt (`src/lib/seat-layout/generate.test.ts`).
+- [x] Dùng được trên điện thoại (cấu hình và xem sơ đồ), chủ dự án đã duyệt 2026-11-17.
 
 ---
 
@@ -148,10 +149,10 @@ Trạng thái: Chưa bắt đầu · Đang làm · Chờ kiểm tra · Xong
 **Ngoài phạm vi:** đánh dấu công khai/cộng đồng (hoãn), đánh giá phòng, nút tạo lịch hẹn (có thể để nút vô hiệu).
 
 **Tiêu chí hoàn thành**
-- [ ] Tạo suất hàng loạt và import CSV thành công, báo lỗi rõ khi dòng CSV sai.
-- [ ] Trailer phát được ngay trong trang trên điện thoại.
-- [ ] Đánh dấu ghế ở một phòng rồi mở lại vẫn thấy; sau khi phòng có version mới (không đổi ghế đó), đánh dấu vẫn hiện; ghế bị dời hoặc xóa thì vào "Đánh dấu cũ".
-- [ ] Bộ lọc lịch chiếu hoạt động và nhanh trên dữ liệu mẫu.
+- [x] Tạo suất hàng loạt và import CSV thành công, báo lỗi rõ khi dòng CSV sai (test `showtime.service.test.ts`, `csv.test.ts`; màn hình chưa thử trên điện thoại).
+- [x] Trailer phát được ngay trong trang trên điện thoại (chủ dự án duyệt, 2026-11-18).
+- [x] Đánh dấu ghế ở một phòng rồi mở lại vẫn thấy (test service `seat-mark.service.test.ts`; màn hình chưa thử trên điện thoại); sau khi phòng có version mới (không đổi ghế đó), đánh dấu vẫn hiện; ghế bị dời hoặc xóa thì vào "Đánh dấu cũ".
+- [x] Bộ lọc lịch chiếu hoạt động và nhanh trên dữ liệu mẫu (chủ dự án duyệt, 2026-11-18).
 
 ---
 
@@ -171,7 +172,7 @@ giới hạn tra cứu, kết bạn cần chấp nhận (thiết kế mục 6 v�
 - Chốt: người tạo chọn một phương án, danh sách mặc định là người vote Có (bỏ bớt/thêm người chưa từ chối trước khi chốt), rồi khóa
   danh sách (người tạo không thêm/bớt nữa). Hủy lịch hẹn. Không mời được tài khoản đang bị khóa.
 - Rút lui: người tham gia tự rút trước giờ chiếu; người tạo nhận thông báo #13. (Trả ghế và tính lại tiền làm ở Sprint 5A.)
-- Quá hạn phản hồi: lịch hẹn không tự hủy; người chưa trả lời hiện nhãn "Quá hạn", người tạo vẫn chốt được.
+- Quá hạn phản hồi: lịch hẹn không tự hủy; người chưa trả lời hiện nhãn "Quá hạn", người tạo vẫn chốt được. **Sau hạn khóa cứng** (chủ dự án chốt 2026-11-18): người được mời không vote, đề xuất giờ hay từ chối được nữa, người tạo không mời thêm được. Hạn trả lời phải trước giờ sớm nhất đang bình chọn, và giờ đề xuất thêm không được sớm hơn hạn.
 - Máy trạng thái trong service, có test các chuyển trạng thái hợp lệ và không hợp lệ.
 - Thông báo cho sự kiện #1, #2, #4, #7, #13 (không có #3 vì cần tác vụ chạy theo giờ, làm ở Sprint 5B):
   - **In-app:** chuông trên header, badge; ghi trực tiếp vào `notifications`/`notificationDeliveries`.
@@ -184,40 +185,40 @@ giới hạn tra cứu, kết bạn cần chấp nhận (thiết kế mục 6 v�
 **Ngoài phạm vi:** chọn suất/phòng/ghế/đồ ăn, tính tiền, Zalo, mọi thông báo theo giờ (kể cả #3).
 
 **Tiêu chí hoàn thành**
-- [ ] Đi hết luồng với 3 tài khoản: mời → đề xuất giờ khác → vote → chốt người.
-- [ ] Sau khi chốt, người tạo không thêm/bớt được người; người tham gia tự rút được và người tạo nhận thông báo.
-- [ ] Người vote Có phương án khác phương án được chọn không tự động nằm trong danh sách (người tạo phải thêm tay).
-- [ ] Thông báo in-app đến đúng người, đúng thời điểm.
-- [ ] Web Push: bật trên Android và trên iPhone (đã cài PWA), "Gửi thử" nhận được kể cả khi đã đóng app; sự kiện mời/chốt/hủy đến đúng người.
-- [ ] Không gửi trùng khi chạy hai worker; một thiết bị lỗi 410 thì subscription bị xóa, các thiết bị khác vẫn nhận.
-- [ ] Test máy trạng thái pass; test tra cứu số điện thoại bị giới hạn tần suất.
+- [x] Đi hết luồng với 3 tài khoản: mời → đề xuất giờ khác → vote → chốt người (chủ dự án duyệt, 2026-11-18).
+- [x] Sau khi chốt, người tạo không thêm/bớt được người; người tham gia tự rút được và người tạo nhận thông báo (test `appointment.service.test.ts`; màn hình chưa thử trên điện thoại).
+- [x] Người vote Có phương án khác phương án được chọn không nằm trong danh sách và không hiện ở bước chốt: màn chốt chỉ liệt kê người đã vote Có giờ được chọn (đổi ngày 2026-11-18 so với bản đầu "người tạo phải thêm tay"; service vẫn nhận người được mời chưa từ chối, giao diện không đưa ra).
+- [x] Thông báo in-app đến đúng người, đúng thời điểm.
+- [x] Web Push (chủ dự án duyệt Sprint 4 xong, 2026-11-18): bật trên Android và trên iPhone (đã cài PWA), "Gửi thử" (admin gửi từ Cài đặt quản trị tới người dùng chọn) nhận được kể cả khi đã đóng app; sự kiện mời/chốt/hủy đến đúng người.
+- [x] Không gửi trùng khi chạy hai worker; một thiết bị lỗi 410 thì subscription bị xóa, các thiết bị khác vẫn nhận (test `src/notifications/deliver.test.ts` với bộ gửi giả).
+- [x] Test máy trạng thái pass; test tra cứu số điện thoại bị giới hạn tần suất (`state.test.ts`, `friend.service.test.ts`).
 
 ---
 
 ## Sprint 5A: Lịch hẹn giai đoạn 2
-**Mục tiêu:** hoàn thiện lịch hẹn: chọn suất, xếp ghế, đồ ăn, chi phí, công nợ.
+**Mục tiêu:** hoàn thiện lịch hẹn: chọn suất, xếp ghế, đồ ăn, ghi chi phí mỗi buổi xem.
 **Tham chiếu:** thiết kế mục 3.4 (giai đoạn 2, sau buổi xem), 3.1 (nguyên tắc số liệu), 4.1, 5.
-**Đã chốt:** chỉ theo dõi đã trả/chưa trả, chưa làm VietQR (thiết kế mục 9, câu 6).
+**Đã chốt (2026-11-18):** chỉ ghi chi phí mỗi buổi xem là bao nhiêu (vé, đồ ăn, khoản khác); **không theo dõi ai trả tiền, không công nợ, không VietQR** (thiết kế mục 9, câu 6).
 
 **Phạm vi**
 - PLANNING → CONFIRMED → COMPLETED: chọn suất (điền sẵn nếu phương án đã chốt có `showtimeId`), xếp ghế từng người (kéo thả, ghế đôi gán
-  2 người, gợi ý dãy ghế liền nhau điểm cao), đồ ăn từng người hoặc combo chung, cách trả tiền, tính tiền từng người
+  2 người, gợi ý dãy ghế liền nhau điểm cao), đồ ăn từng người hoặc combo chung, tính tiền ước tính từng người
   (giá ước tính được lưu lại lúc tính).
 - Chống trùng ghế: chốt/đổi ghế trong transaction MongoDB, từ chối ghế đã có người, ghế hỏng hoặc không tồn tại.
 - Rút lui: trả ghế và tính lại tiền (phần còn lại của luồng rút lui từ Sprint 4).
 - Sửa sau khi CONFIRMED (đổi ghế/giờ): chỉ người tạo sửa được, gửi #6 (in-app + Web Push) cho người bị ảnh hưởng.
 - COMPLETED: người tạo bấm "Đã xem xong" sau giờ chiếu (tự động chuyển ở Sprint 5B).
-- Nhập chi phí thực tế: người tạo nhập phần của từng người và người trả; mỗi người thấy và chỉnh được phần của mình.
-  Ghi `expenses` cho từng người (phần của chính họ); một người trả hết thì tạo `expenseShares`, người nợ bấm "Tôi đã trả", người được nợ xác nhận.
+- Nhập chi phí thực tế: người tạo nhập vé, đồ ăn, khoản khác của từng người (không ghi ai trả); mỗi người thấy và chỉnh được phần của mình.
+  Ghi `expenses` cho từng người (phần của chính họ, `category`: ticket, fnb, other) và `actualCost` của cả lần hẹn (tổng vé, đồ ăn, khác của cả nhóm, luôn bằng tổng phần của mọi người). Chỉ lưu chi phí; không có logic trả tiền hay nợ.
 - Thông báo #5 và các sự kiện còn lại của giai đoạn này (in-app + Web Push, dùng hạ tầng của Sprint 4).
 
-**Ngoài phạm vi:** Zalo, nhắc theo giờ (#3, #8), tự chuyển COMPLETED, nhắc trả tiền (#10), phim yêu thích sắp chiếu (#12), dashboard.
+**Ngoài phạm vi:** Zalo, nhắc theo giờ (#3, #8), tự chuyển COMPLETED, phim yêu thích sắp chiếu (#12), dashboard. Không làm: công nợ, nhắc trả tiền (#10), VietQR.
 
 **Tiêu chí hoàn thành**
-- [ ] Đi trọn vòng đời một lịch hẹn: xếp ghế, đồ ăn, xác nhận, hoàn thành, nhập chi phí.
-- [ ] Hai người cùng chọn một ghế thì chỉ một người thành công (có test với transaction).
-- [ ] Một người trả hết: tổng `expenses` của cả nhóm đúng bằng hóa đơn, công nợ đúng, luồng "Tôi đã trả" → "Đã nhận" chạy được (có test).
-- [ ] Người rút lui thì ghế được trả lại và tiền chia lại đúng.
+- [x] Đi trọn vòng đời một lịch hẹn: xếp ghế, đồ ăn, xác nhận, hoàn thành, nhập chi phí.
+- [x] Hai người cùng chọn một ghế thì chỉ một người thành công (có test với transaction).
+- [x] Nhập chi phí một buổi: `actualCost` của lần hẹn luôn bằng tổng `expenses` của mọi người (vé, đồ ăn, khác); mỗi người thấy và chỉnh được phần của mình, chỉnh xong thì tổng cả lần hẹn tính lại (có test).
+- [x] Người rút lui thì ghế được trả lại và chi phí ước tính tính lại đúng.
 
 ---
 
@@ -231,7 +232,7 @@ giới hạn tra cứu, kết bạn cần chấp nhận (thiết kế mục 6 v�
 - Thông báo #3 (sắp hết hạn phản hồi, 12 giờ trước hạn, gửi người chưa trả lời) và #8 (nhắc trước giờ chiếu: phim, giờ, rạp + phòng, ghế của người nhận, chỉ đường, gửi xe).
 - Tự chuyển COMPLETED sau giờ kết thúc suất chiếu nếu người tạo chưa bấm.
 
-**Ngoài phạm vi:** Zalo ZNS (giai đoạn sau), nhắc trả tiền (#10), phim yêu thích sắp chiếu (#12), dashboard.
+**Ngoài phạm vi:** Zalo ZNS (giai đoạn sau), phim yêu thích sắp chiếu (#12), dashboard.
 
 **Tiêu chí hoàn thành**
 - [ ] Nhắc lịch (#8) đến thiết bị (Android và iPhone đã cài PWA) đúng thời điểm theo `reminderMinutesBefore`; đổi số phút thì lịch đã tạo được tính lại.
@@ -249,20 +250,22 @@ giới hạn tra cứu, kết bạn cần chấp nhận (thiết kế mục 6 v�
 
 **Phạm vi**
 - Dashboard: chi tiêu theo ngày/tuần/tháng/năm (vé và đồ ăn) lấy từ `expenses` của chính user, thống kê thể loại/rạp/khung giờ,
-  người hay đi cùng, công nợ (từ `expenseShares`). Bật tab Tổng quan.
+  người hay đi cùng. Bật tab Tổng quan.
 - Ngân sách tháng (vé, đồ ăn), cảnh báo 80% và 100%.
 - Ghi lại buổi đã xem (xem một mình hoặc đặt ngoài app), ghi vào `expenses`.
 - Đánh giá phim, đánh giá ghế và phòng sau buổi xem (lưu cá nhân).
 - Lịch sử ngồi ở trang phòng ("bạn đã ngồi phòng này 3 lần: F7, F8, G9").
+- **Nhóm "Thường tới" ở đầu danh sách rạp** (`/cinemas`, thêm 2026-11-18 theo yêu cầu của chủ dự án): các chi nhánh user hay đến nhất, xếp nhiều buổi nhất trước, bằng nhau thì buổi gần nhất trước. **Chỉ tính buổi đã hoàn thành** (lịch hẹn COMPLETED, cộng buổi ghi lại thủ công ở mục trên), không tính lượt mở trang hay ghim tay. Chưa có buổi nào thì không hiện nhóm. Dữ liệu cá nhân nên không cache qua request (`caching.md` quy tắc 1). Dùng chung nguồn đếm với thống kê rạp hay đi và lịch sử ngồi.
 - Báo cáo sai thông tin phòng (user gửi, admin xem).
 - Thông báo #9 (nhắc nhập chi phí/đánh giá) và #11 (ngân sách).
 
-**Ngoài phạm vi:** chatbot, nhắc trả tiền, gợi ý phim, lớp cộng đồng.
+**Ngoài phạm vi:** chatbot, gợi ý phim, lớp cộng đồng.
 
 **Tiêu chí hoàn thành**
-- [ ] Số liệu dashboard khớp với dữ liệu chi phí đã nhập, không đếm trùng khi một người trả hộ cả nhóm (có test cho các hàm tổng hợp).
+- [ ] Số liệu dashboard khớp với dữ liệu chi phí đã nhập, không đếm trùng một khoản của cả nhóm (có test cho các hàm tổng hợp).
 - [ ] Cảnh báo ngân sách hiện đúng ở 80% và 100%.
 - [ ] Đánh giá ghế sau buổi xem hiện ở lịch sử ngồi của chính user.
+- [ ] Nhóm "Thường tới" ở `/cinemas` chỉ gồm rạp user đã xem xong, đúng thứ tự (nhiều buổi trước, bằng nhau thì gần nhất trước), mỗi người chỉ thấy của mình; chưa có buổi nào thì không hiện nhóm.
 
 ---
 
@@ -312,6 +315,31 @@ giới hạn tra cứu, kết bạn cần chấp nhận (thiết kế mục 6 v�
 
 ---
 
+## Sprint 9: Công tắc tính năng theo môi trường
+**Mục tiêu:** một chỗ duy nhất quyết định thứ nào hiện ở môi trường nào (dev, staging, production), thay cho các điều kiện `NODE_ENV` rải rác; admin bật/tắt được mà không cần sửa code.
+**Tham chiếu:** `src/app/layout.tsx` (nút ghi DOM `DomRecorder`), `src/app/api/dev/dom/route.ts`, `src/components/install-guide.tsx` (hướng dẫn cài app trong Cài đặt người dùng), thiết kế mục 2.7 (cài đặt hệ thống).
+**Bối cảnh:** hiện nút debug chỉ tắt bằng `NODE_ENV !== "production"` viết cứng ở vài nơi, còn các thứ như hướng dẫn cài app, thẻ "Cài app" hay các màn thử nghiệm luôn hiện. Sau này sẽ còn thêm nữa (màn debug, nút thử, hướng dẫn, tính năng chưa hoàn thiện), nên cần một cơ chế chung thay vì mỗi chỗ tự xử lý.
+
+**Phạm vi**
+- **Danh mục công tắc ở một file** (`src/lib/feature-flags.ts`): mỗi công tắc có khóa, mô tả, nhóm (debug, hướng dẫn, thử nghiệm), mặc định cho từng môi trường (dev, staging, production) và nơi dùng (máy chủ, giao diện, hoặc cả hai). Thêm công tắc mới = thêm một dòng vào danh mục.
+- **Biết đang ở môi trường nào:** biến `APP_ENV` (`dev` | `staging` | `production`), tách khỏi `NODE_ENV` (staging vẫn chạy `NODE_ENV=production`); thiếu biến thì coi là `production` (an toàn: không lộ nút debug).
+- **Bật/tắt theo giá trị mặc định của môi trường, có thể ghi đè từ Admin** (Cài đặt > Tính năng): admin thấy danh sách theo nhóm, mỗi công tắc ghi giá trị đang áp dụng, mặc định của môi trường, và công tắc Bật/Tắt/Theo mặc định. Lưu ở `systemSettings`, có audit log, cache theo tag và `updateTag` khi ghi (đúng `caching.md`).
+- **Đọc ở cả hai phía:** hàm `isFeatureEnabled(key)` cho máy chủ; giao diện nhận giá trị qua một provider ở layout (chuỗi/số thuần, không cache dữ liệu cá nhân); route API dev trả 404 khi công tắc tắt.
+- **Chuyển các thứ đang có sang công tắc:** nút ghi DOM (`DomRecorder` và `/api/dev/dom`), thẻ hướng dẫn cài app (`InstallGuide`) và thẻ gửi thử push trong Admin, và mọi điều kiện `NODE_ENV` còn lại trong mã nguồn.
+- **Quy tắc cho việc làm sau này:** thêm vào `CLAUDE.md` và `.claude/rules/`: mọi nút debug, hướng dẫn, màn thử nghiệm hay tính năng chưa hoàn thiện đều phải đăng ký công tắc, không viết `NODE_ENV` rời. Có test quét mã nguồn: báo đỏ nếu còn `NODE_ENV` ngoài file danh mục, hoặc có công tắc nào dùng mà chưa đăng ký.
+- Mặc định đề xuất: nút debug bật ở dev, tắt ở staging và production; hướng dẫn cài app bật ở mọi môi trường; thẻ thử push của admin bật ở dev và staging, tắt ở production.
+
+**Ngoài phạm vi:** công tắc theo từng người dùng hoặc phần trăm người dùng (A/B), phân quyền theo công tắc, dịch vụ công tắc bên ngoài.
+
+**Tiêu chí hoàn thành**
+- [ ] Đặt `APP_ENV=production`: nút debug không hiện và `/api/dev/dom` trả 404; đặt `APP_ENV=dev`: nút hiện lại; thiếu biến thì hành xử như production.
+- [ ] Admin tắt hướng dẫn cài app ở Cài đặt > Tính năng thì thẻ đó biến mất khỏi Cài đặt người dùng ở lần tải kế tiếp, không cần deploy lại; bật lại thì hiện lại.
+- [ ] Không còn `process.env.NODE_ENV` rải rác trong `src` (test kiểm tra).
+- [ ] Thêm một công tắc mới chỉ cần sửa file danh mục và có test báo đỏ nếu thiếu mô tả hoặc thiếu mặc định cho một môi trường.
+- [ ] Mỗi lần đổi công tắc có dòng trong nhật ký thay đổi.
+
+---
+
 ## Nhật ký tiến độ
 Mỗi sprint xong thêm 3 đến 6 dòng: đã làm gì, còn dở gì, quyết định đã chốt, file chính nằm ở đâu.
 
@@ -333,9 +361,58 @@ Mỗi sprint xong thêm 3 đến 6 dòng: đã làm gì, còn dở gì, quyết 
 - File chính: `src/services/master-data/`, `src/services/pricing/ticket-price.ts`, `src/services/admin-user.service.ts`, `src/services/settings.service.ts`, `src/services/profile.service.ts`,
   `src/app/admin/master-data/_sections/` (mỗi loại một thư mục, dựng bằng `createSection`), `src/components/admin/resource-*.tsx`, `src/lib/cloudinary.ts`, `scripts/seed-catalog.ts`, `.claude/rules/admin-crud.md`.
 
+### Sprint 2 (2026-11-17)
+- Xong (code, test, build): model `Auditorium` và `AuditoriumLayout` (version bất biến); hàm thuần sinh lưới ghế và tính điểm (`src/lib/seat-layout/`, `src/services/seat-score.ts`, có test); `auditorium.service.ts`
+  (lưu layout đổi thì tạo version mới trong transaction, giữ nguyên thì chỉ đổi tên; điểm ghế và `summary` tính lúc lưu); component `SeatMap` dùng chung (SVG, pinch-zoom, chạm ghế, heatmap);
+  màn admin `/admin/auditoriums` (danh sách, thêm, sửa với hai tab Thông số và Ghế; không có màn xem phiên bản); ba phòng mẫu trong `npm run seed:catalog`.
+- Quyết định: **mô tả cho chatbot (`summary`) tự tổng hợp từ thông số phòng mỗi lần lưu** (`buildLayoutSummary`), admin không nhập và giao diện không hiển thị; **không có màn hình phiên bản** (chủ dự án bỏ), dữ liệu vẫn giữ phiên bản (`listLayoutVersions` và `getLayout(id, layoutId)` ở service sẵn cho Sprint 3 trở đi); **điểm ghế tính theo mét và góc nhìn thật** (`src/services/seat-score.ts`): góc nhìn ngang tới màn hình (THX tối thiểu 36°, lý tưởng khoảng 40°), góc ngửa cổ tới mép trên màn hình (SMPTE không quá 35°), lệch khỏi trục màn hình, đầu người phía trước che đáy màn hình (tính theo bậc thang, mỗi bậc 0,2 m; phòng không đặt bậc thang coi là phẳng), cân bằng âm thanh theo tâm phòng và độ sâu tham chiếu 65%, cửa, ghế hỏng. Các con số vật lý (ghế rộng 0,55 m, hàng sâu 1,0 m, mắt cao 1,1 m, màn tỉ lệ 2:1 cách sàn 1,0 m) là **giả định** vì layout không có kích thước thật; hệ số và dạng đường cong là phán đoán; nguồn chỉ là bài viết thứ cấp, chưa đọc tài liệu gốc SMPTE/THX. Mọi hằng số gom ở đầu file để chỉnh. Đổi công thức thì chạy `npm run rescore` để tính lại phòng đã lưu. Tâm ngang lý tưởng = tâm màn hình **đã vẽ** (bị kẹt trong phòng nên thanh trượt ở 0% hoặc 100% không đẩy tâm ra tận mép như công thức gốc ở thiết kế 2.3);
+  ghế đôi là một ghế chiếm hai ô liền nhau (không ghép qua lối đi hay ô trống); lối đi ngang tính theo thứ tự nhãn hàng, bậc thang tính từ hàng gần màn hình; heatmap tính theo điểm thấp nhất và cao nhất của chính layout đó (không tính ghế hỏng/che tầm nhìn, nếu không một ghế hỏng điểm 0 làm phẳng cả thang)
+  (một dải theo màu chủ đạo qua ba mốc: tông tối, `--primary`, tông nhạt; chủ dự án chọn thay cho thang xanh-vàng ban đầu, rồi yêu cầu tăng tương phản nên mở rộng dải; chữ mã ghế đổi sang tối ở đầu nhạt); ghi đè ghế lưu theo ô và gộp về dạng ngắn nhất; loại ghế đang được layout dùng thì không xóa được; phóng sơ đồ bằng cách đổi `viewBox` của SVG (không dùng CSS `transform`/`will-change`, vì bản đó để lộ bóng ma của sơ đồ 1x dưới sơ đồ đã phóng và làm mờ nét); chọn ô trên điện thoại bằng chạm (có chạm nhãn hàng/cột để chọn cả hàng/cột), chưa làm kéo vùng chọn.
+- Còn dở (chuyển sang sprint sau): **chạy `npm run rescore`** để tính lại điểm ghế của phòng đã lưu theo công thức mới (lệnh chưa chạy trên DB dev); chưa đo ở cỡ chữ 125% và 150%; chữ nhãn hàng/cột và "MÀN HÌNH" trong sơ đồ nhỏ hơn 12px ở mức 1× và ghế 16px ở mức 1× (phải phóng to để chọn); chưa hỗ trợ ghế giường nằm riêng trong heatmap; chưa cảnh báo khi dãy ghế đôi có ô lẻ; xóa phòng chưa chặn khi có suất chiếu (Sprint 3 thêm). Chủ dự án đã thử và duyệt Sprint 2 ngày 2026-11-17.
+- File chính: `src/lib/seat-layout/`, `src/services/auditorium.service.ts`, `src/services/seat-score.ts`, `src/components/seat-map/`, `src/components/admin/auditorium-editor/`, `src/app/admin/auditoriums/`.
+
+### Sprint 3 (2026-11-17)
+- Xong (code, test, build; **chưa thử trên điện thoại**): model `Movie`, `Showtime`, `SeatMark`; `movie.service` (trạng thái phim **tính theo ngày**, không lưu, nên không cần job cập nhật), `showtime.service` (tạo hàng loạt, nhập CSV, tìm suất kèm giá ước tính), `seat-mark.service` (đánh dấu theo phiên bản layout), `cinema.service`;
+  admin `/admin/movies` (danh sách và form phim có poster Cloudinary, trailer YouTube, thể loại, định dạng; tab Suất chiếu; tạo hàng loạt; nhập CSV; mục Phim bật ở thanh dưới admin);
+  user: `/showtimes` (dải ngày 15 ngày, lọc phim, rạp, thể loại, định dạng, khung giờ trên URL; hàng phim ở đầu trang), `/movies/[id]` (thông tin, trailer lite embed, các suất), `/cinemas`, `/cinemas/[branchId]`, `/cinemas/[branchId]/[auditoriumId]` (sơ đồ chỉ đọc, hai lớp Điểm ghế và Đánh dấu của tôi, ⭐ thích / tránh, tag nhanh, ghi chú, mục "Đánh dấu cũ"); hai tab Lịch chiếu và Rạp đã bật; `npm run seed:movies` nạp 4 phim mẫu và 84 suất (chạy sau `seed:catalog`).
+- Quyết định: **tạo hàng loạt theo khoảng ngày (từ, đến) × nhiều giờ × nhiều phòng**, mỗi lần tối đa 500 suất, suất trùng giờ với suất khác cùng phòng bị bỏ qua và báo số lượng; **CSV chạy tất cả hoặc không**: cột `movie,branch,auditorium,start,format,price` (giờ `YYYY-MM-DD HH:mm` giờ Việt Nam, giá để trống thì theo bảng giá, khớp tên không phân biệt dấu và hoa thường, dòng đầu tiêu đề có hay không đều được, ngăn cách `,` `;` hoặc tab), một dòng sai hoặc trùng giờ thì không tạo suất nào và liệt kê từng dòng lỗi; giờ kết thúc = bắt đầu + thời lượng + phút quảng cáo (cài đặt hệ thống); suất gắn `layoutId` hiện tại của phòng;
+  **giá ước tính** = giá ghế mặc định của layout theo bảng giá (`resolveTicketPrice`), có `priceOverride` thì dùng giá đó; **một ghế một đánh dấu cho mỗi người trong một phòng**, đánh dấu còn hiệu lực ở layout mới khi ghế giữ nguyên mã, hàng, cột và độ rộng, không thì vào "Đánh dấu cũ" (`src/lib/seat-layout/marks.ts`); **bản đồ chi nhánh**: nút "Chỉ đường" mở link Google Maps ngoài app (không thêm thư viện bản đồ); khung sửa đánh dấu là phần của trang dưới sơ đồ, **không dùng bottom sheet** vì ô ghi chú trong sheet gây lỗi bàn phím trên PWA iOS; nút "Tạo lịch hẹn" hiện nhưng tắt (Sprint 4 bật); xóa phòng bị chặn khi còn suất chiếu; thể loại, định dạng, phân loại tuổi đang được phim dùng thì không xóa được.
+- Làm thêm theo yêu cầu (2026-11-17): **công tắc Bật/Tắt** (`active`, mặc định bật, bản ghi cũ chưa có giá trị tính là bật) cho thương hiệu, chi nhánh, thể loại, định dạng: mục tắt không hiện ở bộ lọc, danh sách rạp, suất chiếu của user (suất của chi nhánh, thương hiệu hay định dạng đang tắt bị ẩn) và không được gợi ý khi admin tạo mới, mục đang được dùng thì vẫn hiện; **lọc phim theo khoảng thời gian**: cài đặt hệ thống `movieUpcomingDays` (mặc định 30), bộ lọc phim và hàng poster chỉ gồm phim đang chiếu và phim khởi chiếu trong N ngày tới (`isOfferedInFilter`); **khung giờ chiếu do admin cấu hình** (cài đặt hệ thống `timeSlots`: tên, tên tiếng Anh, từ, đến, tối đa 8, không chồng lấn; mặc định 4 khung cũ; `00:00` ở ô Đến là hết ngày; xóa hết khung thì ẩn bộ lọc Khung giờ; đổi khung giờ chỉ đổi cách lọc, không đụng suất đã tạo). Bảng giá và các lựa chọn khác trong Danh mục chưa lọc theo công tắc.
+- **Chốt 2026-11-18: chủ dự án xác nhận Sprint 3 xong.** (Mục dưới là ghi chú lúc đó.) Còn dở cũ: **thử trên điện thoại** (trailer phát tại chỗ trên iPhone, tốc độ bộ lọc, khung đánh dấu ghế, nhập CSV bằng file); trailer mẫu chưa có (thêm link YouTube thật ở Admin > Phim); chưa có đánh giá phòng và lịch sử ngồi (thiết kế 3.2, để Sprint 6); chưa đo ở cỡ chữ 125% và 150%.
+- File chính: `src/services/{movie,showtime,seat-mark,cinema}.service.ts`, `src/lib/showtime/`, `src/lib/movie/`, `src/lib/seat-layout/marks.ts`, `src/app/admin/movies/`, `src/components/admin/showtime-*.tsx`, `src/app/(user)/{showtimes,movies,cinemas}/`, `src/components/movie/`, `src/components/seat-map/room-seat-view.tsx`, `scripts/seed-movies.ts`.
+
+### Sprint 4 (2026-11-18)
+- Xong (code, test, build; **chưa thử trên điện thoại**; đã chạy thử bản dev với DB tạm, đăng nhập thật và mở mọi trang mới đều trả 200, không lỗi server; chưa bấm thao tác bằng trình duyệt vì extension Chrome không kết nối):
+  **Bạn bè** (`friendships`, `friendGroups`, `friendLookups`, `users.inviteCode`; kết bạn bằng số điện thoại hoặc link mời `/friends/invite/[code]`, lời mời cần chấp nhận, hai bên cùng gửi thì thành bạn, nhóm bạn; tra cứu số trả lời giống nhau dù số có tài khoản hay không, 10 lần mỗi giờ).
+  **Lịch hẹn giai đoạn 1** (`appointments`; `src/lib/appointment/state.ts` là máy trạng thái thuần có test; `appointment.service.ts`: tạo, gửi, vote, đề xuất giờ, từ chối, chốt, rút lui, hủy; lưu bằng optimistic concurrency và thử lại); màn `/appointments`, `/appointments/new`, `/appointments/[id]`; tab Lịch hẹn bật; nút "Tạo lịch hẹn từ suất này" trên thẻ suất chiếu.
+  **Thông báo** (`notifications`, `notificationDeliveries`, `pushSubscriptions`; sự kiện #1, #2, #4, #7, #13; chuông và badge ở header, `/notifications`).
+  **Web Push** (`web-push`, VAPID, `public/sw.js`, `/offline`, worker `src/notifications/worker.ts` qua `src/instrumentation.ts`; Cài đặt người dùng: bật theo thiết bị, tắt từng thiết bị, bật/tắt từng loại, hướng dẫn cài app; **nút Gửi thử nằm ở Admin > Cài đặt > Thử thông báo đẩy, admin chọn người nhận**).
+- Quyết định: **thông báo trong app luôn ghi** (khớp thiết kế 4.1), công tắc từng loại trong Cài đặt chỉ điều khiển **push**; nội dung thông báo không lưu câu chữ mà lưu id và dữ kiện, dựng chữ khi hiển thị hoặc khi đẩy theo ngôn ngữ người nhận (có thay cặp xưng hô); ghi thông báo lỗi chỉ log, không làm hỏng thao tác lịch hẹn;
+  trạng thái người tham gia thêm `excluded` (người tạo không xếp vào danh sách khi chốt) ngoài bốn giá trị trong thiết kế; vote Có ở bất kỳ phương án nào là đồng ý, bỏ hết vote Có thì về "chưa trả lời"; người tạo chỉ nhận thông báo "đồng ý" lần đầu một người chuyển sang đồng ý, không nhận mỗi lần đổi vote;
+  worker nhận việc bằng `findOneAndUpdate` (lấy lại việc kẹt quá 2 phút), thử tối đa 3 lần cách 1 và 5 phút; một thiết bị lỗi tạm thời mà thiết bị khác nhận được thì tính là đã gửi; **người tạo lịch hẹn không sửa được lịch hẹn nháp** (service có `send: false`, `sendInvitations`, nhưng giao diện chỉ có "Gửi lời mời"); đề xuất giờ khác chỉ nhập giờ tay (service cũng nhận `showtimeId`).
+- Cần làm để chạy: thêm vào `.env.local` (và staging) `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` (tạo bằng `npx web-push generate-vapid-keys`), `VAPID_SUBJECT` (dạng `mailto:địa-chỉ-liên-hệ` hoặc một địa chỉ https), `ENABLE_WORKER=true`. Thiếu khóa thì Cài đặt báo chưa bật thông báo đẩy, thông báo trong app vẫn chạy.
+- Thêm theo yêu cầu: **admin chỉnh được thời gian giữ push khi máy offline** (cài đặt hệ thống `pushTtlHours`, mặc định 24 giờ, từ 1 giờ đến 4 tuần = 672 giờ; ở Admin > Cài đặt > Cài đặt hệ thống); worker đọc một lần mỗi vòng gửi. Thông báo trong app không bao giờ hết hạn.
+- Thêm theo yêu cầu: **mời thêm bạn** vào lịch hẹn đang mời hoặc bản nháp (`inviteMore`; chỉ người tạo, chỉ bạn bè đang hoạt động chưa có trong lịch hẹn, kể cả người đã từ chối thì không mời lại, tối đa 20 người; chỉ người mới nhận thông báo #1, bản nháp thì gửi cho tất cả khi gửi đi).
+- Thêm theo yêu cầu: **thông báo kết bạn** (ngoài danh sách #1 đến #13 của thiết kế): `friend_request` gửi cho người được mời kết bạn, `friend_accepted` gửi cho người đã gửi lời mời khi được đồng ý (kể cả khi hai bên cùng gửi cho nhau); từ chối **không** báo; bấm thông báo mở `/friends`; có công tắc push riêng cho từng loại; `npm run seed:users` tạo 3 tài khoản mẫu (an, binh, chi; mật khẩu mẫu ghi trong `scripts/seed-users.ts`, **xóa trước khi lên production**) rồi kết bạn chéo mọi tài khoản người dùng; `npm run seed:friends` chỉ kết bạn chéo.
+- Thêm theo yêu cầu (giao diện lịch hẹn): người được mời **chọn hết rồi lưu một lần** (`submitResponse`, tất cả hoặc không gì cả, nút Từ chối cạnh Lưu ở thanh cuối); người tạo thấy mục "Khung giờ" và **chốt ngay trên thẻ giờ** (hộp xác nhận, mặc định chọn hết người đã vote Có, bỏ tick được; giờ chưa ai vote Có thì khóa); sau hạn trả lời khóa cứng; hạn phải trước giờ sớm nhất.
+- Còn dở: **chủ dự án cần thử trên điện thoại** (luồng 3 tài khoản; push trên Android và iPhone đã cài PWA, cần HTTPS; trang offline); chưa đo ở cỡ chữ 125% và 150%; chưa có huy hiệu số trên icon (Badging API); thông báo #3 (sắp hết hạn trả lời) để Sprint 5B.
+- Cập nhật cuối sprint (2026-11-18, theo yêu cầu): nút **Hủy lịch hẹn** và **Rút lui** cố định phía trên menu dưới (như thanh Lưu của phần trả lời); thẻ khung giờ hiện số vote Có, Không, chưa trả lời bằng ba icon kèm số (bỏ dòng tên người vote Có), hai hàng chữ căn ngang với hai nút nhắc và chốt; màn chi tiết lịch hẹn ẩn tiêu đề trên thanh quay lại (vẫn là `h1` ẩn). **Sprint 4 xong, chủ dự án duyệt 2026-11-18.**
+- File chính: `src/services/{friend,appointment,notification,push}.service.ts`, `src/lib/appointment/`, `src/notifications/`, `src/models/{friendship,friend-group,friend-lookup,appointment,notification,notification-delivery,push-subscription}.ts`, `src/actions/{friends,appointments,notifications,push}.ts`, `src/components/{friends,appointment}/`, `src/components/notification-*.tsx`, `src/app/(user)/{friends,appointments,notifications}/`, `public/sw.js`.
+
 <!-- Ví dụ:
 ### Sprint 2 (2026-12-01)
 - Xong: editor phòng chiếu, SeatMap, điểm ghế.
 - Quyết định: điểm ghế tính ở `src/services/seat-score.ts`, lưu vào từng ghế khi lưu layout.
 - Còn dở: chưa hỗ trợ ghế giường nằm trong heatmap.
 -->
+
+### Sprint 5A (2026-11-18)
+- Xong phần code, test, build (**chưa thử trên điện thoại, chưa bấm thao tác bằng trình duyệt**). Chủ dự án cần thử: `npm run seed:users`, `npm run seed:appointment` (tạo một lịch hẹn đã chốt người, người tạo là tài khoản đầu), rồi đi hết vòng: Lên kế hoạch chi tiết, chọn suất, xếp ghế, đồ ăn, Xác nhận kế hoạch; sau giờ chiếu bấm Đã xem xong và nhập chi phí.
+- Dữ liệu: `appointments` thêm `showtimeId`, `seats`, `fnb` (giá lưu lúc thêm), `estimate` (theo người), `actualCost`, `confirmedAt`, `completedAt`; collection mới `seatClaims` (unique `showtimeId + seatCode`) và `expenses` (`userId, appointmentId, category, amount, date, note`).
+- **Chống trùng ghế:** xếp ghế ghi `seats` và `seatClaims` trong cùng một transaction; claim trùng thì lỗi khóa duy nhất, trả `seat_taken`, không lưu gì. Có test hai lịch hẹn cùng chọn một ghế (`Promise.all`), chỉ một thành công.
+- Quyết định (phán đoán, cần chủ dự án duyệt): **ghế đôi giá một lần cho cả ghế, chia đều cho hai người** (người đầu nhận đồng lẻ); **đồ ăn chung chia đều cho mọi người đi**; **người tạo xếp ghế và chọn đồ ăn cho tất cả** (người khác chỉ xem phần của mình), mỗi người chỉ sửa chi phí thực tế của chính mình; **xếp ghế bằng chạm người rồi chạm ghế** (không kéo thả, vì kéo thả khó dùng trên màn nhỏ và đụng cử chỉ cuộn), lưu ngay mỗi lần chạm; đổi suất sau khi xác nhận thì xóa sơ đồ ghế và báo #6 loại "đổi giờ" cho cả nhóm; đổi ghế sau khi xác nhận báo #6 loại "đổi ghế" cho người bị ảnh hưởng; sang COMPLETED thì ước tính của từng người thành chi phí thực tế ban đầu (sửa được), `actualCost` luôn tính lại từ `expenses`.
+- Người tạo không nằm trong `participants`; danh sách người đi = người tạo + người `accepted` (`attendeeIdsOf`).
+- Giao diện: `PlanSection` (chọn suất bằng `ShowtimePicker`, `SeatPlanner`, `FoodPlanner`, `EstimateList`), `CostSection`; `SeatMap` thêm `reservedCodes`, `holderLabels`; nút Xác nhận kế hoạch và Đã xem xong cố định phía trên menu cùng nút Hủy.
+- **Ảnh nhân vật:** màn mới không đặt nhân vật (màn dày dữ liệu); chưa cần ảnh thêm. Tư thế `đang chọn ghế` và `đang tính tiền` vẫn chưa có.
+- Còn dở: chưa đo cỡ chữ 125% và 150%, chưa đo 320px; thử trên iPhone và Android; thông báo #3 và #8 và tự chuyển COMPLETED làm ở Sprint 5B (nút Đã xem xong chỉ hiện sau giờ chiếu); đánh giá phim và đánh giá ghế sau buổi xem để Sprint 6.
+- File chính: `src/services/appointment-{plan,estimate}.service.ts` (estimate không có đuôi `.service`), `src/lib/appointment/{cost,suggest}.ts`, `src/models/{seat-claim,expense}.ts`, `src/components/appointment/{plan-section,seat-planner,food-planner,estimate-list,cost-section}.tsx`, `scripts/seed-appointment.ts`.

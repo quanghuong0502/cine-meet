@@ -1,33 +1,26 @@
 import { BackButton } from "@/components/back-button";
-import { cn } from "@/lib/utils";
 
 interface PageHeaderProps {
-  title: string;
-  /** Where the back button goes. Every inner screen (not a tab) sets this: see `BackButton`. */
+  /** Omit when the page content already provides a heading. */
+  title?: string;
+  /** Destination of the back button on an inner screen. */
   backHref?: string;
   description?: string;
 }
 
-/**
- * Title of a screen. A tab screen shows a large title that scrolls with the page. An inner screen (with a back button) is a
- * navigation bar like iOS: a smaller title that stays at the top while the page scrolls, so back is always one tap away.
- * Every page puts it first inside a `p-4` container: the bar cancels that padding (negative margins) to reach the screen edges.
- */
+/** Inner screens get a sticky back bar. Page headings are available to screen readers. */
 export function PageHeader({ title, backHref, description }: PageHeaderProps) {
   return (
     <header
-      className={cn(
-        "flex gap-2",
+      className={
         backHref
-          ? "sticky top-0 z-20 -mx-4 -mt-4 items-center bg-background/95 px-4 pt-4 pb-2 backdrop-blur"
-          : "items-start",
-      )}
+          ? "sticky top-0 z-20 -mx-inset -mt-inset flex items-center bg-background/95 px-inset py-0 backdrop-blur"
+          : "sr-only"
+      }
     >
       {backHref ? <BackButton href={backHref} /> : null}
-      <div className={cn("flex min-w-0 flex-col gap-0.5", !backHref && "pt-1.5")}>
-        <h1 className={cn("font-semibold", backHref ? "truncate text-xl" : "text-2xl")}>{title}</h1>
-        {description ? <p className="text-sm text-muted-foreground">{description}</p> : null}
-      </div>
+      {title ? <h1 className="sr-only">{title}</h1> : null}
+      {description ? <p className="sr-only">{description}</p> : null}
     </header>
   );
 }
