@@ -1034,7 +1034,9 @@
         "friend_accepted": "Requests accepted",
         "poll_reminder": "Vote reminders",
         "appointment_confirmed": "Plan confirmed",
-        "appointment_changed": "Seat or time changed"
+        "appointment_changed": "Seat or time changed",
+        "response_deadline_warning": "Answer deadline approaching",
+        "showtime_reminder": "Reminder before showtime"
       },
       "errors": {
         "network": "Network is shaky, please try again.",
@@ -1585,6 +1587,14 @@
           "title": "Showtime changed",
           "body": "{movieTitle} is now at {time}, {place}. Check your seat."
         }
+      },
+      "response_deadline_warning": {
+        "title": "Answer deadline in 12 hours",
+        "body": "You have 12 hours left to answer for {movieTitle}, before {time}."
+      },
+      "showtime_reminder": {
+        "title": "Showtime is coming up",
+        "body": "{movieTitle} at {time}, {place}. Your seat: {seatCode}."
       }
     },
     "test": {

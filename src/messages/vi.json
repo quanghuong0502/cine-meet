@@ -1034,7 +1034,9 @@
         "friend_accepted": "Được chấp nhận bạn bè",
         "poll_reminder": "Nhắc vote giờ",
         "appointment_confirmed": "Kèo đã xác nhận",
-        "appointment_changed": "Đổi ghế hoặc giờ"
+        "appointment_changed": "Đổi ghế hoặc giờ",
+        "response_deadline_warning": "Sắp hết hạn trả lời",
+        "showtime_reminder": "Nhắc trước giờ chiếu"
       },
       "errors": {
         "network": "Mạng đang chập chờn, thử lại giúp [me] nha.",
@@ -1585,6 +1587,14 @@
           "title": "Đổi giờ chiếu rồi",
           "body": "{movieTitle} giờ là {time}, {place}. Xem lại ghế của [you] nha."
         }
+      },
+      "response_deadline_warning": {
+        "title": "Sắp hết hạn trả lời rồi",
+        "body": "Còn 12 tiếng để [you] trả lời kèo xem {movieTitle}, trước {time}."
+      },
+      "showtime_reminder": {
+        "title": "Sắp tới giờ xem rồi",
+        "body": "{movieTitle} lúc {time}, {place}. Ghế của [you]: {seatCode}."
       }
     },
     "test": {
