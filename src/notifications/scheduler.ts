@@ -40,11 +40,16 @@ async function sendReminder(appointmentId: string): Promise<boolean> {
   return true;
 }
 
-/** #3: 12h left to answer, for people who still have not. Stale (no longer inviting, or already past the deadline) rows are dropped. */
+/**
+ * #3: 12h left to answer, for people who still have not. "Still has not answered" means no vote (yes or no) on any time
+ * and the invitation not declined — a "no" vote never turns `participant.status` away from "invited" (only a "yes"
+ * does), so that status alone cannot tell a silent person from one who voted no on everything.
+ */
 async function sendDeadlineWarning(appointmentId: string): Promise<boolean> {
   const doc = await Appointment.findById(appointmentId).lean();
   if (!doc || doc.status !== "INVITING" || !doc.responseDeadline) return false;
-  const recipientIds = doc.participants.filter((p) => p.status === "invited").map((p) => p.userId.toString());
+  const voted = new Set(doc.timeOptions.flatMap((o) => o.votes.map((v) => v.userId.toString())));
+  const recipientIds = doc.participants.filter((p) => p.status === "invited" && !voted.has(p.userId.toString())).map((p) => p.userId.toString());
   if (recipientIds.length === 0) return false;
   const movie = await Movie.findById(doc.movieId, "title").lean();
   const payload = { appointmentId, movieTitle: movie?.title ?? "", actorName: "", slotAt: doc.responseDeadline.toISOString() };

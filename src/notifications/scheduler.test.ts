@@ -77,14 +77,16 @@ describe("scheduler (scheduled notifications and auto-complete)", () => {
       const movie = await Movie.create({ title: "Phim", durationMin: 100, releaseDate: "2026-01-01" });
       const creator = await User.create({ name: "Creator", username: "creator" });
       const answered = await User.create({ name: "Answered", username: "answered" });
+      const votedNo = await User.create({ name: "VotedNo", username: "votedno" });
       const notYet = await User.create({ name: "NotYet", username: "notyet" });
       const appt = await Appointment.create({
         creatorId: creator._id,
         movieId: movie._id,
         status: "INVITING",
         responseDeadline: hours(10, now.getTime()),
-        timeOptions: [{ startAt: hours(20, now.getTime()), proposedBy: creator._id, votes: [] }],
-        participants: [{ userId: answered._id, status: "accepted" }, { userId: notYet._id, status: "invited" }],
+        // A "no" vote never turns `status` away from "invited" (only a "yes" does) — `votedNo` must still count as answered.
+        timeOptions: [{ startAt: hours(20, now.getTime()), proposedBy: creator._id, votes: [{ userId: votedNo._id, vote: "no" }] }],
+        participants: [{ userId: answered._id, status: "accepted" }, { userId: votedNo._id, status: "invited" }, { userId: notYet._id, status: "invited" }],
       });
       await ScheduledNotification.create({ appointmentId: appt._id, type: "deadline_warning", sendAt: hours(-1, now.getTime()), status: "pending" });
 
