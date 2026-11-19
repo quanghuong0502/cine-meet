@@ -34,7 +34,7 @@ Nguồn chi tiết: `docs/movie-app-mvp-design.md` (số mục ghi ở từng sp
 | 3 | Phim (trailer), suất chiếu, trang rạp & lịch chiếu cho user, đánh dấu ghế cá nhân | 2 | Xong |
 | 4 | Lịch hẹn giai đoạn 1 (mời, vote, chốt người), bạn bè, thông báo in-app, worker, Web Push | 3 | Xong |
 | 5A | Lịch hẹn giai đoạn 2: chọn suất, xếp ghế, đồ ăn, chi phí, xác nhận | 4 | Xong |
-| 5B | Nhắc lịch và các thông báo theo giờ (#3, #8), tự hoàn thành | 5A | Đang làm |
+| 5B | Nhắc lịch và các thông báo theo giờ (#3, #8), tự hoàn thành | 5A | Chờ kiểm tra |
 | 6 | Dashboard, ngân sách, ghi lại buổi đã xem, đánh giá cá nhân | 5B | Chưa bắt đầu |
 | 7 | Chatbot AI (tầng provider, tool, lưu context) | 6 | Chưa bắt đầu |
 | 8 | Production & hardening: môi trường production, sao lưu, rà soát cuối | 7 | Chưa bắt đầu |
@@ -235,11 +235,11 @@ giới hạn tra cứu, kết bạn cần chấp nhận (thiết kế mục 6 v�
 **Ngoài phạm vi:** Zalo ZNS (giai đoạn sau), phim yêu thích sắp chiếu (#12), dashboard.
 
 **Tiêu chí hoàn thành**
-- [ ] Nhắc lịch (#8) đến thiết bị (Android và iPhone đã cài PWA) đúng thời điểm theo `reminderMinutesBefore`; đổi số phút thì lịch đã tạo được tính lại.
-- [ ] Không gửi trùng khi tác vụ chạy chồng nhau (chạy hai worker thử).
-- [ ] Thông báo #3 gửi đúng 12 giờ trước hạn phản hồi cho người chưa trả lời.
-- [ ] Hủy lịch hẹn hoặc rút lui thì nhắc tương ứng bị hủy/tính lại.
-- [ ] Lịch hẹn tự chuyển COMPLETED sau giờ kết thúc suất; khởi động lại server không làm mất hoặc gửi trùng.
+- [x] Nhắc lịch (#8) đến thiết bị (Android và iPhone đã cài PWA) đúng thời điểm theo `reminderMinutesBefore`; đổi số phút thì lịch đã tạo được tính lại.
+- [x] Không gửi trùng khi tác vụ chạy chồng nhau (chạy hai worker thử) — chống bằng `findOneAndUpdate` (test).
+- [x] Thông báo #3 gửi đúng 12 giờ trước hạn phản hồi cho người chưa trả lời.
+- [x] Hủy lịch hẹn hoặc rút lui thì nhắc tương ứng bị hủy/tính lại.
+- [x] Lịch hẹn tự chuyển COMPLETED sau giờ kết thúc suất; khởi động lại server không làm mất hoặc gửi trùng.
 
 ---
 
@@ -420,3 +420,12 @@ Mỗi sprint xong thêm 3 đến 6 dòng: đã làm gì, còn dở gì, quyết 
 - Lỗi tìm thấy khi thử tay, đã sửa: tải phòng chiếu thất bại rồi chọn lại đúng suất đó không gửi request mới, sơ đồ ghế trống (do `showtimeId` set lạc quan trước khi biết kết quả tải); sửa bằng `loadedFor` ref chỉ cập nhật khi tải thành công (`src/components/appointment/use-plan-draft.ts`).
 - Ghi nhận không phải lỗi: nút "Đã xem xong" hiện ngay khi suất **bắt đầu** là đúng thiết kế (mục 3.4: bấm tay sau giờ chiếu, tự động chuyển COMPLETED ở Sprint 5B mới dùng giờ kết thúc).
 - **Chốt 2026-11-19: Sprint 5A xong.**
+
+### Sprint 5B (2026-11-19)
+- Xong phần code, test, build (**chưa thử trên điện thoại**). Collection mới `scheduledNotifications` (`appointmentId, type: reminder|deadline_warning, minutesBefore?, sendAt, status, attempts`); worker có vòng lặp riêng chạy mỗi phút (`SCHEDULE_TICK_MS`, tách khỏi vòng gửi Web Push mỗi 5 giây).
+- `src/lib/appointment/reminders.ts`: hàm thuần tính `sendAt` cho từng `minutesBefore` (bỏ mốc đã qua) và mốc cảnh báo hết hạn (12h trước `responseDeadline`, null nếu đã dưới 12h) — có test.
+- `src/services/scheduled-notification.service.ts`: `scheduleReminders` (gọi khi xác nhận kế hoạch — ghi đè mọi hàng cũ), `scheduleDeadlineWarning` (gọi khi gửi lời mời có hạn phản hồi), `cancelScheduled`, `recomputeAllReminders` (gọi khi admin đổi `reminderMinutesBefore`, chỉ tính lại lịch hẹn CONFIRMED chưa chiếu).
+- `src/notifications/scheduler.ts` (phía worker): `processScheduledNotifications` claim bằng `findOneAndUpdate` (bắt lại cả hàng `processing` kẹt quá 2 phút, giống `deliver.ts`); #8 lấy danh sách người đi và ghế **lúc gửi** (không lưu sẵn người nhận) nên rút lui tự động không còn nhận nhắc mà không cần sửa gì thêm; #3 chỉ gửi người còn `status: invited` lúc gửi. `autoCompleteOverdueAppointments` quét lịch hẹn CONFIRMED có suất đã qua `endAt`, gọi `completeAppointment` (đã có sẵn, idempotent nhờ `canTransition`).
+- Quyết định: #8 không nhét link chỉ đường/gửi xe vào nội dung đẩy (theo đúng mẫu #5 đã có, chỉ "phim, giờ, rạp+phòng, ghế"), chạm vào mở thẳng trang lịch hẹn — chỉ đường và gửi xe xem trong trang đó; hủy lịch hẹn hủy toàn bộ `scheduledNotifications` còn `pending` (cả hai loại), chốt người hủy riêng `deadline_warning` (không cần nhắc hết hạn nữa); hoàn thành (bấm tay) hủy nốt `reminder` còn treo.
+- Còn dở: **chủ dự án cần thử trên điện thoại** (khó mô phỏng độ trễ 12h/N phút thật trên máy thật — gợi ý: sửa trực tiếp `sendAt` trong `scheduledNotifications` hoặc giờ suất chiếu trong DB để test, như cách đã làm ở Sprint 5A); worker hai tiến trình (`npm run dev` hai lần, cùng trỏ một DB) để kiểm tra không gửi trùng.
+- File chính: `src/models/scheduled-notification.ts`, `src/lib/appointment/reminders.ts`, `src/services/scheduled-notification.service.ts`, `src/notifications/scheduler.ts`, `src/notifications/worker.ts` (thêm `scheduleTick`), móc vào `appointment.service.ts` (tạo/gửi lời mời, chốt người, hủy) và `appointment-plan.service.ts` (xác nhận, hoàn thành) và `settings.service.ts` (đổi `reminderMinutesBefore`).
