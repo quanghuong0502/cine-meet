@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { NewAppointmentForm } from "@/components/appointment/new-appointment-form";
-import { toShowtimeChoice } from "@/components/appointment/showtime-picker";
+import { toShowtimeChoice } from "@/lib/appointment/showtime-choice";
 import { PageHeader } from "@/components/page-header";
 import { requireUser } from "@/lib/auth/guards";
 import { getSystemSettings } from "@/services/settings.service";

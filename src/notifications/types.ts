@@ -10,6 +10,8 @@ export const NOTIFICATION_TYPES = [
   "poll_reminder", //         the creator nudges people who have not voted on a time
   "friend_request", //        someone asked me to be friends
   "friend_accepted", //       someone said yes to my friend request
+  "response_deadline_warning", // #3  12h left to answer, for people who have not
+  "showtime_reminder", //     #8  N minutes before the showtime (admin's reminderMinutesBefore)
 ] as const;
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
 

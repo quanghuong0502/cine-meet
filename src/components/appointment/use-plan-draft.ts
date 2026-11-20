@@ -28,11 +28,14 @@ export function usePlanDraft(view: AppointmentView, plan: PlanData | null) {
   const [food, setFood] = useState(plan?.food);
   const [loading, setLoading] = useState(false);
   const latest = useRef(0);
+  // The showtime the room/food on screen actually belong to. Set only on success, so a failed load leaves it behind `showtimeId`
+  // and picking the very same showtime again is not skipped as "nothing changed" (it would otherwise never retry).
+  const loadedFor = useRef(view.showtimeId ?? undefined);
 
   /** Another showtime: the old seats and food belong to the old room, so they are cleared; the new room is read (nothing is written). */
   const changeShowtime = useCallback(
     async (id: string) => {
-      if (id === showtimeId) return;
+      if (id === showtimeId && id === loadedFor.current) return;
       const call = ++latest.current;
       setShowtimeId(id);
       setSeats(new Map());
@@ -45,6 +48,7 @@ export function usePlanDraft(view: AppointmentView, plan: PlanData | null) {
         toast.error(t("roomFailed"));
         return;
       }
+      loadedFor.current = id;
       setRoom(result.room);
       setFood(result.food);
     },

@@ -9,36 +9,10 @@ import { formatTime, vietnamDayKey } from "@/lib/datetime";
 import { formatVnd, formatVndRange } from "@/lib/money";
 import { vietnamToday } from "@/lib/movie/status";
 import { cn } from "@/lib/utils";
-
-export interface ShowtimeChoice {
-  id: string;
-  startAt: string;
-  branchId: string;
-  branchName: string;
-  endAt: string;
-  roomName: string;
-  formatName: string;
-  /** Whole dong; null when no price rule matches. The range shows when seat types differ. */
-  price: number | null;
-  priceMin: number | null;
-  priceMax: number | null;
-}
-
-/** A showtime row as the picker lists it (the cinema is shown as "Brand · Branch"). */
-export function toShowtimeChoice(row: import("@/services/showtime.service").ShowtimeRow): ShowtimeChoice {
-  return {
-    id: row.id,
-    startAt: row.startAt,
-    endAt: row.endAt,
-    branchId: row.branch.id,
-    branchName: [row.branch.brandName, row.branch.name].filter(Boolean).join(" · "),
-    roomName: row.auditorium.name,
-    formatName: row.format.name,
-    price: row.price,
-    priceMin: row.priceMin,
-    priceMax: row.priceMax,
-  };
-}
+// Kept in a plain (non "use client") module: a Server Component needs to call `toShowtimeChoice` directly, which is not
+// possible with a function exported from a client module. Re-exported here so existing client imports keep working.
+export { toShowtimeChoice, type ShowtimeChoice } from "@/lib/appointment/showtime-choice";
+import type { ShowtimeChoice } from "@/lib/appointment/showtime-choice";
 
 interface Props {
   showtimes: ShowtimeChoice[];

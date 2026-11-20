@@ -4,6 +4,7 @@ import { DEFAULT_TIME_SLOTS, timeSlotsFieldSchema, timeSlotsSchema, type TimeSlo
 import { requiredInt } from "@/lib/validation/fields";
 import { SystemSetting } from "@/models/system-setting";
 import { recordAudit } from "@/services/audit.service";
+import { recomputeAllReminders } from "@/services/scheduled-notification.service";
 
 export interface SystemSettings {
   /** Minutes before showtime to remind attendees; several values allowed, largest first (e.g. [1440, 20]). */
@@ -112,5 +113,8 @@ export async function updateSystemSettings(input: SystemSettingsInput, actorId: 
       after: { key, value: next },
     });
   }
-  return getSystemSettings();
+  const after = await getSystemSettings();
+  // The lead times moved: every confirmed appointment's scheduled reminders (#8) have to match the new values.
+  if (JSON.stringify(before.reminderMinutesBefore) !== JSON.stringify(after.reminderMinutesBefore)) await recomputeAllReminders();
+  return after;
 }
