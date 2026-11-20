@@ -49,23 +49,32 @@ export function CostSection({ view, costs, onSave, busy }: Props) {
       <h2 id="appt-cost" className="type-heading">
         {t("title")}
       </h2>
+      {view.allPaidByCreator ? <p className="type-secondary text-muted-foreground">{t("allPaidByCreatorNote", { name: view.creator.name })}</p> : null}
       <ul className="flex flex-col gap-stack">
         {view.attendees.map((p) => {
           const c = byUser.get(p.id);
           const mine = p.id === view.viewerId;
-          const canEdit = view.isCreator || mine;
+          const isPayerRow = view.allPaidByCreator && p.id === view.creator.id;
+          // The creator pays for everyone: only their own row can be edited, and only by them.
+          const canEdit = view.allPaidByCreator ? view.isCreator && isPayerRow : view.isCreator || mine;
           return (
             <li key={p.id} className="flex flex-col gap-item rounded-xl border bg-card p-inset-sm">
               <div className="flex items-center gap-item">
                 <UserAvatar name={p.name} image={p.avatar} size={PX.avatar} />
                 <span className="flex min-w-0 flex-1 flex-col gap-tight">
                   <span className="break-words type-item-title">{p.name}</span>
-                  <span className="type-secondary text-muted-foreground tabular-nums">
-                    {t("breakdown", { ticket: formatVnd(c?.ticket ?? 0, locale), food: formatVnd(c?.fnb ?? 0, locale), other: formatVnd(c?.other ?? 0, locale) })}
-                  </span>
-                  {c?.note ? <span className="break-words type-secondary text-muted-foreground">{c.note}</span> : null}
+                  {view.allPaidByCreator && !isPayerRow ? (
+                    <span className="type-secondary text-muted-foreground">{t("paidByCreator")}</span>
+                  ) : (
+                    <>
+                      <span className="type-secondary text-muted-foreground tabular-nums">
+                        {t("breakdown", { ticket: formatVnd(c?.ticket ?? 0, locale), food: formatVnd(c?.fnb ?? 0, locale), other: formatVnd(c?.other ?? 0, locale) })}
+                      </span>
+                      {c?.note ? <span className="break-words type-secondary text-muted-foreground">{c.note}</span> : null}
+                    </>
+                  )}
                 </span>
-                <span className="shrink-0 type-item-title tabular-nums">{formatVnd(c?.total ?? 0, locale)}</span>
+                {view.allPaidByCreator && !isPayerRow ? null : <span className="shrink-0 type-item-title tabular-nums">{formatVnd(c?.total ?? 0, locale)}</span>}
                 {canEdit && editing !== p.id ? (
                   <Button type="button" variant="ghost" size="icon" aria-label={t("edit", { name: p.name })} disabled={busy} onClick={() => edit(p.id)}>
                     <Pencil aria-hidden />

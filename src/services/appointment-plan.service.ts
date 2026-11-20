@@ -307,11 +307,22 @@ export async function completeAppointment(creatorId: string, id: string, now = n
     if (!start || start.getTime() > now.getTime()) return { ok: false as const, error: "too_early" as const };
     doc.status = "COMPLETED";
     doc.completedAt = now;
-    return { ok: true as const, start, estimate: doc.estimate.map((e) => ({ userId: e.userId.toString(), ticket: e.ticket, fnb: e.fnb, other: e.other })) };
+    return {
+      ok: true as const,
+      start,
+      estimate: doc.estimate.map((e) => ({ userId: e.userId.toString(), ticket: e.ticket, fnb: e.fnb, other: e.other })),
+      allPaidByCreator: doc.allPaidByCreator ?? false,
+      creatorId: doc.creatorId.toString(),
+    };
   });
   if (!result.ok) return result;
   await cancelScheduled(id, ["reminder"]);
-  for (const e of result.estimate) {
+  // Normally each attendee's estimate becomes their own first expense. When the creator pays for everyone, the whole
+  // group's estimate lands on the creator instead: seats and food stayed per person, only who the money counts for changes.
+  const rows = result.allPaidByCreator
+    ? [{ userId: result.creatorId, ...sumCosts(result.estimate) }]
+    : result.estimate;
+  for (const e of rows) {
     for (const category of EXPENSE_CATEGORIES) {
       if (e[category] <= 0) continue;
       await Expense.updateOne({ appointmentId: id, userId: e.userId, category }, { $setOnInsert: { amount: e[category], date: result.start } }, { upsert: true });
@@ -340,7 +351,12 @@ export async function setPersonCost(actorId: string, id: string, input: PersonCo
   const attendees = attendeeIdsOf(doc as never);
   const isCreator = sameId(doc.creatorId, actorId);
   if (!isCreator && !attendees.includes(actorId)) return { ok: false, error: "not_found" };
-  if (!isCreator && input.userId !== actorId) return { ok: false, error: "forbidden" };
+  // When the creator pays for everyone, the whole cost is theirs: only they can edit it, and only their own row.
+  if (doc.allPaidByCreator) {
+    if (!isCreator || !sameId(doc.creatorId, input.userId)) return { ok: false, error: "forbidden" };
+  } else if (!isCreator && input.userId !== actorId) {
+    return { ok: false, error: "forbidden" };
+  }
   if (doc.status !== "COMPLETED") return { ok: false, error: "bad_state" };
   if (!attendees.includes(input.userId)) return { ok: false, error: "not_attendee" };
   const date = doc.timeOptions.find((o) => sameId(o._id, doc.chosenOptionId?.toString() ?? ""))?.startAt ?? doc.completedAt ?? new Date();

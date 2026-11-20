@@ -157,7 +157,7 @@ Hệ thống tính khi lưu layout và lưu kèm từng ghế. Dùng cho heatmap
         − phạt(ghế hỏng / bị che)
   ```
 - Khi lưu layout cũng sinh `summary` (mô tả ngắn: số ghế, vị trí màn hình, lối đi, vùng ghế điểm cao) cho chatbot.
-- Giai đoạn sau: cộng thêm điểm cộng đồng (người dùng đánh giá ghế sau buổi xem).
+- **Không làm:** điểm cộng đồng (người dùng đánh giá ghế sau buổi xem) — app chỉ dùng trong nhóm bạn bè, không cần lớp cộng đồng (chốt 2026-11-19).
 
 ### 2.4 Phim & suất chiếu
 
@@ -199,7 +199,7 @@ Nội dung template nằm ở phía Zalo và phải được Zalo duyệt. App c
 - Hạn phản hồi lời mời mặc định.
 - Thời gian quảng cáo (phút) cộng vào giờ kết thúc suất chiếu.
 - Cài đặt AI: provider chính, model, provider dự phòng, temperature, số token tối đa (xem mục 7).
-- Mục khác: báo cáo sai thông tin phòng (do user gửi), audit log cho master data. (Duyệt đánh dấu công khai hoãn cùng lớp cộng đồng.)
+- Mục khác: báo cáo sai thông tin phòng (do user gửi), audit log cho master data. (Duyệt đánh dấu công khai: **không làm**, bỏ cùng lớp cộng đồng.)
 
 ---
 
@@ -224,7 +224,7 @@ Nội dung template nằm ở phía Zalo và phải được Zalo duyệt. App c
 - Xem sơ đồ phòng ở chế độ chỉ đọc, có 3 lớp bật/tắt:
   1. Heatmap điểm ghế của hệ thống.
   2. Đánh dấu cá nhân: ⭐ thích / 🚫 tránh, kèm ghi chú.
-  3. ~~Đánh dấu cộng đồng~~ **hoãn sang giai đoạn sau**: nhóm chỉ có vài người nên chưa đủ dữ liệu. MVP chỉ có lớp 1 và 2.
+  3. ~~Đánh dấu cộng đồng~~ **không làm**: app chỉ dùng trong nhóm bạn bè, không cần chia sẻ công khai. Chỉ có lớp 1 và 2.
 - Tag nhanh cho ghế: gần lối đi, sát cửa, bị che, ghế lỏng, gần loa.
 - Đánh giá phòng: âm thanh, điều hòa, độ sạch.
 - Lịch sử ngồi: "Bạn đã ngồi phòng này 3 lần: F7, F8, G9".
@@ -272,7 +272,8 @@ DRAFT → INVITING → PARTICIPANTS_LOCKED → PLANNING → CONFIRMED → COMPLE
 - **Lưu ở hai mức** (chủ dự án chốt 2026-11-18): chi phí **cả lần hẹn** (`actualCost` của lịch hẹn: tổng vé, đồ ăn, khác của cả nhóm, luôn bằng tổng phần của mọi người) và chi phí **từng người** (`expenses`, chia theo vé, đồ ăn, khác). Mục đích duy nhất là lưu lại chi phí xem phim; app không có logic trả tiền hay nợ.
 - Phần của mỗi người ghi thành `expenses` của chính người đó. Đây là nguồn duy nhất cho dashboard.
 - **Không có công nợ, không có "Tôi đã trả"/"Đã nhận", không có mã VietQR** (chủ dự án chốt 2026-11-18): app chỉ cho biết buổi đó tốn bao nhiêu.
-- Đánh giá phim và đánh giá ghế đã ngồi (lưu cá nhân, hiện ở lịch sử ngồi; điểm cộng đồng để giai đoạn sau).
+- **Người tạo bao hết chi phí** (`allPaidByCreator`, chủ dự án chốt 2026-11-19, đặt lúc mời lời mời, không đổi lại được sau khi tạo): ghế và đồ ăn vẫn chọn riêng cho từng người như bình thường; chỉ khác ở bước Hoàn thành — toàn bộ chi phí ước tính của cả nhóm dồn thành `expenses` của người tạo (người khác không có `expenses` cho buổi này, không ảnh hưởng ngân sách/dashboard cá nhân của họ). Không phải tính năng công nợ, chỉ đổi chi phí này tính cho ai khi tổng hợp dashboard (Sprint 6). Sau khi hoàn thành, chỉ người tạo sửa được chi phí thực tế (vì toàn bộ là của họ).
+- Đánh giá phim và đánh giá ghế đã ngồi (lưu cá nhân, hiện ở lịch sử ngồi; **không có** điểm cộng đồng).
 
 **Bổ sung**
 - Ghi lại buổi đã xem (xem một mình hoặc đặt ngoài app) để dashboard đầy đủ dữ liệu.
@@ -600,7 +601,7 @@ Chi tiết phạm vi, ranh giới và tiêu chí hoàn thành từng sprint nằ
 1. **Zalo OA & ZNS**: đã có Official Account đã xác thực chưa? Ai chịu chi phí tin nhắn? Nếu chưa có, MVP có chạy trước chỉ với in-app không? **Hoãn:** Zalo không làm trong MVP (Zalo cá nhân không gửi tự động được, chỉ OA + ZNS có phí). MVP dùng Web Push + in-app; xem lại khi bạn muốn thêm Zalo.
 2. **Xác minh số điện thoại**: có cần OTP để xác minh số trước khi gửi Zalo (hoặc kết bạn theo số) không, hay chỉ cần người dùng tự nhập? **Đã chốt (mặc định MVP):** không dùng OTP; giảm thiểu bằng số điện thoại unique, giới hạn tra cứu, kết bạn cần chấp nhận (mục 6). Xét lại nếu mở rộng người dùng.
 3. **Hosting**: chọn VPS/Railway/Render (tiến trình chạy liên tục) hay serverless kèm cron bên ngoài? **Đã chốt:** dịch vụ Node chạy liên tục, không serverless; có staging từ Sprint 0 (mục 1).
-4. **Đánh dấu ghế công khai**: có cần admin duyệt trước khi hiển thị cho người khác không? **Hoãn:** lớp cộng đồng không làm trong MVP (nhóm nhỏ).
+4. **Đánh dấu ghế công khai**: có cần admin duyệt trước khi hiển thị cho người khác không? **Đã chốt (2026-11-19): không làm.** App chỉ dùng trong nhóm bạn bè, không cần lớp cộng đồng.
 5. **Lời mời người chưa có tài khoản**: có hỗ trợ mời qua link để người đó đăng ký rồi tham gia không? **Đã chốt:** không hỗ trợ (không có đăng ký công khai, xem 6.1). Link mời chỉ dùng để kết bạn với người đã có tài khoản; người chưa có tài khoản phải nhờ admin tạo.
 6. **Chia tiền**: **Đã chốt (2026-11-18):** không theo dõi ai trả, không công nợ, không VietQR; app chỉ ghi chi phí mỗi buổi xem (vé, đồ ăn, khác).
 7. **Dữ liệu suất chiếu**: nhập tay/CSV là đủ cho MVP, hay cần cân nhắc lấy tự động từ website rạp ở giai đoạn sau? Mặc định cho MVP: nhập tay hoặc CSV.

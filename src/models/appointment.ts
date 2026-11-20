@@ -74,6 +74,9 @@ const appointmentSchema = new Schema(
     showtimeFromPoll: { type: Boolean },
     participants: { type: [participantSchema], default: [] },
     cancelReason: { type: String, trim: true },
+    // The creator pays for everyone (set when inviting, fixed afterwards). Seats and food are still chosen per person;
+    // this only changes whose `expenses` the viewing's cost lands on when the appointment is completed. Not a debt feature.
+    allPaidByCreator: { type: Boolean, default: false },
     // Stage 2 (Sprint 5A).
     showtimeId: { type: Schema.Types.ObjectId, ref: "Showtime" },
     seats: { type: [seatAssignmentSchema], default: [] },

@@ -113,6 +113,37 @@ describe("appointment planning (stage 2)", () => {
     expect(stored.total).toBe(costs.perUser.reduce((s, p) => s + p.total, 0));
   });
 
+  it("puts the whole cost on the creator when they pay for everyone (seats and food stay per person)", async () => {
+    const Appointment = (await import("@/models/appointment")).Appointment;
+    const id = await lockedAppointment();
+    await Appointment.updateOne({ _id: id }, { $set: { allPaidByCreator: true } });
+
+    expect(await plan.beginPlanning(creator, id)).toEqual({ ok: true });
+    expect((await plan.assignSeats(creator, id, { assignments: [{ userId: creator, seatCode: "A1" }, { userId: u1, seatCode: "A2" }, { userId: u2, seatCode: "A3" }] })).ok).toBe(true);
+    expect(await plan.confirmAppointment(creator, id)).toEqual({ ok: true });
+
+    // No price rules in this test world, so seats cost 0: force a real-looking per-person estimate before completing.
+    const doc = await Appointment.findById(id);
+    doc!.set("estimate", [
+      { userId: creator, ticket: 80_000, fnb: 0, other: 0 },
+      { userId: u1, ticket: 90_000, fnb: 20_000, other: 0 },
+      { userId: u2, ticket: 90_000, fnb: 0, other: 0 },
+    ]);
+    await doc!.save();
+
+    expect(await plan.completeAppointment(creator, id, hours(6))).toEqual({ ok: true });
+
+    // Only the creator has an expense for this appointment: the sum of everyone's estimate.
+    const costs = await plan.getCosts(id);
+    expect(costs.perUser).toEqual([{ userId: creator, ticket: 260_000, fnb: 20_000, other: 0, total: 280_000 }]);
+    expect(costs.totals).toEqual({ ticket: 260_000, fnb: 20_000, other: 0, total: 280_000 });
+
+    // Nobody else can touch it (not even their own, since there is no "their own" any more), and the creator can only edit their own row.
+    expect(await plan.setPersonCost(u1, id, { userId: u1, ticket: 1, fnb: 0, other: 0 })).toEqual({ ok: false, error: "forbidden" });
+    expect(await plan.setPersonCost(creator, id, { userId: u1, ticket: 1, fnb: 0, other: 0 })).toEqual({ ok: false, error: "forbidden" });
+    expect((await plan.setPersonCost(creator, id, { userId: creator, ticket: 300_000, fnb: 0, other: 0 })).ok).toBe(true);
+  });
+
   it("lets only one of two appointments take the same seat", async () => {
     const a = await lockedAppointment();
     const b = await lockedAppointment();

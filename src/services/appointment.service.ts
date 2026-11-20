@@ -44,6 +44,8 @@ export const createAppointmentSchema = z.object({
   responseDeadline: z.coerce.date().optional(),
   /** false keeps it as a draft (nobody is told yet). */
   send: z.boolean().default(true),
+  /** The creator pays for everyone; fixed once set, cannot change after the appointment is made. */
+  allPaidByCreator: z.boolean().default(false),
 });
 export type CreateAppointmentInput = z.infer<typeof createAppointmentSchema>;
 
@@ -183,6 +185,7 @@ export async function createAppointment(creatorId: string, input: CreateAppointm
     responseDeadline: input.responseDeadline,
     timeOptions: options.map((o) => ({ ...o, proposedBy: creatorId, votes: [] })),
     participants: inviteeIds.map((userId) => ({ userId, status: "invited" })),
+    allPaidByCreator: input.allPaidByCreator,
   });
   if (input.send) {
     await notifyPeople(doc._id.toString(), creatorId, "appointment_invited", inviteeIds);
@@ -519,6 +522,8 @@ export interface AppointmentView {
   chosenOptionId?: string;
   participants: ParticipantView[];
   cancelReason?: string;
+  /** The creator pays for everyone: seats and food are still chosen per person, but the real cost lands on the creator only. */
+  allPaidByCreator: boolean;
   /** Stage 2: the showtime, who sits where, the food, and each person's estimated money (whole dong). */
   showtimeId?: string;
   /** The showtime was already chosen when the time was picked: nothing to choose in the plan. */
@@ -595,6 +600,7 @@ export async function getAppointment(userId: string, id: string, now = new Date(
       declineReason: p.declineReason ?? undefined,
     })),
     cancelReason: doc.cancelReason ?? undefined,
+    allPaidByCreator: doc.allPaidByCreator ?? false,
     showtimeId: (doc.showtimeId ?? doc.timeOptions.find((o) => o._id.toString() === doc.chosenOptionId?.toString())?.showtimeId)?.toString(),
     // New appointments carry the flag. Older ones (locked before it existed) count as fixed when the chosen time points at a showtime.
     showtimeFixed: doc.showtimeFromPoll ?? Boolean(doc.timeOptions.find((o) => o._id.toString() === doc.chosenOptionId?.toString())?.showtimeId),

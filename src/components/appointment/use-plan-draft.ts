@@ -21,23 +21,34 @@ export interface FoodLine {
  */
 export function usePlanDraft(view: AppointmentView, plan: PlanData | null) {
   const t = useTranslations("appointments.detail.plan");
-  const [showtimeId, setShowtimeId] = useState<string | undefined>(view.showtimeId ?? undefined);
+  // What the creator explicitly tried on screen (`changeShowtime`). `undefined` means nothing was picked here: the showtime,
+  // room and food are then read straight from the server (`view`/`plan`) on every render instead of being copied into state
+  // once on mount. This screen mounts as soon as the appointment page opens, well before there is an agreed time or a plan to
+  // show (both still null/undefined then); locking the poll on a time that already pointed at a showtime, or beginning
+  // planning, can make real values appear later without remounting this component — deriving them fresh each render (rather
+  // than an effect copying them into state, which React would run one render too late) is what makes that, and the cost
+  // estimate that needs it, appear without a reload.
+  const [pickedShowtimeId, setPickedShowtimeId] = useState<string | undefined>(undefined);
+  const [pickedRoom, setPickedRoom] = useState<PlanData["room"] | undefined>(undefined);
+  const [pickedFood, setPickedFood] = useState<PlanData["food"] | undefined>(undefined);
+  const showtimeId = pickedShowtimeId ?? view.showtimeId ?? undefined;
+  const room = pickedShowtimeId === undefined ? plan?.room : pickedRoom;
+  const food = pickedShowtimeId === undefined ? plan?.food : pickedFood;
   const [seats, setSeats] = useState(() => new Map(view.seats.map((s) => [s.userId, s.seatCode])));
   const [lines, setLines] = useState<FoodLine[]>(() => view.fnb.map((l) => ({ ownerId: l.ownerId ?? undefined, kind: l.kind, refId: l.refId, quantity: l.quantity })));
-  const [room, setRoom] = useState(plan?.room);
-  const [food, setFood] = useState(plan?.food);
   const [loading, setLoading] = useState(false);
   const latest = useRef(0);
-  // The showtime the room/food on screen actually belong to. Set only on success, so a failed load leaves it behind `showtimeId`
-  // and picking the very same showtime again is not skipped as "nothing changed" (it would otherwise never retry).
-  const loadedFor = useRef(view.showtimeId ?? undefined);
+  // The showtime `pickedRoom`/`pickedFood` actually belong to, once one was explicitly picked. Set only on success, so a
+  // failed load leaves this behind `pickedShowtimeId` and picking the very same showtime again is not skipped as "nothing
+  // changed" (it would otherwise never retry).
+  const loadedFor = useRef<string | undefined>(undefined);
 
   /** Another showtime: the old seats and food belong to the old room, so they are cleared; the new room is read (nothing is written). */
   const changeShowtime = useCallback(
     async (id: string) => {
-      if (id === showtimeId && id === loadedFor.current) return;
+      if (id === pickedShowtimeId && id === loadedFor.current) return;
       const call = ++latest.current;
-      setShowtimeId(id);
+      setPickedShowtimeId(id);
       setSeats(new Map());
       setLines([]);
       setLoading(true);
@@ -49,10 +60,10 @@ export function usePlanDraft(view: AppointmentView, plan: PlanData | null) {
         return;
       }
       loadedFor.current = id;
-      setRoom(result.room);
-      setFood(result.food);
+      setPickedRoom(result.room);
+      setPickedFood(result.food);
     },
-    [showtimeId, view.id, t],
+    [pickedShowtimeId, view.id, t],
   );
 
   const payload = useCallback(() => {

@@ -21,6 +21,7 @@ export function EstimateList({ view, title, estimate = view.estimate }: { view: 
       <h2 id="appt-estimate" className="type-heading">
         {title}
       </h2>
+      {view.allPaidByCreator ? <p className="type-secondary text-muted-foreground">{t("allPaidByCreatorNote", { name: view.creator.name })}</p> : null}
       <ul className="flex flex-col gap-stack">
         {rows.map(({ person, ticket, fnb, total: sum }) => (
           <li key={person.id} className="flex items-center gap-item rounded-xl border bg-card p-inset-sm">
