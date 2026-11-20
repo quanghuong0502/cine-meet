@@ -246,7 +246,7 @@ giới hạn tra cứu, kết bạn cần chấp nhận (thiết kế mục 6 v�
 ## Sprint 6: Dashboard & ngân sách
 **Mục tiêu:** user thấy chi tiêu và thống kê; hoàn thiện các tính năng bổ sung.
 **Tham chiếu:** thiết kế mục 3.1, 3.2 (đánh giá, lịch sử ngồi), 2.7, 4.1 (#9, #11).
-**Đã chốt:** lớp cộng đồng (đánh dấu công khai, điểm cộng đồng, duyệt) hoãn sang giai đoạn sau vì nhóm nhỏ.
+**Đã chốt (2026-11-19):** **bỏ hẳn** lớp cộng đồng (đánh dấu công khai, điểm cộng đồng, duyệt) — app chỉ dùng trong nhóm bạn bè, không cần chia sẻ công khai.
 
 **Phạm vi**
 - Dashboard: chi tiêu theo ngày/tuần/tháng/năm (vé và đồ ăn) lấy từ `expenses` của chính user, thống kê thể loại/rạp/khung giờ,
@@ -259,7 +259,7 @@ giới hạn tra cứu, kết bạn cần chấp nhận (thiết kế mục 6 v�
 - Báo cáo sai thông tin phòng (user gửi, admin xem).
 - Thông báo #9 (nhắc nhập chi phí/đánh giá) và #11 (ngân sách).
 
-**Ngoài phạm vi:** chatbot, gợi ý phim, lớp cộng đồng.
+**Ngoài phạm vi:** chatbot, gợi ý phim, lớp cộng đồng (bỏ hẳn, không hoãn).
 
 **Tiêu chí hoàn thành**
 - [ ] Số liệu dashboard khớp với dữ liệu chi phí đã nhập, không đếm trùng một khoản của cả nhóm (có test cho các hàm tổng hợp).
@@ -433,3 +433,15 @@ Mỗi sprint xong thêm 3 đến 6 dòng: đã làm gì, còn dở gì, quyết 
   1. **#3 gửi nhầm người đã vote "Không" như người chưa trả lời** — `participant.status` chỉ chuyển khỏi `invited` khi có vote **Có** ở đâu đó (vote "Không" không đổi status); sửa `sendDeadlineWarning` để loại luôn người đã có vote (bất kể Có/Không) khỏi danh sách nhận, không chỉ dựa vào `status` (`src/notifications/scheduler.ts`).
   2. **Trang `/appointments/new?showtimeId=...` báo lỗi server** — `toShowtimeChoice` nằm trong file có `"use client"` (`showtime-picker.tsx`), Server Component không gọi thẳng được hàm từ module client; tách hàm này sang `src/lib/appointment/showtime-choice.ts` (module thuần), `showtime-picker.tsx` re-export lại để các component client khác không phải đổi import.
 - Còn dở: **chủ dự án cần xác nhận lại 2 lỗi đã sửa** và thử trên điện thoại thật; Web Push trên thiết bị thật chưa được xác nhận qua lượt test headless.
+- **Chốt 2026-11-19: Sprint 5B xong, chủ dự án duyệt.**
+
+### Bổ sung ngoài sprint (2026-11-19): người tạo bao hết chi phí
+- Theo yêu cầu, không nằm trong sprint nào: thêm flag `allPaidByCreator` trên `Appointment`, đặt lúc tạo lời mời (checkbox "Mình bao hết chi phí" ở `/appointments/new`), không đổi lại được sau khi tạo.
+- Ghế và đồ ăn vẫn chọn riêng từng người như cũ (không đụng `assignSeats`/`setFood`/`estimate` lúc lên kế hoạch). Chỉ đổi ở bước Hoàn thành (`completeAppointment`): thay vì mỗi attendee có `expenses` riêng theo ước tính, toàn bộ ước tính của cả nhóm (`sumCosts`) dồn thành `expenses` của người tạo; người khác không có `expenses` cho buổi này.
+- `setPersonCost` (sửa chi phí thực tế sau COMPLETED): khi bật flag, chỉ người tạo được sửa, và chỉ sửa đúng dòng của chính họ (người khác trả về `forbidden`).
+- Không mâu thuẫn với quyết định "không công nợ" (2026-11-18): đây không phải tính năng theo dõi ai trả ai nợ, chỉ đổi chi phí buổi đó được tính cho `expenses` của ai — phục vụ tổng hợp ngân sách/dashboard cá nhân ở Sprint 6.
+- File chính: `src/models/appointment.ts` (field mới), `src/services/appointment.service.ts` (schema + `AppointmentView.allPaidByCreator`), `src/services/appointment-plan.service.ts` (`completeAppointment`, `setPersonCost`), `src/components/appointment/new-appointment-form.tsx` (checkbox), `estimate-list.tsx` và `cost-section.tsx` (ghi chú "bao hết"/ẩn nút sửa cho người không phải người tạo). Có test cho `completeAppointment`/`setPersonCost` khi bật flag (`appointment-plan.service.test.ts`) và cho việc lưu/đọc flag (`appointment.service.test.ts`).
+- **Lỗi tìm thấy khi thử tay (có sẵn từ trước, không phải do flag mới — tái hiện cả khi bật/tắt `allPaidByCreator`), đã sửa (2 vòng):**
+  1. Sau khi bấm "Lên kế hoạch chi tiết", phần chọn ghế và đồ ăn không hiện cho tới khi tải lại trang. Khối "Tiền ước tính" cũng không hiện trong lúc lập kế hoạch vì cùng nguyên nhân (phụ thuộc `showtimeId`).
+  2. Nguyên nhân gốc: `usePlanDraft` dùng `useState(initial)` để copy `showtimeId`/`room`/`food` từ props vào state **đúng một lần lúc mount** — nhưng component này mount ngay khi mở trang (trước cả khi chốt người/lên kế hoạch), lúc đó `view.showtimeId` và `plan` còn rỗng. Chuyển trạng thái `PARTICIPANTS_LOCKED` → `PLANNING` không remount `AppointmentDetail`, nên state nội bộ đứng yên ở giá trị rỗng dù props sau đó đã có dữ liệu thật; F5 ép remount nên mới thấy đúng.
+  3. Sửa dứt điểm bằng cách bỏ hẳn việc copy-vào-state cho `showtimeId`/`room`/`food`: chỉ giữ state cho phần người dùng **chủ động chọn tay** (`pickedShowtimeId`/`pickedRoom`/`pickedFood`, đổi qua `changeShowtime`), còn lại luôn tính trực tiếp từ props mỗi lần render (`pickedShowtimeId ?? view.showtimeId`, tương tự cho room/food) — không cần `useEffect` đồng bộ (bản sửa vòng 1 dùng `useEffect` gọi `setState` bị chặn bởi eslint rule `react-hooks/set-state-in-effect`, nên đổi sang cách này). `src/components/appointment/use-plan-draft.ts`.

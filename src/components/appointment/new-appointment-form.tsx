@@ -14,6 +14,7 @@ import { RequiredMark } from "@/components/required-mark";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { vietnamToIso } from "@/lib/appointment/datetime";
 import type { TimeSlot } from "@/lib/showtime/slots";
 import { vietnamToday } from "@/lib/movie/status";
@@ -48,6 +49,7 @@ export function NewAppointmentForm({ movies, movieId: initialMovieId, initialSho
   const [invitees, setInvitees] = useState<string[]>([]);
   const [deadlineDate, setDeadlineDate] = useState("");
   const [deadlineTime, setDeadlineTime] = useState("");
+  const [allPaidByCreator, setAllPaidByCreator] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // The latest answer-by time: the earliest showtime picked, minus the admin's lead. Checked as soon as both fields are filled.
@@ -111,6 +113,7 @@ export function NewAppointmentForm({ movies, movieId: initialMovieId, initialSho
         inviteeIds: invitees,
         responseDeadline,
         send: true,
+        allPaidByCreator,
       }).catch(() => null);
       if (!result) {
         toast.error(tc("networkError"));
@@ -194,6 +197,14 @@ export function NewAppointmentForm({ movies, movieId: initialMovieId, initialSho
           <p className="type-secondary text-muted-foreground">{t("noFriends")}</p>
         )}
         {fieldError("invitees")}
+      </div>
+
+      <div className="flex min-h-target items-center justify-between gap-group rounded-xl border bg-card px-inset-sm">
+        <Label htmlFor="appointment-all-paid" className="flex min-w-0 flex-1 flex-col gap-tight py-inset-sm">
+          <span className="type-item-title">{t("allPaidByCreatorLabel")}</span>
+          <span className="type-secondary text-muted-foreground">{t("allPaidByCreatorHint")}</span>
+        </Label>
+        <Switch id="appointment-all-paid" checked={allPaidByCreator} onCheckedChange={setAllPaidByCreator} />
       </div>
 
       <div className="flex flex-col gap-item">

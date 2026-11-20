@@ -54,6 +54,7 @@ describe("appointment service", () => {
       options: Array.from({ length: extra.options ?? 2 }, (_, i) => ({ startAt: hours(24 + i * 24) })),
       inviteeIds: [u1, u2, u3],
       send: true,
+      allPaidByCreator: false,
     });
     if (!created.ok) throw new Error(created.error);
     return created.id;
@@ -68,8 +69,17 @@ describe("appointment service", () => {
       expect(view?.options).toHaveLength(2);
     });
 
+    it("remembers whether the creator pays for everyone, and defaults to false", async () => {
+      const normal = await inviting();
+      expect((await svc.getAppointment(creator, normal))?.allPaidByCreator).toBe(false);
+
+      const paid = await svc.createAppointment(creator, { movieId: movie, options: [{ startAt: hours(5) }], inviteeIds: [u1], send: true, allPaidByCreator: true });
+      if (!paid.ok) throw new Error(paid.error);
+      expect((await svc.getAppointment(creator, paid.id))?.allPaidByCreator).toBe(true);
+    });
+
     it("rejects someone who is not a friend, a locked friend, a past time, a missing movie", async () => {
-      const base = { movieId: movie, options: [{ startAt: hours(5) }], inviteeIds: [u1], send: true };
+      const base = { movieId: movie, options: [{ startAt: hours(5) }], inviteeIds: [u1], send: true, allPaidByCreator: false };
       expect(await svc.createAppointment(creator, { ...base, inviteeIds: [stranger] })).toEqual({ ok: false, error: "not_friends" });
       await models.User.updateOne({ _id: u1 }, { status: "locked" });
       expect(await svc.createAppointment(creator, base)).toEqual({ ok: false, error: "not_friends" });
@@ -83,14 +93,14 @@ describe("appointment service", () => {
       const mk = (movieId: string) => models.Showtime.create({ movieId, auditoriumId: stranger, layoutId: stranger, formatId: stranger, startAt: hours(30), endAt: hours(32) });
       const mine = String((await mk(movie))._id);
       const wrong = String((await mk(other))._id);
-      const ok = await svc.createAppointment(creator, { movieId: movie, options: [{ showtimeId: mine }], inviteeIds: [u1], send: true });
+      const ok = await svc.createAppointment(creator, { movieId: movie, options: [{ showtimeId: mine }], inviteeIds: [u1], send: true, allPaidByCreator: false });
       expect(ok.ok).toBe(true);
       if (ok.ok) expect((await svc.getAppointment(creator, ok.id))?.options[0]?.showtimeId).toBe(mine);
-      expect(await svc.createAppointment(creator, { movieId: movie, options: [{ showtimeId: wrong }], inviteeIds: [u1], send: true })).toEqual({ ok: false, error: "invalid_option" });
+      expect(await svc.createAppointment(creator, { movieId: movie, options: [{ showtimeId: wrong }], inviteeIds: [u1], send: true, allPaidByCreator: false })).toEqual({ ok: false, error: "invalid_option" });
     });
 
     it("a draft is invisible to the invited until it is sent", async () => {
-      const created = await svc.createAppointment(creator, { movieId: movie, options: [{ startAt: hours(5) }], inviteeIds: [u1], send: false });
+      const created = await svc.createAppointment(creator, { movieId: movie, options: [{ startAt: hours(5) }], inviteeIds: [u1], send: false, allPaidByCreator: false });
       if (!created.ok) throw new Error();
       expect(created.status).toBe("DRAFT");
       expect(await svc.getAppointment(u1, created.id)).toBeNull();
@@ -159,7 +169,7 @@ describe("appointment service", () => {
     });
 
     it("an unanswered person is overdue after the deadline, but the appointment does not cancel", async () => {
-      const created = await svc.createAppointment(creator, { movieId: movie, options: [{ startAt: hours(48) }], inviteeIds: [u1, u2], responseDeadline: hours(1), send: true });
+      const created = await svc.createAppointment(creator, { movieId: movie, options: [{ startAt: hours(48) }], inviteeIds: [u1, u2], responseDeadline: hours(1), send: true, allPaidByCreator: false });
       if (!created.ok) throw new Error();
       const a = (await svc.getAppointment(creator, created.id))!.options[0]!;
       await svc.setVote(u1, created.id, a.id, "yes");
@@ -226,7 +236,7 @@ describe("appointment service", () => {
       await svc.lockParticipants(creator, id, { optionId: a.id, attendeeIds: [u1] });
       expect(await svc.submitResponse(u2, id, vote)).toEqual({ ok: false, error: "bad_state" });
 
-      const timed = await svc.createAppointment(creator, { movieId: movie, options: [{ startAt: hours(48) }], inviteeIds: [u1], responseDeadline: hours(1), send: true });
+      const timed = await svc.createAppointment(creator, { movieId: movie, options: [{ startAt: hours(48) }], inviteeIds: [u1], responseDeadline: hours(1), send: true, allPaidByCreator: false });
       if (!timed.ok) throw new Error();
       const t = (await svc.getAppointment(creator, timed.id))!.options[0]!;
       const later = new Date(Date.now() + 2 * 3600_000);
@@ -253,7 +263,7 @@ describe("appointment service", () => {
   });
 
   describe("answer-by time must come before the first viewing time", () => {
-    const base = () => ({ movieId: movie, inviteeIds: [u1], send: true });
+    const base = () => ({ movieId: movie, inviteeIds: [u1], send: true, allPaidByCreator: false });
 
     it("is refused at or after the earliest time, accepted before it", async () => {
       const opts = [{ startAt: hours(48) }, { startAt: hours(72) }];
@@ -295,7 +305,7 @@ describe("appointment service", () => {
 
   describe("answer-by time", () => {
     it("after it, nobody can vote, suggest a time, decline or be invited; the creator can still lock", async () => {
-      const created = await svc.createAppointment(creator, { movieId: movie, options: [{ startAt: hours(48) }], inviteeIds: [u1, u2], responseDeadline: hours(1), send: true });
+      const created = await svc.createAppointment(creator, { movieId: movie, options: [{ startAt: hours(48) }], inviteeIds: [u1, u2], responseDeadline: hours(1), send: true, allPaidByCreator: false });
       if (!created.ok) throw new Error();
       const id = created.id;
       const a = (await svc.getAppointment(creator, id))!.options[0]!;
@@ -408,7 +418,7 @@ describe("appointment service", () => {
     });
 
     it("cancelling a draft tells nobody", async () => {
-      const created = await svc.createAppointment(creator, { movieId: movie, options: [{ startAt: hours(5) }], inviteeIds: [u1], send: false });
+      const created = await svc.createAppointment(creator, { movieId: movie, options: [{ startAt: hours(5) }], inviteeIds: [u1], send: false, allPaidByCreator: false });
       if (!created.ok) throw new Error();
       expect(await svc.cancelAppointment(creator, created.id)).toEqual({ ok: true, wasDraft: true, recipientIds: [] });
     });
@@ -422,7 +432,7 @@ describe("appointment service", () => {
     });
 
     async function invitingTwo() {
-      const created = await svc.createAppointment(creator, { movieId: movie, options: [{ startAt: hours(30) }], inviteeIds: [u1, u2], send: true });
+      const created = await svc.createAppointment(creator, { movieId: movie, options: [{ startAt: hours(30) }], inviteeIds: [u1, u2], send: true, allPaidByCreator: false });
       if (!created.ok) throw new Error(created.error);
       return created.id;
     }
@@ -438,7 +448,7 @@ describe("appointment service", () => {
     });
 
     it("a draft takes more people without telling anyone; sending then tells everyone", async () => {
-      const created = await svc.createAppointment(creator, { movieId: movie, options: [{ startAt: hours(30) }], inviteeIds: [u1], send: false });
+      const created = await svc.createAppointment(creator, { movieId: movie, options: [{ startAt: hours(30) }], inviteeIds: [u1], send: false, allPaidByCreator: false });
       if (!created.ok) throw new Error();
       expect(await svc.inviteMore(creator, created.id, [u4])).toMatchObject({ ok: true });
       expect(await models.Notification.countDocuments()).toBe(0);
@@ -536,7 +546,7 @@ describe("appointment service", () => {
       await svc.lockParticipants(creator, id, { optionId: a.id, attendeeIds: [u1] });
       expect(await svc.remindVoters(creator, id, a.id)).toEqual({ ok: false, error: "bad_state" });
 
-      const timed = await svc.createAppointment(creator, { movieId: movie, options: [{ startAt: hours(48) }], inviteeIds: [u1], responseDeadline: hours(1), send: true });
+      const timed = await svc.createAppointment(creator, { movieId: movie, options: [{ startAt: hours(48) }], inviteeIds: [u1], responseDeadline: hours(1), send: true, allPaidByCreator: false });
       if (!timed.ok) throw new Error();
       const t = (await svc.getAppointment(creator, timed.id))!.options[0]!;
       expect(await svc.remindVoters(creator, timed.id, t.id, new Date(Date.now() + 2 * 3600_000))).toEqual({ ok: false, error: "deadline_passed" });
@@ -592,7 +602,7 @@ describe("appointment service", () => {
     });
 
     it("a draft tells nobody until it is sent", async () => {
-      const created = await svc.createAppointment(creator, { movieId: movie, options: [{ startAt: hours(5) }], inviteeIds: [u1], send: false });
+      const created = await svc.createAppointment(creator, { movieId: movie, options: [{ startAt: hours(5) }], inviteeIds: [u1], send: false, allPaidByCreator: false });
       if (!created.ok) throw new Error();
       expect(await sent()).toEqual([]);
       await svc.sendInvitations(creator, created.id);
