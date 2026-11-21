@@ -391,7 +391,7 @@
         },
         "price": {
           "label": "Price (VND)",
-          "placeholder": "e.g. 79000"
+          "placeholder": "e.g. 79.000"
         },
         "validFrom": {
           "label": "Valid from"
@@ -485,7 +485,7 @@
         },
         "price": {
           "label": "Ticket price (VND)",
-          "placeholder": "e.g. 95000"
+          "placeholder": "e.g. 95.000"
         },
         "formatId": {
           "label": "Format"
@@ -891,6 +891,24 @@
         "not_found": "Couldn't find this user."
       }
     },
+    "roomReports": {
+      "title": "Room problem reports",
+      "openCount": "{count, plural, one {# report open} other {# reports open}}",
+      "noneOpen": "No reports waiting",
+      "open": "Open",
+      "emptyTitle": "No reports yet",
+      "emptyDescription": "Reports users send about a room's info will show up here.",
+      "status": {
+        "open": "Open",
+        "resolved": "Resolved"
+      },
+      "by": "From {name}",
+      "resolve": "Mark resolved",
+      "resolved": "Marked resolved",
+      "errors": {
+        "generic": "Could not do that, try again"
+      }
+    },
     "fnbCategories": {
       "title": "Food types",
       "createTitle": "Add type",
@@ -1000,6 +1018,15 @@
       "description": "Your sign-in password.",
       "changePassword": "Change password"
     },
+    "budget": {
+      "title": "Monthly budget",
+      "ticket": "Tickets",
+      "fnb": "Food",
+      "placeholder": "e.g. 500000",
+      "save": "Save budget",
+      "saved": "Budget saved",
+      "error": "Could not save, try again"
+    },
     "notifications": {
       "title": "Push notifications",
       "notConfigured": "The server doesn't have push notifications turned on. Ask the admin to set it up. In-app notifications still work.",
@@ -1025,18 +1052,20 @@
       },
       "typesTitle": "Kinds of notification to push",
       "types": {
-        "appointment_invited": "Invited to a plan",
-        "appointment_reply": "Replies to your plan",
-        "participants_locked": "Guest list final",
-        "appointment_cancelled": "Plan cancelled",
-        "participant_withdrew": "Someone drops out",
-        "friend_request": "Friend requests",
-        "friend_accepted": "Requests accepted",
-        "poll_reminder": "Vote reminders",
-        "appointment_confirmed": "Plan confirmed",
-        "appointment_changed": "Seat or time changed",
-        "response_deadline_warning": "Answer deadline approaching",
-        "showtime_reminder": "Reminder before showtime"
+        "appointment_invited": "Someone invites you to a plan",
+        "appointment_reply": "An invitee replies to your plan",
+        "poll_reminder": "Reminder to vote on a showtime",
+        "participants_locked": "The creator locks the attendee list",
+        "appointment_confirmed": "A plan is confirmed",
+        "appointment_changed": "A plan's seat or showtime changes",
+        "appointment_cancelled": "The creator cancels a plan",
+        "participant_withdrew": "Someone leaves a plan",
+        "friend_request": "Someone sends you a friend request",
+        "friend_accepted": "Your friend request is accepted",
+        "response_deadline_warning": "Time to answer an invitation is running out",
+        "showtime_reminder": "A showtime is about to start",
+        "expense_reminder": "Reminder to log cost and rate after a viewing",
+        "budget_warning": "Spending is close to or over your budget"
       },
       "errors": {
         "network": "Network is shaky, please try again.",
@@ -1044,23 +1073,12 @@
         "subscribeFailed": "Couldn't turn on notifications here. Try again or check the notification permission.",
         "notConfigured": "The server doesn't have push notifications turned on."
       },
-      "insecure": "Push notifications only work when the app is opened over https or localhost. This address is plain http, so the browser has switched the feature off."
-    },
-    "install": {
-      "title": "Install the app",
-      "why": "Installed, the app opens fast like any other app and can send you push notifications, especially on iPhone.",
-      "ios": {
-        "step1": "Open this page in Safari and tap the Share button",
-        "shareIcon": "Share",
-        "step2": "Choose Add to Home Screen",
-        "step3": "Tap Add, then open the app from your home screen"
-      },
-      "android": {
-        "step1": "Tap the browser's three-dot menu",
-        "step2": "Choose Install app or Add to Home screen"
-      },
-      "other": {
-        "step1": "Look for the Install app button in the browser's address bar."
+      "insecure": "Push notifications only work when the app is opened over https or localhost. This address is plain http, so the browser has switched the feature off.",
+      "groups": {
+        "appointments": "Viewing plans",
+        "reminders": "Reminders",
+        "friends": "Friends",
+        "budget": "Budget"
       }
     }
   },
@@ -1166,6 +1184,31 @@
     "directions": "Get directions",
     "rooms": "Auditoriums",
     "room": {
+      "sittingHistory": {
+        "summary": "You've sat in this room {count, plural, one {# time} other {# times}}: {seats}"
+      },
+      "review": {
+        "title": "Rate this room",
+        "sound": "Sound",
+        "ac": "Air conditioning",
+        "cleanliness": "Cleanliness",
+        "commentPlaceholder": "Add a note if you'd like",
+        "save": "Save review",
+        "saved": "Room review saved",
+        "needAllStars": "Rate all 3 before saving",
+        "error": "Could not save, try again"
+      },
+      "report": {
+        "action": "Report a problem",
+        "title": "Report a problem with this room",
+        "description": "Something off about this room's layout or info? Tell us and an admin will take a look.",
+        "noteLabel": "Description",
+        "notePlaceholder": "e.g. Seat F7 was actually removed",
+        "cancel": "Not now",
+        "send": "Send report",
+        "sent": "Report sent, thanks!",
+        "error": "Could not send, try again"
+      },
       "layers": "Layers",
       "layerScore": "Seat score",
       "layerMine": "My marks",
@@ -1199,6 +1242,22 @@
       "saveFailed": "Could not save. Check your connection and try again.",
       "oldMarks": "Old marks",
       "oldMarksDescription": "Seats that moved or were removed when the auditorium changed its seat map."
+    },
+    "filters": {
+      "title": "Filters",
+      "titleCount": "Filters ({count})",
+      "show": "{count, plural, =0 {No cinemas} one {Show # cinema} other {Show # cinemas}}",
+      "remove": "Remove filter {name}",
+      "clear": "Clear filters",
+      "all": "All",
+      "frequentOption": "Frequently visited",
+      "emptyTitle": "No matching cinemas",
+      "emptyDescription": "Try removing a filter.",
+      "labels": {
+        "brand": "Brand",
+        "format": "Format",
+        "frequent": "Frequently visited"
+      }
     }
   },
   "friends": {
@@ -1286,11 +1345,9 @@
   },
   "appointments": {
     "title": "Plans",
-    "listTitle": "Your plans",
     "add": "Create plan",
     "emptyTitle": "No plans yet",
     "emptyDescription": "Pick a movie, pick a time, and invite your friends!",
-    "pastTitle": "Finished",
     "byMe": "You made this",
     "byName": "By {name}",
     "needsReply": "Waiting for you",
@@ -1348,7 +1405,7 @@
       "groupsLabel": "Groups",
       "noFriends": "No friends to invite yet. Add some in Profile first.",
       "allPaidByCreatorLabel": "I'm paying for everyone",
-      "allPaidByCreatorHint": "Everyone still picks their own seat and food, but the whole cost of this viewing will count as mine. Cannot be changed after it is made.",
+      "allPaidByCreatorHint": "Everyone still picks their own seat and food, but the whole cost of this viewing will count as mine.",
       "deadlineLabel": "Answer by",
       "deadlineDate": "Answer-by date",
       "deadlineTime": "Answer-by time",
@@ -1495,6 +1552,12 @@
         "save": "Save cost",
         "saved": "Cost saved",
         "groupTotal": "Whole group"
+      },
+      "rating": {
+        "title": "Rate this viewing",
+        "movie": "Movie",
+        "seat": "Seat {seatCode}",
+        "error": "Could not save, try again"
       }
     },
     "invite": {
@@ -1504,7 +1567,37 @@
       "done": "Invited {count, plural, one {# more person} other {# more people}}"
     },
     "answered": "{answered}/{total} replied",
-    "peopleGoing": "{count, plural, one {# going} other {# going}}"
+    "peopleGoing": "{count, plural, one {# going} other {# going}}",
+    "filters": {
+      "title": "Filters",
+      "titleCount": "Filters ({count})",
+      "show": "{count, plural, =0 {No plans} one {Show # plan} other {Show # plans}}",
+      "remove": "Remove filter {name}",
+      "clear": "Clear filters",
+      "all": "All",
+      "labels": {
+        "status": "Status",
+        "role": "Role"
+      },
+      "options": {
+        "status": {
+          "reply": "Needs your answer",
+          "inviting": "Inviting",
+          "locked": "People locked",
+          "planning": "Planning",
+          "confirmed": "Confirmed",
+          "completed": "Watched",
+          "cancelled": "Cancelled",
+          "draft": "Draft"
+        },
+        "role": {
+          "mine": "You made",
+          "invited": "You're invited"
+        }
+      }
+    },
+    "filteredEmptyTitle": "No plans match",
+    "filteredEmptyDescription": "Try removing a filter."
   },
   "notifications": {
     "title": "Notifications",
@@ -1600,11 +1693,79 @@
       "showtime_reminder": {
         "title": "Showtime is coming up",
         "body": "{movieTitle} at {time}, {place}. Your seat: {seatCode}."
+      },
+      "expense_reminder": {
+        "title": "Don't forget to log the cost",
+        "body": "Done watching {movieTitle}? Log the real cost and rate your seat."
+      },
+      "budget_warning": {
+        "eighty": {
+          "title": "Close to your budget",
+          "body": "You've spent 80% of this month's {budgetCategory} budget."
+        },
+        "full": {
+          "title": "Budget reached",
+          "body": "You've spent all of this month's {budgetCategory} budget."
+        }
+      },
+      "budgetCategories": {
+        "ticket": "ticket",
+        "fnb": "food"
       }
     },
     "test": {
       "title": "Test notification",
       "body": "Push notifications are working!"
+    }
+  },
+  "dashboard": {
+    "title": "Overview",
+    "logViewing": {
+      "action": "Log a viewing",
+      "title": "Log a viewing",
+      "movie": "Movie",
+      "noMovie": "Don't remember / skip",
+      "room": "Room you watched in",
+      "noRoom": "Don't remember / skip",
+      "ticket": "Ticket cost (VND)",
+      "food": "Food cost (VND)",
+      "other": "Other cost (VND)",
+      "note": "Note",
+      "date": "Date watched",
+      "submit": "Save viewing",
+      "saved": "Viewing saved",
+      "futureDate": "Cannot log a viewing for a future date.",
+      "error": "Could not save, try again"
+    },
+    "spending": {
+      "title": "Spending",
+      "periods": {
+        "week": "Week",
+        "month": "Month",
+        "year": "Year"
+      },
+      "ticket": "Ticket",
+      "food": "Food"
+    },
+    "budget": {
+      "title": "Monthly budget",
+      "notSet": "No budget set. Set one in Settings to get warned before you overspend.",
+      "categories": {
+        "ticket": "Tickets",
+        "fnb": "Food"
+      }
+    },
+    "stats": {
+      "title": "Viewing stats",
+      "empty": "No viewings logged yet.",
+      "countLabel": "Viewings",
+      "averageLabel": "Average per viewing",
+      "genres": "Genres you watch most",
+      "branches": "Branches you go to most"
+    },
+    "companions": {
+      "title": "Who you watch with most",
+      "count": "{count, plural, one {# time} other {# times}}"
     }
   },
   "offline": {

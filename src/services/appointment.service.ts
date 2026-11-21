@@ -536,6 +536,9 @@ export interface AppointmentView {
   /** The film has started: the creator may mark it as watched. */
   started: boolean;
   actualCost?: { ticket: number; fnb: number; other: number; total: number };
+  /** The room the showtime is in, for rating a seat after the viewing (design 3.2, 3.4). Missing before a showtime is chosen. */
+  auditoriumId?: string;
+  layoutId?: string;
 }
 
 async function loadPeople(ids: string[]): Promise<Map<string, PersonView>> {
@@ -568,6 +571,8 @@ export async function getAppointment(userId: string, id: string, now = new Date(
   const people = await loadPeople([doc.creatorId.toString(), ...doc.participants.map((p) => p.userId.toString()), ...doc.timeOptions.map((o) => o.proposedBy.toString())]);
   const movie = await Movie.findById(doc.movieId, "title posterUrl").lean();
   const places = await loadPlaces(doc.timeOptions.flatMap((o) => (o.showtimeId ? [o.showtimeId.toString()] : [])));
+  const finalShowtimeId = (doc.showtimeId ?? doc.timeOptions.find((o) => o._id.toString() === doc.chosenOptionId?.toString())?.showtimeId)?.toString();
+  const finalShowtime = finalShowtimeId ? await Showtime.findById(finalShowtimeId, "auditoriumId layoutId").lean() : null;
   const unknown = (pid: string): PersonView => ({ id: pid, name: "?" });
   const person = (pid: string) => people.get(pid) ?? unknown(pid);
 
@@ -613,6 +618,8 @@ export async function getAppointment(userId: string, id: string, now = new Date(
       return Boolean(chosen) && chosen!.startAt.getTime() <= now.getTime();
     })(),
     actualCost: doc.actualCost ? { ticket: doc.actualCost.ticket ?? 0, fnb: doc.actualCost.fnb ?? 0, other: doc.actualCost.other ?? 0, total: doc.actualCost.total ?? 0 } : undefined,
+    auditoriumId: finalShowtime?.auditoriumId.toString(),
+    layoutId: finalShowtime?.layoutId.toString(),
   };
 }
 

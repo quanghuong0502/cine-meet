@@ -2,7 +2,7 @@
 
 import { CircleAlert, Eye, EyeOff, LoaderCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useActionState, useState } from "react";
+import { useActionState, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { GoogleIcon } from "@/components/google-icon";
 import { Button } from "@/components/ui/button";
@@ -41,10 +41,18 @@ function GoogleButton() {
 
 export function LoginForm({ callbackUrl, initialError }: LoginFormProps) {
   const t = useTranslations("auth.login");
-  const [state, formAction, isPending] = useActionState(
-    loginWithPassword,
-    INITIAL_STATE,
-  );
+  // Controlled, so a failed attempt keeps what was typed in the first box (React would reset an uncontrolled form) and clears only the password.
+  const [identifier, setIdentifier] = useState("");
+  const [password, setPassword] = useState("");
+  const passwordRef = useRef<HTMLInputElement>(null);
+  const [state, formAction, isPending] = useActionState(async (previous: LoginState, formData: FormData) => {
+    const next = await loginWithPassword(previous, formData);
+    if (next.error) {
+      setPassword("");
+      passwordRef.current?.focus();
+    }
+    return next;
+  }, INITIAL_STATE);
   const [showPassword, setShowPassword] = useState(false);
   const errorMessage = state.error ?? initialError;
 
@@ -70,6 +78,8 @@ export function LoginForm({ callbackUrl, initialError }: LoginFormProps) {
             autoCorrect="off"
             spellCheck={false}
             required
+            value={identifier}
+            onChange={(event) => setIdentifier(event.target.value)}
             className="h-control rounded-xl bg-card px-inset type-body"
           />
         </div>
@@ -84,6 +94,9 @@ export function LoginForm({ callbackUrl, initialError }: LoginFormProps) {
           <div className="relative">
             <Input
               id="password"
+              ref={passwordRef}
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
               name="password"
               type={showPassword ? "text" : "password"}
               autoComplete="current-password"

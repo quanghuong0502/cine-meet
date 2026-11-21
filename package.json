@@ -15,6 +15,7 @@
         "seed:users": "tsx scripts/seed-users.ts",
         "seed:friends": "tsx scripts/seed-friends.ts",
         "seed:appointment": "tsx scripts/seed-appointment.ts",
+        "seed:sprint6": "tsx scripts/seed-sprint6.ts",
         "rescore": "tsx scripts/rescore-layouts.ts",
         "mascots:trim": "node scripts/trim-mascots.mjs",
         "splash:generate": "node scripts/generate-splash.mjs"
@@ -29,6 +30,7 @@
         "eslint": "^9.39.5",
         "eslint-config-next": "^16.4.6",
         "mongodb-memory-server": "^11.3.0",
+        "playwright": "^1.65.1",
         "shadcn": "^4.23.0",
         "tailwindcss": "^4.3.5",
         "tsx": "^4.23.15",

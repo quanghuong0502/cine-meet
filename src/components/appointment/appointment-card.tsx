@@ -18,7 +18,7 @@ export function AppointmentCard({ item }: { item: AppointmentSummary }) {
       ? t("timesCount", { count: item.optionCount })
       : `${formatDayCompact(item.startAt, locale)} · ${formatTime(item.startAt, locale)}`;
 
-  // The creator knows it is theirs, so "made by" is only said for other people's plans.
+  // The card never says who made the plan; it only says what to do next (answer, or the creator's progress).
   const note = item.isCreator
     ? item.status === "INVITING"
       ? t("answered", { answered: item.answeredCount, total: item.participantCount })
@@ -27,10 +27,10 @@ export function AppointmentCard({ item }: { item: AppointmentSummary }) {
         : null
     : item.needsReply
       ? t("needsReply")
-      : t("byName", { name: item.creatorName });
+      : null;
 
   // The note is the fact to act on, so it is a step heavier than the time above it (medium weight): waiting for my answer stands out in the
-  // accent colour, the creator's progress in normal text, and "made by" stays quiet.
+  // accent colour, the creator's progress in normal text, .
   const noteColor = item.isCreator ? "text-foreground" : item.needsReply ? "text-primary-text" : "text-muted-foreground";
 
   return (

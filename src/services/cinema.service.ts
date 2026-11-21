@@ -10,6 +10,7 @@ import { Format } from "@/models/format";
 import { SeatMark } from "@/models/seat-mark";
 import { Showtime } from "@/models/showtime";
 import { SeatType } from "@/models/seat-type";
+import { listViewingSessions, rankFrequentBranches } from "@/services/viewing-history.service";
 
 /** Plain objects only (strings, numbers): they go straight to client components. */
 export interface CinemaBranch {
@@ -79,6 +80,68 @@ export async function listCinemaGroups(): Promise<CinemaGroup[]> {
         .map((b) => ({ ...toBranch(b), roomCount: roomCount.get(b._id.toString()) ?? 0 })),
     }))
     .filter((group) => group.branches.length > 0);
+}
+
+/**
+ * The signed-in person's most-visited branches (design 3.2 "Thường tới"), in order, with no community data involved. Empty
+ * when they have not completed a single viewing yet: the caller then shows no such group at all.
+ */
+export async function listFrequentBranches(userId: string, limit = 5): Promise<CinemaBranch[]> {
+  await connectToDatabase();
+  const sessions = await listViewingSessions(userId);
+  const ranked = rankFrequentBranches(sessions).slice(0, limit);
+  if (ranked.length === 0) return [];
+  const branches = await Branch.find({ _id: { $in: ranked.map((r) => r.branchId) }, ...ACTIVE }).lean();
+  const byId = new Map(branches.map((b) => [b._id.toString(), b]));
+  return ranked.flatMap((r) => {
+    const branch = byId.get(r.branchId);
+    return branch ? [toBranch(branch)] : [];
+  });
+}
+
+/** One branch of the flat cinema list, with what the filters need (brand, formats of its upcoming showtimes, whether the person often goes). */
+export interface CinemaListItem extends CinemaBranch {
+  roomCount: number;
+  brand: string;
+  brandName: string;
+  format: string[];
+  /** ["1"] when the person often visits this branch, else empty. */
+  frequent: string[];
+}
+
+/**
+ * Every branch with a seat map in one list (no brand groups): the person's most-visited branches first, then by name. Filtering by
+ * brand, format and "often visited" happens on this list (`lib/cinema/filters`).
+ */
+export async function listCinemaList(userId: string): Promise<CinemaListItem[]> {
+  await connectToDatabase();
+  const [groups, frequent, upcoming] = await Promise.all([
+    listCinemaGroups(),
+    listFrequentBranches(userId),
+    Showtime.find({ startAt: { $gte: new Date() } }, "auditoriumId formatId").limit(2000).lean(),
+  ]);
+  const rooms = upcoming.length
+    ? await Auditorium.find({ _id: { $in: [...new Set(upcoming.map((s) => s.auditoriumId.toString()))] } }, "branchId").lean()
+    : [];
+  const branchByRoom = new Map(rooms.map((r) => [r._id.toString(), r.branchId.toString()]));
+  const formatsByBranch = new Map<string, Set<string>>();
+  for (const s of upcoming) {
+    const branchId = branchByRoom.get(s.auditoriumId.toString());
+    if (!branchId) continue;
+    formatsByBranch.set(branchId, (formatsByBranch.get(branchId) ?? new Set()).add(s.formatId.toString()));
+  }
+  const rank = new Map(frequent.map((b, index) => [b.id, index]));
+  return groups
+    .flatMap((group) =>
+      group.branches.map((branch) => ({
+        ...branch,
+        brand: group.brand.id,
+        brandName: group.brand.name,
+        format: [...(formatsByBranch.get(branch.id) ?? [])],
+        frequent: rank.has(branch.id) ? ["1"] : [],
+      })),
+    )
+    .sort((a, b) => (rank.get(a.id) ?? Infinity) - (rank.get(b.id) ?? Infinity) || a.name.localeCompare(b.name, "vi"));
 }
 
 export interface CinemaRoom {
@@ -152,6 +215,21 @@ export async function getCinema(branchId: string, userId?: string) {
       };
     }),
   };
+}
+
+export interface RoomOption {
+  id: string;
+  label: string;
+}
+
+/** Every room, labelled "Branch · Room", for pick-lists such as logging a viewing by hand. */
+export async function listRoomOptions(): Promise<RoomOption[]> {
+  await connectToDatabase();
+  const [rooms, branches] = await Promise.all([Auditorium.find({}, "name branchId").lean(), Branch.find({}, "name").lean()]);
+  const branchById = new Map(branches.map((b) => [b._id.toString(), b.name]));
+  return rooms
+    .map((r) => ({ id: r._id.toString(), label: `${branchById.get(r.branchId.toString()) ?? "?"} · ${r.name}` }))
+    .sort((a, b) => a.label.localeCompare(b.label, "vi"));
 }
 
 export interface RoomView {

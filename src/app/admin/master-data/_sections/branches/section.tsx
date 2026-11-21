@@ -41,7 +41,7 @@ export const branchesSection = createSection({
     { name: "mapsUrl", kind: "url", label: t("fields.mapsUrl.label"), maxLength: 300 },
     { name: "floor", kind: "text", label: t("fields.floor.label"), placeholder: t("fields.floor.placeholder"), maxLength: 40 },
     { name: "openingHours", kind: "text", label: t("fields.openingHours.label"), placeholder: t("fields.openingHours.placeholder"), maxLength: 60 },
-    { name: "parkingFee", kind: "number", label: t("fields.parkingFee.label"), placeholder: t("fields.parkingFee.placeholder"), step: "1", min: 0 },
+    { name: "parkingFee", kind: "number", money: true, label: t("fields.parkingFee.label"), placeholder: t("fields.parkingFee.placeholder"), step: "1", min: 0 },
     { name: "parkingLocation", kind: "text", label: t("fields.parkingLocation.label"), maxLength: 120 },
     { name: "parkingEntrance", kind: "textarea", label: t("fields.parkingEntrance.label"), maxLength: 120 },
     { name: "active", kind: "switch", label: tc("activeLabel") },

@@ -61,17 +61,18 @@ export function ConfirmDialog({
   const t = useTranslations("confirmDialog");
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent>
+      {/* Focus goes to the popup itself, not to Cancel: a focused Cancel drew a heavy ring that made the two buttons look uneven. */}
+      <AlertDialogContent onOpenAutoFocus={(event) => event.preventDefault()}>
         <AlertDialogHeader>
           <AlertDialogTitle className={cn("type-item-title", titleClassName)}>{title}</AlertDialogTitle>
-          {description ? <AlertDialogDescription>{description}</AlertDialogDescription> : null}
+          {description ? <AlertDialogDescription className="text-balance">{description}</AlertDialogDescription> : null}
         </AlertDialogHeader>
         {children}
         <AlertDialogFooter className="flex-row">
-          <AlertDialogCancel disabled={pending} className="min-w-0 flex-1">{cancelLabel ?? t("cancel")}</AlertDialogCancel>
+          <AlertDialogCancel disabled={pending} className="min-w-0 flex-1 gap-tight px-inset-xs whitespace-nowrap [&_svg]:size-icon-sm">{cancelLabel ?? t("cancel")}</AlertDialogCancel>
           <AlertDialogAction
             disabled={pending || confirmDisabled}
-            className={cn("min-w-0 flex-1", tone === "destructive" && "border border-destructive/40 bg-destructive/10 text-destructive hover:bg-destructive/20")}
+            className={cn("min-w-0 flex-1 gap-tight px-inset-xs whitespace-nowrap [&_svg]:size-icon-sm", tone === "destructive" && "border border-destructive/40 bg-destructive/10 text-destructive hover:bg-destructive/20")}
             onClick={(event) => {
               // The popup stays open until the work is done; the parent closes it.
               event.preventDefault();

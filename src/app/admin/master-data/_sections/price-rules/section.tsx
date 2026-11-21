@@ -85,7 +85,7 @@ export const priceRulesSection = createSection({
     ];
     return [
       { name: "scope", kind: "select", label: t("fields.scope.label"), required: true, options: scopeOptions, placeholder: t("fields.scope.placeholder") },
-      { name: "price", kind: "number", label: t("fields.price.label"), placeholder: t("fields.price.placeholder"), required: true, step: "1", min: 0 },
+      { name: "price", kind: "number", money: true, label: t("fields.price.label"), placeholder: t("fields.price.placeholder"), required: true, step: "1", min: 0 },
       { name: "formatId", kind: "select", label: t("fields.formatId.label"), options: formatOptions, placeholder: t("any.format") },
       { name: "seatTypeId", kind: "select", label: t("fields.seatTypeId.label"), options: seatTypeOptions, placeholder: t("any.seatType") },
       {

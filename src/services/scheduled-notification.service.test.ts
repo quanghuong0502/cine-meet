@@ -25,7 +25,7 @@ describe("scheduled notifications (reminders and deadline warnings)", () => {
     await Promise.all([Appointment.deleteMany({}), ScheduledNotification.deleteMany({}), SystemSetting.deleteMany({})]);
   });
 
-  async function makeAppointment(status: "INVITING" | "PLANNING" | "CONFIRMED", startAt: Date) {
+  async function makeAppointment(status: "INVITING" | "PLANNING" | "CONFIRMED" | "COMPLETED", startAt: Date) {
     const doc = await Appointment.create({
       creatorId: oid(),
       movieId: oid(),
@@ -77,6 +77,28 @@ describe("scheduled notifications (reminders and deadline warnings)", () => {
       const id = await makeAppointment("INVITING", hours(48, now.getTime()));
       await svc.scheduleDeadlineWarning(id, hours(6, now.getTime()), now);
       expect(await ScheduledNotification.countDocuments({ appointmentId: id, type: "deadline_warning" })).toBe(0);
+    });
+  });
+
+  describe("scheduleExpenseReminder (#9)", () => {
+    it("schedules an expense reminder ~3h after the showtime and replaces previous ones", async () => {
+      const id = await makeAppointment("COMPLETED", hours(-1, now.getTime()));
+      const endAt = hours(-1, now.getTime());
+      await svc.scheduleExpenseReminder(id, endAt);
+      const rows = await ScheduledNotification.find({ appointmentId: id, type: "expense_reminder" }).lean();
+      expect(rows).toHaveLength(1);
+      expect(rows[0]?.status).toBe("pending");
+      expect(rows[0]?.sendAt.getTime()).toBe(endAt.getTime() + 3 * 60 * 60 * 1000);
+
+      // Re-scheduling replaces old pending row
+      await svc.scheduleExpenseReminder(id, endAt);
+      const rowsAfter = await ScheduledNotification.find({ appointmentId: id, type: "expense_reminder" }).lean();
+      expect(rowsAfter.filter((r) => r.status === "pending")).toHaveLength(1);
+
+      // Cancelling all scheduled notifications for this appointment cancels the expense reminder
+      await svc.cancelScheduled(id);
+      const rowsCancelled = await ScheduledNotification.find({ appointmentId: id, type: "expense_reminder" }).lean();
+      expect(rowsCancelled.every((r) => r.status === "cancelled")).toBe(true);
     });
   });
 

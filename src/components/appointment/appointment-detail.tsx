@@ -20,6 +20,7 @@ import { AppointmentStatusBadge } from "@/components/appointment/status-badge";
 import { ReasonDialog } from "@/components/appointment/reason-dialog";
 import { PollSection } from "@/components/appointment/poll-section";
 import { CostSection } from "@/components/appointment/cost-section";
+import { RatingSection } from "@/components/appointment/rating-section";
 import { usePlanDraft } from "@/components/appointment/use-plan-draft";
 import { PlanSection } from "@/components/appointment/plan-section";
 import { PersonRow } from "@/components/friends/person-row";
@@ -48,9 +49,12 @@ interface DetailProps {
   plan?: PlanData | null;
   /** What it really cost each person, once the appointment is over. */
   costs?: CostView[];
+  /** This person's own existing ratings, once the appointment is over (design 3.4). */
+  initialMovieRating?: number;
+  initialSeatRatings?: Record<string, number>;
 }
 
-export function AppointmentDetail({ view, friends = [], groups = [], plan = null, costs = [] }: DetailProps) {
+export function AppointmentDetail({ view, friends = [], groups = [], plan = null, costs = [], initialMovieRating = 0, initialSeatRatings = {} }: DetailProps) {
   const t = useTranslations("appointments.detail");
   const tc = useTranslations("appointments");
   const locale = useLocale();
@@ -156,6 +160,9 @@ export function AppointmentDetail({ view, friends = [], groups = [], plan = null
         <>
         {view.status !== "CANCELLED" && view.myStatus !== "excluded" && view.myStatus !== "dropped" ? <PlanSection view={view} plan={plan} run={run} busy={pending} draft={draft} /> : null}
         {view.status === "COMPLETED" ? <CostSection view={view} costs={costs} onSave={run} busy={pending} /> : null}
+        {view.status === "COMPLETED" && view.myStatus !== "excluded" && view.myStatus !== "dropped" ? (
+          <RatingSection view={view} initialMovieRating={initialMovieRating} initialSeatRatings={initialSeatRatings} />
+        ) : null}
         </>
       ) : (
         <PollSection

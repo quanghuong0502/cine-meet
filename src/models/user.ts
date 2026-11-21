@@ -50,6 +50,10 @@ const userSchema = new Schema(
     pushOff: { type: [String], default: [] },
     // Random code in this person's friend-invite link; made the first time they open "Friends". Unique when present.
     inviteCode: { type: String, unique: true, sparse: true },
+    // This person's own monthly budget (design 3.1), whole dong. Unset means no budget is tracked for them.
+    monthlyBudget: {
+      type: new Schema({ ticket: { type: Number, min: 0 }, fnb: { type: Number, min: 0 } }, { _id: false }),
+    },
   },
   { timestamps: true },
 );

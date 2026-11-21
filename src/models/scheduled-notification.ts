@@ -1,8 +1,8 @@
 import { Schema, type InferSchemaType, type Model } from "mongoose";
 import { defineModel } from "@/lib/define-model";
 
-/** Design 4.3: a time-based notification that has not happened yet (a reminder before showtime, a deadline warning). */
-export const SCHEDULED_NOTIFICATION_TYPES = ["reminder", "deadline_warning"] as const;
+/** Design 4.3: a time-based notification that has not happened yet (a reminder before showtime, a deadline warning, an expense nudge). */
+export const SCHEDULED_NOTIFICATION_TYPES = ["reminder", "deadline_warning", "expense_reminder"] as const;
 export type ScheduledNotificationType = (typeof SCHEDULED_NOTIFICATION_TYPES)[number];
 
 export const SCHEDULED_NOTIFICATION_STATUSES = ["pending", "processing", "sent", "cancelled"] as const;

@@ -1,5 +1,5 @@
 import { connectToDatabase } from "@/lib/db";
-import { deadlineWarningSendAt, reminderSendTimes } from "@/lib/appointment/reminders";
+import { deadlineWarningSendAt, expenseReminderSendAt, reminderSendTimes } from "@/lib/appointment/reminders";
 import { Appointment } from "@/models/appointment";
 import { ScheduledNotification, type ScheduledNotificationType } from "@/models/scheduled-notification";
 import { getSystemSettings } from "@/services/settings.service";
@@ -33,6 +33,13 @@ export async function scheduleDeadlineWarning(appointmentId: string, responseDea
   const sendAt = deadlineWarningSendAt(responseDeadline, now);
   if (!sendAt) return;
   await ScheduledNotification.create({ appointmentId, type: "deadline_warning", sendAt });
+}
+
+/** The nudge to log real cost and rate the seat (#9), ~3h after the showtime ends. One row; set when the appointment is marked watched. */
+export async function scheduleExpenseReminder(appointmentId: string, endAt: Date): Promise<void> {
+  await connectToDatabase();
+  await cancelScheduled(appointmentId, ["expense_reminder"]);
+  await ScheduledNotification.create({ appointmentId, type: "expense_reminder", sendAt: expenseReminderSendAt(endAt) });
 }
 
 /** Admin changed `reminderMinutesBefore`: every confirmed, not-yet-started appointment gets its reminders recomputed from scratch. */

@@ -2,10 +2,12 @@ import type { Metadata } from "next";
 import { Plus } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
+import { AppointmentFilters } from "@/components/appointment/appointment-filters";
 import { AppointmentCard } from "@/components/appointment/appointment-card";
 import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
+import { applyFilters, FILTER_KEYS, parseFilters } from "@/lib/appointment/filters";
 import { requireUser } from "@/lib/auth/guards";
 import { listAppointments } from "@/services/appointment.service";
 
@@ -14,24 +16,24 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t("title") };
 }
 
-export default async function AppointmentsPage() {
+type SearchParams = Record<string, string | string[] | undefined>;
+const first = (value: string | string[] | undefined) => (Array.isArray(value) ? value[0] : value);
+
+export default async function AppointmentsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const user = await requireUser();
   const t = await getTranslations("appointments");
-  const { active, past } = await listAppointments(user.userId);
+  const params = await searchParams;
+  const values = parseFilters(Object.fromEntries(FILTER_KEYS.map((key) => [key, first(params[key])])));
+  const { active: allActive, past: allPast } = await listAppointments(user.userId);
+  // One list: current ones first, finished ones after; the status filter is how to narrow it.
+  const all = [...allActive, ...allPast];
+  const items = applyFilters(all, values);
 
   return (
     <div className="flex flex-1 flex-col gap-section p-inset">
       <PageHeader title={t("title")} />
-      <div className="flex items-center justify-between gap-item">
-        <h2 className="type-heading">{t("listTitle")}</h2>
-        <Button asChild size="icon" className="size-control shrink-0 rounded-full">
-          <Link href="/appointments/new" aria-label={t("add")}>
-            <Plus aria-hidden />
-          </Link>
-        </Button>
-      </div>
 
-      {active.length === 0 && past.length === 0 ? (
+      {all.length === 0 ? (
         <EmptyState
           className="flex-1 justify-center"
           mascot="duo-watching"
@@ -45,25 +47,26 @@ export default async function AppointmentsPage() {
         />
       ) : (
         <>
-          {active.length > 0 ? (
+          <AppointmentFilters
+            values={values}
+            records={all}
+            action={
+              <Button asChild size="icon" className="size-control shrink-0 rounded-full">
+                <Link href="/appointments/new" aria-label={t("add")}>
+                  <Plus aria-hidden />
+                </Link>
+              </Button>
+            }
+          />
+          {items.length === 0 ? (
+            <EmptyState mascot="bubu-sleepy" title={t("filteredEmptyTitle")} description={t("filteredEmptyDescription")} />
+          ) : (
             <ul className="flex flex-col gap-stack">
-              {active.map((item) => (
+              {items.map((item) => (
                 <AppointmentCard key={item.id} item={item} />
               ))}
             </ul>
-          ) : null}
-          {past.length > 0 ? (
-            <section aria-labelledby="appointments-past" className="flex flex-col gap-item">
-              <h2 id="appointments-past" className="type-heading">
-                {t("pastTitle")}
-              </h2>
-              <ul className="flex flex-col gap-stack">
-                {past.map((item) => (
-                  <AppointmentCard key={item.id} item={item} />
-                ))}
-              </ul>
-            </section>
-          ) : null}
+          )}
         </>
       )}
     </div>

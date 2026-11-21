@@ -22,7 +22,7 @@ export interface NavItem {
 }
 
 export const NAV_ITEMS: NavItem[] = [
-  { href: "/", key: "overview", icon: LayoutDashboard, enabled: false }, // Sprint 6
+  { href: "/", key: "overview", icon: LayoutDashboard, enabled: true },
   { href: "/showtimes", key: "showtimes", icon: Clapperboard, enabled: true },
   { href: "/appointments", key: "appointments", icon: CalendarHeart, enabled: true },
   { href: "/cinemas", key: "cinemas", icon: Popcorn, enabled: true },
@@ -34,7 +34,7 @@ export const ENABLED_NAV_ITEMS = NAV_ITEMS.filter((item) => item.enabled);
 
 /** Entry screens (such as editing the profile) hide the bottom bar: the Save button takes its place. */
 export function isFocusedUserRoute(pathname: string): boolean {
-  return /^\/profile\/.+/.test(pathname) || pathname === "/appointments/new";
+  return /^\/profile\/.+/.test(pathname) || pathname === "/appointments/new" || pathname === "/log-viewing";
 }
 
 /**

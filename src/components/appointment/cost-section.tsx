@@ -6,6 +6,7 @@ import { useState } from "react";
 import { setPersonCostAction, type ActionResult } from "@/actions/appointments";
 import { UserAvatar } from "@/components/user-avatar";
 import { Button } from "@/components/ui/button";
+import { MoneyInput } from "@/components/money-input";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { formatVnd } from "@/lib/money";
@@ -40,7 +41,7 @@ export function CostSection({ view, costs, onSave, busy }: Props) {
   const money = (id: string, label: string, field: "ticket" | "fnb" | "other") => (
     <div className="flex flex-col gap-item">
       <Label htmlFor={id}>{label}</Label>
-      <Input id={id} inputMode="numeric" autoComplete="off" enterKeyHint="done" value={form[field]} onChange={(e) => setForm({ ...form, [field]: e.target.value.replace(/\D/g, "") })} />
+      <MoneyInput id={id} enterKeyHint="done" value={form[field]} onValueChange={(digits) => setForm({ ...form, [field]: digits })} />
     </div>
   );
 

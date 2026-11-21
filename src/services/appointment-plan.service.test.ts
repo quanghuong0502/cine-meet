@@ -99,6 +99,11 @@ describe("appointment planning (stage 2)", () => {
     expect(await plan.completeAppointment(creator, id)).toEqual({ ok: false, error: "too_early" });
     expect(await plan.completeAppointment(creator, id, hours(6))).toEqual({ ok: true });
 
+    // The room is known once there is a showtime, so the viewing can be rated (design 3.4).
+    const completed = await svc.getAppointment(creator, id);
+    expect(completed?.auditoriumId).toBeTruthy();
+    expect(completed?.layoutId).toBeTruthy();
+
     expect((await plan.setPersonCost(creator, id, { userId: u1, ticket: 90_000, fnb: 50_000, other: 10_000 })).ok).toBe(true);
     // A person changes their own part; someone else's is refused.
     expect((await plan.setPersonCost(u2, id, { userId: u2, ticket: 100_000, fnb: 0, other: 0, note: "đổi" })).ok).toBe(true);

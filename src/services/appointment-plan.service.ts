@@ -15,7 +15,8 @@ import { SeatClaim } from "@/models/seat-claim";
 import { Showtime } from "@/models/showtime";
 import { attendeeIdsOf, loadSeatPrices, recomputeEstimate } from "@/services/appointment-estimate";
 import { mutate, notifyPeople, sameId, type Doc, type Failure } from "@/services/appointment.service";
-import { cancelScheduled, scheduleReminders } from "@/services/scheduled-notification.service";
+import { cancelScheduled, scheduleExpenseReminder, scheduleReminders } from "@/services/scheduled-notification.service";
+import { checkBudgetWarnings } from "@/services/budget.service";
 import { generateGrid } from "@/lib/seat-layout/generate";
 import type { LayoutConfig, LayoutGeometry, LayoutSeat, SeatTypeInfo } from "@/lib/seat-layout/types";
 import { SeatType } from "@/models/seat-type";
@@ -310,6 +311,7 @@ export async function completeAppointment(creatorId: string, id: string, now = n
     return {
       ok: true as const,
       start,
+      showtimeId: doc.showtimeId?.toString(),
       estimate: doc.estimate.map((e) => ({ userId: e.userId.toString(), ticket: e.ticket, fnb: e.fnb, other: e.other })),
       allPaidByCreator: doc.allPaidByCreator ?? false,
       creatorId: doc.creatorId.toString(),
@@ -328,6 +330,10 @@ export async function completeAppointment(creatorId: string, id: string, now = n
       await Expense.updateOne({ appointmentId: id, userId: e.userId, category }, { $setOnInsert: { amount: e[category], date: result.start } }, { upsert: true });
     }
   }
+  await checkBudgetWarnings(rows.map((r) => r.userId));
+  // #9: nudge to log the real cost and rate the seat, a few hours after the showtime ends.
+  const showtime = result.showtimeId ? await Showtime.findById(result.showtimeId, "endAt").lean() : null;
+  if (showtime) await scheduleExpenseReminder(id, showtime.endAt);
   await syncActualCost(id);
   return { ok: true };
 }

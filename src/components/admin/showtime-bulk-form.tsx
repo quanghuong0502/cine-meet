@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Chip } from "@/components/admin/auditorium-editor/chips";
 import { RequiredMark } from "@/components/required-mark";
 import { Button } from "@/components/ui/button";
+import { MoneyInput } from "@/components/money-input";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -181,7 +182,7 @@ export function ShowtimeBulkForm({ movies, formats, rooms, backHref, action, tod
 
       <div className="flex flex-col gap-item">
         {label("priceOverride", t("price"))}
-        <Input id="priceOverride" name="priceOverride" type="number" inputMode="numeric" step="1" min={0} placeholder="90000" autoComplete="off" defaultValue={typed?.priceOverride} className={CONTROL_CLASS} />
+        <MoneyInput id="priceOverride" name="priceOverride" placeholder="90.000" defaultValue={typed?.priceOverride} className={CONTROL_CLASS} />
         {error("priceOverride")}
       </div>
 

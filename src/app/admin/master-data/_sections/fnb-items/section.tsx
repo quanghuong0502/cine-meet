@@ -40,7 +40,7 @@ export const fnbItemsSection = createSection({
     { name: "name", kind: "text", label: t("fields.name.label"), required: true, maxLength: 80 },
     { name: "nameEn", kind: "text", label: t("fields.nameEn.label"), maxLength: 80 },
     { name: "size", kind: "text", label: t("fields.size.label"), placeholder: t("fields.size.placeholder"), maxLength: 30 },
-    { name: "price", kind: "number", label: t("fields.price.label"), placeholder: t("fields.price.placeholder"), required: true, step: "1", min: 0 },
+    { name: "price", kind: "number", money: true, label: t("fields.price.label"), placeholder: t("fields.price.placeholder"), required: true, step: "1", min: 0 },
     { name: "validFrom", kind: "date", label: t("fields.validFrom.label"), },
     { name: "validTo", kind: "date", label: t("fields.validTo.label") },
   ],

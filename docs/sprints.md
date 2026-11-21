@@ -34,8 +34,8 @@ Nguồn chi tiết: `docs/movie-app-mvp-design.md` (số mục ghi ở từng sp
 | 3 | Phim (trailer), suất chiếu, trang rạp & lịch chiếu cho user, đánh dấu ghế cá nhân | 2 | Xong |
 | 4 | Lịch hẹn giai đoạn 1 (mời, vote, chốt người), bạn bè, thông báo in-app, worker, Web Push | 3 | Xong |
 | 5A | Lịch hẹn giai đoạn 2: chọn suất, xếp ghế, đồ ăn, chi phí, xác nhận | 4 | Xong |
-| 5B | Nhắc lịch và các thông báo theo giờ (#3, #8), tự hoàn thành | 5A | Chờ kiểm tra |
-| 6 | Dashboard, ngân sách, ghi lại buổi đã xem, đánh giá cá nhân | 5B | Chưa bắt đầu |
+| 5B | Nhắc lịch và các thông báo theo giờ (#3, #8), tự hoàn thành | 5A | Xong |
+| 6 | Dashboard, ngân sách, ghi lại buổi đã xem, đánh giá cá nhân | 5B | Chờ kiểm tra |
 | 7 | Chatbot AI (tầng provider, tool, lưu context) | 6 | Chưa bắt đầu |
 | 8 | Production & hardening: môi trường production, sao lưu, rà soát cuối | 7 | Chưa bắt đầu |
 | 9 | Công tắc tính năng theo môi trường: bật/tắt nút debug, hướng dẫn trong Cài đặt và mọi thứ thêm sau này | 8 | Chưa bắt đầu |
@@ -262,10 +262,10 @@ giới hạn tra cứu, kết bạn cần chấp nhận (thiết kế mục 6 v�
 **Ngoài phạm vi:** chatbot, gợi ý phim, lớp cộng đồng (bỏ hẳn, không hoãn).
 
 **Tiêu chí hoàn thành**
-- [ ] Số liệu dashboard khớp với dữ liệu chi phí đã nhập, không đếm trùng một khoản của cả nhóm (có test cho các hàm tổng hợp).
-- [ ] Cảnh báo ngân sách hiện đúng ở 80% và 100%.
-- [ ] Đánh giá ghế sau buổi xem hiện ở lịch sử ngồi của chính user.
-- [ ] Nhóm "Thường tới" ở `/cinemas` chỉ gồm rạp user đã xem xong, đúng thứ tự (nhiều buổi trước, bằng nhau thì gần nhất trước), mỗi người chỉ thấy của mình; chưa có buổi nào thì không hiện nhóm.
+- [x] Số liệu dashboard khớp với dữ liệu chi phí đã nhập, không đếm trùng một khoản của cả nhóm (test `budget.service.test.ts`, `period.test.ts`; màn hình chưa thử trên điện thoại).
+- [x] Cảnh báo ngân sách hiện đúng ở 80% và 100% (test `budget.service.test.ts`: mỗi mốc một lần mỗi tháng, tháng sau tính lại; chưa thử trên điện thoại).
+- [x] Đánh giá ghế sau buổi xem hiện ở lịch sử ngồi của chính user ("F7 ★4" ở trang phòng; test `rating.service.test.ts`, `viewing-history.test.ts`; chưa thử trên điện thoại).
+- [x] Nhóm "Thường tới" ở `/cinemas` (test `viewing-history.test.ts`; chưa thử trên điện thoại) chỉ gồm rạp user đã xem xong, đúng thứ tự (nhiều buổi trước, bằng nhau thì gần nhất trước), mỗi người chỉ thấy của mình; chưa có buổi nào thì không hiện nhóm.
 
 ---
 
@@ -432,8 +432,8 @@ Mỗi sprint xong thêm 3 đến 6 dòng: đã làm gì, còn dở gì, quyết 
 - Lỗi tìm thấy khi thử tay, đã sửa:
   1. **#3 gửi nhầm người đã vote "Không" như người chưa trả lời** — `participant.status` chỉ chuyển khỏi `invited` khi có vote **Có** ở đâu đó (vote "Không" không đổi status); sửa `sendDeadlineWarning` để loại luôn người đã có vote (bất kể Có/Không) khỏi danh sách nhận, không chỉ dựa vào `status` (`src/notifications/scheduler.ts`).
   2. **Trang `/appointments/new?showtimeId=...` báo lỗi server** — `toShowtimeChoice` nằm trong file có `"use client"` (`showtime-picker.tsx`), Server Component không gọi thẳng được hàm từ module client; tách hàm này sang `src/lib/appointment/showtime-choice.ts` (module thuần), `showtime-picker.tsx` re-export lại để các component client khác không phải đổi import.
-- Còn dở: **chủ dự án cần xác nhận lại 2 lỗi đã sửa** và thử trên điện thoại thật; Web Push trên thiết bị thật chưa được xác nhận qua lượt test headless.
-- **Chốt 2026-11-19: Sprint 5B xong, chủ dự án duyệt.**
+- **Chủ dự án đã thử trên điện thoại thật (2026-11-20): xác nhận 2 lỗi trên đã hết; Web Push (#8, #3) nhận được trên thiết bị thật.**
+- **Chốt 2026-11-19 (code), 2026-11-20 (thử điện thoại thật): Sprint 5B xong hoàn toàn, chủ dự án duyệt.**
 
 ### Bổ sung ngoài sprint (2026-11-19): người tạo bao hết chi phí
 - Theo yêu cầu, không nằm trong sprint nào: thêm flag `allPaidByCreator` trên `Appointment`, đặt lúc tạo lời mời (checkbox "Mình bao hết chi phí" ở `/appointments/new`), không đổi lại được sau khi tạo.

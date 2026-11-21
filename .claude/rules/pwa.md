@@ -15,7 +15,7 @@ Viết code đúng quy tắc ngay từ đầu. Thử bản cài trên iPhone 13 
   `theme-color`, thẻ Apple (`appleWebApp`, thanh trạng thái đen), `viewport-fit=cover`, vùng an toàn và `dvh`.
 - Đã có: nút quay lại trong app (`PageHeader`), báo mất/có mạng và tự làm mới khi quay lại app (`NetworkWatcher`), ẩn phần tử cố định đáy khi bàn phím mở (`KeyboardWatcher`). Checklist đầy đủ ở `mobile-ux.md`.
 - Đã có (Sprint 4): service worker `public/sw.js` (thông báo đẩy, trang `/offline` khi mất mạng; không cache trang hay dữ liệu cá nhân; đăng ký ở `ServiceWorkerRegister`), trang `/offline`,
-  hướng dẫn cài app và bật thông báo đẩy trong Cài đặt (`InstallGuide`, `NotificationSettings`). `proxy.ts` loại `sw.js` và `offline` khỏi yêu cầu đăng nhập.
+  bật thông báo đẩy trong Cài đặt (`NotificationSettings`; thẻ hướng dẫn cài app `InstallGuide` đã bị xóa 2026-11-22 theo yêu cầu của chủ dự án). `proxy.ts` loại `sw.js` và `offline` khỏi yêu cầu đăng nhập.
   Chưa thử trên máy thật: thông báo đẩy trên iPhone đã cài PWA (cần HTTPS), trang offline khi tắt mạng.
 
 ## Quy tắc cho mọi màn hình
@@ -43,7 +43,7 @@ Nguồn chính: [firt.dev, iOS PWA compatibility](https://firt.dev/notes/pwa-ios
 | 2 | **CSS cảm giác như app:** `-webkit-tap-highlight-color: transparent` (Tailwind preflight đã có sẵn), `-webkit-touch-callout: none` và `user-select: none` cho nút, thanh điều hướng, header, ảnh (không áp lên nội dung chữ và ô nhập) | blog (netguru, MagicBell), chưa chắc | **Đã làm** (`globals.css`) | xong |
 | 3 | **`orientation` trong manifest bị iOS bỏ qua:** app vẫn xoay ngang. Bố cục phải chịu được hoặc hiện lời nhắc xoay dọc | firt.dev | Chưa xử lý | 8 |
 | 4 | **Thông báo đẩy chỉ chạy khi đã cài app.** Từ **iOS 18.4 có Declarative Web Push** (không cần service worker); có thêm **Badging API** (số trên icon) từ 16.4. Cân nhắc cả hai khi thiết kế thông báo | firt.dev, WebKit | Đã làm (Web Push cổ điển qua service worker; Declarative Web Push của iOS 18.4 chưa dùng; chưa thử máy thật) | xong |
-| 5 | **Hướng dẫn cài app** (Chia sẻ, rồi Thêm vào Màn hình chính): iOS không có `beforeinstallprompt` và `appinstalled` | firt.dev | Đã làm (`InstallGuide` trong Cài đặt: các bước cho iPhone và Android, tự ẩn khi đã cài) | xong |
+| 5 | **Hướng dẫn cài app** (Chia sẻ, rồi Thêm vào Màn hình chính): iOS không có `beforeinstallprompt` và `appinstalled` | firt.dev | Đã xóa (2026-11-22, chủ dự án yêu cầu bỏ phần hướng dẫn trong Cài đặt) | xong |
 | 6 | **Dùng `@media (display-mode: standalone)`** để chỉnh riêng cho app đã cài; không dùng `navigator.standalone` (đã deprecated từ 11.3) | firt.dev | Chưa dùng | khi cần |
 | 7 | **Ngoại tuyến:** service worker, Cache Storage, Navigation Preload (iOS 15.4). Chỉ cache tài nguyên tĩnh, không cache dữ liệu cá nhân | firt.dev | Đã làm (chỉ trang `/offline` và icon; điều hướng ưu tiên mạng; chưa dùng Navigation Preload) | xong |
 | 8 | **Icon:** `apple-touch-icon` được ưu tiên hơn icon trong manifest; icon maskable và monochrome bị bỏ qua; SVG chỉ chạy từ iOS 26 và phải khai trong manifest | firt.dev | Đã có `apple-icon.png` | đã đủ |

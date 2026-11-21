@@ -199,12 +199,12 @@ export function NewAppointmentForm({ movies, movieId: initialMovieId, initialSho
         {fieldError("invitees")}
       </div>
 
-      <div className="flex min-h-target items-center justify-between gap-group rounded-xl border bg-card px-inset-sm">
-        <Label htmlFor="appointment-all-paid" className="flex min-w-0 flex-1 flex-col gap-tight py-inset-sm">
+      <div className="flex min-h-target items-start justify-between gap-group rounded-xl border bg-card px-inset-sm">
+        <Label htmlFor="appointment-all-paid" className="flex min-w-0 flex-1 flex-col items-start gap-tight text-left py-inset-sm">
           <span className="type-item-title">{t("allPaidByCreatorLabel")}</span>
           <span className="type-secondary text-muted-foreground">{t("allPaidByCreatorHint")}</span>
         </Label>
-        <Switch id="appointment-all-paid" checked={allPaidByCreator} onCheckedChange={setAllPaidByCreator} />
+        <Switch className="mt-inset-sm" id="appointment-all-paid" checked={allPaidByCreator} onCheckedChange={setAllPaidByCreator} />
       </div>
 
       <div className="flex flex-col gap-item">

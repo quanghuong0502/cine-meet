@@ -9,8 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { cn } from "@/lib/utils";
 import { formatDayLong } from "@/lib/datetime";
-import type { NotificationType } from "@/notifications/types";
+import { NOTIFICATION_GROUPS, type NotificationType } from "@/notifications/types";
 import type { DeviceView } from "@/services/push.service";
 
 interface Props {
@@ -195,18 +196,26 @@ export function NotificationSettings({ publicKey, devices: initialDevices, pushO
           </section>
         ) : null}
 
-        <section aria-labelledby="push-types" className="flex flex-col gap-stack">
+        <section aria-labelledby="push-types" className="flex flex-col gap-group">
           <h3 id="push-types" className="type-label text-muted-foreground">
             {t("typesTitle")}
           </h3>
-          {types.map((type) => (
-            <div key={type} className="flex min-h-target items-center justify-between gap-item">
-              <Label htmlFor={`push-${type}`} className="type-body">
-                {t(`types.${type}`)}
-              </Label>
-              <Switch id={`push-${type}`} checked={!off.includes(type)} onCheckedChange={(checked) => toggleType(type, checked)} />
-            </div>
-          ))}
+          {NOTIFICATION_GROUPS.map((group, index) => {
+            const shown = group.types.filter((type): type is NotificationType => types.includes(type));
+            if (shown.length === 0) return null;
+            return (
+              <div key={group.id} role="group" aria-label={t(`groups.${group.id}`)} className={cn("flex flex-col gap-stack", index > 0 && "border-t pt-group")}>
+                {shown.map((type) => (
+                  <div key={type} className="flex min-h-target items-center justify-between gap-item">
+                    <Label htmlFor={`push-${type}`} className="type-body">
+                      {t(`types.${type}`)}
+                    </Label>
+                    <Switch id={`push-${type}`} checked={!off.includes(type)} onCheckedChange={(checked) => toggleType(type, checked)} />
+                  </div>
+                ))}
+              </div>
+            );
+          })}
         </section>
       </CardContent>
     </Card>

@@ -40,6 +40,20 @@ async function sendReminder(appointmentId: string): Promise<boolean> {
   return true;
 }
 
+/** #9: nudge the group, a few hours after the showtime, to log the real cost and rate their seat. Stale (undone) rows are dropped. */
+async function sendExpenseReminder(appointmentId: string): Promise<boolean> {
+  const doc = await Appointment.findById(appointmentId).lean();
+  if (!doc || doc.status !== "COMPLETED") return false;
+  const movie = await Movie.findById(doc.movieId, "title").lean();
+  const inputs: NotificationInput[] = attendeeIdsOf(doc as never).map((userId) => ({
+    recipientId: userId,
+    type: "expense_reminder",
+    payload: { appointmentId, movieTitle: movie?.title ?? "", actorName: "" },
+  }));
+  await enqueueNotifications(inputs);
+  return true;
+}
+
 /**
  * #3: 12h left to answer, for people who still have not. "Still has not answered" means no vote (yes or no) on any time
  * and the invitation not declined — a "no" vote never turns `participant.status` away from "invited" (only a "yes"
@@ -65,7 +79,12 @@ export async function processScheduledNotifications(now = new Date(), batch = 25
     const row = await claimOne(now);
     if (!row) break;
     handled++;
-    const sent = row.type === "reminder" ? await sendReminder(row.appointmentId.toString()) : await sendDeadlineWarning(row.appointmentId.toString());
+    const sent =
+      row.type === "reminder"
+        ? await sendReminder(row.appointmentId.toString())
+        : row.type === "expense_reminder"
+          ? await sendExpenseReminder(row.appointmentId.toString())
+          : await sendDeadlineWarning(row.appointmentId.toString());
     await ScheduledNotification.updateOne({ _id: row._id }, { $set: { status: sent ? "sent" : "cancelled" } });
   }
   return handled;

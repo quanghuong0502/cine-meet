@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { BackButton } from "@/components/back-button";
 
 interface PageHeaderProps {
@@ -6,10 +7,12 @@ interface PageHeaderProps {
   /** Destination of the back button on an inner screen. */
   backHref?: string;
   description?: string;
+  /** One trailing action on the bar (only shown together with `backHref`), e.g. "report a problem". */
+  children?: ReactNode;
 }
 
 /** Inner screens get a sticky back bar. Page headings are available to screen readers. */
-export function PageHeader({ title, backHref, description }: PageHeaderProps) {
+export function PageHeader({ title, backHref, description, children }: PageHeaderProps) {
   return (
     <header
       className={
@@ -21,6 +24,7 @@ export function PageHeader({ title, backHref, description }: PageHeaderProps) {
       {backHref ? <BackButton href={backHref} /> : null}
       {title ? <h1 className="sr-only">{title}</h1> : null}
       {description ? <p className="sr-only">{description}</p> : null}
+      {backHref && children ? <div className="ml-auto">{children}</div> : null}
     </header>
   );
 }

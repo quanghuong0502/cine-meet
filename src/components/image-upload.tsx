@@ -2,12 +2,18 @@
 
 import { Camera, LoaderCircle, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useRef, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import type { TicketResult } from "@/lib/upload-types";
 
 const MAX_BYTES = 8 * 1024 * 1024;
+
+/**
+ * A form that holds an upload provides this so it can keep Save off while a picture is still going up: until Cloudinary answers, the
+ * hidden input still carries the old address, so saving then would silently keep the old picture.
+ */
+export const UploadBusyContext = createContext<((busy: boolean) => void) | null>(null);
 
 interface ImageUploadProps {
   /** Name of the hidden input that carries the picture's address into the form. */
@@ -28,6 +34,13 @@ export function ImageUpload({ name, initialUrl, getTicket, preview }: ImageUploa
   const [url, setUrl] = useState(initialUrl ?? "");
   const [uploading, setUploading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const reportBusy = useContext(UploadBusyContext);
+
+  useEffect(() => {
+    if (!uploading) return;
+    reportBusy?.(true);
+    return () => reportBusy?.(false);
+  }, [uploading, reportBusy]);
 
   async function upload(file: File) {
     if (!file.type.startsWith("image/")) return toast.error(t("errors.notImage"));

@@ -14,6 +14,8 @@ export interface ResourceField {
   options?: { value: string; label: string }[];
   /** Shown in a select that has no value yet. */
   placeholder?: string;
+  /** For number fields: an amount in VND, typed and shown with dots ("100.000"), sent as plain digits. */
+  money?: boolean;
   /** For number fields. */
   step?: string;
   min?: number;

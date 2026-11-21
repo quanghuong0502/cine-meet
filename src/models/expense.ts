@@ -6,8 +6,9 @@ import { EXPENSE_CATEGORIES } from "@/lib/appointment/cost";
 const expenseSchema = new Schema(
   {
     userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
-    // Missing for a viewing that was not planned in the app (Sprint 6).
+    // Exactly one of the two (or neither, for a viewing with no cost at all) ties this cost to where it came from.
     appointmentId: { type: Schema.Types.ObjectId, ref: "Appointment" },
+    manualViewingId: { type: Schema.Types.ObjectId, ref: "ManualViewing" },
     category: { type: String, enum: EXPENSE_CATEGORIES, required: true },
     amount: { type: Number, required: true, min: 0 },
     date: { type: Date, required: true },
@@ -19,6 +20,7 @@ const expenseSchema = new Schema(
 
 expenseSchema.index({ userId: 1, date: -1 });
 expenseSchema.index({ appointmentId: 1, userId: 1, category: 1 }, { unique: true, partialFilterExpression: { appointmentId: { $exists: true } } });
+expenseSchema.index({ manualViewingId: 1, category: 1 }, { unique: true, partialFilterExpression: { manualViewingId: { $exists: true } } });
 
 export type ExpenseDoc = InferSchemaType<typeof expenseSchema>;
 

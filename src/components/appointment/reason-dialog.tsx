@@ -18,13 +18,15 @@ interface Props {
   pending: boolean;
   icon: React.ReactNode;
   onConfirm: (reason: string) => void;
+  /** `default` for something harmless like a report (the default is `destructive`, for turning down, leaving or cancelling). */
+  tone?: "default" | "destructive";
 }
 
-/** Confirmation for something that cannot be undone (turn down, leave, cancel), with an optional reason the others will see. */
-export function ReasonDialog({ open, onOpenChange, title, description, reasonLabel, reasonPlaceholder, cancelLabel, confirmLabel, pending, icon, onConfirm }: Props) {
+/** Confirmation with an optional reason the others (or an admin) will see. Destructive by default (turn down, leave, cancel); pass `tone="default"` for a harmless one like a report. */
+export function ReasonDialog({ open, onOpenChange, title, description, reasonLabel, reasonPlaceholder, cancelLabel, confirmLabel, pending, icon, onConfirm, tone = "destructive" }: Props) {
   const [reason, setReason] = useState("");
   return (
-    <ConfirmDialog open={open} onOpenChange={onOpenChange} title={title} description={description} tone="destructive" icon={icon} confirmLabel={confirmLabel} cancelLabel={cancelLabel} pending={pending} onConfirm={() => onConfirm(reason)}>
+    <ConfirmDialog open={open} onOpenChange={onOpenChange} title={title} description={description} tone={tone} icon={icon} confirmLabel={confirmLabel} cancelLabel={cancelLabel} pending={pending} onConfirm={() => onConfirm(reason)}>
       {reasonLabel ? (
         <div className="flex flex-col gap-item">
           <Label htmlFor="reason" className="type-label text-muted-foreground">

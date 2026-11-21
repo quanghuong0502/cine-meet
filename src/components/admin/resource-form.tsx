@@ -7,12 +7,13 @@ import { useRouter } from "next/navigation";
 import { ComboItemsField } from "@/components/admin/combo-items-field";
 import { DeleteRecordButton } from "@/components/admin/delete-record-button";
 import { Chip } from "@/components/admin/auditorium-editor/chips";
-import { ImageUpload } from "@/components/image-upload";
+import { ImageUpload, UploadBusyContext } from "@/components/image-upload";
 import { TimeSlotsField } from "@/components/admin/time-slots-field";
 import { RequiredMark } from "@/components/required-mark";
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { MoneyInput } from "@/components/money-input";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -130,6 +131,9 @@ function FieldControl({ field, value, invalid, last, onSelect, selected, sibling
         </Select>
       );
     default:
+      if (field.kind === "number" && field.money) {
+        return <MoneyInput {...common} enterKeyHint={last ? "done" : "next"} placeholder={field.placeholder} defaultValue={value} className={CONTROL_CLASS} />;
+      }
       return (
         <Input
           {...common}
@@ -198,6 +202,11 @@ export function ResourceForm({ itemId, fields, values, backHref, saveAction, del
   }, [state]);
 
   const fieldErrors = state.status === "error" ? (state.fieldErrors ?? {}) : {};
+  // Pictures still going up: Save waits for them (see UploadBusyContext).
+  const [uploads, setUploads] = useState(0);
+  const reportUpload = useCallback((busy: boolean) => setUploads((n) => Math.max(0, n + (busy ? 1 : -1))), []);
+  const uploading = uploads > 0;
+
   // After a failed save, start from what the user typed; otherwise from the saved record.
   const typed = state.status === "error" ? state.values : undefined;
   const formError = state.status === "error" && state.error !== "validation" ? state.error : null;
@@ -205,7 +214,8 @@ export function ResourceForm({ itemId, fields, values, backHref, saveAction, del
 
   // noValidate on the form: the server validates and returns translated messages, so the browser must not show its own.
   return (
-    <form action={formAction} noValidate className="flex flex-1 flex-col gap-field">
+    <UploadBusyContext.Provider value={reportUpload}>
+    <form action={formAction} onSubmit={(event) => uploading && event.preventDefault()} noValidate className="flex flex-1 flex-col gap-field">
       {itemId ? <input type="hidden" name="id" value={itemId} /> : null}
       {lead}
 
@@ -257,7 +267,7 @@ export function ResourceForm({ itemId, fields, values, backHref, saveAction, del
       <div data-save-bar className="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-inset pb-(--inset-bottom) md:left-sidebar">
         <div className="mx-auto flex max-w-form items-center gap-stack">
           {deleteItem ? <DeleteRecordButton id={deleteItem.id} name={deleteItem.name} backHref={backHref} removeAction={deleteItem.removeAction} /> : null}
-          <Button type="submit" size="cta" disabled={isPending} className="pointer-events-auto min-w-0 flex-1">
+          <Button type="submit" size="cta" disabled={isPending || uploading} className="pointer-events-auto min-w-0 flex-1">
             {isPending ? (
               <>
                 <LoaderCircle className="motion-safe:animate-spin" aria-hidden />
@@ -270,5 +280,6 @@ export function ResourceForm({ itemId, fields, values, backHref, saveAction, del
         </div>
       </div>
     </form>
+    </UploadBusyContext.Provider>
   );
 }

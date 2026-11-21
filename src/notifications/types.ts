@@ -12,8 +12,21 @@ export const NOTIFICATION_TYPES = [
   "friend_accepted", //       someone said yes to my friend request
   "response_deadline_warning", // #3  12h left to answer, for people who have not
   "showtime_reminder", //     #8  N minutes before the showtime (admin's reminderMinutesBefore)
+  "expense_reminder", //      #9  nudge to log real cost and rate the seat, ~3h after the showtime
+  "budget_warning", //        #11 this month's spending reached 80% or 100% of the person's budget
 ] as const;
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
+
+/** How the notification settings group the kinds, so each switch is read in context. Every kind is in exactly one group (a test checks). */
+export const NOTIFICATION_GROUPS = [
+  {
+    id: "appointments",
+    types: ["appointment_invited", "appointment_reply", "poll_reminder", "participants_locked", "appointment_confirmed", "appointment_changed", "appointment_cancelled", "participant_withdrew"],
+  },
+  { id: "reminders", types: ["response_deadline_warning", "showtime_reminder", "expense_reminder"] },
+  { id: "friends", types: ["friend_request", "friend_accepted"] },
+  { id: "budget", types: ["budget_warning"] },
+] as const satisfies readonly { id: string; types: readonly NotificationType[] }[];
 
 export const REPLY_KINDS = ["agree", "decline", "propose"] as const;
 export type ReplyKind = (typeof REPLY_KINDS)[number];
@@ -41,6 +54,9 @@ export interface NotificationPayload {
   change?: "seat" | "time";
   /** For `participants_locked`: false when the recipient was left out. */
   included?: boolean;
+  /** For `budget_warning`: which budget (ticket or fnb) and how much of it (80 or 100). */
+  budgetCategory?: "ticket" | "fnb";
+  percent?: number;
 }
 
 export interface NotificationInput {

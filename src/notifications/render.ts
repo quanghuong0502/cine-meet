@@ -27,6 +27,8 @@ export function notificationKey(type: NotificationType, payload: NotificationPay
     case "appointment_changed":
       if (payload.change === "time") return "appointment_changed.time";
       return payload.seatCode ? "appointment_changed.seat" : "appointment_changed.seatNone";
+    case "budget_warning":
+      return payload.percent === 100 ? "budget_warning.full" : "budget_warning.eighty";
     default:
       return type;
   }
@@ -37,8 +39,9 @@ export function renderNotification(t: Translate, type: NotificationType, payload
   const key = notificationKey(type, payload);
   // A time is written out here, in the language of the person it is for.
   const time = payload.slotAt ? `${formatDayCompact(payload.slotAt, locale, new Date(), { midSentence: true })} · ${formatTime(payload.slotAt, locale)}` : "";
-  const values = { actorName: payload.actorName, movieTitle: payload.movieTitle ?? "", reason: payload.reason ?? "", time, seatCode: payload.seatCode ?? "", place: payload.place ?? "" };
-  // Appointment news opens that appointment; friend news opens the Friends screen.
-  const url = payload.appointmentId ? `/appointments/${payload.appointmentId}` : "/friends";
+  const budgetCategory = payload.budgetCategory ? t(`budgetCategories.${payload.budgetCategory}`) : "";
+  const values = { actorName: payload.actorName, movieTitle: payload.movieTitle ?? "", reason: payload.reason ?? "", time, seatCode: payload.seatCode ?? "", place: payload.place ?? "", budgetCategory };
+  // Appointment news opens that appointment; friend news opens Friends; a budget warning opens the dashboard.
+  const url = payload.appointmentId ? `/appointments/${payload.appointmentId}` : type === "budget_warning" ? "/" : "/friends";
   return { title: t(`${key}.title`, values), body: t(`${key}.body`, values), url };
 }

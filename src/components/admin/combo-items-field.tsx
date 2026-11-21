@@ -3,6 +3,7 @@
 import { Minus, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { MoneyInput } from "@/components/money-input";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatVnd } from "@/lib/money";
@@ -167,6 +168,17 @@ export function ComboItemsField({ config, brandId, initialItems, initialDiscount
             <SelectItem value="percent">{labels.percent}</SelectItem>
           </SelectContent>
         </Select>
+        {type === "amount" ? (
+          <MoneyInput
+            name="discountValue"
+            placeholder="0"
+            aria-label={labels.discountValue}
+            aria-invalid={Boolean(discountError) || undefined}
+            value={value}
+            onValueChange={setValue}
+            className="h-control w-1/2 rounded-xl bg-card px-inset type-body"
+          />
+        ) : (
         <Input
           name="discountValue"
           type="number"
@@ -182,6 +194,7 @@ export function ComboItemsField({ config, brandId, initialItems, initialDiscount
           onChange={(event) => setValue(event.target.value)}
           className="h-control w-1/2 rounded-xl bg-card px-inset type-body tabular-nums"
         />
+        )}
       </div>
       {discountError ? (
         <p role="alert" className="-mt-stack type-secondary text-destructive">

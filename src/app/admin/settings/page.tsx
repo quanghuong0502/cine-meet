@@ -4,6 +4,7 @@ import { EmptyState } from "@/components/empty-state";
 import { AppearanceSettingsCard } from "@/components/admin/appearance-settings-card";
 import { PushSettingsCard } from "@/components/admin/push-settings-card";
 import { PronounsSettingsCard } from "@/components/admin/pronouns-settings-card";
+import { RoomReportsCard } from "@/components/admin/room-reports-card";
 import { SystemSettingsCard } from "@/components/admin/system-settings-card";
 import { PageHeader } from "@/components/page-header";
 import { LanguageSetting } from "@/components/language-setting";
@@ -26,6 +27,7 @@ export default async function AdminSettingsPage() {
       <SystemSettingsCard />
       <AppearanceSettingsCard />
       <PronounsSettingsCard />
+      <RoomReportsCard />
       <PushSettingsCard />
       <SecuritySetting hasPassword={admin.hasPassword} />
       <EmptyState

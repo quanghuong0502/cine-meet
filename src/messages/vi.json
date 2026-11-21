@@ -391,7 +391,7 @@
         },
         "price": {
           "label": "Giá (đồng)",
-          "placeholder": "vd. 79000"
+          "placeholder": "vd. 79.000"
         },
         "validFrom": {
           "label": "Áp dụng từ"
@@ -485,7 +485,7 @@
         },
         "price": {
           "label": "Giá vé (đồng)",
-          "placeholder": "vd. 95000"
+          "placeholder": "vd. 95.000"
         },
         "formatId": {
           "label": "Định dạng"
@@ -891,6 +891,24 @@
         "not_found": "Không tìm thấy người dùng này."
       }
     },
+    "roomReports": {
+      "title": "Báo cáo sai thông tin phòng",
+      "openCount": "{count, plural, other {# báo cáo chưa xử lý}}",
+      "noneOpen": "Không có báo cáo nào đang chờ",
+      "open": "Mở",
+      "emptyTitle": "Chưa có báo cáo nào",
+      "emptyDescription": "Người dùng báo sai thông tin phòng sẽ hiện ở đây.",
+      "status": {
+        "open": "Đang chờ",
+        "resolved": "Đã xử lý"
+      },
+      "by": "Từ {name}",
+      "resolve": "Đánh dấu đã xử lý",
+      "resolved": "Đã đánh dấu xử lý",
+      "errors": {
+        "generic": "Chưa làm được, thử lại nha"
+      }
+    },
     "fnbCategories": {
       "title": "Loại đồ ăn",
       "createTitle": "Thêm loại",
@@ -1000,6 +1018,15 @@
       "description": "Mật khẩu đăng nhập của [you].",
       "changePassword": "Đổi mật khẩu"
     },
+    "budget": {
+      "title": "Ngân sách tháng",
+      "ticket": "Vé",
+      "fnb": "Đồ ăn",
+      "placeholder": "vd. 500.000",
+      "save": "Lưu ngân sách",
+      "saved": "Đã lưu ngân sách",
+      "error": "Chưa lưu được, thử lại nha"
+    },
     "notifications": {
       "title": "Thông báo đẩy",
       "notConfigured": "Máy chủ chưa bật thông báo đẩy. Nhờ quản trị viên cài đặt giúp [me] nha. Thông báo trong app vẫn chạy bình thường.",
@@ -1025,18 +1052,20 @@
       },
       "typesTitle": "Loại thông báo được đẩy",
       "types": {
-        "appointment_invited": "Có người rủ [you] đi xem",
-        "appointment_reply": "Bạn bè trả lời kèo",
-        "participants_locked": "Đã chốt người",
-        "appointment_cancelled": "Kèo bị hủy",
-        "participant_withdrew": "Có người hủy kèo",
-        "friend_request": "Có lời mời bạn bè",
-        "friend_accepted": "Được chấp nhận bạn bè",
-        "poll_reminder": "Nhắc vote giờ",
-        "appointment_confirmed": "Kèo đã xác nhận",
-        "appointment_changed": "Đổi ghế hoặc giờ",
-        "response_deadline_warning": "Sắp hết hạn trả lời",
-        "showtime_reminder": "Nhắc trước giờ chiếu"
+        "appointment_invited": "Có người mời [you] vào lịch hẹn",
+        "appointment_reply": "Người được mời trả lời lịch hẹn của [you]",
+        "poll_reminder": "Nhắc [you] bình chọn giờ chiếu",
+        "participants_locked": "Người tạo chốt danh sách người tham gia",
+        "appointment_confirmed": "Lịch hẹn được xác nhận",
+        "appointment_changed": "Lịch hẹn đổi ghế hoặc giờ chiếu",
+        "appointment_cancelled": "Người tạo hủy lịch hẹn",
+        "participant_withdrew": "Có người rút khỏi lịch hẹn",
+        "friend_request": "Có người gửi lời mời bạn bè",
+        "friend_accepted": "Lời mời bạn bè được chấp nhận",
+        "response_deadline_warning": "Sắp hết hạn trả lời lời mời",
+        "showtime_reminder": "Sắp đến giờ chiếu",
+        "expense_reminder": "Nhắc ghi chi phí và đánh giá sau buổi xem",
+        "budget_warning": "Chi tiêu gần chạm hoặc vượt ngân sách"
       },
       "errors": {
         "network": "Mạng đang chập chờn, thử lại giúp [me] nha.",
@@ -1044,23 +1073,12 @@
         "subscribeFailed": "Chưa bật được thông báo trên thiết bị này. Thử lại hoặc kiểm tra quyền thông báo nha.",
         "notConfigured": "Máy chủ chưa bật thông báo đẩy."
       },
-      "insecure": "Thông báo đẩy chỉ chạy khi mở app bằng địa chỉ https hoặc localhost. Địa chỉ hiện tại là http thường nên trình duyệt đã tắt tính năng này."
-    },
-    "install": {
-      "title": "Cài app ra màn hình chính",
-      "why": "Cài app thì mở nhanh như app thường và nhận được thông báo đẩy, nhất là trên iPhone.",
-      "ios": {
-        "step1": "Mở trang này bằng Safari rồi bấm nút Chia sẻ",
-        "shareIcon": "Chia sẻ",
-        "step2": "Chọn Thêm vào Màn hình chính",
-        "step3": "Bấm Thêm, rồi mở app từ màn hình chính"
-      },
-      "android": {
-        "step1": "Bấm nút menu ba chấm của trình duyệt",
-        "step2": "Chọn Cài đặt ứng dụng hoặc Thêm vào màn hình chính"
-      },
-      "other": {
-        "step1": "Tìm nút Cài đặt ứng dụng trên thanh địa chỉ của trình duyệt."
+      "insecure": "Thông báo đẩy chỉ chạy khi mở app bằng địa chỉ https hoặc localhost. Địa chỉ hiện tại là http thường nên trình duyệt đã tắt tính năng này.",
+      "groups": {
+        "appointments": "Lịch hẹn xem phim",
+        "reminders": "Nhắc nhở",
+        "friends": "Bạn bè",
+        "budget": "Ngân sách"
       }
     }
   },
@@ -1166,6 +1184,31 @@
     "directions": "Chỉ đường",
     "rooms": "Phòng chiếu",
     "room": {
+      "sittingHistory": {
+        "summary": "[you] đã ngồi phòng này {count, plural, other {# lần}}: {seats}"
+      },
+      "review": {
+        "title": "Đánh giá phòng",
+        "sound": "Âm thanh",
+        "ac": "Điều hòa",
+        "cleanliness": "Độ sạch",
+        "commentPlaceholder": "Thêm vài dòng cảm nhận nha",
+        "save": "Lưu đánh giá",
+        "saved": "Đã lưu đánh giá phòng",
+        "needAllStars": "Chấm đủ 3 mục rồi lưu nha",
+        "error": "Chưa lưu được, thử lại nha"
+      },
+      "report": {
+        "action": "Báo sai thông tin",
+        "title": "Báo sai thông tin phòng",
+        "description": "Sơ đồ hay thông tin phòng này có gì không đúng? Kể cho [me] nghe, quản trị viên sẽ xem lại.",
+        "noteLabel": "Mô tả",
+        "notePlaceholder": "vd. Ghế F7 thực ra đã bị tháo",
+        "cancel": "Để sau",
+        "send": "Gửi báo cáo",
+        "sent": "Đã gửi báo cáo, cảm ơn [you] nha!",
+        "error": "Chưa gửi được, thử lại nha"
+      },
       "layers": "Lớp hiển thị",
       "layerScore": "Điểm ghế",
       "layerMine": "Đánh dấu của mình",
@@ -1199,6 +1242,22 @@
       "saveFailed": "Chưa lưu được. Kiểm tra mạng rồi thử lại.",
       "oldMarks": "Đánh dấu cũ",
       "oldMarksDescription": "Ghế đã dời hoặc bị xóa khi phòng đổi sơ đồ."
+    },
+    "filters": {
+      "title": "Bộ lọc",
+      "titleCount": "Bộ lọc ({count})",
+      "show": "{count, plural, =0 {Không có rạp} other {Xem # rạp}}",
+      "remove": "Bỏ lọc {name}",
+      "clear": "Xóa lọc",
+      "all": "Tất cả",
+      "frequentOption": "Thường tới",
+      "emptyTitle": "Không có rạp phù hợp",
+      "emptyDescription": "Thử bỏ bớt bộ lọc nha.",
+      "labels": {
+        "brand": "Thương hiệu",
+        "format": "Định dạng",
+        "frequent": "Thường tới"
+      }
     }
   },
   "friends": {
@@ -1286,11 +1345,9 @@
   },
   "appointments": {
     "title": "Lịch hẹn",
-    "listTitle": "Lịch hẹn của [you]",
     "add": "Tạo lịch hẹn",
     "emptyTitle": "Chưa có kèo nào hết",
     "emptyDescription": "Chọn phim, chọn giờ rồi rủ bạn bè đi xem thôi!",
-    "pastTitle": "Đã kết thúc",
     "byMe": "[you] tạo",
     "byName": "{name} tạo",
     "needsReply": "Chờ [you] trả lời",
@@ -1348,7 +1405,7 @@
       "groupsLabel": "Nhóm",
       "noFriends": "Chưa có bạn bè để mời. Thêm bạn bè trong Hồ sơ trước nha.",
       "allPaidByCreatorLabel": "Mình bao hết chi phí",
-      "allPaidByCreatorHint": "Mọi người vẫn chọn ghế và đồ ăn riêng, nhưng toàn bộ chi phí buổi này sẽ tính cho mình. Không đổi lại được sau khi tạo.",
+      "allPaidByCreatorHint": "Mọi người vẫn chọn ghế và đồ ăn riêng, nhưng toàn bộ chi phí buổi này sẽ tính cho mình.",
       "deadlineLabel": "Trả lời trước",
       "deadlineDate": "Ngày trả lời trước",
       "deadlineTime": "Giờ trả lời trước",
@@ -1495,6 +1552,12 @@
         "save": "Lưu chi phí",
         "saved": "Đã lưu chi phí",
         "groupTotal": "Cả nhóm"
+      },
+      "rating": {
+        "title": "Đánh giá buổi xem",
+        "movie": "Phim",
+        "seat": "Ghế {seatCode}",
+        "error": "Chưa lưu được, thử lại nha"
       }
     },
     "invite": {
@@ -1504,7 +1567,37 @@
       "done": "Đã mời thêm {count, plural, one {# người} other {# người}}"
     },
     "answered": "{answered}/{total} đã trả lời",
-    "peopleGoing": "{count, plural, one {# người đi} other {# người đi}}"
+    "peopleGoing": "{count, plural, one {# người đi} other {# người đi}}",
+    "filters": {
+      "title": "Bộ lọc",
+      "titleCount": "Bộ lọc ({count})",
+      "show": "{count, plural, =0 {Không có lịch hẹn} other {Xem # lịch hẹn}}",
+      "remove": "Bỏ lọc {name}",
+      "clear": "Xóa lọc",
+      "all": "Tất cả",
+      "labels": {
+        "status": "Trạng thái",
+        "role": "Vai trò"
+      },
+      "options": {
+        "status": {
+          "reply": "Chờ [you] trả lời",
+          "inviting": "Đang mời",
+          "locked": "Đã chốt người",
+          "planning": "Đang lên kế hoạch",
+          "confirmed": "Đã chốt",
+          "completed": "Đã xem xong",
+          "cancelled": "Đã hủy",
+          "draft": "Nháp"
+        },
+        "role": {
+          "mine": "[you] tạo",
+          "invited": "[you] được mời"
+        }
+      }
+    },
+    "filteredEmptyTitle": "Không có lịch hẹn nào",
+    "filteredEmptyDescription": "Thử bỏ bớt bộ lọc."
   },
   "notifications": {
     "title": "Thông báo",
@@ -1600,11 +1693,79 @@
       "showtime_reminder": {
         "title": "Sắp tới giờ xem rồi",
         "body": "{movieTitle} lúc {time}, {place}. Ghế của [you]: {seatCode}."
+      },
+      "expense_reminder": {
+        "title": "Nhớ ghi chi phí nha",
+        "body": "Xem {movieTitle} xong chưa? Vào ghi chi phí thực tế và chấm điểm ghế nha."
+      },
+      "budget_warning": {
+        "eighty": {
+          "title": "Sắp chạm ngân sách rồi",
+          "body": "Tháng này [you] đã tiêu 80% ngân sách {budgetCategory}."
+        },
+        "full": {
+          "title": "Vượt ngân sách rồi nè",
+          "body": "Tháng này [you] đã tiêu hết ngân sách {budgetCategory}."
+        }
+      },
+      "budgetCategories": {
+        "ticket": "vé",
+        "fnb": "đồ ăn"
       }
     },
     "test": {
       "title": "Thử thông báo",
       "body": "Thông báo đẩy chạy ngon lành rồi nè!"
+    }
+  },
+  "dashboard": {
+    "title": "Tổng quan",
+    "logViewing": {
+      "action": "Ghi lại buổi xem",
+      "title": "Ghi lại buổi đã xem",
+      "movie": "Phim",
+      "noMovie": "Không nhớ/không chọn",
+      "room": "Rạp đã xem",
+      "noRoom": "Không nhớ/không chọn",
+      "ticket": "Tiền vé (đồng)",
+      "food": "Tiền đồ ăn (đồng)",
+      "other": "Khoản khác (đồng)",
+      "note": "Ghi chú",
+      "date": "Ngày xem",
+      "submit": "Lưu buổi xem",
+      "saved": "Đã lưu buổi xem",
+      "futureDate": "Chưa ghi được buổi xem ở ngày chưa tới nha.",
+      "error": "Chưa lưu được, thử lại nha"
+    },
+    "spending": {
+      "title": "Chi tiêu",
+      "periods": {
+        "week": "Tuần",
+        "month": "Tháng",
+        "year": "Năm"
+      },
+      "ticket": "Vé",
+      "food": "Đồ ăn"
+    },
+    "budget": {
+      "title": "Ngân sách tháng",
+      "notSet": "Chưa đặt ngân sách. Vào Cài đặt để đặt và nhận cảnh báo khi gần hết nha.",
+      "categories": {
+        "ticket": "Vé",
+        "fnb": "Đồ ăn"
+      }
+    },
+    "stats": {
+      "title": "Thống kê xem phim",
+      "empty": "Chưa có buổi xem nào được ghi nhận.",
+      "countLabel": "Số buổi xem",
+      "averageLabel": "Trung bình mỗi buổi",
+      "genres": "Thể loại hay xem",
+      "branches": "Rạp hay đi"
+    },
+    "companions": {
+      "title": "Hay đi xem cùng",
+      "count": "{count, plural, other {# buổi}}"
     }
   },
   "offline": {

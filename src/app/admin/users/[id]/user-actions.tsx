@@ -67,7 +67,6 @@ export function UserActions({ id, name, locked, isSelf, canResetPassword, resetH
         title={t(locked ? "unlockTitle" : "lockTitle", { name })}
         description={t(locked ? "unlockDescription" : "lockDescription")}
         tone={locked ? "default" : "destructive"}
-        icon={locked ? <LockOpen aria-hidden /> : <Lock aria-hidden />}
         confirmLabel={t(locked ? "unlock" : "lock")}
         pending={isPending}
         onConfirm={confirm}
