@@ -872,25 +872,6 @@
         }
       }
     },
-    "pushTest": {
-      "title": "Test push",
-      "cardDescription": "Send a test notification to a user's devices to check push works.",
-      "open": "Open",
-      "targetLabel": "Send to",
-      "targetPlaceholder": "Pick a user",
-      "targetOption": "{name} ({count, plural, =0 {no devices on} other {# devices}})",
-      "send": "Send test",
-      "sent": "Sent to {name}, {count, plural, one {# device} other {# devices}}",
-      "noDevice": "{name} hasn't turned push on for any device.",
-      "allFailed": "Couldn't reach {name}. Reason: {reason}. Turn notifications off and on again on that device if the VAPID keys just changed.",
-      "notConfigured": "The server has no VAPID keys, so nothing can be sent. Add VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY and VAPID_SUBJECT, then restart the server.",
-      "errors": {
-        "pick": "Pick who to send to first.",
-        "network": "Network is shaky, please try again.",
-        "not_configured": "The server has no VAPID keys.",
-        "not_found": "Couldn't find this user."
-      }
-    },
     "roomReports": {
       "title": "Room problem reports",
       "openCount": "{count, plural, one {# report open} other {# reports open}}",
@@ -1030,7 +1011,7 @@
     "notifications": {
       "title": "Push notifications",
       "notConfigured": "The server doesn't have push notifications turned on. Ask the admin to set it up. In-app notifications still work.",
-      "needsInstall": "On iPhone and iPad, push only works once the app is on the home screen. Follow the steps below, then open the app from the home screen and come back here.",
+      "needsInstall": "On iPhone and iPad, push only works once the app is on the home screen. Add the app to the home screen, open it from there, then come back here.",
       "unsupported": "This browser doesn't support push notifications. In-app notifications still work.",
       "denied": "You're blocking notifications for this app. Allow them again in your browser or phone settings.",
       "turnOn": "Turn on for this device",
@@ -1712,10 +1693,6 @@
         "ticket": "ticket",
         "fnb": "food"
       }
-    },
-    "test": {
-      "title": "Test notification",
-      "body": "Push notifications are working!"
     }
   },
   "dashboard": {

@@ -37,13 +37,6 @@ export async function buildPushPayload(type: NotificationType, payload: Notifica
   return renderNotification(t, type, payload, locale);
 }
 
-/** The "send a test" push, in the person's language. */
-export async function buildTestPayload(locale: "vi" | "en"): Promise<PushPayload> {
-  const messages = await loadMessages(locale, await currentPronouns());
-  const t = createTranslator({ locale, messages: messages as never, namespace: "notifications.test" as never }) as unknown as (key: string) => string;
-  return { title: t("title"), body: t("body"), url: "/settings" };
-}
-
 export interface DeliverOptions {
   sender: PushSender;
   now?: Date;

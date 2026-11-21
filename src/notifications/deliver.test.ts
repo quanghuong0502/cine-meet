@@ -214,13 +214,5 @@ describe("web push delivery", () => {
       expect(push.subscriptionSchema.safeParse({ endpoint: "http://x.example/1", keys }).success).toBe(false);
       expect(push.subscriptionSchema.safeParse({ endpoint: "https://x.example/1", keys }).success).toBe(true);
     });
-
-    it("a test push reaches every device and cleans up the gone ones", async () => {
-      await device(1);
-      await device(2);
-      const { fn } = sender((endpoint) => (endpoint.endsWith("/2") ? { status: "gone" } : { status: "ok" }));
-      expect(await push.sendTestPush(user, { title: "t", body: "b", url: "/" }, fn, { ttlSeconds: 60 })).toEqual({ sent: 1, failed: 0, removed: 1, errors: [] });
-      expect(await push.listDevices(user)).toHaveLength(1);
-    });
   });
 });

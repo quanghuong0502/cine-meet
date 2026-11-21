@@ -147,7 +147,7 @@ export function AuditoriumEditor({ auditorium, branches, seatTypes, initialConfi
       {/* The map stays under the title bar while the controls scroll beneath it. */}
       {/* transform-gpu: its own compositor layer, so on iOS the browser only moves it while scrolling instead of repainting the
           whole map at every new position (a sticky block without one lags and jumps behind the scroll). */}
-      <div data-scroll-probe className="sticky top-target z-10 -mx-inset flex transform-gpu flex-col gap-tight bg-background px-inset pb-inset-xs">
+      <div className="sticky top-target z-10 -mx-inset flex transform-gpu flex-col gap-tight bg-background px-inset pb-inset-xs">
         <SeatMap
           geometry={built.geometry}
           seats={built.seats}

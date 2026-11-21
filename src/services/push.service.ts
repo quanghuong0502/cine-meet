@@ -4,7 +4,6 @@ import { connectToDatabase } from "@/lib/db";
 import { describeDevice, type DeviceKind } from "@/lib/device";
 import { PushSubscription } from "@/models/push-subscription";
 import { User } from "@/models/user";
-import type { PushPayload, PushSendOptions, PushSender } from "@/notifications/push";
 import { NOTIFICATION_TYPES, type NotificationType } from "@/notifications/types";
 
 export const subscriptionSchema = z.object({
@@ -77,49 +76,3 @@ export async function pushRecipients(userIds: string[], type: NotificationType):
   return new Set(wanting.map((u) => u._id.toString()));
 }
 
-export interface TestResult {
-  sent: number;
-  failed: number;
-  removed: number;
-  /** Why the failed ones failed (codes like http_403, or the library's own words), so the admin can fix the cause. */
-  errors: string[];
-}
-
-/** "Send a test": straight to every device of the person, so they can see push works (no retry, no outbox). */
-export async function sendTestPush(userId: string, payload: PushPayload, sender: PushSender, options: PushSendOptions): Promise<TestResult> {
-  await connectToDatabase();
-  const subscriptions = await PushSubscription.find({ userId }).lean();
-  const result: TestResult = { sent: 0, failed: 0, removed: 0, errors: [] };
-  for (const sub of subscriptions) {
-    const outcome = await sender({ endpoint: sub.endpoint, keys: { p256dh: sub.keys?.p256dh ?? "", auth: sub.keys?.auth ?? "" } }, payload, options);
-    if (outcome.status === "ok") {
-      result.sent++;
-      await PushSubscription.updateOne({ _id: sub._id }, { $set: { lastUsedAt: new Date() } });
-    } else if (outcome.status === "gone") {
-      result.removed++;
-      await PushSubscription.deleteOne({ _id: sub._id });
-    } else {
-      result.failed++;
-      if (!result.errors.includes(outcome.message)) result.errors.push(outcome.message);
-    }
-  }
-  return result;
-}
-
-export interface PushTarget {
-  id: string;
-  name: string;
-  deviceCount: number;
-}
-
-/** Active regular accounts with how many devices each has push turned on: the list the admin picks from to send a test. */
-export async function listPushTargets(): Promise<PushTarget[]> {
-  await connectToDatabase();
-  const users = await User.find({ role: "user", status: "active" }, "name").sort({ name: 1 }).lean();
-  const counts = await PushSubscription.aggregate<{ _id: unknown; count: number }>([
-    { $match: { userId: { $in: users.map((u) => u._id) } } },
-    { $group: { _id: "$userId", count: { $sum: 1 } } },
-  ]);
-  const byUser = new Map(counts.map((c) => [String(c._id), c.count]));
-  return users.map((u) => ({ id: u._id.toString(), name: u.name, deviceCount: byUser.get(u._id.toString()) ?? 0 }));
-}

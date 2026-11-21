@@ -68,9 +68,9 @@ Nguồn chính: [firt.dev, iOS PWA compatibility](https://firt.dev/notes/pwa-ios
 - Có nhiều báo cáo lỗi khung nhìn, khoảng trống đáy khi có phần tử `fixed` cao bằng màn hình, và phần tử `fixed` ở đáy khi bàn phím mở (WebKit [218983](https://bugs.webkit.org/show_bug.cgi?id=218983), [301994](https://bugs.webkit.org/show_bug.cgi?id=301994)). Mọi thay đổi bố cục cố định phải thử trên iPhone thật ở chế độ PWA.
 - Chưa tìm được nguồn chính thức về `viewport-fit` và thanh trạng thái riêng cho iOS 26: kiểm tra trên máy thật.
 
-### Công cụ kiểm tra có sẵn
+### Công cụ kiểm tra
 
-Khi chạy dev, nút sóng phát ở mép phải trang (`src/components/dev/dom-recorder.tsx`) ghi cấu trúc DOM, kết quả đo chuẩn mobile (vùng chạm, khoảng cách, chữ nhỏ, cuộn ngang), vùng an toàn, chế độ standalone và từng khung hình khi bàn phím mở hoặc đóng vào `.next/dev-dom.json`. Trang có khối dính cần soi gắn `data-scroll-probe` lên khối đó: khi cuộn, nút ghi vết từng khung hình vị trí khối (`probeTop`, `probeHeight`) và khoảng hở với thanh tiêu đề dính (`gap`); khối dính đúng thì `probeTop` và `gap` không đổi giữa các khung hình. Nút kéo thả được (nhấn giữ rồi kéo) và nhớ vị trí. Bật nút trên iPhone, dùng app, rồi đọc file. Tắt nút thì dữ liệu bị xóa.
+Nhánh `production` không có nút ghi DOM (`DomRecorder`, `/api/dev/dom`) và không có màn gửi thử push của admin; hai thứ này chỉ còn ở nhánh `main` để dev.
 
 ## Service worker (từ Sprint 4)
 

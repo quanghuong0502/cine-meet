@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { EmptyState } from "@/components/empty-state";
 import { AppearanceSettingsCard } from "@/components/admin/appearance-settings-card";
-import { PushSettingsCard } from "@/components/admin/push-settings-card";
 import { PronounsSettingsCard } from "@/components/admin/pronouns-settings-card";
 import { RoomReportsCard } from "@/components/admin/room-reports-card";
 import { SystemSettingsCard } from "@/components/admin/system-settings-card";
@@ -28,7 +27,6 @@ export default async function AdminSettingsPage() {
       <AppearanceSettingsCard />
       <PronounsSettingsCard />
       <RoomReportsCard />
-      <PushSettingsCard />
       <SecuritySetting hasPassword={admin.hasPassword} />
       <EmptyState
         title={states("comingSoon")}
