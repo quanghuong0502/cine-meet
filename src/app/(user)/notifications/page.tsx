@@ -5,6 +5,7 @@ import { NotificationList } from "@/components/notification-list";
 import { PageHeader } from "@/components/page-header";
 import { requireUser } from "@/lib/auth/guards";
 import { renderNotification } from "@/notifications/render";
+import { sweepDueNotifications } from "@/notifications/sweep";
 import { listNotifications } from "@/services/notification.service";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -16,6 +17,8 @@ export default async function NotificationsPage() {
   const user = await requireUser();
   const t = await getTranslations("notifications");
   const types = await getTranslations("notifications.types");
+  // The layout does this too, but a page and its layout are read side by side: bring due reminders in before the list is read.
+  await sweepDueNotifications();
   const [rows, locale] = [await listNotifications(user.userId), await getLocale()];
   const items = rows.map((row) => ({
     id: row.id,

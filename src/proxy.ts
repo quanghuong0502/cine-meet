@@ -10,7 +10,8 @@ export default auth;
 export const config = {
   // Skip Next internals and static/PWA assets so they never get redirected to /login.
   // push/onesignal: OneSignal's service worker file, which the browser fetches without a session.
+  // api/cron: called by the host's scheduler, which has no session; the route checks CRON_SECRET itself.
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|sw.js|offline|push/onesignal|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|sw.js|offline|push/onesignal|api/cron|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
   ],
 };

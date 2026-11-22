@@ -2,6 +2,7 @@ import { connectToDatabase } from "@/lib/db";
 import { Notification } from "@/models/notification";
 import { NotificationDelivery } from "@/models/notification-delivery";
 import { pushRecipients } from "@/services/push.service";
+import { kickDeliveries } from "./kick";
 import type { NotificationInput, NotificationType } from "./types";
 
 /**
@@ -19,6 +20,8 @@ export async function enqueueNotifications(inputs: NotificationInput[], options:
     // `skipPushFor`: people whose phone is already (or will be) told by a push scheduled at OneSignal; they only get the in-app message.
     const toPush = rows.filter((n) => !options.skipPushFor?.has(n.recipientId.toString()));
     await queuePush(toPush.map((n) => ({ id: n._id, recipientId: n.recipientId.toString(), type: n.type })));
+    // Right after the response, so the push does not wait for a worker that may not be running (see kick.ts).
+    await kickDeliveries();
   } catch {
     console.error("notifications: could not write the outbox");
   }
