@@ -193,7 +193,7 @@
   --inset-top: max(var(--spacing-inset), env(safe-area-inset-top));
   --nav-clearance: calc(var(--spacing-nav) + var(--spacing-nav-gap) + var(--nav-bottom));
   /* Where toasts sit on phones: above the floating bottom menu and the fixed "Add" button, never on top of them. */
-  --toast-offset: calc(var(--nav-clearance) + var(--spacing-control) + 1.5rem);
+  --toast-offset: calc(var(--nav-clearance) + var(--spacing-nav-gap)); /* toast sits right above the floating menu pill */
   --background: oklch(0.99 0.006 var(--brand-h));
   --foreground: oklch(0.22 0.03 var(--brand-h));
   --card: oklch(1 0 0);

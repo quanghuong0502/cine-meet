@@ -24,7 +24,9 @@ import { recomputeEstimate, releaseUnusedClaims } from "@/services/appointment-e
 import { getSystemSettings } from "@/services/settings.service";
 import { enqueueNotifications } from "@/notifications/outbox";
 import type { NotificationPayload, NotificationType } from "@/notifications/types";
-import { cancelScheduled, scheduleDeadlineWarning } from "@/services/scheduled-notification.service";
+import { deadlineWarningSendAt } from "@/lib/appointment/reminders";
+import { pushProvider } from "@/notifications/provider";
+import { cancelScheduled, dropDeadlineWarningFor, scheduleDeadlineWarning } from "@/services/scheduled-notification.service";
 
 export type Doc = HydratedDocument<AppointmentDoc>;
 
@@ -234,10 +236,15 @@ export async function inviteMore(creatorId: string, id: string, inviteeIds: stri
     if (wanted.some((userId) => participantOf(doc, userId))) return { ok: false as const, error: "duplicate" as const };
     if (doc.participants.length + wanted.length > MAX_INVITEES) return { ok: false as const, error: "limit" as const };
     for (const userId of wanted) doc.participants.push({ userId, status: "invited" });
-    return { ok: true as const, addedIds: wanted, wasDraft: doc.status === "DRAFT" };
+    return { ok: true as const, addedIds: wanted, wasDraft: doc.status === "DRAFT", responseDeadline: doc.responseDeadline };
   });
   // A draft has told nobody yet; everyone on it is told when it is sent.
   if (result.ok && !result.wasDraft) await notifyPeople(id, creatorId, "appointment_invited", result.addedIds);
+  // With OneSignal the "about to expire" push is held per person at the time it was scheduled, so the newly invited have none yet:
+  // schedule it again (only while its time is still ahead; otherwise the one that is due would be dropped).
+  if (result.ok && !result.wasDraft && result.responseDeadline && pushProvider() === "onesignal" && deadlineWarningSendAt(result.responseDeadline, now)) {
+    await scheduleDeadlineWarning(id, result.responseDeadline, now);
+  }
   return result.ok ? { ok: true, addedIds: result.addedIds } : result;
 }
 
@@ -286,7 +293,10 @@ export async function declineInvitation(userId: string, id: string, reason?: str
     for (const option of doc.timeOptions) setOptionVote(option, userId, null);
     return { ok: true as const, creatorId: doc.creatorId.toString() };
   });
-  if (result.ok) await notifyPeople(id, userId, "appointment_reply", [result.creatorId], { kind: "decline", reason: text });
+  if (result.ok) {
+    await notifyPeople(id, userId, "appointment_reply", [result.creatorId], { kind: "decline", reason: text });
+    await dropDeadlineWarningFor(id, userId);
+  }
   return result;
 }
 
@@ -314,6 +324,8 @@ export async function setVote(
   });
   // Only the moment a person goes from "not in" to "in" is news for the creator; changing votes afterwards is not.
   if (result.ok && result.becameAccepted) await notifyPeople(id, userId, "appointment_reply", [result.creatorId], { kind: "agree" });
+  // They have answered: the "about to expire" warning is no longer for them (taking a vote back does not bring it back).
+  if (result.ok && vote !== null) await dropDeadlineWarningFor(id, userId);
   return result;
 }
 
@@ -342,7 +354,10 @@ export async function proposeOption(
     me.declineReason = undefined;
     return { ok: true as const, creatorId: doc.creatorId.toString(), optionId: added._id.toString() };
   });
-  if (result.ok) await notifyPeople(id, userId, "appointment_reply", [result.creatorId], { kind: "propose" });
+  if (result.ok) {
+    await notifyPeople(id, userId, "appointment_reply", [result.creatorId], { kind: "propose" });
+    await dropDeadlineWarningFor(id, userId);
+  }
   return result;
 }
 
@@ -389,6 +404,8 @@ export async function submitResponse(
   if (result.ok) {
     if (result.proposedCount > 0) await notifyPeople(id, userId, "appointment_reply", [result.creatorId], { kind: "propose" });
     else if (result.becameAccepted) await notifyPeople(id, userId, "appointment_reply", [result.creatorId], { kind: "agree" });
+    // An empty save is not an answer, so only a save with votes or suggestions ends the warning for this person.
+    if (input.votes.length > 0 || input.proposals.length > 0) await dropDeadlineWarningFor(id, userId);
   }
   return result;
 }

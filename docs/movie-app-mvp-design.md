@@ -54,6 +54,7 @@
   chạy local thì không thử được đăng nhập Google hay cài PWA trên điện thoại thật.
 - **Worker** (gửi Web Push, nhắc theo giờ, tự chuyển COMPLETED) chạy cùng tiến trình web: `instrumentation.ts` khởi động vòng lặp
   mỗi phút khi `ENABLE_WORKER=true`. Nhiều instance vẫn an toàn nhờ `findOneAndUpdate` (mục 4.3). Tự viết, không dùng Agenda.
+  Trên Vercel (serverless) không bật worker, xem mục 4.3 điểm 6.
 - **Tách database** theo môi trường (dev, staging, production) bằng `MONGODB_URI` khác nhau.
 
 ---
@@ -327,6 +328,11 @@ Tạm gác vì cần Zalo OA và ZNS có phí. Kiến trúc kênh đã tách (`n
 3. Tác vụ chạy **mỗi phút** tìm bản ghi `pending` có `sendAt <= now`. Dùng `findOneAndUpdate` để chuyển sang `processing` trước khi gửi, tránh gửi trùng.
 4. Khi admin đổi số phút, hoặc lịch hẹn đổi giờ / bị hủy: tính lại `sendAt` hoặc hủy các bản ghi còn `pending`.
 5. **Đã chốt: tự viết, không dùng Agenda.** Worker chạy cùng tiến trình web (mục 1, Triển khai). In-app được ghi trực tiếp khi tạo `notifications` (không cần worker); worker cần cho gửi Web Push (có retry), nhắc theo giờ và tự chuyển COMPLETED.
+6. **Khi không chạy được worker (Vercel gói free):** `ENABLE_WORKER` để trống và ba việc thay thế, gốc vẫn là hàng đợi và `scheduledNotifications` ở trên.
+   (a) **Gửi ngay** sau khi ghi hàng đợi bằng `after()` của Next (`src/notifications/kick.ts`), thông báo tức thì tới trong vài giây.
+   (b) **Quét khi mở app** (`sweep.ts`, gọi ở layout người dùng và trang thông báo, tối đa 30 giây một lần mỗi instance): đưa thông báo theo giờ đã tới hạn vào danh sách trong app.
+   (c) **Cron mỗi ngày một lần** (`vercel.json` gọi `/api/cron/tick`, khóa `CRON_SECRET`): quét, gửi lại hàng lỗi và tự chuyển COMPLETED, là lưới an toàn (Vercel Cron gói free không chạy thường hơn).
+   Phần đẩy của thông báo theo giờ do OneSignal giữ đúng giờ (mục 4.4), nên nhắc lịch không phụ thuộc cron.
 
 ### 4.4 Web Push (thông báo đẩy qua PWA)
 
@@ -334,8 +340,11 @@ Tạm gác vì cần Zalo OA và ZNS có phí. Kiến trúc kênh đã tách (`n
 - Lý do: miễn phí, không bên thứ ba giữ dữ liệu người dùng, ít phụ thuộc, và đủ cho quy mô nhóm nhỏ. Chạy được trên Android, Chrome/Edge/Firefox desktop
   và iPhone (iOS 16.4 trở lên, chỉ khi app đã cài ra màn hình chính).
 - Đã cân nhắc và không chọn: **Firebase Cloud Messaging** (thêm SDK và phụ thuộc Google cho việc mà chuẩn Web Push đã làm được);
-  **OneSignal/Novu** (dịch vụ ngoài, dữ liệu thiết bị nằm ở bên thứ ba, thêm chi phí khi mở rộng); các gói PWA tự sinh service worker
+  **Novu** (dịch vụ ngoài, thêm chi phí khi mở rộng); các gói PWA tự sinh service worker
   (như next-pwa/Serwist) vì mình chỉ cần một service worker nhỏ cho push, không cần cache offline phức tạp.
+- **OneSignal: ban đầu không chọn, đổi ý ngày 2026-11-22** (chủ dự án quyết định) khi quyết định deploy lên **Vercel gói free**, nơi worker
+  chạy cùng tiến trình web không chạy đều được (xem "Nhà cung cấp OneSignal" bên dưới). Cái giá phải chấp nhận: dữ liệu thiết bị và nội dung
+  thông báo đã vẽ sẵn đi qua bên thứ ba. Web Push tự gửi **vẫn còn nguyên trong code** và là mặc định; đổi lại chỉ bằng một biến môi trường.
 
 **Cách hoạt động**
 - Trình duyệt đăng ký qua `PushManager.subscribe` với khóa công khai VAPID; server lưu subscription vào `pushSubscriptions`.
@@ -343,6 +352,20 @@ Tạm gác vì cần Zalo OA và ZNS có phí. Kiến trúc kênh đã tách (`n
 - Worker (mục 4.3) lấy `notifications` chưa gửi, gọi `web-push` tới từng subscription của người nhận. `web-push` lo việc mã hóa payload.
 - **Service worker** `public/sw.js`: sự kiện `push` hiện thông báo; `notificationclick` mở đúng trang (deep link, ví dụ chi tiết lịch hẹn).
   Nội dung push ngắn (tiêu đề, một dòng, link); chi tiết xem trong app.
+
+**Nhà cung cấp OneSignal (từ 2026-11-22)**
+- `PUSH_PROVIDER` = `webpush` (mặc định, cách ở trên) hoặc `onesignal`; chỉ một chạy mỗi lúc. Cần `ONESIGNAL_APP_ID` và `ONESIGNAL_API_KEY` (khóa REST, chỉ ở server, không đặt tên `NEXT_PUBLIC_`).
+  Khi là `webpush`, mọi thứ ở trên giữ nguyên, kể cả `pushSubscriptions` và khóa VAPID.
+- **Hàng đợi, gửi lại 3 lần, `pushOff`, chữ theo ngôn ngữ và cách xưng hô của người nhận không đổi.** Chỉ bước gửi đổi: `src/notifications/onesignal.ts` gọi REST của OneSignal,
+  nhắm `include_subscription_ids`, gửi **chữ đã vẽ sẵn** (không dùng mẫu của OneSignal) nên `[you]`, `[me]` và `locale` vẫn đúng. Kênh vẫn ghi `webpush` trong `notificationDeliveries` (nghĩa là "đẩy tới điện thoại").
+- **Thiết bị:** trình duyệt nạp SDK OneSignal (chỉ ở trang Cài đặt), xin quyền khi người dùng bấm, rồi server lưu **id đăng ký** của thiết bị dưới `userId` lấy từ session vào `oneSignalDevices`
+  (tách khỏi `pushSubscriptions`). Id là UUID ngẫu nhiên mỗi thiết bị nên không cần xác thực danh tính bằng JWT và không thể nhận thông báo của người khác chỉ vì biết `userId`.
+  Id mà OneSignal báo hết đăng ký thì xóa dòng thiết bị, như xử lý 404/410 của Web Push. Worker riêng của OneSignal ở `public/push/onesignal/` (phạm vi riêng) để không đụng `public/sw.js`.
+- **Thông báo theo giờ:** lúc xếp `scheduledNotifications`, app giao phần đẩy cho OneSignal giữ tới giờ (`send_after`), mỗi người một tin; id tin lưu ở `pushIds` để hủy khi lịch đổi, bị hủy, hoặc khi người đó đã trả lời
+  (nhắc "sắp hết hạn"). Tới giờ, phần quét chỉ tạo thông báo trong app cho những người đã có tin ở OneSignal (không đẩy lần hai); hàng không giao được vẫn do phần quét đẩy.
+  Giới hạn đã đối chiếu tài liệu OneSignal: hẹn trước tối đa 30 ngày (app dùng 29 ngày, xa hơn thì để phần quét lo); hủy chỉ chặn thiết bị chưa được xếp lệnh gửi; 150 yêu cầu/giây/app ở gói free.
+- **Chấp nhận:** chữ của tin đã hẹn là chụp lúc hẹn (đổi ghế hay chỗ chiếu phải đi qua `scheduleReminders` để hẹn lại); hủy tin ở OneSignal có thể thất bại hoặc quá muộn nên đôi khi một nhắc của lịch đã hủy vẫn tới máy;
+  người đang bật thông báo ở Web Push phải bật lại một lần khi đổi sang OneSignal.
 - **Đăng ký:** user bấm "Bật thông báo trên thiết bị này" trong Hồ sơ (xin quyền khi người dùng chủ động bấm, không xin lúc vừa mở app).
   Mỗi thiết bị một bản ghi; tắt được từng thiết bị. Nút "Gửi thử thông báo" để kiểm tra.
 - **iPhone:** chỉ nhận khi đã cài PWA ra màn hình chính; Hồ sơ hiển thị hướng dẫn cài khi phát hiện iPhone chưa cài.
@@ -413,7 +436,7 @@ aiUsage                  { date, userId, provider, model, inputTokens, outputTok
 - Middleware kiểm tra role cho `/admin/*`.
 - Mọi truy vấn dữ liệu cá nhân (chi tiêu, lịch hẹn, đánh dấu ghế) lọc theo `userId` lấy từ session, không lấy từ client.
 - Lịch hẹn: chỉ người tạo được chốt người và chốt chi tiết; người tham gia chỉ sửa phần của mình (phản hồi, đồ ăn nếu được phép).
-- API key AI và cặp khóa VAPID (Web Push) để trong biến môi trường, không lưu trong database (Zalo cũng vậy khi làm giai đoạn sau).
+- API key AI, cặp khóa VAPID (Web Push), khóa REST của OneSignal và `CRON_SECRET` để trong biến môi trường, không lưu trong database và không để trong file được commit, kể cả `.env.example` (Zalo cũng vậy khi làm giai đoạn sau).
 - **Admin chỉ dùng khu quản trị:** tài khoản `admin` chỉ có giao diện `/admin/*`, không có liên kết sang app người dùng, và mở trang người dùng sẽ được đưa về khu quản trị (muốn xem app người dùng thì dùng một tài khoản `user`). **Mọi thiết lập tài khoản** (ngôn ngữ, đổi mật khẩu, thông báo) nằm trong trang Cài đặt.
 - **Middleware chỉ là lớp đầu.** Nó chạy ở edge, chỉ đọc được JWT, không truy cập MongoDB. Mọi trang và API server gọi
   `requireUser()` / `requireAdmin()` (`src/lib/auth/guards.ts`) để đọc lại `status` và `role` từ DB, nên khóa hoặc hạ quyền

@@ -1,22 +1,28 @@
 "use client";
 
-import { Bell, BellOff, LoaderCircle, Smartphone, Trash2 } from "lucide-react";
+import { BellOff, LoaderCircle, Smartphone, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { removePushDeviceAction, savePushSubscriptionAction, setPushPreferenceAction } from "@/actions/push";
+import { removePushDeviceAction, saveOneSignalDeviceAction, savePushSubscriptionAction, setPushPreferenceAction } from "@/actions/push";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { formatDayLong } from "@/lib/datetime";
+import { loadOneSignal, waitForSubscriptionId } from "@/lib/onesignal-client";
+import type { PushProvider } from "@/notifications/provider";
 import { NOTIFICATION_GROUPS, type NotificationType } from "@/notifications/types";
 import type { DeviceView } from "@/services/push.service";
 
 interface Props {
-  /** VAPID public key; null when the server has no keys (push is off). */
+  /** Who delivers pushes on this server (PUSH_PROVIDER). */
+  provider: PushProvider;
+  /** VAPID public key (Web Push); null when the server has no keys, so push is off. */
   publicKey: string | null;
+  /** OneSignal app id (OneSignal); null when it is not set up, so push is off. The REST key never comes here. */
+  oneSignalAppId: string | null;
   devices: DeviceView[];
   /** Kinds the person turned off for push. */
   pushOff: NotificationType[];
@@ -28,6 +34,7 @@ type Support =
   | "insecure" // opened over plain http (a LAN address): browsers switch service workers and push off
   | "unsupported" // the browser has no Web Push
   | "needs_install" // iPhone and iPad only get push once the app is on the home screen
+  | "load_failed" // OneSignal's script could not be loaded (offline, or blocked)
   | "ready";
 
 /** The key goes to `subscribe` as bytes; it is stored and sent as URL-safe base64. */
@@ -43,11 +50,13 @@ function keyToBytes(base64: string): Uint8Array<ArrayBuffer> {
  * Notification settings: turn push on for this device (asked only when the person taps, as the platform requires), send a test, see and
  * remove devices, and choose which kinds of message are pushed. In-app messages are always kept, so these switches only control push.
  */
-export function NotificationSettings({ publicKey, devices: initialDevices, pushOff: initialOff, types }: Props) {
+export function NotificationSettings({ provider, publicKey, oneSignalAppId, devices: initialDevices, pushOff: initialOff, types }: Props) {
   const t = useTranslations("settings.notifications");
   const locale = useLocale();
+  const configured = provider === "onesignal" ? oneSignalAppId !== null : publicKey !== null;
   const [support, setSupport] = useState<Support>("checking");
   const [permission, setPermission] = useState<NotificationPermission>("default");
+  // What tells this device apart from the others in the list: its Web Push endpoint, or (OneSignal) its OneSignal subscription id.
   const [endpoint, setEndpoint] = useState<string | null>(null);
   const [devices, setDevices] = useState(initialDevices);
   const [off, setOff] = useState<NotificationType[]>(initialOff);
@@ -64,6 +73,16 @@ export function NotificationSettings({ publicKey, devices: initialDevices, pushO
       if (!hasPush) return setSupport(apple && !installed ? "needs_install" : "unsupported");
       if (apple && !installed) return setSupport("needs_install");
       setPermission(Notification.permission);
+      if (provider === "onesignal") {
+        // Only worth loading OneSignal's script when the server is set up for it.
+        if (!oneSignalAppId) return;
+        const oneSignal = await loadOneSignal(oneSignalAppId).catch(() => null);
+        if (cancelled) return;
+        if (!oneSignal) return setSupport("load_failed");
+        const subscription = oneSignal.User.PushSubscription;
+        setEndpoint(subscription.optedIn ? (subscription.id ?? null) : null);
+        return setSupport("ready");
+      }
       const registration = await navigator.serviceWorker.ready.catch(() => null);
       const current = await registration?.pushManager.getSubscription().catch(() => null);
       if (cancelled) return;
@@ -74,13 +93,40 @@ export function NotificationSettings({ publicKey, devices: initialDevices, pushO
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [provider, oneSignalAppId]);
 
   const thisDevice = devices.find((d) => d.endpoint === endpoint);
+
+  /** This device is now saved on the server: show it as on, in the list too. */
+  function markOn(key: string) {
+    setEndpoint(key);
+    setDevices((list) => [...list.filter((d) => d.endpoint !== key), { id: key, endpoint: key, device: "other", createdAt: new Date().toISOString() }]);
+    toast.success(t("turnedOn"));
+  }
 
   function turnOn() {
     start(async () => {
       try {
+        if (provider === "onesignal") {
+          // Asked here, after a tap, never when the app opens.
+          const oneSignal = await loadOneSignal(oneSignalAppId ?? "");
+          await oneSignal.Notifications.requestPermission();
+          setPermission(Notification.permission);
+          if (Notification.permission !== "granted") return;
+          await oneSignal.User.PushSubscription.optIn();
+          const subscriptionId = await waitForSubscriptionId(oneSignal);
+          if (!subscriptionId) {
+            toast.error(t("errors.subscribeFailed"));
+            return;
+          }
+          const saved = await saveOneSignalDeviceAction({ subscriptionId, userAgent: navigator.userAgent });
+          if (!saved.ok) {
+            toast.error(t("errors.saveFailed"));
+            return;
+          }
+          markOn(subscriptionId);
+          return;
+        }
         // Asked here, after a tap, never when the app opens.
         const answer = await Notification.requestPermission();
         setPermission(answer);
@@ -95,16 +141,14 @@ export function NotificationSettings({ publicKey, devices: initialDevices, pushO
           toast.error(t("errors.saveFailed"));
           return;
         }
-        setEndpoint(subscription.endpoint);
-        setDevices((list) => [...list.filter((d) => d.endpoint !== subscription.endpoint), { id: subscription.endpoint, endpoint: subscription.endpoint, device: "other", createdAt: new Date().toISOString() }]);
-        toast.success(t("turnedOn"));
+        markOn(subscription.endpoint);
       } catch {
         toast.error(t("errors.subscribeFailed"));
       }
     });
   }
 
-  function removeDevice(device: DeviceView) {
+  function removeDevice(device: DeviceView, message: "removed" | "turnedOff" = "removed") {
     start(async () => {
       const result = await removePushDeviceAction(device.id).catch(() => null);
       if (!result) {
@@ -113,12 +157,17 @@ export function NotificationSettings({ publicKey, devices: initialDevices, pushO
       }
       // On this very device the browser's own subscription goes too, or it would keep accepting pushes that nobody sends.
       if (device.endpoint === endpoint) {
-        const registration = await navigator.serviceWorker.ready.catch(() => null);
-        await (await registration?.pushManager.getSubscription())?.unsubscribe().catch(() => undefined);
+        if (provider === "onesignal") {
+          const oneSignal = await loadOneSignal(oneSignalAppId ?? "").catch(() => null);
+          await oneSignal?.User.PushSubscription.optOut().catch(() => undefined);
+        } else {
+          const registration = await navigator.serviceWorker.ready.catch(() => null);
+          await (await registration?.pushManager.getSubscription())?.unsubscribe().catch(() => undefined);
+        }
         setEndpoint(null);
       }
       setDevices((list) => list.filter((d) => d.id !== device.id));
-      toast.success(t("removed"));
+      toast.success(t(message));
     });
   }
 
@@ -142,11 +191,15 @@ export function NotificationSettings({ publicKey, devices: initialDevices, pushO
         <CardTitle className="type-item-title">{t("title")}</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-section">
-        {publicKey === null ? (
+        {!configured ? (
           <p role="status" className="type-secondary text-muted-foreground">
             {t("notConfigured")}
           </p>
-        ) : support === "checking" ? null : support === "needs_install" ? (
+        ) : support === "checking" ? null : support === "load_failed" ? (
+          <p role="status" className="type-secondary text-muted-foreground">
+            {t("loadFailed")}
+          </p>
+        ) : support === "needs_install" ? (
           <p role="status" className="rounded-xl border bg-card p-inset-sm type-secondary">
             {t("needsInstall")}
           </p>
@@ -163,13 +216,20 @@ export function NotificationSettings({ publicKey, devices: initialDevices, pushO
             <BellOff className="mr-stack inline size-icon-sm align-text-bottom" aria-hidden />
             {t("denied")}
           </p>
-        ) : thisDevice ? (
-          <p className="type-secondary text-muted-foreground">{t("on")}</p>
         ) : (
-          <Button type="button" size="pill" disabled={pending} onClick={turnOn}>
-            {pending ? <LoaderCircle className="motion-safe:animate-spin" aria-hidden /> : <Bell aria-hidden />}
-            {t("turnOn")}
-          </Button>
+          // The person decides, here and only here: on asks the browser for permission (when it has not been given yet), off stops pushes on this device.
+          <div className="flex min-h-target items-center justify-between gap-item">
+            <Label htmlFor="push-this-device" className="type-body">
+              {t("deviceSwitch")}
+            </Label>
+            {pending ? <LoaderCircle className="size-icon shrink-0 text-muted-foreground motion-safe:animate-spin" aria-hidden /> : null}
+            <Switch
+              id="push-this-device"
+              checked={Boolean(thisDevice)}
+              disabled={pending}
+              onCheckedChange={(checked) => (checked ? turnOn() : thisDevice ? removeDevice(thisDevice, "turnedOff") : undefined)}
+            />
+          </div>
         )}
 
         {devices.length > 0 ? (

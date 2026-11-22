@@ -1,6 +1,8 @@
 import { connectToDatabase } from "@/lib/db";
 import { processDeliveries } from "./deliver";
-import { pushConfig, sendWebPush } from "./push";
+import { sendOneSignal } from "./onesignal";
+import { pushProvider, pushReady } from "./provider";
+import { sendWebPush } from "./push";
 import { autoCompleteOverdueAppointments, processScheduledNotifications } from "./scheduler";
 
 const TICK_MS = 5000;
@@ -17,11 +19,11 @@ let started = false;
 export function startWorker(): void {
   if (started) return;
   started = true;
-  if (!pushConfig()) console.warn("worker: VAPID keys are not set, Web Push is off");
+  if (!pushReady()) console.warn(`worker: ${pushProvider() === "onesignal" ? "OneSignal is not set up" : "VAPID keys are not set"}, push is off`);
 
   const tick = async () => {
     try {
-      if (pushConfig()) await processDeliveries({ sender: sendWebPush });
+      if (pushReady()) await processDeliveries({ sender: sendWebPush, oneSignal: sendOneSignal });
     } catch {
       console.error("worker: a round failed");
     } finally {

@@ -1,12 +1,10 @@
 import { connectToDatabase } from "@/lib/db";
-import { Appointment, type AppointmentDoc } from "@/models/appointment";
-import { Movie } from "@/models/movie";
+import { Appointment } from "@/models/appointment";
 import { ScheduledNotification } from "@/models/scheduled-notification";
 import { Showtime } from "@/models/showtime";
-import { attendeeIdsOf } from "@/services/appointment-estimate";
-import { completeAppointment, placeOf } from "@/services/appointment-plan.service";
+import { completeAppointment } from "@/services/appointment-plan.service";
 import { enqueueNotifications } from "./outbox";
-import type { NotificationInput } from "./types";
+import { scheduledInputs } from "./scheduled-inputs";
 
 /** A row stuck in "processing" this long belongs to a worker that died: another worker takes it (same idea as `deliver.ts`). */
 const STALE_MS = 2 * 60 * 1000;
@@ -20,58 +18,11 @@ async function claimOne(now: Date) {
   );
 }
 
-function chosenOptionOf(doc: Pick<AppointmentDoc, "timeOptions" | "chosenOptionId">) {
-  return doc.timeOptions.find((o) => o._id?.toString() === doc.chosenOptionId?.toString());
-}
-
-/** #8: the reminder N minutes before the showtime, with each attendee's own seat. Stale (no longer confirmed) rows are dropped. */
-async function sendReminder(appointmentId: string): Promise<boolean> {
-  const doc = await Appointment.findById(appointmentId).lean();
-  if (!doc || doc.status !== "CONFIRMED" || !doc.showtimeId) return false;
-  const [movie, place] = await Promise.all([Movie.findById(doc.movieId, "title").lean(), placeOf(doc.showtimeId.toString())]);
-  const slotAt = chosenOptionOf(doc)?.startAt.toISOString();
-  const seatByUser = new Map((doc.seats ?? []).map((s) => [s.userId.toString(), s.seatCode]));
-  const inputs: NotificationInput[] = attendeeIdsOf(doc as never).map((userId) => ({
-    recipientId: userId,
-    type: "showtime_reminder",
-    payload: { appointmentId, movieTitle: movie?.title ?? "", actorName: "", slotAt, place, seatCode: seatByUser.get(userId) },
-  }));
-  await enqueueNotifications(inputs);
-  return true;
-}
-
-/** #9: nudge the group, a few hours after the showtime, to log the real cost and rate their seat. Stale (undone) rows are dropped. */
-async function sendExpenseReminder(appointmentId: string): Promise<boolean> {
-  const doc = await Appointment.findById(appointmentId).lean();
-  if (!doc || doc.status !== "COMPLETED") return false;
-  const movie = await Movie.findById(doc.movieId, "title").lean();
-  const inputs: NotificationInput[] = attendeeIdsOf(doc as never).map((userId) => ({
-    recipientId: userId,
-    type: "expense_reminder",
-    payload: { appointmentId, movieTitle: movie?.title ?? "", actorName: "" },
-  }));
-  await enqueueNotifications(inputs);
-  return true;
-}
-
 /**
- * #3: 12h left to answer, for people who still have not. "Still has not answered" means no vote (yes or no) on any time
- * and the invitation not declined — a "no" vote never turns `participant.status` away from "invited" (only a "yes"
- * does), so that status alone cannot tell a silent person from one who voted no on everything.
+ * Sends every scheduled notification whose time has come. Returns how many it handled (sent or dropped as stale).
+ * People whose push OneSignal already holds for this moment (`pushIds`, see `remote-schedule.ts`) only get the in-app message here:
+ * their phone is told by OneSignal at the right time, and pushing again would ring twice.
  */
-async function sendDeadlineWarning(appointmentId: string): Promise<boolean> {
-  const doc = await Appointment.findById(appointmentId).lean();
-  if (!doc || doc.status !== "INVITING" || !doc.responseDeadline) return false;
-  const voted = new Set(doc.timeOptions.flatMap((o) => o.votes.map((v) => v.userId.toString())));
-  const recipientIds = doc.participants.filter((p) => p.status === "invited" && !voted.has(p.userId.toString())).map((p) => p.userId.toString());
-  if (recipientIds.length === 0) return false;
-  const movie = await Movie.findById(doc.movieId, "title").lean();
-  const payload = { appointmentId, movieTitle: movie?.title ?? "", actorName: "", slotAt: doc.responseDeadline.toISOString() };
-  await enqueueNotifications(recipientIds.map((recipientId) => ({ recipientId, type: "response_deadline_warning" as const, payload })));
-  return true;
-}
-
-/** Sends every scheduled notification whose time has come. Returns how many it handled (sent or dropped as stale). */
 export async function processScheduledNotifications(now = new Date(), batch = 25): Promise<number> {
   await connectToDatabase();
   let handled = 0;
@@ -79,13 +30,10 @@ export async function processScheduledNotifications(now = new Date(), batch = 25
     const row = await claimOne(now);
     if (!row) break;
     handled++;
-    const sent =
-      row.type === "reminder"
-        ? await sendReminder(row.appointmentId.toString())
-        : row.type === "expense_reminder"
-          ? await sendExpenseReminder(row.appointmentId.toString())
-          : await sendDeadlineWarning(row.appointmentId.toString());
-    await ScheduledNotification.updateOne({ _id: row._id }, { $set: { status: sent ? "sent" : "cancelled" } });
+    const inputs = await scheduledInputs(row.type, row.appointmentId.toString());
+    const skipPushFor = new Set((row.pushIds ?? []).map((p) => p.userId.toString()));
+    if (inputs.length > 0) await enqueueNotifications(inputs, { skipPushFor });
+    await ScheduledNotification.updateOne({ _id: row._id }, { $set: { status: inputs.length > 0 ? "sent" : "cancelled" } });
   }
   return handled;
 }

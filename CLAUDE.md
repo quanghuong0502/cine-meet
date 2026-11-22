@@ -15,7 +15,7 @@ Thiết kế đầy đủ: `docs/movie-app-mvp-design.md`. Trước khi làm m�
 ## Stack
 
 Next.js (App Router, `src/`) · TypeScript strict · MongoDB Atlas + Mongoose · Auth.js (Google + Credentials)
-· shadcn/ui + Tailwind · Cloudinary · Web Push (chuẩn W3C + VAPID, thư viện `web-push`) · AI qua `src/ai` (Claude hoặc Gemini, đổi được)
+· shadcn/ui + Tailwind · Cloudinary · thông báo đẩy qua `PUSH_PROVIDER`: Web Push (chuẩn W3C + VAPID, thư viện `web-push`, mặc định) hoặc OneSignal · AI qua `src/ai` (Claude hoặc Gemini, đổi được)
 
 ## Lệnh
 
@@ -42,7 +42,7 @@ Next.js (App Router, `src/`) · TypeScript strict · MongoDB Atlas + Mongoose ·
 - **Admin chỉ có giao diện admin** (`/admin/*`); không có lối nào sang app người dùng, và admin mở trang của người dùng sẽ bị đưa về khu quản trị. **Mọi thiết lập tài khoản (ngôn ngữ, đổi mật khẩu, thông báo...) nằm trong Cài đặt**; trang Hồ sơ của người dùng là một tab ở thanh dưới (`/profile`), không có avatar ở header; admin vẫn bấm avatar ở header để mở `/admin/profile`; từ Hồ sơ vào Cài đặt và Đăng xuất; không có menu bật lên.
 - Middleware chỉ là lớp đầu: mọi trang/API server dùng `requireUser()` / `requireAdmin()` (`src/lib/auth/guards.ts`), đọc lại status/role từ DB.
 - Chi tiêu của user = `expenses` của chính họ (phần của mình). App chỉ ghi mỗi buổi xem tốn bao nhiêu (vé, đồ ăn, khác): **không theo dõi ai trả tiền, không công nợ** (chủ dự án chốt 2026-11-18; thiết kế 3.4).
-- Worker (Web Push, nhắc lịch) chạy cùng tiến trình web qua `instrumentation.ts`, bật bằng `ENABLE_WORKER=true`; không Agenda, không Redis.
+- Worker (Web Push, nhắc lịch) chạy cùng tiến trình web qua `instrumentation.ts`, bật bằng `ENABLE_WORKER=true`; không Agenda, không Redis. **Trên Vercel (serverless) không bật worker**: thông báo tức thì gửi ngay sau request (`kick.ts`), nhắc theo giờ do OneSignal giữ (`PUSH_PROVIDER=onesignal`), phần quét chạy khi mở app và mỗi ngày một lần ở `/api/cron/tick` (`CRON_SECRET`); xem `docs/movie-app-mvp-design.md` mục 4.3 và 4.4. Đổi nhà cung cấp chỉ bằng biến môi trường; không xóa code Web Push.
 - Sửa layout phòng chiếu = tạo phiên bản mới, không ghi đè.
 - API key và connection string chỉ ở biến môi trường (`.env.local`), không đưa vào code hay file docs.
 - Trước khi báo hoàn thành: chạy `npm run lint` và `npm run typecheck`, sửa hết lỗi.

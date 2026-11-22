@@ -882,12 +882,12 @@
       "send": "Gửi thử",
       "sent": "Đã gửi tới {name}, {count, plural, one {# thiết bị} other {# thiết bị}}",
       "noDevice": "{name} chưa bật thông báo đẩy trên thiết bị nào.",
-      "allFailed": "Chưa gửi được tới {name}. Lý do: {reason}. Thử bật lại thông báo trên thiết bị đó nếu vừa đổi khóa VAPID.",
-      "notConfigured": "Máy chủ chưa có khóa VAPID nên chưa gửi được. Thêm VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT rồi chạy lại máy chủ.",
+      "allFailed": "Chưa gửi được tới {name}. Lý do: {reason}. Thử bật lại thông báo trên thiết bị đó nếu vừa đổi khóa VAPID hoặc đổi nhà cung cấp.",
+      "notConfigured": "Máy chủ chưa cấu hình nhà cung cấp thông báo đẩy nên chưa gửi được. Web Push cần VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT; OneSignal cần ONESIGNAL_APP_ID, ONESIGNAL_API_KEY (PUSH_PROVIDER chọn một trong hai). Thêm rồi chạy lại máy chủ.",
       "errors": {
         "pick": "Chọn người nhận trước nha.",
         "network": "Mạng đang chập chờn, thử lại giúp [me] nha.",
-        "not_configured": "Máy chủ chưa có khóa VAPID.",
+        "not_configured": "Máy chủ chưa cấu hình thông báo đẩy.",
         "not_found": "Không tìm thấy người dùng này."
       }
     },
@@ -1033,9 +1033,9 @@
       "needsInstall": "Trên iPhone và iPad, thông báo đẩy chỉ chạy khi app đã nằm ở màn hình chính. Làm theo hướng dẫn bên dưới, rồi mở app từ màn hình chính và quay lại đây nha.",
       "unsupported": "Trình duyệt này chưa hỗ trợ thông báo đẩy. Thông báo trong app vẫn chạy bình thường.",
       "denied": "[you] đang chặn thông báo của app này. Mở cài đặt của trình duyệt hoặc điện thoại để cho phép lại nha.",
-      "turnOn": "Bật thông báo trên thiết bị này",
-      "on": "Thiết bị này đang nhận thông báo đẩy, kể cả khi đã đóng app.",
+      "deviceSwitch": "Nhận thông báo trên thiết bị này",
       "turnedOn": "Đã bật thông báo trên thiết bị này",
+      "turnedOff": "Đã tắt thông báo trên thiết bị này",
       "removed": "Đã tắt thông báo trên thiết bị đó",
       "devicesTitle": "Thiết bị nhận thông báo",
       "thisDevice": "Thiết bị này",
@@ -1074,6 +1074,7 @@
         "notConfigured": "Máy chủ chưa bật thông báo đẩy."
       },
       "insecure": "Thông báo đẩy chỉ chạy khi mở app bằng địa chỉ https hoặc localhost. Địa chỉ hiện tại là http thường nên trình duyệt đã tắt tính năng này.",
+      "loadFailed": "Chưa tải được phần thông báo đẩy. Kiểm tra mạng rồi mở lại trang này nha.",
       "groups": {
         "appointments": "Lịch hẹn xem phim",
         "reminders": "Nhắc nhở",
