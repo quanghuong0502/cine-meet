@@ -6,6 +6,7 @@ import { NotificationSettings } from "@/components/notification-settings";
 import { PageHeader } from "@/components/page-header";
 import { SecuritySetting } from "@/components/security-setting";
 import { requireUser } from "@/lib/auth/guards";
+import { oneSignalConfig, pushProvider } from "@/notifications/provider";
 import { pushConfig } from "@/notifications/push";
 import { NOTIFICATION_TYPES } from "@/notifications/types";
 import { getMonthlyBudget } from "@/services/budget.service";
@@ -26,7 +27,14 @@ export default async function SettingsPage() {
       <PageHeader title={t("title")} backHref="/profile" />
       <LanguageSetting />
       <BudgetSetting initial={budget} />
-      <NotificationSettings publicKey={pushConfig()?.publicKey ?? null} devices={devices} pushOff={pushOff} types={NOTIFICATION_TYPES} />
+      <NotificationSettings
+        provider={pushProvider()}
+        publicKey={pushConfig()?.publicKey ?? null}
+        oneSignalAppId={oneSignalConfig()?.appId ?? null}
+        devices={devices}
+        pushOff={pushOff}
+        types={NOTIFICATION_TYPES}
+      />
       <SecuritySetting hasPassword={user.hasPassword} />
     </div>
   );

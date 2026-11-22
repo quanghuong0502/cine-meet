@@ -17,6 +17,7 @@
         "seed:appointment": "tsx scripts/seed-appointment.ts",
         "seed:sprint6": "tsx scripts/seed-sprint6.ts",
         "rescore": "tsx scripts/rescore-layouts.ts",
+        "cloudinary:move": "tsx scripts/move-cloudinary-folders.ts",
         "mascots:trim": "node scripts/trim-mascots.mjs",
         "splash:generate": "node scripts/generate-splash.mjs"
     },

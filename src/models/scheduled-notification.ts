@@ -16,6 +16,12 @@ const scheduledNotificationSchema = new Schema(
     // the old rows (by value) and add the new ones, instead of guessing which row is which.
     minutesBefore: { type: Number },
     sendAt: { type: Date, required: true },
+    // With PUSH_PROVIDER=onesignal: the push of each person was handed to OneSignal ahead of time, held until `sendAt` (their message id
+    // is what a cancel needs). Empty: nothing is held there and the push goes out when the sweep finds this row due (Web Push, or no OneSignal).
+    pushIds: {
+      type: [{ _id: false, userId: { type: Schema.Types.ObjectId, ref: "User", required: true }, id: { type: String, required: true } }],
+      default: [],
+    },
     status: { type: String, enum: SCHEDULED_NOTIFICATION_STATUSES, default: "pending", required: true },
     attempts: { type: Number, default: 0 },
   },

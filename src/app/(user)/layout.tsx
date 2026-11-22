@@ -5,6 +5,7 @@ import { UserBottomNav } from "@/components/user-bottom-nav";
 import { UserMain } from "@/components/user-main";
 import { requireUser } from "@/lib/auth/guards";
 import { ENABLED_NAV_ITEMS } from "@/lib/nav";
+import { sweepDueNotifications } from "@/notifications/sweep";
 import { countUnread } from "@/services/notification.service";
 
 export default async function UserLayout({
@@ -19,6 +20,8 @@ export default async function UserLayout({
   // Admins only have the admin area: the user app is for regular accounts.
   if (user.role === "admin") redirect("/admin");
   const hasBottomNav = ENABLED_NAV_ITEMS.length > 0;
+  // Reminders that came due since the last visit are brought into the list first, so the bell counts them (see sweep.ts).
+  await sweepDueNotifications();
   // Personal, so read on every request and never cached; a failed count must not take the whole app down.
   const unread = await countUnread(user.userId).catch(() => 0);
 

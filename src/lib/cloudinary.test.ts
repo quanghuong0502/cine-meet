@@ -1,8 +1,8 @@
 import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
-import { cloudinaryConfig, createAvatarUploadTicket, createBranchImageUploadTicket, createBrandLogoUploadTicket, isOwnAvatarUrl, signParams } from "./cloudinary";
+import { assetFolder, cloudinaryConfig, createAvatarUploadTicket, createBranchImageUploadTicket, createBrandLogoUploadTicket, createMoviePosterUploadTicket, isOwnAvatarUrl, signParams } from "./cloudinary";
 
-const CONFIG = { cloudName: "demo", apiKey: "key123", apiSecret: "s3cret" };
+const CONFIG = { cloudName: "demo", apiKey: "key123", apiSecret: "s3cret", rootFolder: "seatmate_dev" };
 const USER = "6afbb4609e156d9ab456f6d3";
 
 describe("signParams", () => {
@@ -52,6 +52,39 @@ describe("createBranchImageUploadTicket", () => {
   });
 });
 
+describe("asset folders", () => {
+  const signedOk = (fields: Record<string, string>) => {
+    const { api_key: _key, signature, ...signed } = fields;
+    void _key;
+    return signature === signParams(signed, "s3cret");
+  };
+
+  it("puts every kind of picture under the environment's root folder, and signs the folder", () => {
+    const tickets = {
+      "seatmate_dev/avatars": createAvatarUploadTicket(USER, CONFIG),
+      "seatmate_dev/brands": createBrandLogoUploadTicket(CONFIG),
+      "seatmate_dev/branches": createBranchImageUploadTicket(CONFIG),
+      "seatmate_dev/movies": createMoviePosterUploadTicket(CONFIG),
+    };
+    for (const [folder, ticket] of Object.entries(tickets)) {
+      expect(ticket.fields.asset_folder).toBe(folder);
+      expect(signedOk(ticket.fields)).toBe(true);
+    }
+    expect(tickets["seatmate_dev/movies"].fields.public_id).toMatch(/^movies\/[0-9a-z]+$/);
+  });
+
+  it("uses the plain kind folder when no root folder is set", () => {
+    const { rootFolder: _root, ...bare } = CONFIG;
+    void _root;
+    expect(assetFolder("avatars", bare)).toBe("avatars");
+    expect(createBrandLogoUploadTicket(bare).fields.asset_folder).toBe("brands");
+  });
+
+  it("separates dev from production", () => {
+    expect(assetFolder("movies", { ...CONFIG, rootFolder: "seatmate_production" })).toBe("seatmate_production/movies");
+  });
+});
+
 describe("isOwnAvatarUrl", () => {
   const good = `https://res.cloudinary.com/demo/image/upload/v17/avatars/${USER}.jpg`;
 
@@ -75,5 +108,10 @@ describe("cloudinaryConfig", () => {
     expect(cloudinaryConfig({} as NodeJS.ProcessEnv)).toBeNull();
     expect(cloudinaryConfig({ CLOUDINARY_CLOUD_NAME: "a", CLOUDINARY_API_KEY: "b" } as unknown as NodeJS.ProcessEnv)).toBeNull();
     expect(cloudinaryConfig({ CLOUDINARY_CLOUD_NAME: "a", CLOUDINARY_API_KEY: "b", CLOUDINARY_API_SECRET: "c" } as unknown as NodeJS.ProcessEnv)).toEqual({ cloudName: "a", apiKey: "b", apiSecret: "c" });
+  });
+
+  it("reads the root folder and trims stray slashes and spaces", () => {
+    const env = { CLOUDINARY_CLOUD_NAME: "a", CLOUDINARY_API_KEY: "b", CLOUDINARY_API_SECRET: "c", CLOUDINARY_ROOT_FOLDER: " /seatmate_dev/ " } as unknown as NodeJS.ProcessEnv;
+    expect(cloudinaryConfig(env)?.rootFolder).toBe("seatmate_dev");
   });
 });

@@ -17,6 +17,7 @@ Viết code đúng quy tắc ngay từ đầu. Thử bản cài trên iPhone 13 
 - Đã có (Sprint 4): service worker `public/sw.js` (thông báo đẩy, trang `/offline` khi mất mạng; không cache trang hay dữ liệu cá nhân; đăng ký ở `ServiceWorkerRegister`), trang `/offline`,
   bật thông báo đẩy trong Cài đặt (`NotificationSettings`; thẻ hướng dẫn cài app `InstallGuide` đã bị xóa 2026-11-22 theo yêu cầu của chủ dự án). `proxy.ts` loại `sw.js` và `offline` khỏi yêu cầu đăng nhập.
   Chưa thử trên máy thật: thông báo đẩy trên iPhone đã cài PWA (cần HTTPS), trang offline khi tắt mạng.
+- Đã có (2026-11-22): nhà cung cấp thông báo đẩy **OneSignal** cạnh Web Push, chọn bằng `PUSH_PROVIDER` (mặc định `webpush`). Khi là `onesignal`, trang Cài đặt nạp SDK OneSignal và dùng worker riêng `public/push/onesignal/OneSignalSDKWorker.js` (phạm vi `/push/onesignal/`), **không đụng `public/sw.js`**; `proxy.ts` loại `push/onesignal` và `api/cron` khỏi yêu cầu đăng nhập. Quyền vẫn chỉ xin khi người dùng bấm: trong dashboard OneSignal phải tắt lời nhắc tự động (auto prompt). Chưa thử trên máy thật (iPhone vẫn chỉ nhận khi đã cài ra màn hình chính).
 
 ## Quy tắc cho mọi màn hình
 
