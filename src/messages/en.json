@@ -882,12 +882,12 @@
       "send": "Send test",
       "sent": "Sent to {name}, {count, plural, one {# device} other {# devices}}",
       "noDevice": "{name} hasn't turned push on for any device.",
-      "allFailed": "Couldn't reach {name}. Reason: {reason}. Turn notifications off and on again on that device if the VAPID keys just changed.",
-      "notConfigured": "The server has no VAPID keys, so nothing can be sent. Add VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY and VAPID_SUBJECT, then restart the server.",
+      "allFailed": "Couldn't reach {name}. Reason: {reason}. Turn notifications off and on again on that device if the VAPID keys or the provider just changed.",
+      "notConfigured": "The server has no push provider set up, so nothing can be sent. Web Push needs VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY and VAPID_SUBJECT; OneSignal needs ONESIGNAL_APP_ID and ONESIGNAL_API_KEY (PUSH_PROVIDER picks one). Add them, then restart the server.",
       "errors": {
         "pick": "Pick who to send to first.",
         "network": "Network is shaky, please try again.",
-        "not_configured": "The server has no VAPID keys.",
+        "not_configured": "The server has no push provider set up.",
         "not_found": "Couldn't find this user."
       }
     },
@@ -1074,6 +1074,7 @@
         "notConfigured": "The server doesn't have push notifications turned on."
       },
       "insecure": "Push notifications only work when the app is opened over https or localhost. This address is plain http, so the browser has switched the feature off.",
+      "loadFailed": "Couldn't load the push notification part. Check your connection and reopen this page.",
       "groups": {
         "appointments": "Viewing plans",
         "reminders": "Reminders",
