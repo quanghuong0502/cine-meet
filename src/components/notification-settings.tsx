@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, BellOff, LoaderCircle, Smartphone, Trash2 } from "lucide-react";
+import { BellOff, LoaderCircle, Smartphone, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -148,7 +148,7 @@ export function NotificationSettings({ provider, publicKey, oneSignalAppId, devi
     });
   }
 
-  function removeDevice(device: DeviceView) {
+  function removeDevice(device: DeviceView, message: "removed" | "turnedOff" = "removed") {
     start(async () => {
       const result = await removePushDeviceAction(device.id).catch(() => null);
       if (!result) {
@@ -167,7 +167,7 @@ export function NotificationSettings({ provider, publicKey, oneSignalAppId, devi
         setEndpoint(null);
       }
       setDevices((list) => list.filter((d) => d.id !== device.id));
-      toast.success(t("removed"));
+      toast.success(t(message));
     });
   }
 
@@ -216,13 +216,20 @@ export function NotificationSettings({ provider, publicKey, oneSignalAppId, devi
             <BellOff className="mr-stack inline size-icon-sm align-text-bottom" aria-hidden />
             {t("denied")}
           </p>
-        ) : thisDevice ? (
-          <p className="type-secondary text-muted-foreground">{t("on")}</p>
         ) : (
-          <Button type="button" size="pill" disabled={pending} onClick={turnOn}>
-            {pending ? <LoaderCircle className="motion-safe:animate-spin" aria-hidden /> : <Bell aria-hidden />}
-            {t("turnOn")}
-          </Button>
+          // The person decides, here and only here: on asks the browser for permission (when it has not been given yet), off stops pushes on this device.
+          <div className="flex min-h-target items-center justify-between gap-item">
+            <Label htmlFor="push-this-device" className="type-body">
+              {t("deviceSwitch")}
+            </Label>
+            {pending ? <LoaderCircle className="size-icon shrink-0 text-muted-foreground motion-safe:animate-spin" aria-hidden /> : null}
+            <Switch
+              id="push-this-device"
+              checked={Boolean(thisDevice)}
+              disabled={pending}
+              onCheckedChange={(checked) => (checked ? turnOn() : thisDevice ? removeDevice(thisDevice, "turnedOff") : undefined)}
+            />
+          </div>
         )}
 
         {devices.length > 0 ? (

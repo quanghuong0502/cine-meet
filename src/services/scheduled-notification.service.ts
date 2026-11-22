@@ -2,6 +2,7 @@ import { connectToDatabase } from "@/lib/db";
 import { deadlineWarningSendAt, expenseReminderSendAt, reminderSendTimes } from "@/lib/appointment/reminders";
 import { Appointment } from "@/models/appointment";
 import { ScheduledNotification, type ScheduledNotificationType } from "@/models/scheduled-notification";
+import { pushProvider } from "@/notifications/provider";
 import { getSystemSettings } from "@/services/settings.service";
 
 // The push side of a scheduled notification can be held at OneSignal ahead of time (PUSH_PROVIDER=onesignal, `remote-schedule.ts`).
@@ -9,6 +10,8 @@ import { getSystemSettings } from "@/services/settings.service";
 
 /** Hands the pushes of freshly created rows to OneSignal. Does nothing (and never throws) unless OneSignal is the provider. */
 async function holdRemotely(rowIds: unknown[]): Promise<void> {
+  // Web Push (the default): nothing to hand over, so do not even load the OneSignal side.
+  if (pushProvider() !== "onesignal") return;
   try {
     const { scheduleRemotely } = await import("@/notifications/remote-schedule");
     for (const id of rowIds) await scheduleRemotely(String(id));
