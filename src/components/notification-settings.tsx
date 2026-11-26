@@ -1,12 +1,14 @@
 "use client";
 
-import { BellOff, LoaderCircle, Smartphone, Trash2 } from "lucide-react";
+import { AltArrowDownIcon, AltArrowUpIcon, BellIcon, BellOffIcon, LoaderIcon, RefreshIcon, SmartphoneIcon, TrashBinMinimalisticIcon } from "@solar-icons/react/line-duotone";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { removePushDeviceAction, saveOneSignalDeviceAction, savePushSubscriptionAction, setPushPreferenceAction } from "@/actions/push";
+import { LazyConfirmDialog } from "@/components/lazy-dialogs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { IconBadge } from "@/components/ui/icon-badge";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
@@ -47,7 +49,7 @@ function keyToBytes(base64: string): Uint8Array<ArrayBuffer> {
 }
 
 /**
- * Notification settings: turn push on for this device (asked only when the person taps, as the platform requires), send a test, see and
+ * Notification settings: turn push on for this device (asked only when the person taps, as the platform requires), see and
  * remove devices, and choose which kinds of message are pushed. In-app messages are always kept, so these switches only control push.
  */
 export function NotificationSettings({ provider, publicKey, oneSignalAppId, devices: initialDevices, pushOff: initialOff, types }: Props) {
@@ -55,13 +57,18 @@ export function NotificationSettings({ provider, publicKey, oneSignalAppId, devi
   const locale = useLocale();
   const configured = provider === "onesignal" ? oneSignalAppId !== null : publicKey !== null;
   const [support, setSupport] = useState<Support>("checking");
+  const [retryTick, setRetryTick] = useState(0);
   const [permission, setPermission] = useState<NotificationPermission>("default");
   // What tells this device apart from the others in the list: its Web Push endpoint, or (OneSignal) its OneSignal subscription id.
   const [endpoint, setEndpoint] = useState<string | null>(null);
   const [devices, setDevices] = useState(initialDevices);
   const [off, setOff] = useState<NotificationType[]>(initialOff);
-  const [pending, start] = useTransition();
+  const [typesExpanded, setTypesExpanded] = useState(initialDevices.length > 0);
+  const [confirmDevice, setConfirmDevice] = useState<DeviceView | null>(null);
+  const [devicePending, startDevice] = useTransition();
+  const [, startType] = useTransition();
 
+  const hasSavedDevices = initialDevices.length > 0;
   useEffect(() => {
     let cancelled = false;
     async function check() {
@@ -76,6 +83,11 @@ export function NotificationSettings({ provider, publicKey, oneSignalAppId, devi
       if (provider === "onesignal") {
         // Only worth loading OneSignal's script when the server is set up for it.
         if (!oneSignalAppId) return;
+        // Defer downloading the 100+ KB OneSignal SDK on /settings until the user has granted permission, already has a device, or toggles push ON.
+        if (Notification.permission !== "granted" && !hasSavedDevices && retryTick === 0) {
+          setEndpoint(null);
+          return setSupport("ready");
+        }
         const oneSignal = await loadOneSignal(oneSignalAppId).catch(() => null);
         if (cancelled) return;
         if (!oneSignal) return setSupport("load_failed");
@@ -93,19 +105,20 @@ export function NotificationSettings({ provider, publicKey, oneSignalAppId, devi
     return () => {
       cancelled = true;
     };
-  }, [provider, oneSignalAppId]);
+  }, [provider, oneSignalAppId, retryTick, hasSavedDevices]);
 
   const thisDevice = devices.find((d) => d.endpoint === endpoint);
 
   /** This device is now saved on the server: show it as on, in the list too. */
-  function markOn(key: string) {
-    setEndpoint(key);
-    setDevices((list) => [...list.filter((d) => d.endpoint !== key), { id: key, endpoint: key, device: "other", createdAt: new Date().toISOString() }]);
+  function markOn(device: DeviceView) {
+    setEndpoint(device.endpoint);
+    setDevices((list) => [...list.filter((d) => d.endpoint !== device.endpoint && d.id !== device.id), device]);
+    setTypesExpanded(true);
     toast.success(t("turnedOn"));
   }
 
   function turnOn() {
-    start(async () => {
+    startDevice(async () => {
       try {
         if (provider === "onesignal") {
           // Asked here, after a tap, never when the app opens.
@@ -124,7 +137,7 @@ export function NotificationSettings({ provider, publicKey, oneSignalAppId, devi
             toast.error(t("errors.saveFailed"));
             return;
           }
-          markOn(subscriptionId);
+          markOn(saved.device);
           return;
         }
         // Asked here, after a tap, never when the app opens.
@@ -141,7 +154,7 @@ export function NotificationSettings({ provider, publicKey, oneSignalAppId, devi
           toast.error(t("errors.saveFailed"));
           return;
         }
-        markOn(subscription.endpoint);
+        markOn(saved.device);
       } catch {
         toast.error(t("errors.subscribeFailed"));
       }
@@ -149,9 +162,10 @@ export function NotificationSettings({ provider, publicKey, oneSignalAppId, devi
   }
 
   function removeDevice(device: DeviceView, message: "removed" | "turnedOff" = "removed") {
-    start(async () => {
+    startDevice(async () => {
       const result = await removePushDeviceAction(device.id).catch(() => null);
-      if (!result) {
+      setConfirmDevice(null);
+      if (!result?.ok) {
         toast.error(t("errors.network"));
         return;
       }
@@ -174,7 +188,7 @@ export function NotificationSettings({ provider, publicKey, oneSignalAppId, devi
   function toggleType(type: NotificationType, enabled: boolean) {
     const before = off;
     setOff(enabled ? off.filter((o) => o !== type) : [...off, type]);
-    start(async () => {
+    startType(async () => {
       const result = await setPushPreferenceAction(type, enabled).catch(() => null);
       if (!result?.ok) {
         setOff(before);
@@ -184,11 +198,17 @@ export function NotificationSettings({ provider, publicKey, oneSignalAppId, devi
   }
 
   const deviceName = (device: DeviceView) => (device.endpoint === endpoint ? t("thisDevice") : t(`devices.${device.device}`));
+  const hasDevices = devices.length > 0;
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="type-item-title">{t("title")}</CardTitle>
+        <div className="flex items-center gap-item">
+          <IconBadge tone="primary">
+            <BellIcon />
+          </IconBadge>
+          <CardTitle className="type-item-title">{t("title")}</CardTitle>
+        </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-section">
         {!configured ? (
@@ -196,15 +216,33 @@ export function NotificationSettings({ provider, publicKey, oneSignalAppId, devi
             {t("notConfigured")}
           </p>
         ) : support === "checking" ? null : support === "load_failed" ? (
-          <p role="status" className="type-secondary text-muted-foreground">
-            {t("loadFailed")}
-          </p>
+          <div role="status" className="flex flex-col items-start gap-item rounded-xl border bg-background p-inset-sm">
+            <p className="type-secondary text-muted-foreground">{t("loadFailed")}</p>
+            <Button
+              type="button"
+              variant="outline"
+              size="cta-sm"
+              className="w-auto px-inset"
+              onClick={() => {
+                setSupport("checking");
+                setRetryTick((n) => n + 1);
+              }}
+            >
+              <RefreshIcon aria-hidden />
+              {t("retry")}
+            </Button>
+          </div>
         ) : support === "needs_install" ? (
-          <p role="status" className="rounded-xl border bg-card p-inset-sm type-secondary">
-            {t("needsInstall")}
-          </p>
+          <div role="status" className="flex flex-col gap-stack rounded-xl border bg-background p-inset-sm type-secondary">
+            <p className="font-medium text-foreground">{t("needsInstallTitle")}</p>
+            <ol className="flex list-decimal flex-col gap-tight pl-inset text-muted-foreground">
+              <li>{t("needsInstallStep1")}</li>
+              <li>{t("needsInstallStep2")}</li>
+              <li>{t("needsInstallStep3")}</li>
+            </ol>
+          </div>
         ) : support === "insecure" ? (
-          <p role="status" className="rounded-xl border bg-card p-inset-sm type-secondary">
+          <p role="status" className="rounded-xl border bg-background p-inset-sm type-secondary">
             {t("insecure")}
           </p>
         ) : support === "unsupported" ? (
@@ -213,7 +251,7 @@ export function NotificationSettings({ provider, publicKey, oneSignalAppId, devi
           </p>
         ) : permission === "denied" ? (
           <p role="status" className="rounded-xl border border-destructive/40 bg-destructive/10 p-inset-sm type-secondary">
-            <BellOff className="mr-stack inline size-icon-sm align-text-bottom" aria-hidden />
+            <BellOffIcon className="mr-stack inline size-icon-sm align-text-bottom" aria-hidden />
             {t("denied")}
           </p>
         ) : (
@@ -222,33 +260,44 @@ export function NotificationSettings({ provider, publicKey, oneSignalAppId, devi
             <Label htmlFor="push-this-device" className="type-body">
               {t("deviceSwitch")}
             </Label>
-            {pending ? <LoaderCircle className="size-icon shrink-0 text-muted-foreground motion-safe:animate-spin" aria-hidden /> : null}
-            <Switch
-              id="push-this-device"
-              checked={Boolean(thisDevice)}
-              disabled={pending}
-              onCheckedChange={(checked) => (checked ? turnOn() : thisDevice ? removeDevice(thisDevice, "turnedOff") : undefined)}
-            />
+            <div className="flex items-center gap-stack">
+              {devicePending ? <LoaderIcon className="size-icon shrink-0 text-muted-foreground motion-safe:animate-spin" aria-hidden /> : null}
+              <Switch
+                id="push-this-device"
+                checked={Boolean(thisDevice)}
+                disabled={devicePending}
+                onCheckedChange={(checked) => (checked ? turnOn() : thisDevice ? removeDevice(thisDevice, "turnedOff") : undefined)}
+              />
+            </div>
           </div>
         )}
 
-        {devices.length > 0 ? (
+        {hasDevices ? (
           <section aria-labelledby="push-devices" className="flex flex-col gap-item">
             <h3 id="push-devices" className="type-label text-muted-foreground">
               {t("devicesTitle")}
             </h3>
             <ul className="flex flex-col gap-stack">
               {devices.map((device) => (
-                <li key={device.id} className="flex min-h-row items-center gap-item rounded-xl border bg-card p-inset-sm">
-                  <Smartphone className="size-icon-lg shrink-0 text-muted-foreground" aria-hidden />
+                <li key={device.id} className="flex min-h-row items-center gap-item rounded-xl border bg-background p-inset-sm">
+                  <IconBadge tone={device.endpoint === endpoint ? "primary" : "muted"} size="md">
+                    <SmartphoneIcon />
+                  </IconBadge>
                   <span className="flex min-w-0 flex-1 flex-col gap-tight">
                     <span className="break-words type-item-title">{deviceName(device)}</span>
                     <span className="type-secondary text-muted-foreground tabular-nums">
                       {t("since", { date: `${formatDayLong(device.createdAt, locale)}` })}
                     </span>
                   </span>
-                  <Button type="button" variant="ghost" size="icon" disabled={pending} aria-label={t("removeDevice", { name: deviceName(device) })} onClick={() => removeDevice(device)}>
-                    <Trash2 aria-hidden />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    disabled={devicePending}
+                    aria-label={t("removeDevice", { name: deviceName(device) })}
+                    onClick={() => (device.endpoint === endpoint ? removeDevice(device, "turnedOff") : setConfirmDevice(device))}
+                  >
+                    <TrashBinMinimalisticIcon aria-hidden />
                   </Button>
                 </li>
               ))}
@@ -256,28 +305,63 @@ export function NotificationSettings({ provider, publicKey, oneSignalAppId, devi
           </section>
         ) : null}
 
-        <section aria-labelledby="push-types" className="flex flex-col gap-group">
-          <h3 id="push-types" className="type-label text-muted-foreground">
-            {t("typesTitle")}
-          </h3>
-          {NOTIFICATION_GROUPS.map((group, index) => {
-            const shown = group.types.filter((type): type is NotificationType => types.includes(type));
-            if (shown.length === 0) return null;
-            return (
-              <div key={group.id} role="group" aria-label={t(`groups.${group.id}`)} className={cn("flex flex-col gap-stack", index > 0 && "border-t pt-group")}>
-                {shown.map((type) => (
-                  <div key={type} className="flex min-h-target items-center justify-between gap-item">
-                    <Label htmlFor={`push-${type}`} className="type-body">
-                      {t(`types.${type}`)}
-                    </Label>
-                    <Switch id={`push-${type}`} checked={!off.includes(type)} onCheckedChange={(checked) => toggleType(type, checked)} />
+        <section aria-labelledby="push-types" className="flex flex-col gap-item">
+          <button
+            type="button"
+            aria-expanded={typesExpanded}
+            onClick={() => setTypesExpanded((v) => !v)}
+            className="flex min-h-target items-center justify-between gap-item rounded-xl text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+          >
+            <span className="flex flex-col gap-tight">
+              <h3 id="push-types" className="type-label text-muted-foreground">
+                {t("typesTitle")}
+              </h3>
+              {!hasDevices ? <span className="type-secondary text-muted-foreground">{t("typesInactiveNote")}</span> : null}
+            </span>
+            {typesExpanded ? <AltArrowUpIcon className="size-icon-sm shrink-0 text-muted-foreground" aria-hidden /> : <AltArrowDownIcon className="size-icon-sm shrink-0 text-muted-foreground" aria-hidden />}
+          </button>
+
+          {typesExpanded ? (
+            <div className={cn("flex flex-col gap-group", !hasDevices && "opacity-75")}>
+              {NOTIFICATION_GROUPS.map((group, index) => {
+                const shown = group.types.filter((type): type is NotificationType => types.includes(type));
+                if (shown.length === 0) return null;
+                return (
+                  <div key={group.id} role="group" aria-labelledby={`push-group-${group.id}`} className={cn("flex flex-col gap-stack", index > 0 && "border-t pt-group")}>
+                    <h4 id={`push-group-${group.id}`} className="type-label text-muted-foreground">
+                      {t(`groups.${group.id}`)}
+                    </h4>
+                    {shown.map((type) => (
+                      <div key={type} className="flex min-h-target items-center justify-between gap-item">
+                        <Label htmlFor={`push-${type}`} className="type-body">
+                          {t(`types.${type}`)}
+                        </Label>
+                        <Switch id={`push-${type}`} checked={!off.includes(type)} onCheckedChange={(checked) => toggleType(type, checked)} />
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            );
-          })}
+                );
+              })}
+            </div>
+          ) : null}
         </section>
       </CardContent>
+
+      {confirmDevice !== null ? (
+        <LazyConfirmDialog
+          open
+          onOpenChange={(open) => (open ? undefined : setConfirmDevice(null))}
+          title={t("removeDeviceTitle", { name: deviceName(confirmDevice) })}
+          description={t("removeDeviceDescription")}
+          tone="destructive"
+          icon={<TrashBinMinimalisticIcon aria-hidden />}
+          confirmLabel={t("removeDeviceConfirm")}
+          pending={devicePending}
+          onConfirm={() => {
+            removeDevice(confirmDevice, "removed");
+          }}
+        />
+      ) : null}
     </Card>
   );
 }

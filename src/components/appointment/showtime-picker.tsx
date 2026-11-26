@@ -1,6 +1,6 @@
 "use client";
 
-import { Circle, CircleCheck } from "lucide-react";
+import { CheckCircleIcon, CircleIcon } from "@solar-icons/react/line-duotone";
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { Chip } from "@/components/admin/auditorium-editor/chips";
@@ -50,9 +50,12 @@ export function ShowtimePicker({ showtimes, selectedIds, onToggle, initialDay, h
     <div className="flex flex-col gap-item">
       {hideDays ? null : <nav aria-label={t("dayStrip")}>
         <ul className="scroll-strip flex gap-stack pb-tight">
-          {days.map((key) => {
+          {days.map((key, index) => {
             const date = new Date(`${key}T00:00:00Z`);
             const open = key === day;
+            const monthChanged = index > 0 && key.slice(5, 7) !== days[index - 1]?.slice(5, 7);
+            const dayNum = Number(key.slice(8));
+            const monthNum = Number(key.slice(5, 7));
             return (
               <li key={key} className="shrink-0">
                 <button
@@ -60,12 +63,12 @@ export function ShowtimePicker({ showtimes, selectedIds, onToggle, initialDay, h
                   onClick={() => setPickedDay(key)}
                   aria-pressed={open}
                   className={cn(
-                    "flex min-h-row min-w-row flex-col items-center justify-center gap-tight rounded-2xl border px-inset py-inset-xs type-micro leading-tight! outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
-                    open ? "border-transparent bg-primary text-primary-foreground" : "bg-card text-muted-foreground",
+                    "flex min-h-row min-w-row flex-col items-center justify-center gap-tight rounded-xl border px-inset py-inset-xs type-micro leading-tight! transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:opacity-80",
+                    open ? "border-transparent bg-primary text-primary-foreground" : "bg-card text-muted-foreground hover:text-foreground",
                   )}
                 >
                   <span>{key === today ? t("today") : weekday.format(date)}</span>
-                  <span className="type-item-title">{Number(key.slice(8))}</span>
+                  <span className="type-item-title tabular-nums">{monthChanged ? `${dayNum}/${monthNum}` : dayNum}</span>
                 </button>
               </li>
             );
@@ -106,11 +109,11 @@ export function ShowtimePicker({ showtimes, selectedIds, onToggle, initialDay, h
                   aria-pressed={chosen}
                   onClick={() => onToggle(s.id)}
                   className={cn(
-                    "flex w-full min-w-0 items-start gap-group rounded-xl border p-inset text-left transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
+                    "flex w-full min-w-0 items-start gap-group rounded-xl border p-inset text-left transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:bg-muted/60",
                     chosen ? "border-primary bg-accent" : "bg-card",
                   )}
                 >
-                  <span className="flex w-row shrink-0 flex-col gap-tight">
+                  <span className="flex min-w-row shrink-0 flex-col gap-tight whitespace-nowrap">
                     <span className="type-heading leading-6! tabular-nums">{formatTime(s.startAt, locale)}</span>
                     <span className="type-secondary text-muted-foreground tabular-nums">{t("until", { time: formatTime(s.endAt, locale) })}</span>
                   </span>
@@ -122,9 +125,9 @@ export function ShowtimePicker({ showtimes, selectedIds, onToggle, initialDay, h
                         {s.formatName}
                       </Badge>
                     </span>
-                    <span className="type-secondary">{priceText}</span>
+                    <span className="type-secondary tabular-nums">{priceText}</span>
                   </span>
-                  {chosen ? <CircleCheck className="size-icon-lg shrink-0 text-primary-text" aria-hidden /> : <Circle className="size-icon-lg shrink-0 text-muted-foreground" aria-hidden />}
+                  {chosen ? <CheckCircleIcon className="size-icon-lg shrink-0 text-primary-text" aria-hidden /> : <CircleIcon className="size-icon-lg shrink-0 text-muted-foreground" aria-hidden />}
                 </button>
               </li>
             );

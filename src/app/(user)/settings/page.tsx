@@ -4,6 +4,7 @@ import { BudgetSetting } from "@/components/budget-setting";
 import { LanguageSetting } from "@/components/language-setting";
 import { NotificationSettings } from "@/components/notification-settings";
 import { PageHeader } from "@/components/page-header";
+import { ScopedIntlProvider } from "@/components/scoped-intl-provider";
 import { SecuritySetting } from "@/components/security-setting";
 import { requireUser } from "@/lib/auth/guards";
 import { oneSignalConfig, pushProvider } from "@/notifications/provider";
@@ -23,19 +24,21 @@ export default async function SettingsPage() {
   const user = await requireUser();
   const [devices, pushOff, budget] = await Promise.all([listDevices(user.userId), getPushOff(user.userId), getMonthlyBudget(user.userId)]);
   return (
-    <div className="flex flex-col gap-group p-inset">
-      <PageHeader title={t("title")} backHref="/profile" />
-      <LanguageSetting />
-      <BudgetSetting initial={budget} />
-      <NotificationSettings
-        provider={pushProvider()}
-        publicKey={pushConfig()?.publicKey ?? null}
-        oneSignalAppId={oneSignalConfig()?.appId ?? null}
-        devices={devices}
-        pushOff={pushOff}
-        types={NOTIFICATION_TYPES}
-      />
-      <SecuritySetting hasPassword={user.hasPassword} />
-    </div>
+    <ScopedIntlProvider namespaces={["settings"]}>
+      <div className="flex flex-col gap-section p-inset">
+        <PageHeader title={t("title")} backHref="/profile" />
+        <LanguageSetting />
+        <BudgetSetting initial={budget} />
+        <SecuritySetting hasPassword={user.hasPassword} />
+        <NotificationSettings
+          provider={pushProvider()}
+          publicKey={pushConfig()?.publicKey ?? null}
+          oneSignalAppId={oneSignalConfig()?.appId ?? null}
+          devices={devices}
+          pushOff={pushOff}
+          types={NOTIFICATION_TYPES}
+        />
+      </div>
+    </ScopedIntlProvider>
   );
 }

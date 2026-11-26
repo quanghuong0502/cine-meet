@@ -15,19 +15,20 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function AppointmentPage({ params }: { params: Promise<{ id: string }> }) {
-  const user = await requireUser();
-  const { id } = await params;
-  const t = await getTranslations("appointments.detail");
+  const [user, { id }, t] = await Promise.all([requireUser(), params, getTranslations("appointments.detail")]);
   const view = await getAppointment(user.userId, id);
   if (!view) notFound();
-  // Friends and groups are only needed for the creator's "invite more".
-  const [overview, groups] = view.isCreator ? await Promise.all([getFriendOverview(user.userId), listGroups(user.userId)]) : [null, []];
-  // Only what this step needs: the creator's planning data, or everyone's real costs and ratings once it is over.
-  const [plan, costs, movieRating, seatRatings] = await Promise.all([
-    view.isCreator ? getPlanData(user.userId, id) : null,
-    view.status === "COMPLETED" ? getCosts(id) : null,
-    view.status === "COMPLETED" ? getMyMovieRating(user.userId, view.movie.id) : null,
-    view.status === "COMPLETED" ? getMySeatRatings(user.userId, id) : {},
+  // Fetch all stage-specific data in ONE parallel wave (and skip queries unneeded for the current lifecycle stage).
+  const needsFriends = view.isCreator && (view.status === "DRAFT" || view.status === "INVITING");
+  const needsPlan = view.isCreator && view.status === "PLANNING";
+  const isCompleted = view.status === "COMPLETED";
+  const [overview, groups, plan, costs, movieRating, seatRatings] = await Promise.all([
+    needsFriends ? getFriendOverview(user.userId) : Promise.resolve(null),
+    needsFriends ? listGroups(user.userId) : Promise.resolve([]),
+    needsPlan ? getPlanData(user.userId, id) : Promise.resolve(null),
+    isCompleted ? getCosts(id) : Promise.resolve(null),
+    isCompleted ? getMyMovieRating(user.userId, view.movie.id) : Promise.resolve(null),
+    isCompleted ? getMySeatRatings(user.userId, id) : Promise.resolve({}),
   ]);
   return (
     <div className="flex w-full flex-col gap-section p-inset">

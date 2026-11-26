@@ -1,13 +1,14 @@
 "use client";
 
-import { RotateCcw, ThumbsUp, ZoomIn, ZoomOut } from "lucide-react";
+import { LikeIcon, RestartIcon, RoundedMagnifierZoomInIcon, RoundedMagnifierZoomOutIcon } from "@solar-icons/react/line-duotone";
 import { useTranslations } from "next-intl";
 import { memo, useCallback, useMemo, useRef } from "react";
 import { Button } from "@/components/ui/button";
+import { AISLE_SIZE } from "@/lib/seat-layout/generate";
 import type { LayoutGeometry, LayoutSeat } from "@/lib/seat-layout/types";
 import { cn } from "@/lib/utils";
 import { heatColor, heatRange, heatTextColor } from "./heat-color";
-import { MAX_SCALE, MIN_SCALE, usePanZoom } from "./use-pan-zoom";
+import { usePanZoom } from "./use-pan-zoom";
 
 export interface SeatMapSeatType {
   id: string;
@@ -66,6 +67,8 @@ const SELECT_RING_PX = 1.5;
 const DEFAULT_COLOR = "var(--muted-foreground)";
 
 interface LayerProps extends Omit<SeatMapProps, "className" | "onSeatTap" | "onRowTap" | "onColTap" | "maxHeight"> {
+  scoreMin: number;
+  scoreMax: number;
   labels: boolean;
   interactive: boolean;
   rowLabelsTappable: boolean;
@@ -82,6 +85,8 @@ const MapLayer = memo(function MapLayer({
   seats,
   seatTypes,
   showHeatmap,
+  scoreMin,
+  scoreMax,
   marks,
   selectedCodes,
   reservedCodes,
@@ -97,7 +102,8 @@ const MapLayer = memo(function MapLayer({
   doorText,
 }: LayerProps) {
   const types = useMemo(() => new Map(seatTypes.map((t) => [t.id, t])), [seatTypes]);
-  const { min, max } = useMemo(() => heatRange(seats), [seats]);
+  const min = scoreMin;
+  const max = scoreMax;
 
   const g = geometry;
   const sx1 = g.screen.x1;
@@ -108,7 +114,7 @@ const MapLayer = memo(function MapLayer({
     <>
       {/* Screen */}
       <path d={`M ${sx1} 0.1 Q ${sMid} -0.45 ${sx2} 0.1`} fill="none" stroke="var(--primary)" strokeWidth={0.22} strokeLinecap="round" />
-      <path d={`M ${sx1} 0.1 Q ${sMid} -0.45 ${sx2} 0.1 L ${sx2 - 0.3} 0.7 Q ${sMid} 0.2 ${sx1 + 0.3} 0.7 Z`} fill="var(--primary)" opacity={0.12} />
+      <path d={`M ${sx1} 0.1 Q ${sMid} -0.45 ${sx2} 0.1 L ${sx2 - 0.3} 0.7 Q ${sMid} 0.2 ${sx1 + 0.3} 0.7 Z`} fill="var(--screen-glow)" />
       <text x={sMid} y={0.62} textAnchor="middle" fontSize={0.42} fill="var(--muted-foreground)" style={{ letterSpacing: "0.08em" }}>
         {screenLabel}
       </text>
@@ -117,6 +123,12 @@ const MapLayer = memo(function MapLayer({
       {g.verticalAisles.map((x) => (
         <line key={`v${x}`} x1={x} x2={x} y1={g.firstRowY - 0.5} y2={g.lastRowY + 0.5} stroke="var(--border)" strokeWidth={0.06} strokeDasharray="0.2 0.2" />
       ))}
+      {g.sideAisles?.includes("left") ? (
+        <line key="side-left" x1={AISLE_SIZE / 2} x2={AISLE_SIZE / 2} y1={g.firstRowY - 0.5} y2={g.lastRowY + 0.5} stroke="var(--border)" strokeWidth={0.07} strokeDasharray="0.2 0.2" />
+      ) : null}
+      {g.sideAisles?.includes("right") ? (
+        <line key="side-right" x1={g.width - AISLE_SIZE / 2} x2={g.width - AISLE_SIZE / 2} y1={g.firstRowY - 0.5} y2={g.lastRowY + 0.5} stroke="var(--border)" strokeWidth={0.07} strokeDasharray="0.2 0.2" />
+      ) : null}
       {g.horizontalAisles.map((y) => (
         <line key={`h${y}`} x1={0} x2={g.width} y1={y} y2={y} stroke="var(--border)" strokeWidth={0.06} strokeDasharray="0.2 0.2" />
       ))}
@@ -179,13 +191,15 @@ const MapLayer = memo(function MapLayer({
       })}
 
       {/* Seats */}
-      {seats.map((seat) => {
+      {seats.map((seat, index) => {
         const type = types.get(seat.type);
         const holder = holderLabels?.get(seat.code);
         const reserved = reservedCodes?.has(seat.code) ?? false;
         const fill = holder ? "var(--primary)" : showHeatmap ? heatColor(seat.score, min, max) : (type?.color ?? DEFAULT_COLOR);
         const w = seat.span * 1 - (1 - SEAT);
         const selected = selectedCodes?.has(seat.code);
+        const hasAnySelected = Boolean(selectedCodes && selectedCodes.size > 0);
+        const focusable = interactive && (selected || (!hasAnySelected && index === 0));
         const broken = seat.flags.includes("broken");
         const obstructed = seat.flags.includes("obstructed");
         const recommended = seat.flags.includes("recommended");
@@ -195,12 +209,14 @@ const MapLayer = memo(function MapLayer({
             key={seat.code}
             data-seat={seat.code}
             role={interactive ? "button" : undefined}
-            tabIndex={interactive ? 0 : undefined}
+            tabIndex={interactive ? (focusable ? 0 : -1) : undefined}
             aria-label={interactive ? seatAria(seat, type?.name ?? "", mark) : undefined}
             aria-pressed={interactive ? !!selected : undefined}
-            className={cn("outline-none", interactive && "cursor-pointer")}
+            className={cn("outline-none focus-visible:outline-2 focus-visible:outline-ring", interactive && "cursor-pointer")}
           >
-            <rect data-seat={seat.code} x={seat.x - w / 2} y={seat.y - SEAT / 2} width={w} height={SEAT} rx={0.2} fill={fill} opacity={broken ? 0.45 : reserved ? 0.3 : 1} />
+            {/* Full-pitch invisible hit zone so taps in the small inter-seat gap still register cleanly. */}
+            {interactive ? <rect x={seat.x - seat.span / 2} y={seat.y - 0.5} width={seat.span} height={1} fill="transparent" /> : null}
+            <rect data-seat={seat.code} x={seat.x - w / 2} y={seat.y - SEAT / 2} width={w} height={SEAT} rx={0.2} fill={fill} stroke="var(--border)" strokeWidth={0.04} opacity={broken ? 0.45 : reserved ? 0.3 : 1} />
             {/* Seat back, on the side away from the screen */}
             <rect x={seat.x - w / 2 + 0.06} y={seat.y + SEAT / 2 - 0.2} width={w - 0.12} height={0.14} rx={0.07} fill="#000" opacity={0.22} pointerEvents="none" />
             {obstructed ? (
@@ -229,7 +245,7 @@ const MapLayer = memo(function MapLayer({
               <rect x={seat.x - w / 2 - 0.03} y={seat.y - SEAT / 2 - 0.03} width={w + 0.06} height={SEAT + 0.06} rx={0.23} fill="none" stroke="var(--foreground)" strokeWidth={SELECT_RING_PX} vectorEffect="non-scaling-stroke" pointerEvents="none" />
             ) : null}
             {labels && !broken && !holder ? (
-              <text x={seat.x} y={seat.y + 0.12} textAnchor="middle" fontSize={seat.code.length > 3 ? 0.28 : 0.34} fontWeight={600} fill={showHeatmap ? heatTextColor(seat.score, min, max) : "#fff"} pointerEvents="none" style={showHeatmap ? undefined : { textShadow: "0 0 2px rgba(0,0,0,0.6)" }}>
+              <text x={seat.x} y={seat.y + 0.12} textAnchor="middle" fontSize={seat.code.length > 3 ? 0.28 : 0.34} fontWeight={600} fill={showHeatmap ? heatTextColor(seat.score, min, max) : "#fff"} pointerEvents="none">
                 {seat.code}
               </text>
             ) : null}
@@ -246,7 +262,7 @@ function RecommendedBadge({ x, y }: { x: number; y: number }) {
   const k = size / 24;
   return (
     <g pointerEvents="none">
-      <circle cx={x} cy={y} r={0.25} fill="#16a34a" stroke="#fff" strokeWidth={0.05} />
+      <circle cx={x} cy={y} r={0.25} fill="var(--success)" stroke="#fff" strokeWidth={0.05} />
       <g transform={`translate(${x - size / 2} ${y - size / 2}) scale(${k})`} fill="none" stroke="#fff" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round">
         <path d="M7 10v12" />
         <path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z" />
@@ -255,19 +271,26 @@ function RecommendedBadge({ x, y }: { x: number; y: number }) {
   );
 }
 
-/** Corner badge of a marked seat: a gold star, or a red circle with a bar. Shape differs, so colour is not the only signal. */
+/** Corner badge of a marked seat: a soft rounded gold star, or a red circle with a bar. Shape differs, so colour is not the only signal. */
 function MarkBadge({ kind, x, y }: { kind: "favorite" | "avoid"; x: number; y: number }) {
   if (kind === "favorite") {
-    const points = Array.from({ length: 10 }, (_, i) => {
-      const radius = i % 2 === 0 ? 0.3 : 0.13;
-      const angle = (Math.PI / 5) * i - Math.PI / 2;
-      return `${(x + radius * Math.cos(angle)).toFixed(3)},${(y + radius * Math.sin(angle)).toFixed(3)}`;
-    }).join(" ");
-    return <polygon points={points} fill="#facc15" stroke="#000" strokeOpacity={0.55} strokeWidth={0.04} pointerEvents="none" />;
+    const size = 0.62;
+    const k = size / 24;
+    return (
+      <g pointerEvents="none" transform={`translate(${x - size / 2} ${y - size / 2}) scale(${k})`}>
+        <path
+          d="M11.16 4.48 Q12 3 12.84 4.48 L14.25 6.96 Q15 8.27 16.48 8.58 L19.28 9.15 Q20.94 9.5 19.79 10.75 L17.87 12.86 Q16.85 13.98 17.02 15.48 L17.34 18.32 Q17.53 20 15.98 19.3 L13.38 18.13 Q12 17.5 10.62 18.13 L8.02 19.3 Q6.47 20 6.66 18.32 L6.98 15.48 Q7.15 13.98 6.13 12.86 L4.21 10.75 Q3.06 9.5 4.72 9.15 L7.52 8.58 Q9 8.27 9.75 6.96 Z"
+          fill="var(--seat-favorite)"
+          stroke="#fff"
+          strokeWidth={1.8}
+          strokeLinejoin="round"
+        />
+      </g>
+    );
   }
   return (
     <g pointerEvents="none">
-      <circle cx={x} cy={y} r={0.25} fill="#dc2626" stroke="#fff" strokeWidth={0.05} />
+      <circle cx={x} cy={y} r={0.25} fill="var(--seat-avoid)" stroke="#fff" strokeWidth={0.05} />
       <line x1={x - 0.14} y1={y} x2={x + 0.14} y2={y} stroke="#fff" strokeWidth={0.07} strokeLinecap="round" />
     </g>
   );
@@ -303,9 +326,15 @@ export function SeatMap({
   const pad = useMemo(() => mapPadding(geometry), [geometry]);
   const viewW = geometry.width + pad.left + pad.right;
   const viewH = geometry.height + pad.top + pad.bottom;
+  const scoreBounds = useMemo(() => heatRange(seats), [seats]);
+  const usedSeatTypes = useMemo(() => {
+    const ids = new Set(seats.map((s) => s.type));
+    return seatTypes.filter((type) => ids.has(type.id));
+  }, [seats, seatTypes]);
+  const hasRecommended = useMemo(() => seats.some((seat) => seat.flags.includes("recommended")), [seats]);
 
-  const { scale, handlers, zoomIn, zoomOut, reset } = usePanZoom(containerRef, svgRef, { x: -pad.left, y: -pad.top, w: viewW, h: viewH }, {
-    onTap: (target) => {
+  const activateTarget = useCallback(
+    (target: EventTarget | null) => {
       const el = target instanceof Element ? target : null;
       const seatCode = el?.closest("[data-seat]")?.getAttribute("data-seat");
       if (seatCode) {
@@ -322,7 +351,15 @@ export function SeatMap({
       const col = el?.closest("[data-col]")?.getAttribute("data-col");
       if (col) onColTap?.(Number(col));
     },
-  });
+    [seatsByCode, emptyByCode, onSeatTap, onEmptyTap, onRowTap, onColTap],
+  );
+
+  const { zoomed, atMax, showLabels, handlers, zoomIn, zoomOut, reset } = usePanZoom(
+    containerRef,
+    svgRef,
+    { x: -pad.left, y: -pad.top, w: viewW, h: viewH },
+    { onTap: activateTarget, labelScale: LABELS_FROM_SCALE },
+  );
 
 
   // Stable between renders: the layer below is memoized and must not redraw every seat at each zoom step.
@@ -358,18 +395,26 @@ export function SeatMap({
           role="group"
           aria-label={t("label")}
           preserveAspectRatio="xMidYMid meet"
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              activateTarget(event.target);
+            }
+          }}
         >
           <MapLayer
             geometry={geometry}
             seats={seats}
             seatTypes={seatTypes}
             showHeatmap={showHeatmap}
+            scoreMin={scoreBounds.min}
+            scoreMax={scoreBounds.max}
             marks={marks}
             selectedCodes={selectedCodes}
             reservedCodes={reservedCodes}
             holderLabels={holderLabels}
             emptyCells={emptyCells}
-            labels={scale >= LABELS_FROM_SCALE}
+            labels={showLabels}
             interactive={!!onSeatTap || !!onEmptyTap}
             rowLabelsTappable={!!onRowTap}
             colLabelsTappable={!!onColTap}
@@ -379,38 +424,50 @@ export function SeatMap({
             doorText={t("door")}
           />
         </svg>
+      </div>
 
-        <div className="absolute right-inset-xs bottom-inset-xs flex gap-stack" data-no-pan>
-          <Button type="button" variant="secondary" size="icon" aria-label={t("zoomOut")} disabled={scale <= MIN_SCALE} onClick={zoomOut} onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()}>
-            <ZoomOut className="size-icon" />
+      {/* Zoom controls sit cleanly outside the SVG frame so they never cover corner seats. */}
+      <div className="flex flex-wrap items-center justify-between gap-stack">
+        <div className="flex flex-wrap items-center gap-x-item gap-y-tight type-micro text-muted-foreground">
+          {!showHeatmap && usedSeatTypes.length > 0
+            ? usedSeatTypes.map((type) => (
+                <span key={type.id} className="inline-flex items-center gap-tight">
+                  <span aria-hidden className="size-icon-xs shrink-0 rounded-sm border border-border" style={{ backgroundColor: type.color ?? DEFAULT_COLOR }} />
+                  {type.name}
+                </span>
+              ))
+            : null}
+          {hasRecommended ? (
+            <span className="inline-flex items-center gap-tight">
+              <span aria-hidden className="flex size-icon-sm shrink-0 items-center justify-center rounded-full bg-success text-white">
+                <LikeIcon className="size-icon-xs" />
+              </span>
+              {t("recommendedLegend")}
+            </span>
+          ) : null}
+        </div>
+        <div className="ml-auto flex shrink-0 gap-stack">
+          <Button type="button" variant="secondary" size="icon" aria-label={t("zoomOut")} disabled={!zoomed} onClick={zoomOut}>
+            <RoundedMagnifierZoomOutIcon className="size-icon" />
           </Button>
-          <Button type="button" variant="secondary" size="icon" aria-label={t("zoomIn")} disabled={scale >= MAX_SCALE} onClick={zoomIn} onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()}>
-            <ZoomIn className="size-icon" />
+          <Button type="button" variant="secondary" size="icon" aria-label={t("zoomIn")} disabled={atMax} onClick={zoomIn}>
+            <RoundedMagnifierZoomInIcon className="size-icon" />
           </Button>
-          <Button type="button" variant="secondary" size="icon" aria-label={t("zoomReset")} disabled={scale <= MIN_SCALE} onClick={reset} onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()}>
-            <RotateCcw className="size-icon" />
+          <Button type="button" variant="secondary" size="icon" aria-label={t("zoomReset")} disabled={!zoomed} onClick={reset}>
+            <RestartIcon className="size-icon" />
           </Button>
         </div>
       </div>
 
-      {seats.some((seat) => seat.flags.includes("recommended")) ? (
-        <p className="flex items-center gap-stack type-micro text-muted-foreground">
-          <span aria-hidden className="flex size-icon-sm shrink-0 items-center justify-center rounded-full bg-[#16a34a] text-white">
-            <ThumbsUp className="size-icon-xs" />
-          </span>
-          {t("recommendedLegend")}
-        </p>
-      ) : null}
-
       {showHeatmap ? (
         <div className="flex items-center gap-stack type-micro text-muted-foreground">
-          <span>{t("heatLow")}</span>
+          <span className="tabular-nums">{t("heatLow")} ({scoreBounds.min})</span>
           <div
             className="h-track flex-1 rounded-full"
             style={{ background: `linear-gradient(in oklch to right, ${[0, 0.25, 0.5, 0.75, 1].map((t) => heatColor(t, 0, 1)).join(", ")})` }}
             aria-hidden
           />
-          <span>{t("heatHigh")}</span>
+          <span className="tabular-nums">{t("heatHigh")} ({scoreBounds.max})</span>
         </div>
       ) : null}
     </div>

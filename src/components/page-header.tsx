@@ -11,20 +11,20 @@ interface PageHeaderProps {
   children?: ReactNode;
 }
 
-/** Inner screens get a sticky back bar. Page headings are available to screen readers. */
+/** Inner screens get a sticky back bar with a concise visible title so people never lose context when scrolling. */
 export function PageHeader({ title, backHref, description, children }: PageHeaderProps) {
   return (
     <header
       className={
         backHref
-          ? "sticky top-0 z-20 -mx-inset -mt-inset flex items-center bg-background/95 px-inset py-0 backdrop-blur"
+          ? "sticky top-0 z-20 -mx-inset -mt-inset flex items-center gap-stack bg-background/98 px-inset py-0"
           : "sr-only"
       }
     >
       {backHref ? <BackButton href={backHref} /> : null}
-      {title ? <h1 className="sr-only">{title}</h1> : null}
+      {title ? <h1 className={backHref ? "min-w-0 flex-1 truncate type-heading" : "sr-only"}>{title}</h1> : null}
       {description ? <p className="sr-only">{description}</p> : null}
-      {backHref && children ? <div className="ml-auto">{children}</div> : null}
+      {backHref && children ? <div className="ml-auto shrink-0">{children}</div> : null}
     </header>
   );
 }

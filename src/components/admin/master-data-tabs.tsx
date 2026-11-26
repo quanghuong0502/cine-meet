@@ -33,19 +33,20 @@ export function MasterDataTabs({ label, labels, activeKey }: MasterDataTabsProps
   }, [shown]);
 
   return (
-    <nav aria-label={label}>
-      <ul ref={listRef} className="scroll-strip relative flex gap-stack pb-tight">
+    <nav aria-label={label} className="relative">
+      <ul ref={listRef} className="scroll-strip relative flex gap-stack pb-tight md:flex-wrap md:overflow-visible">
         {MASTER_DATA_SECTIONS.map(({ key, icon: Icon }) => {
           const selected = key === shown;
           return (
             <li key={key} className="shrink-0">
               <Link
                 href={`/admin/master-data?tab=${key}`}
+                prefetch={false}
                 aria-current={selected ? "page" : undefined}
                 onClick={() => setPending({ key, from: activeKey })}
                 className={cn(
-                  "flex h-target items-center gap-stack rounded-full border px-inset type-label",
-                  selected ? "border-transparent bg-primary text-primary-foreground" : "bg-card text-muted-foreground",
+                  "flex h-target items-center gap-stack rounded-full border px-inset type-label transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:opacity-80",
+                  selected ? "border-transparent bg-primary text-primary-foreground" : "bg-card text-muted-foreground hover:bg-muted/50",
                 )}
               >
                 <Icon className="size-icon-sm" aria-hidden />
@@ -55,6 +56,7 @@ export function MasterDataTabs({ label, labels, activeKey }: MasterDataTabsProps
           );
         })}
       </ul>
+      <div aria-hidden className="pointer-events-none absolute inset-y-0 right-0 w-inset-lg bg-gradient-to-l from-background to-transparent md:hidden" />
     </nav>
   );
 }

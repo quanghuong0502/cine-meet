@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { RequiredMark } from "@/components/required-mark";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -13,6 +14,8 @@ interface Props {
   /** Without it there is no reason field (leaving an appointment needs none). */
   reasonLabel?: string;
   reasonPlaceholder?: string;
+  required?: boolean;
+  maxLength?: number;
   cancelLabel: string;
   confirmLabel: string;
   pending: boolean;
@@ -22,17 +25,68 @@ interface Props {
   tone?: "default" | "destructive";
 }
 
-/** Confirmation with an optional reason the others (or an admin) will see. Destructive by default (turn down, leave, cancel); pass `tone="default"` for a harmless one like a report. */
-export function ReasonDialog({ open, onOpenChange, title, description, reasonLabel, reasonPlaceholder, cancelLabel, confirmLabel, pending, icon, onConfirm, tone = "destructive" }: Props) {
+/** Confirmation with an optional (or required) reason. Resets text whenever closed so stale text never carries over. */
+export function ReasonDialog({
+  open,
+  onOpenChange,
+  title,
+  description,
+  reasonLabel,
+  reasonPlaceholder,
+  required = false,
+  maxLength = 200,
+  cancelLabel,
+  confirmLabel,
+  pending,
+  icon,
+  onConfirm,
+  tone = "destructive",
+}: Props) {
+  const fieldId = useId();
   const [reason, setReason] = useState("");
+
+  function handleOpenChange(next: boolean) {
+    if (!next) setReason("");
+    onOpenChange(next);
+  }
+
+  const missingRequired = Boolean(reasonLabel && required && !reason.trim());
+
   return (
-    <ConfirmDialog open={open} onOpenChange={onOpenChange} title={title} description={description} tone={tone} icon={icon} confirmLabel={confirmLabel} cancelLabel={cancelLabel} pending={pending} onConfirm={() => onConfirm(reason)}>
+    <ConfirmDialog
+      open={open}
+      onOpenChange={handleOpenChange}
+      title={title}
+      description={description}
+      tone={tone}
+      icon={icon}
+      confirmLabel={confirmLabel}
+      cancelLabel={cancelLabel}
+      pending={pending}
+      confirmDisabled={missingRequired}
+      onConfirm={() => {
+        if (missingRequired) return;
+        onConfirm(reason);
+      }}
+    >
       {reasonLabel ? (
         <div className="flex flex-col gap-item">
-          <Label htmlFor="reason" className="type-label text-muted-foreground">
-            {reasonLabel}
+          <Label htmlFor={fieldId} className="type-label text-muted-foreground">
+            <span>
+              {reasonLabel}
+              {required ? <RequiredMark /> : null}
+            </span>
           </Label>
-          <Textarea id="reason" value={reason} onChange={(e) => setReason(e.target.value)} maxLength={200} placeholder={reasonPlaceholder} className="rounded-xl bg-card px-inset type-body" />
+          <Textarea
+            id={fieldId}
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            maxLength={maxLength}
+            aria-required={required || undefined}
+            disabled={pending}
+            placeholder={reasonPlaceholder}
+            className="rounded-xl bg-background px-inset type-body"
+          />
         </div>
       ) : null}
     </ConfirmDialog>

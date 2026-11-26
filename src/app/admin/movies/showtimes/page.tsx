@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
-import { CalendarPlus, FileUp } from "lucide-react";
+import { CalendarAddIcon, UploadMinimalisticIcon } from "@solar-icons/react/line-duotone";
 import { AdminShowtimeList } from "@/components/admin/showtime-list";
 import { MoviesTabs } from "@/components/admin/movies-tabs";
 import { EmptyState } from "@/components/empty-state";
@@ -30,17 +30,17 @@ export default async function AdminShowtimesPage() {
       )}
 
       <div aria-hidden className="h-action-clear shrink-0" />
-      <div data-bottom-fixed className="pointer-events-none fixed inset-x-0 bottom-[var(--bottom-nav-h,0px)] z-30 px-inset md:left-sidebar">
-        <div className="mx-auto flex max-w-menu gap-stack">
-          <Button asChild size="cta" className="pointer-events-auto min-w-0 flex-1">
+      <div data-bottom-fixed className="pointer-events-none fixed inset-x-0 bottom-[var(--bottom-nav-h,0px)] z-30 bg-gradient-to-t from-background via-background/95 to-transparent px-inset pt-group md:left-sidebar md:pb-inset">
+        <div className="mx-auto flex max-w-menu flex-wrap gap-stack">
+          <Button asChild size="cta" className="pointer-events-auto w-auto flex-auto px-inset-sm">
             <Link href="/admin/movies/showtimes/bulk?back=/admin/movies/showtimes">
-              <CalendarPlus aria-hidden />
+              <CalendarAddIcon aria-hidden />
               {t("showtimes.bulkButton")}
             </Link>
           </Button>
-          <Button asChild size="cta" variant="secondary" className="pointer-events-auto min-w-0 flex-1">
+          <Button asChild size="cta" variant="secondary" className="pointer-events-auto w-auto flex-auto px-inset-sm">
             <Link href="/admin/movies/showtimes/import?back=/admin/movies/showtimes">
-              <FileUp aria-hidden />
+              <UploadMinimalisticIcon aria-hidden />
               {t("showtimes.importButton")}
             </Link>
           </Button>

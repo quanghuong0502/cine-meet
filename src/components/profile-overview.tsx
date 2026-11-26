@@ -1,4 +1,4 @@
-import { Pencil, Settings, Users } from "lucide-react";
+import { AltArrowRightIcon, Pen2Icon, SettingsIcon, UsersGroupRoundedIcon } from "@solar-icons/react/line-duotone";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
@@ -6,6 +6,7 @@ import { UserAvatar } from "@/components/user-avatar";
 import { SignOutButton } from "@/components/sign-out-button";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { IconBadge } from "@/components/ui/icon-badge";
 import { formatVietnamPhone } from "@/lib/phone";
 import type { SeatPreference, UserRole } from "@/lib/user-constants";
 import { PX } from "@/lib/ui-sizes";
@@ -39,52 +40,66 @@ export async function ProfileOverview({ name, identity, role, avatar, phone, sea
     <div className="flex w-full flex-col gap-group p-inset">
       <PageHeader title={t("title")} backHref={backHref} />
       <Card>
-        <CardHeader className="flex-row items-center gap-group">
+        <CardHeader className="flex flex-row items-center gap-group">
           <UserAvatar name={name} image={avatar} size={PX.avatarLg} />
-          <div className="flex min-w-0 flex-col gap-tight">
+          <div className="flex min-w-0 flex-1 flex-col gap-tight">
             <CardTitle className="type-heading break-words">{name}</CardTitle>
             <CardDescription className="break-words">{identity}</CardDescription>
           </div>
         </CardHeader>
         <CardContent className="flex flex-col gap-item type-secondary">
           <dl className="grid gap-stack">
-            <div className="flex justify-between gap-group">
-              <dt className="text-muted-foreground">{t("fields.phone.label")}</dt>
-              <dd className="font-medium">{phone ? formatVietnamPhone(phone) : t("notSet")}</dd>
+            <div className="flex items-baseline justify-between gap-group">
+              <dt className="shrink-0 text-muted-foreground">{t("fields.phone.label")}</dt>
+              <dd className="min-w-0 break-words text-right font-medium tabular-nums">{phone ? formatVietnamPhone(phone) : t("notSet")}</dd>
             </div>
-            <div className="flex justify-between gap-group">
-              <dt className="text-muted-foreground">{t("fields.seatPreference.label")}</dt>
-              <dd className="font-medium">{seatPreference ? t(`seat.${seatPreference}`) : t("notSet")}</dd>
+            <div className="flex items-baseline justify-between gap-group">
+              <dt className="shrink-0 text-muted-foreground">{t("fields.seatPreference.label")}</dt>
+              <dd className="min-w-0 break-words text-right font-medium">{seatPreference ? t(`seat.${seatPreference}`) : t("notSet")}</dd>
             </div>
-            <div className="flex justify-between gap-group">
-              <dt className="text-muted-foreground">{t("roleLabel")}</dt>
-              <dd className="font-medium">{t(`roles.${role}`)}</dd>
-            </div>
+            {role !== "user" ? (
+              <div className="flex items-baseline justify-between gap-group">
+                <dt className="shrink-0 text-muted-foreground">{t("roleLabel")}</dt>
+                <dd className="min-w-0 break-words text-right font-medium">{t(`roles.${role}`)}</dd>
+              </div>
+            ) : null}
           </dl>
           <Button asChild variant="outline" size="cta-sm">
             <Link href={editHref}>
-              <Pencil aria-hidden />
+              <Pen2Icon aria-hidden />
               {t("edit")}
             </Link>
           </Button>
         </CardContent>
       </Card>
-      <nav aria-label={account("menuLabel")} className="flex flex-col gap-stack">
-        {friendsHref ? (
-          <Button asChild variant="ghost" className="h-target justify-start gap-stack">
-            <Link href={friendsHref}>
-              <Users aria-hidden />
-              {t("friends")}
+      <nav aria-label={account("menuLabel")} className="flex flex-col gap-item">
+        <div className="divide-y overflow-hidden rounded-xl border bg-card">
+          {friendsHref ? (
+            <Link
+              href={friendsHref}
+              className="flex min-h-row items-center gap-item px-inset-sm type-body font-medium transition-colors outline-none hover:bg-muted/50 focus-visible:ring-3 focus-visible:ring-ring/50 active:bg-muted/80"
+            >
+              <IconBadge tone="primary">
+                <UsersGroupRoundedIcon />
+              </IconBadge>
+              <span className="min-w-0 flex-1">{t("friends")}</span>
+              <AltArrowRightIcon className="size-icon-sm shrink-0 text-muted-foreground" aria-hidden />
             </Link>
-          </Button>
-        ) : null}
-        <Button asChild variant="ghost" className="h-target justify-start gap-stack">
-          <Link href={settingsHref}>
-            <Settings aria-hidden />
-            {account("settings")}
+          ) : null}
+          <Link
+            href={settingsHref}
+            className="flex min-h-row items-center gap-item px-inset-sm type-body font-medium transition-colors outline-none hover:bg-muted/50 focus-visible:ring-3 focus-visible:ring-ring/50 active:bg-muted/80"
+          >
+            <IconBadge tone="info">
+              <SettingsIcon />
+            </IconBadge>
+            <span className="min-w-0 flex-1">{account("settings")}</span>
+            <AltArrowRightIcon className="size-icon-sm shrink-0 text-muted-foreground" aria-hidden />
           </Link>
-        </Button>
-        <SignOutButton />
+        </div>
+        <div className="overflow-hidden rounded-xl border bg-card">
+          <SignOutButton className="rounded-none px-inset-sm" />
+        </div>
       </nav>
     </div>
   );

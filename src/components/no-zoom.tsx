@@ -11,18 +11,14 @@ import { useEffect } from "react";
  */
 export function NoZoom() {
   useEffect(() => {
+    // Only iOS Safari's gesture* events are needed here: CSS `touch-action: pan-x pan-y` in globals.css already
+    // blocks pinch-zoom natively on the compositor thread without blocking single-finger scroll via non-passive touchmove.
     const cancel = (event: Event) => event.preventDefault();
-    const cancelMultiTouch = (event: TouchEvent) => {
-      if (event.touches.length > 1) event.preventDefault();
-    };
-
     const gestureEvents = ["gesturestart", "gesturechange", "gestureend"] as const;
     for (const name of gestureEvents) document.addEventListener(name, cancel, { passive: false });
-    document.addEventListener("touchmove", cancelMultiTouch, { passive: false });
 
     return () => {
       for (const name of gestureEvents) document.removeEventListener(name, cancel);
-      document.removeEventListener("touchmove", cancelMultiTouch);
     };
   }, []);
 

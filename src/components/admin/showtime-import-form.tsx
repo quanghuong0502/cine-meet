@@ -1,15 +1,18 @@
 "use client";
 
-import { FileUp, LoaderCircle } from "lucide-react";
+import { DownloadMinimalisticIcon, LoaderIcon, UploadMinimalisticIcon } from "@solar-icons/react/line-duotone";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { RequiredMark } from "@/components/required-mark";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { ImportState } from "@/app/admin/movies/actions";
+
+const CSV_HEADER = "movie,branch,auditorium,start,format,price";
+const CSV_SAMPLE = `${CSV_HEADER}\nMai,CGV Vincom,Phòng 1,2026-12-01 19:30,2D,90000\n`;
 
 interface Props {
   backHref: string;
@@ -37,21 +40,55 @@ export function ShowtimeImportForm({ backHref, action }: Props) {
     router.replace(backHref);
   }, [state, t, router, backHref]);
 
+  const rowCount = useMemo(() => {
+    const lines = text
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean);
+    if (lines.length === 0) return 0;
+    const first = lines[0].toLowerCase().replace(/\s+/g, "");
+    return first.startsWith("movie,") ? lines.length - 1 : lines.length;
+  }, [text]);
+
   async function readFile(file: File | undefined) {
     if (!file) return;
     setText(await file.text());
     if (fileRef.current) fileRef.current.value = "";
   }
 
+  function downloadTemplate() {
+    const blob = new Blob([CSV_SAMPLE], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "showtimes-template.csv";
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <form action={formAction} noValidate className="flex flex-1 flex-col gap-field">
+      <div className="flex flex-col gap-stack rounded-xl border bg-card p-inset-sm">
+        <span className="type-label text-muted-foreground">{t("columnsLabel")}</span>
+        <code className="break-all font-mono type-secondary">{CSV_HEADER}</code>
+        <Button type="button" variant="outline" size="cta-sm" onClick={downloadTemplate} className="w-auto self-start px-inset">
+          <DownloadMinimalisticIcon aria-hidden />
+          {t("downloadTemplate")}
+        </Button>
+      </div>
+
       <div className="flex flex-col gap-item">
-        <Label htmlFor="csv" className="text-muted-foreground">
-          <span>
-            {t("csv")}
-            <RequiredMark />
-          </span>
-        </Label>
+        <div className="flex items-baseline justify-between gap-item">
+          <Label htmlFor="csv" className="text-muted-foreground">
+            <span>
+              {t("csv")}
+              <RequiredMark />
+            </span>
+          </Label>
+          {rowCount > 0 ? (
+            <span className="type-secondary text-muted-foreground tabular-nums">{t("rowCount", { count: rowCount })}</span>
+          ) : null}
+        </div>
         <Textarea
           id="csv"
           name="csv"
@@ -61,12 +98,12 @@ export function ShowtimeImportForm({ backHref, action }: Props) {
           autoCapitalize="none"
           autoCorrect="off"
           spellCheck={false}
-          placeholder={"movie,branch,auditorium,start,format,price\nMai,CGV Vincom,Phòng 1,2026-12-01 19:30,2D,90000"}
+          placeholder={CSV_SAMPLE.trim()}
           className="max-h-area-max min-h-area-lg resize-y rounded-xl bg-card px-inset py-inset-sm font-mono type-body"
         />
         <input ref={fileRef} type="file" accept=".csv,text/csv,text/plain" className="sr-only" tabIndex={-1} aria-hidden onChange={(e) => void readFile(e.target.files?.[0])} />
         <Button type="button" variant="secondary" size="cta" onClick={() => fileRef.current?.click()}>
-          <FileUp aria-hidden />
+          <UploadMinimalisticIcon aria-hidden />
           {t("pickFile")}
         </Button>
       </div>
@@ -84,12 +121,12 @@ export function ShowtimeImportForm({ backHref, action }: Props) {
       ) : null}
 
       <div aria-hidden className="h-save-clear shrink-0" />
-      <div data-save-bar className="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-inset pb-(--inset-bottom) md:left-sidebar">
+      <div data-save-bar className="pointer-events-none fixed inset-x-0 bottom-0 z-30 bg-gradient-to-t from-background via-background/95 to-transparent px-inset pt-group pb-(--inset-bottom) md:left-sidebar">
         <div className="mx-auto flex max-w-form">
           <Button type="submit" size="cta" disabled={isPending} className="pointer-events-auto min-w-0 flex-1">
             {isPending ? (
               <>
-                <LoaderCircle className="motion-safe:animate-spin" aria-hidden />
+                <LoaderIcon className="motion-safe:animate-spin" aria-hidden />
                 {t("importing")}
               </>
             ) : (

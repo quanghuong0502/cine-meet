@@ -1,3 +1,4 @@
+import { SEAT_STYLES } from "@/lib/seat-layout/types";
 import { seatTypeService } from "@/services/master-data/seat-type.service";
 import { createSection } from "../create-section";
 import { removeSeatType, saveSeatType } from "./actions";
@@ -11,13 +12,17 @@ export const seatTypesSection = createSection({
   item: (type, { t }) => ({
     title: type.name,
     subtitle: type.nameEn || undefined,
-    meta: [t(type.capacity === 2 ? "capacityCouple" : "capacitySingle")],
+    meta: [
+      t(type.capacity === 2 ? "capacityCouple" : "capacitySingle"),
+      ...(type.style && type.style !== "standard" ? [t(`styles.${type.style}`)] : []),
+    ],
     color: type.color ?? undefined,
   }),
   values: (type) => ({
     name: type.name,
     nameEn: type.nameEn ?? "",
     capacity: String(type.capacity),
+    style: type.style ?? "standard",
     color: type.color ?? "",
   }),
   fields: ({ t }) => [
@@ -33,6 +38,13 @@ export const seatTypesSection = createSection({
         { value: "1", label: t("capacitySingle") },
         { value: "2", label: t("capacityCouple") },
       ],
+    },
+    {
+      name: "style",
+      kind: "select",
+      label: t("fields.style.label"),
+      placeholder: t("fields.style.placeholder"),
+      options: SEAT_STYLES.map((value) => ({ value, label: t(`styles.${value}`) })),
     },
     { name: "color", kind: "color", label: t("fields.color.label"), },
   ],

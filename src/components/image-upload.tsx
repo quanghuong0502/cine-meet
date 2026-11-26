@@ -1,6 +1,6 @@
 "use client";
 
-import { Camera, LoaderCircle, Trash2 } from "lucide-react";
+import { CameraIcon, LoaderIcon, TrashBinMinimalisticIcon } from "@solar-icons/react/line-duotone";
 import { useTranslations } from "next-intl";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -32,6 +32,7 @@ interface ImageUploadProps {
 export function ImageUpload({ name, initialUrl, getTicket, preview }: ImageUploadProps) {
   const t = useTranslations("imageUpload");
   const [url, setUrl] = useState(initialUrl ?? "");
+  const [localPreview, setLocalPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const reportBusy = useContext(UploadBusyContext);
@@ -42,10 +43,18 @@ export function ImageUpload({ name, initialUrl, getTicket, preview }: ImageUploa
     return () => reportBusy?.(false);
   }, [uploading, reportBusy]);
 
+  useEffect(() => {
+    return () => {
+      if (localPreview) URL.revokeObjectURL(localPreview);
+    };
+  }, [localPreview]);
+
   async function upload(file: File) {
     if (!file.type.startsWith("image/")) return toast.error(t("errors.notImage"));
     if (file.size > MAX_BYTES) return toast.error(t("errors.tooBig"));
 
+    const objectUrl = URL.createObjectURL(file);
+    setLocalPreview(objectUrl);
     setUploading(true);
     try {
       const signed = await getTicket();
@@ -63,6 +72,8 @@ export function ImageUpload({ name, initialUrl, getTicket, preview }: ImageUploa
       toast.error(t("errors.network"));
     } finally {
       setUploading(false);
+      setLocalPreview(null);
+      URL.revokeObjectURL(objectUrl);
       if (inputRef.current) inputRef.current.value = "";
     }
   }
@@ -70,7 +81,20 @@ export function ImageUpload({ name, initialUrl, getTicket, preview }: ImageUploa
   return (
     <div className="flex items-end gap-group">
       <input type="hidden" name={name} value={url} />
-      {preview(url)}
+      <button
+        type="button"
+        disabled={uploading}
+        onClick={() => inputRef.current?.click()}
+        aria-label={t(url ? "change" : "choose")}
+        className="relative shrink-0 rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:opacity-80 disabled:pointer-events-none"
+      >
+        {preview(localPreview ?? url)}
+        {uploading ? (
+          <span aria-hidden className="absolute inset-0 flex items-center justify-center rounded-xl bg-background/60">
+            <LoaderIcon className="size-icon text-foreground motion-safe:animate-spin" />
+          </span>
+        ) : null}
+      </button>
       <div className="flex min-w-0 flex-wrap gap-stack">
         <input
           ref={inputRef}
@@ -85,12 +109,12 @@ export function ImageUpload({ name, initialUrl, getTicket, preview }: ImageUploa
           }}
         />
         <Button type="button" variant="outline" size="cta-sm" disabled={uploading} onClick={() => inputRef.current?.click()} className="w-auto px-inset">
-          {uploading ? <LoaderCircle className="motion-safe:animate-spin" aria-hidden /> : <Camera aria-hidden />}
+          {uploading ? <LoaderIcon className="motion-safe:animate-spin" aria-hidden /> : <CameraIcon aria-hidden />}
           {uploading ? t("uploading") : t(url ? "change" : "choose")}
         </Button>
         {url && !uploading ? (
           <Button type="button" variant="ghost" size="cta-sm" onClick={() => setUrl("")} className="w-auto px-inset text-muted-foreground">
-            <Trash2 aria-hidden />
+            <TrashBinMinimalisticIcon aria-hidden />
             {t("remove")}
           </Button>
         ) : null}

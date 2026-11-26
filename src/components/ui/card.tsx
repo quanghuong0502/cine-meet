@@ -1,5 +1,5 @@
 import * as React from "react"
-import { cn } from "cn"
+import { cn } from "@/lib/utils"
 
 function Card({
   className,
@@ -36,10 +36,7 @@ function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-title"
-      className={cn(
-        "font-heading type-body font-medium! leading-snug! group-data-[size=sm]/card:type-secondary",
-        className
-      )}
+      className={cn("font-heading leading-snug", className)}
       {...props}
     />
   )

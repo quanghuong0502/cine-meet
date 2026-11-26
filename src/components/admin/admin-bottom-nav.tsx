@@ -23,7 +23,7 @@ export function AdminBottomNav() {
     <BottomNav
       className="md:hidden"
       label={t("label")}
-      items={items.map((item) => ({ href: item.href, label: t(item.key), icon: item.icon, exact: item.exact }))}
+      items={items.map((item) => ({ href: item.href, label: t(item.key), icon: item.icon, activeIcon: item.activeIcon, exact: item.exact }))}
     />
   );
 }

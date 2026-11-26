@@ -1,12 +1,12 @@
 "use client";
 
-import { SlidersHorizontal, X } from "lucide-react";
+import { CloseIcon, Tuning2Icon } from "@solar-icons/react/line-duotone";
 import { useTranslations } from "next-intl";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { Chip } from "@/components/admin/auditorium-editor/chips";
+import { LazyFilterDrawer } from "@/components/filter-drawer";
 import { Button } from "@/components/ui/button";
-import { Drawer, DrawerContent, DrawerFooter, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { availableCinemaValues, CINEMA_FILTER_KEYS as FILTER_KEYS, countCinemas, type CinemaFacet, type CinemaFilterKey as FilterKey, type CinemaFilterValues as FilterValues } from "@/lib/cinema/filters";
 
 interface Option {
@@ -29,31 +29,48 @@ export function CinemaFilters({ values, options, records }: Props) {
   const t = useTranslations("cinemas.filters");
   const router = useRouter();
   const pathname = usePathname();
-  const [, startTransition] = useTransition();
+  const [isPending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
-  const [applied, setApplied] = useState(values);
+  const [drawerMounted, setDrawerMounted] = useState(false);
+  const [optimistic, setOptimistic] = useState<{ key: string; values: FilterValues } | null>(null);
   const [draft, setDraft] = useState(values);
   const anchor = useRef<HTMLDivElement>(null);
   // True once the filter button at the top has scrolled out of the screen: the floating button then takes its place.
   const [floating, setFloating] = useState(false);
+  const valuesKey = FILTER_KEYS.map((k) => values[k] ?? "").join("|");
+  const applied = optimistic && optimistic.key === valuesKey ? optimistic.values : values;
 
   const activeKeys = FILTER_KEYS.filter((key) => applied[key]);
-  const available = availableCinemaValues(records, draft);
-  // A choice already made stays visible even when it has no showtime (for example after changing the day), so it can be undone.
-  const offered = (key: FilterKey) => options[key].filter((option) => available[key].has(option.value) || draft[key] === option.value);
-  // "Often visited" is a yes/no choice, so one option is enough; the others need at least two to be a choice.
-  const groups = FILTER_KEYS.filter((key) => offered(key).length >= (key === "frequent" ? 1 : 2) || draft[key]);
+  const draftHasAny = FILTER_KEYS.some((key) => Boolean(draft[key]));
+  const appliedCount = useMemo(() => countCinemas(records, applied), [records, applied]);
+  const { groups, offeredMap, draftCount } = useMemo(() => {
+    const source = open ? draft : applied;
+    const avail = availableCinemaValues(records, source);
+    const map = {} as Record<FilterKey, Option[]>;
+    for (const key of FILTER_KEYS) {
+      map[key] = options[key].filter((option) => avail[key].has(option.value) || source[key] === option.value);
+    }
+    const visibleGroups = FILTER_KEYS.filter((key) => map[key].length >= (key === "frequent" ? 1 : 2) || source[key]);
+    return {
+      groups: visibleGroups,
+      offeredMap: map,
+      draftCount: open ? countCinemas(records, draft) : appliedCount,
+    };
+  }, [records, options, open, draft, applied, appliedCount]);
   const labelOf = (key: FilterKey, value: string) => options[key].find((option) => option.value === value)?.label ?? value;
 
   function apply(next: FilterValues) {
-    setApplied(next);
+    setOptimistic({ key: valuesKey, values: next });
     const params = new URLSearchParams();
     for (const key of FILTER_KEYS) if (next[key]) params.set(key, next[key] as string);
     startTransition(() => router.replace(params.size ? `${pathname}?${params}` : pathname, { scroll: false }));
   }
 
   function onOpenChange(next: boolean) {
-    if (next) setDraft(applied);
+    if (next) {
+      setDrawerMounted(true);
+      setDraft(applied);
+    }
     setOpen(next);
   }
 
@@ -75,34 +92,26 @@ export function CinemaFilters({ values, options, records }: Props) {
   if (!canFilter) return null;
 
   return (
-    <section aria-label={t("title")} className="flex flex-col gap-stack">
-      <div ref={anchor} className="flex justify-end">
+    <section aria-label={t("title")} aria-busy={isPending} className="flex flex-col gap-stack">
+      <div ref={anchor} className="flex items-center justify-between gap-stack">
+        <span className="type-secondary text-muted-foreground tabular-nums">{t("show", { count: appliedCount })}</span>
         <Chip selected={activeKeys.length > 0} onClick={() => onOpenChange(true)} aria-haspopup="dialog">
-          <SlidersHorizontal className="size-icon-sm" aria-hidden />
-          {buttonLabel}
+          <Tuning2Icon className="size-icon-sm shrink-0" aria-hidden />
+          <span className="truncate">{buttonLabel}</span>
         </Chip>
       </div>
-      {/* Once the button above has scrolled away it floats at the bottom right, above the menu, as the icon alone, with a small count badge when filters are on (the label and count are also in aria-label). */}
       {floating ? (
         <div data-bottom-fixed className="pointer-events-none fixed inset-x-0 bottom-[var(--nav-clearance)] z-30">
-          <div className="mx-auto flex max-w-app justify-end px-inset">
+          <div className="mx-auto flex max-w-app justify-center px-inset">
             <Button
               type="button"
-              size="icon"
+              size="sm"
               onClick={() => onOpenChange(true)}
               aria-haspopup="dialog"
-              aria-label={buttonLabel}
-              className="pointer-events-auto relative rounded-full shadow-lg"
+              className="pointer-events-auto rounded-full px-inset shadow-lg"
             >
-              <SlidersHorizontal className="size-icon" aria-hidden />
-              {activeKeys.length > 0 ? (
-                <span
-                  aria-hidden
-                  className="absolute -top-tight -right-tight flex size-icon items-center justify-center rounded-full bg-foreground type-tag font-semibold! text-background tabular-nums"
-                >
-                  {activeKeys.length}
-                </span>
-              ) : null}
+              <Tuning2Icon className="size-icon-sm" aria-hidden />
+              {buttonLabel}
             </Button>
           </div>
         </div>
@@ -112,64 +121,74 @@ export function CinemaFilters({ values, options, records }: Props) {
           {activeKeys.map((key) => {
             const name = labelOf(key, applied[key] as string);
             return (
-              <Chip key={key} selected={false} onClick={() => apply({ ...applied, [key]: undefined })} aria-label={t("remove", { name })}>
-                {name}
-                <X className="size-icon-sm" aria-hidden />
+              <Chip
+                key={key}
+                selected={false}
+                onClick={() => apply({ ...applied, [key]: undefined })}
+                aria-label={t("remove", { name })}
+                className="border-transparent bg-accent text-accent-foreground"
+              >
+                <span className="min-w-0 truncate">{name}</span>
+                <CloseIcon className="size-icon-sm shrink-0" aria-hidden />
               </Chip>
             );
           })}
         </div>
       ) : null}
 
-      <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent aria-describedby={undefined}>
-          <DrawerHeader>
-            <DrawerTitle className="type-heading">{t("title")}</DrawerTitle>
-          </DrawerHeader>
-          <div className="flex min-h-0 flex-col gap-group overflow-y-auto overscroll-contain px-inset pb-inset">
-            {groups.map((key) => (
-              <div key={key} role="group" aria-label={t(`labels.${key}`)} className="flex flex-col gap-stack">
-                <span className="type-secondary text-muted-foreground">{t(`labels.${key}`)}</span>
-                <div className="flex flex-wrap gap-stack">
-                  <Chip selected={!draft[key]} onClick={() => setDraft({ ...draft, [key]: undefined })}>
-                    {t("all")}
+      {drawerMounted ? (
+        <LazyFilterDrawer
+          open={open}
+          onOpenChange={onOpenChange}
+          title={t("title")}
+          footer={
+            <>
+              <Button
+                type="button"
+                size="cta"
+                disabled={draftCount === 0}
+                onClick={() => {
+                  apply(draft);
+                  setOpen(false);
+                }}
+              >
+                {t("show", { count: draftCount })}
+              </Button>
+              {draftHasAny || activeKeys.length > 0 ? (
+                <Button
+                  type="button"
+                  size="cta-sm"
+                  variant="ghost"
+                  onClick={() => {
+                    // Clearing is applied at once and closes the sheet: nothing is left to review.
+                    setDraft({});
+                    apply({});
+                    setOpen(false);
+                  }}
+                >
+                  {t("clear")}
+                </Button>
+              ) : null}
+            </>
+          }
+        >
+          {groups.map((key) => (
+            <div key={key} role="group" aria-label={t(`labels.${key}`)} className="flex flex-col gap-stack">
+              <span className="type-secondary text-muted-foreground">{t(`labels.${key}`)}</span>
+              <div className="flex flex-wrap gap-stack">
+                <Chip selected={!draft[key]} onClick={() => setDraft({ ...draft, [key]: undefined })}>
+                  <span className="truncate">{t("all")}</span>
+                </Chip>
+                {offeredMap[key].map((option) => (
+                  <Chip key={option.value} selected={draft[key] === option.value} onClick={() => setDraft({ ...draft, [key]: option.value })}>
+                    <span className="min-w-0 truncate">{option.label}</span>
                   </Chip>
-                  {offered(key).map((option) => (
-                    <Chip key={option.value} selected={draft[key] === option.value} onClick={() => setDraft({ ...draft, [key]: option.value })}>
-                      {option.label}
-                    </Chip>
-                  ))}
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
-          <DrawerFooter className="pb-(--inset-bottom)">
-            <Button
-              type="button"
-              size="cta"
-              onClick={() => {
-                apply(draft);
-                setOpen(false);
-              }}
-            >
-              {t("show", { count: countCinemas(records, draft) })}
-            </Button>
-            <Button
-              type="button"
-              size="cta-sm"
-              variant="ghost"
-              onClick={() => {
-                // Clearing is applied at once and closes the sheet: nothing is left to review.
-                setDraft({});
-                apply({});
-                setOpen(false);
-              }}
-            >
-              {t("clear")}
-            </Button>
-          </DrawerFooter>
-        </DrawerContent>
-      </Drawer>
+            </div>
+          ))}
+        </LazyFilterDrawer>
+      ) : null}
     </section>
   );
 }

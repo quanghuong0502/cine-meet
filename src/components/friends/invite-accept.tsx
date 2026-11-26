@@ -1,6 +1,6 @@
 "use client";
 
-import { LoaderCircle, UserPlus } from "lucide-react";
+import { LoaderIcon, UserPlusRoundedIcon } from "@solar-icons/react/line-duotone";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
@@ -9,7 +9,7 @@ import { sendInviteRequestAction } from "@/actions/friends";
 import { Button } from "@/components/ui/button";
 
 /** The button on the page a friend link opens: sends the request, then goes to the Friends screen. */
-export function InviteAccept({ code, name }: { code: string; name: string }) {
+export function InviteAccept({ code, name, label }: { code: string; name: string; label?: string }) {
   const t = useTranslations("friends.invite");
   const router = useRouter();
   const [pending, start] = useTransition();
@@ -26,8 +26,8 @@ export function InviteAccept({ code, name }: { code: string; name: string }) {
 
   return (
     <Button type="button" size="cta" onClick={send} disabled={pending}>
-      {pending ? <LoaderCircle className="motion-safe:animate-spin" aria-hidden /> : <UserPlus aria-hidden />}
-      {t("button")}
+      {pending ? <LoaderIcon className="motion-safe:animate-spin" aria-hidden /> : <UserPlusRoundedIcon aria-hidden />}
+      {label ?? t("button")}
     </Button>
   );
 }

@@ -32,7 +32,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             pose="duo-watching"
             size={PX.mascotLg}
             decorative
-            priority
+            preload
             fillHeight
             className="max-h-mascot-max"
           />

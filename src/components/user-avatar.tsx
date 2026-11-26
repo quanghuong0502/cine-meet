@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { RemoteImage } from "@/components/remote-image";
 import { cn } from "@/lib/utils";
 
 /**
@@ -37,8 +37,7 @@ export function UserAvatar({ name, image, size, className }: UserAvatarProps) {
       )}
     >
       {image ? (
-        // Already resized and optimised by Cloudinary (256px square), so Next does not process it again.
-        <Image src={image} alt="" width={size} height={size} unoptimized className="size-full object-cover" />
+        <RemoteImage src={image} alt="" width={size} height={size} sizes={`${size}px`} className="size-full object-cover" />
       ) : (
         getInitials(name)
       )}

@@ -1,14 +1,12 @@
 /**
- * Heatmap scale in the app's brand colour, one hue so it follows the colour the admin picks in Settings. Three stops, so the
- * lightness travels a long way and neighbouring scores stay tellable apart: a dark shade (low), the brand colour itself
- * `--primary` (middle), a pale tint (high). Relative to the best and worst seat of THIS layout, because most scores sit in a
- * narrow band and an absolute 0-100 scale would look flat.
- * The pale end needs dark text; `heatTextColor` picks the text colour for a level.
+ * Heatmap scale in the app's brand colour, driven by theme CSS tokens (`--heat-low`, `--heat-mid`, `--heat-high`,
+ * `--heat-low-fg`, `--heat-high-fg` in globals.css) so both dark and light modes maintain strong contrast on cards.
  */
-const LOW = "oklch(0.34 0.08 var(--brand-h))";
-const HIGH = "oklch(0.94 0.07 var(--brand-h))";
-/** From this level on the fill is light enough that white text would not read. */
-const DARK_TEXT_FROM = 0.62;
+const LOW = "var(--heat-low)";
+const MID = "var(--heat-mid)";
+const HIGH = "var(--heat-high)";
+/** From this level on the fill swaps to the high-end text token. */
+const HIGH_TEXT_FROM = 0.62;
 
 /** Where a score sits between the worst (0) and best (1) normal seat of the layout. */
 export function heatLevel(score: number, min: number, max: number): number {
@@ -18,13 +16,13 @@ export function heatLevel(score: number, min: number, max: number): number {
 export function heatColor(score: number, min: number, max: number): string {
   const t = heatLevel(score, min, max);
   return t <= 0.5
-    ? `color-mix(in oklch, ${LOW}, var(--primary) ${Math.round(t * 200)}%)`
-    : `color-mix(in oklch, var(--primary), ${HIGH} ${Math.round((t - 0.5) * 200)}%)`;
+    ? `color-mix(in oklch, ${LOW}, ${MID} ${Math.round(t * 200)}%)`
+    : `color-mix(in oklch, ${MID}, ${HIGH} ${Math.round((t - 0.5) * 200)}%)`;
 }
 
-/** White on the dark and middle part of the scale, near-black on the pale end. */
+/** High-contrast label text token for either end of the heatmap scale (theme-aware via globals.css). */
 export function heatTextColor(score: number, min: number, max: number): string {
-  return heatLevel(score, min, max) >= DARK_TEXT_FROM ? "oklch(0.2 0.03 var(--brand-h))" : "#fff";
+  return heatLevel(score, min, max) >= HIGH_TEXT_FROM ? "var(--heat-high-fg)" : "var(--heat-low-fg)";
 }
 
 /**

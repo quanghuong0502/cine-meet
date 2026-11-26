@@ -1,6 +1,6 @@
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
-import { CalendarPlus } from "lucide-react";
+import { CalendarMarkIcon } from "@solar-icons/react/line-duotone";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatTime } from "@/lib/datetime";
@@ -23,31 +23,41 @@ export function ShowtimeCard({ row, showMovie = false }: { row: ShowtimeRow; sho
         ? t("noPrice")
         : t("price", { amount: formatVnd(row.price, locale) });
   return (
-    <li className="flex min-w-0 items-start gap-group rounded-xl border bg-card p-inset">
-      <div className="flex w-row shrink-0 flex-col gap-tight">
-        <span className="type-heading leading-6! tabular-nums">{formatTime(row.startAt, locale)}</span>
-        <span className="type-secondary text-muted-foreground tabular-nums">{t("until", { time: formatTime(row.endAt, locale) })}</span>
-      </div>
-      <div className="flex min-w-0 flex-1 flex-col gap-stack">
-        {showMovie ? (
-          <Link href={`/movies/${row.movie.id}`} className="truncate type-item-title">
-            {row.movie.title}
-          </Link>
-        ) : null}
-        <span className="break-words type-body">{[row.branch.brandName, row.branch.name].filter(Boolean).join(" · ")}</span>
-        <span className="flex flex-wrap items-center gap-x-item gap-y-stack">
-          <span className="type-secondary text-muted-foreground">{row.auditorium.name}</span>
-          <Badge variant="secondary">
-            {row.format.name}
+    <li className="flex min-w-0 flex-col gap-item rounded-xl border bg-card p-inset">
+      <div className="flex flex-wrap items-center justify-between gap-stack">
+        <div className="flex items-baseline gap-stack tabular-nums">
+          <span className="type-heading leading-6!">{formatTime(row.startAt, locale)}</span>
+          <span className="type-secondary text-muted-foreground">– {formatTime(row.endAt, locale)}</span>
+        </div>
+        <div className="flex flex-wrap items-center gap-stack">
+          <Badge variant="secondary">{row.format.name}</Badge>
+          <Badge variant={row.price === null && row.priceMin === null ? "outline" : "accent"} className="tabular-nums">
+            {priceText}
           </Badge>
-        </span>
-        <span className="type-secondary">{priceText}</span>
+        </div>
       </div>
-      <Button asChild variant="outline" size="icon" className="shrink-0 rounded-full">
-        <Link href={`/appointments/new?showtimeId=${row.id}`} aria-label={t("createPlan")}>
-          <CalendarPlus aria-hidden />
-        </Link>
-      </Button>
+
+      <div className="flex min-w-0 items-center justify-between gap-item">
+        <div className="flex min-w-0 flex-1 flex-col gap-tight">
+          {showMovie ? (
+            <Link
+              href={`/movies/${row.movie.id}`}
+              prefetch={false}
+              className="inline-flex min-h-target items-center truncate type-item-title text-primary-text outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+            >
+              {row.movie.title}
+            </Link>
+          ) : null}
+          <span className="break-words type-body">{[row.branch.brandName, row.branch.name].filter(Boolean).join(" · ")}</span>
+          <span className="type-secondary text-muted-foreground">{row.auditorium.name}</span>
+        </div>
+        <Button asChild variant="outline" size="sm" className="shrink-0 rounded-full">
+          <Link href={`/appointments/new?showtimeId=${row.id}`} prefetch={false} aria-label={t("createPlan")}>
+            <CalendarMarkIcon aria-hidden />
+            {t("planShort")}
+          </Link>
+        </Button>
+      </div>
     </li>
   );
 }

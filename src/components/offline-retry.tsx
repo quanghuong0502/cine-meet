@@ -1,6 +1,6 @@
 "use client";
 
-import { RefreshCw } from "lucide-react";
+import { RefreshIcon } from "@solar-icons/react/line-duotone";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 
@@ -9,7 +9,7 @@ export function OfflineRetry() {
   const t = useTranslations("offline");
   return (
     <Button type="button" size="pill" onClick={() => window.location.reload()}>
-      <RefreshCw aria-hidden />
+      <RefreshIcon aria-hidden />
       {t("retry")}
     </Button>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { Trash2 } from "lucide-react";
+import { TrashBinMinimalisticIcon } from "@solar-icons/react/line-duotone";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -46,16 +46,16 @@ export function DeleteRecordButton({ id, name, backHref, removeAction }: DeleteR
     <>
       <Button
         type="button"
-        variant="destructive"
+        variant="outline"
         size="cta"
         onClick={() => setOpen(true)}
         aria-label={`${t("delete")}: ${name}`}
-        className="pointer-events-auto min-w-0 flex-1"
+        className="pointer-events-auto w-auto shrink-0 border-destructive/40 bg-background px-inset text-destructive hover:bg-destructive/10 hover:text-destructive"
       >
-        <Trash2 aria-hidden />
+        <TrashBinMinimalisticIcon aria-hidden />
         {t("delete")}
       </Button>
-      <ConfirmDialog open={open} onOpenChange={setOpen} title={t("deleteTitle", { name })} description={t("deleteDescription")} tone="destructive" icon={<Trash2 aria-hidden />} confirmLabel={t("delete")} pending={isDeleting} onConfirm={confirm} />
+      <ConfirmDialog open={open} onOpenChange={setOpen} title={t("deleteTitle", { name })} description={t("deleteDescription")} tone="destructive" icon={<TrashBinMinimalisticIcon aria-hidden />} confirmLabel={t("delete")} pending={isDeleting} onConfirm={confirm} />
     </>
   );
 }

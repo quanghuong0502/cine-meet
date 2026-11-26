@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { getLocale, getTranslations } from "next-intl/server";
+import { after } from "next/server";
 import { EmptyState } from "@/components/empty-state";
 import { NotificationList } from "@/components/notification-list";
 import { PageHeader } from "@/components/page-header";
+import { ScopedIntlProvider } from "@/components/scoped-intl-provider";
 import { requireUser } from "@/lib/auth/guards";
 import { renderNotification } from "@/notifications/render";
 import { sweepDueNotifications } from "@/notifications/sweep";
@@ -15,22 +17,27 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function NotificationsPage() {
   const user = await requireUser();
-  const t = await getTranslations("notifications");
-  const types = await getTranslations("notifications.types");
-  // The layout does this too, but a page and its layout are read side by side: bring due reminders in before the list is read.
-  await sweepDueNotifications();
-  const [rows, locale] = [await listNotifications(user.userId), await getLocale()];
+  after(() => sweepDueNotifications().catch(() => undefined));
+  const [t, types, rows, locale] = await Promise.all([
+    getTranslations("notifications"),
+    getTranslations("notifications.types"),
+    listNotifications(user.userId),
+    getLocale(),
+  ]);
   const items = rows.map((row) => ({
     id: row.id,
+    type: row.type,
     createdAt: row.createdAt,
     read: row.read,
     ...renderNotification((key, values) => types(key as never, values as never), row.type, row.payload, locale),
   }));
 
   return (
-    <div className="flex w-full flex-1 flex-col gap-section p-inset">
-      <PageHeader title={t("title")} backHref="/" />
-      {items.length === 0 ? <EmptyState className="flex-1 justify-center" mascot="bubu-sleepy" title={t("emptyTitle")} description={t("emptyDescription")} /> : <NotificationList items={items} />}
-    </div>
+    <ScopedIntlProvider namespaces={["notifications"]}>
+      <div className="flex w-full flex-1 flex-col gap-section p-inset">
+        <PageHeader title={t("title")} backHref="/" />
+        {items.length === 0 ? <EmptyState className="flex-1 justify-center" mascot="bubu-sleepy" title={t("emptyTitle")} description={t("emptyDescription")} /> : <NotificationList items={items} />}
+      </div>
+    </ScopedIntlProvider>
   );
 }

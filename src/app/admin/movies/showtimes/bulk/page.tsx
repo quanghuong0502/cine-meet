@@ -63,8 +63,10 @@ export default async function BulkShowtimesPage({ searchParams }: { searchParams
         movies={movies.filter((m) => m.status !== "ended").map((m) => ({ value: m._id.toString(), label: m.title }))}
         formats={formats.filter((f) => f.active !== false).map((f) => ({ value: f._id.toString(), label: f.name }))}
         rooms={roomsReady
-          .map((r) => ({ value: r.id, label: `${branchName.get(r.branchId) ?? ""} · ${r.name}` }))
-          .sort((a, b) => a.label.localeCompare(b.label, locale === "en" ? "en" : "vi"))}
+          .map((r) => ({ value: r.id, label: r.name, group: branchName.get(r.branchId) ?? "" }))
+          .sort((a, b) =>
+            `${a.group} ${a.label}`.localeCompare(`${b.group} ${b.label}`, locale === "en" ? "en" : "vi"),
+          )}
         backHref={backHref}
         action={createShowtimesAction}
         today={vietnamToday()}

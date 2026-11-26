@@ -1,12 +1,20 @@
+import type { Icon as SolarIcon } from "@solar-icons/react/lib/types";
 import {
-  Clapperboard,
-  Database,
-  LayoutDashboard,
-  Projector,
-  Settings,
-  Users,
-  type LucideIcon,
-} from "lucide-react";
+  ClapperboardPlayIcon,
+  HomeSmileIcon,
+  ProjectorIcon,
+  SettingsIcon,
+  UsersGroupRoundedIcon,
+  Widget2Icon,
+} from "@solar-icons/react/linear";
+import {
+  ClapperboardPlayIcon as ClapperboardPlayActiveIcon,
+  HomeSmileIcon as HomeSmileActiveIcon,
+  ProjectorIcon as ProjectorActiveIcon,
+  SettingsIcon as SettingsActiveIcon,
+  UsersGroupRoundedIcon as UsersGroupRoundedActiveIcon,
+  Widget2Icon as Widget2ActiveIcon,
+} from "@solar-icons/react/line-duotone";
 
 /** Keys of `admin.nav.*` and `admin.bottomNav.*` in src/messages/*.json. */
 export type AdminNavKey = "overview" | "users" | "masterData" | "auditoriums" | "movies" | "settings";
@@ -14,7 +22,8 @@ export type AdminNavKey = "overview" | "users" | "masterData" | "auditoriums" | 
 export interface AdminNavItem {
   href: string;
   key: AdminNavKey;
-  icon: LucideIcon;
+  icon: SolarIcon;
+  activeIcon: SolarIcon;
   /** Turned on in the sprint that delivers the page. Pages that are not ready yet stay out of every menu. */
   enabled: boolean;
   /** Link is active only on this exact path (the root page). */
@@ -26,12 +35,12 @@ export interface AdminNavItem {
  * so one link covers them. The phone bottom bar shows at most 5 enabled pages; when more are ready, move the least used into the avatar menu.
  */
 export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
-  { href: "/admin", key: "overview", icon: LayoutDashboard, enabled: false, exact: true }, // later: dashboard
-  { href: "/admin/users", key: "users", icon: Users, enabled: true },
-  { href: "/admin/master-data", key: "masterData", icon: Database, enabled: true },
-  { href: "/admin/auditoriums", key: "auditoriums", icon: Projector, enabled: true },
-  { href: "/admin/movies", key: "movies", icon: Clapperboard, enabled: true },
-  { href: "/admin/settings", key: "settings", icon: Settings, enabled: true },
+  { href: "/admin", key: "overview", icon: HomeSmileIcon, activeIcon: HomeSmileActiveIcon, enabled: false, exact: true }, // later: dashboard
+  { href: "/admin/users", key: "users", icon: UsersGroupRoundedIcon, activeIcon: UsersGroupRoundedActiveIcon, enabled: true },
+  { href: "/admin/master-data", key: "masterData", icon: Widget2Icon, activeIcon: Widget2ActiveIcon, enabled: true },
+  { href: "/admin/auditoriums", key: "auditoriums", icon: ProjectorIcon, activeIcon: ProjectorActiveIcon, enabled: true },
+  { href: "/admin/movies", key: "movies", icon: ClapperboardPlayIcon, activeIcon: ClapperboardPlayActiveIcon, enabled: true },
+  { href: "/admin/settings", key: "settings", icon: SettingsIcon, activeIcon: SettingsActiveIcon, enabled: true },
 ];
 
 export const ENABLED_ADMIN_NAV_ITEMS = ADMIN_NAV_ITEMS.filter((item) => item.enabled);

@@ -1,6 +1,6 @@
 "use client";
 
-import { CircleAlert, Eye, EyeOff, LoaderCircle } from "lucide-react";
+import { DangerCircleIcon, EyeClosedIcon, EyeIcon, LoaderIcon } from "@solar-icons/react/line-duotone";
 import { useTranslations } from "next-intl";
 import { useActionState, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
@@ -30,7 +30,7 @@ function GoogleButton() {
       className="gap-item bg-card"
     >
       {pending ? (
-        <LoaderCircle className="size-icon motion-safe:animate-spin" aria-hidden />
+        <LoaderIcon className="size-icon motion-safe:animate-spin" aria-hidden />
       ) : (
         <GoogleIcon className="size-icon" />
       )}
@@ -58,7 +58,7 @@ export function LoginForm({ callbackUrl, initialError }: LoginFormProps) {
 
   return (
     <div className="flex flex-col gap-group">
-      <form action={formAction} className="flex flex-col gap-field">
+      <form action={formAction} noValidate className="flex flex-col gap-field">
         <input type="hidden" name="callbackUrl" value={callbackUrl} />
 
         <div className="flex flex-col gap-item">
@@ -113,7 +113,7 @@ export function LoginForm({ callbackUrl, initialError }: LoginFormProps) {
               aria-pressed={showPassword}
               className="absolute top-1/2 right-hair size-target -translate-y-1/2 text-muted-foreground"
             >
-              {showPassword ? <EyeOff aria-hidden /> : <Eye aria-hidden />}
+              {showPassword ? <EyeClosedIcon aria-hidden /> : <EyeIcon aria-hidden />}
             </Button>
           </div>
         </div>
@@ -123,7 +123,7 @@ export function LoginForm({ callbackUrl, initialError }: LoginFormProps) {
             role="alert"
             className="flex items-start gap-stack rounded-xl border border-destructive/30 bg-destructive/10 px-inset py-inset-sm type-secondary text-destructive"
           >
-            <CircleAlert className="mt-hair size-icon-sm shrink-0" aria-hidden />
+            <DangerCircleIcon className="mt-hair size-icon-sm shrink-0" aria-hidden />
             {errorMessage}
           </p>
         ) : null}
@@ -135,7 +135,7 @@ export function LoginForm({ callbackUrl, initialError }: LoginFormProps) {
         >
           {isPending ? (
             <>
-              <LoaderCircle className="motion-safe:animate-spin" aria-hidden />
+              <LoaderIcon className="motion-safe:animate-spin" aria-hidden />
               {t("submitting")}
             </>
           ) : (

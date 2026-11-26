@@ -1,25 +1,25 @@
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
-import { cn } from "cn"
 import { Slot } from "radix-ui"
+import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding type-label whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-icon-sm",
+  "group/button inline-flex max-w-full shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding whitespace-nowrap transition-[color,background-color,border-color,opacity,transform,filter] outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:brightness-90 motion-safe:active:not-aria-[haspopup]:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-icon-sm",
   {
     variants: {
       variant: {
         // Solid brand colour (100%, no see-through tint) with the brand's own foreground text; hover darkens it a little.
         default:
-          "bg-primary text-primary-foreground hover:bg-[color-mix(in_oklch,var(--primary),black_10%)] focus-visible:border-primary/40 focus-visible:ring-primary/20 dark:focus-visible:ring-primary/40",
+          "bg-primary text-primary-foreground hover:bg-[color-mix(in_oklch,var(--primary),black_10%)] active:bg-[color-mix(in_oklch,var(--primary),black_14%)] focus-visible:border-primary/40 focus-visible:ring-primary/20 dark:focus-visible:ring-primary/40",
         outline:
-          "border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
+          "border-border bg-background hover:bg-muted hover:text-foreground active:bg-muted aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-card/80 dark:hover:bg-muted/70",
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)] aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
+          "bg-secondary text-secondary-foreground hover:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)] active:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_10%)] aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
         ghost:
-          "hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50",
+          "hover:bg-muted hover:text-foreground active:bg-muted aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50 dark:active:bg-muted/70",
         // Solid red like the main button; light text on the darker light-mode red, dark text on the lighter dark-mode red (contrast).
         destructive:
-          "bg-destructive text-white hover:bg-[color-mix(in_oklch,var(--destructive),black_10%)] focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:text-background dark:focus-visible:ring-destructive/40",
+          "bg-destructive text-white hover:bg-[color-mix(in_oklch,var(--destructive),black_10%)] active:bg-[color-mix(in_oklch,var(--destructive),black_14%)] focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:text-background dark:focus-visible:ring-destructive/40",
         link: "text-primary-text underline-offset-4 hover:underline",
       },
       size: {
@@ -30,11 +30,12 @@ const buttonVariants = cva(
         // cta = the one main action of a form or screen, full width; cta-sm = the quiet action under it (Cancel);
         // pill = a main action that sits alone and keeps its own width (retry, back to home, open a page).
         // Each size carries its own text role (one role per button: roles are !important, so two would clash).
-        cta: "h-control w-full gap-stack rounded-full px-inset type-item-title",
-        "cta-sm": "h-target w-full gap-stack rounded-full px-inset type-action",
-        pill: "h-control gap-stack rounded-full px-inset-xl type-action",
-        icon: "size-target",
-        "icon-sm": "size-target rounded-lg",
+        // min-h-* + whitespace-normal keeps single-line pills exact 48/44px while letting long labels wrap safely on 320px or large text.
+        cta: "min-h-control w-full gap-stack rounded-full px-inset py-inset-xs type-item-title whitespace-normal text-center [&_svg:not([class*='size-'])]:size-icon",
+        "cta-sm": "min-h-target w-full gap-stack rounded-full px-inset py-inset-xs type-action whitespace-normal text-center [&_svg:not([class*='size-'])]:size-icon",
+        pill: "min-h-control gap-stack rounded-full px-inset-lg py-inset-xs type-action whitespace-normal text-center [&_svg:not([class*='size-'])]:size-icon",
+        icon: "size-target type-label [&_svg:not([class*='size-'])]:size-icon",
+        "icon-sm": "size-target rounded-lg type-label [&_svg:not([class*='size-'])]:size-icon-sm",
       },
     },
     defaultVariants: {

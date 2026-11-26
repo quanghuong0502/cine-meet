@@ -1,4 +1,4 @@
-import { KeyRound } from "lucide-react";
+import { KeyIcon } from "@solar-icons/react/line-duotone";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { IconBadge } from "@/components/ui/icon-badge";
 
 /** Password change entry in Settings. Accounts that only sign in with Google have no password, so nothing is shown. */
 export async function SecuritySetting({ hasPassword }: { hasPassword: boolean }) {
@@ -17,13 +18,18 @@ export async function SecuritySetting({ hasPassword }: { hasPassword: boolean })
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="type-item-title">{t("title")}</CardTitle>
+        <div className="flex items-center gap-item">
+          <IconBadge tone="success">
+            <KeyIcon />
+          </IconBadge>
+          <CardTitle className="type-item-title">{t("title")}</CardTitle>
+        </div>
         <CardDescription>{t("description")}</CardDescription>
       </CardHeader>
       <CardContent>
         <Button asChild variant="outline" size="pill">
           <Link href="/change-password">
-            <KeyRound aria-hidden />
+            <KeyIcon aria-hidden />
             {t("changePassword")}
           </Link>
         </Button>

@@ -1,10 +1,10 @@
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
-import { cn } from "cn"
+import { cn } from "@/lib/utils"
 import { Slot } from "radix-ui"
 
 const badgeVariants = cva(
-  "group/badge inline-flex h-auto w-fit shrink-0 items-center justify-center gap-tight overflow-hidden rounded-4xl border border-transparent px-inset-sm py-tight type-badge whitespace-nowrap transition-all focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 has-data-[icon=inline-end]:pr-inset-xs has-data-[icon=inline-start]:pl-inset-xs aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&>svg]:pointer-events-none [&>svg]:size-icon-xs!",
+  "group/badge inline-flex h-auto w-fit shrink-0 items-center justify-center gap-tight overflow-hidden rounded-4xl border border-transparent px-inset-sm py-tight type-badge whitespace-nowrap transition-[color,background-color,border-color,opacity] focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 has-data-[icon=inline-end]:pr-inset-xs has-data-[icon=inline-start]:pl-inset-xs aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&>svg]:pointer-events-none [&>svg]:size-icon-xs!",
   {
     variants: {
       variant: {
@@ -18,7 +18,7 @@ const badgeVariants = cva(
           "border-border text-foreground [a]:hover:bg-muted [a]:hover:text-muted-foreground",
         ghost:
           "hover:bg-muted hover:text-muted-foreground dark:hover:bg-muted/50",
-        link: "text-primary underline-offset-4 hover:underline",
+        link: "text-primary-text underline-offset-4 hover:underline",
       },
     },
     defaultVariants: {

@@ -1,9 +1,10 @@
 {
   "meta": {
-    "description": "Lập kế hoạch xem phim cùng bạn bè, ghi nhớ ghế đẹp ở từng phòng chiếu, chia tiền và theo dõi chi tiêu."
+    "description": "Lập kế hoạch xem phim cùng bạn bè, ghi nhớ ghế đẹp ở từng phòng chiếu và theo dõi chi tiêu."
   },
   "locale": {
-    "label": "Ngôn ngữ"
+    "label": "Ngôn ngữ",
+    "error": "Không đổi được ngôn ngữ, thử lại nha."
   },
   "auth": {
     "login": {
@@ -17,22 +18,22 @@
       "submitting": "Đang đăng nhập...",
       "or": "hoặc",
       "google": "Tiếp tục với Google",
-      "help": "Quên mật khẩu hoặc chưa có tài khoản? <highlight>Hãy liên hệ quản trị viên.</highlight>",
+      "help": "Quên mật khẩu hoặc chưa có tài khoản? <highlight>Liên hệ quản trị viên.</highlight>",
       "errors": {
         "invalidInput": "Nhập tên đăng nhập (hoặc email) và mật khẩu.",
         "invalidCredentials": "Tên đăng nhập/email hoặc mật khẩu không đúng.",
-        "accountLocked": "Tài khoản đã bị khóa. Hãy liên hệ quản trị viên.",
+        "accountLocked": "Tài khoản đã bị khóa. Liên hệ quản trị viên.",
         "tooManyAttempts": "[You] đã nhập sai quá nhiều lần. Thử lại sau {minutes, plural, other {# phút}}.",
         "emailUnverified": "Email Google chưa được xác minh nên không thể đăng nhập.",
-        "notRegistered": "Tài khoản chưa được cấp quyền. Hãy liên hệ quản trị viên.",
-        "sessionExpired": "Phiên đăng nhập đã hết hiệu lực. Hãy đăng nhập lại.",
+        "notRegistered": "Tài khoản chưa được cấp quyền. Liên hệ quản trị viên.",
+        "sessionExpired": "Phiên đăng nhập đã hết hiệu lực. Đăng nhập lại nha.",
         "accessDenied": "[You] không có quyền đăng nhập bằng tài khoản này.",
-        "fallback": "Không đăng nhập được. Hãy thử lại."
+        "fallback": "Không đăng nhập được. Thử lại nha."
       }
     },
     "changePassword": {
       "title": "Đổi mật khẩu",
-      "descriptionRequired": "Đây là lần đăng nhập đầu hoặc mật khẩu vừa được đặt lại. Hãy đặt mật khẩu mới của riêng [you].",
+      "descriptionRequired": "Đây là lần đăng nhập đầu hoặc mật khẩu vừa được đặt lại. Đặt mật khẩu mới của riêng [you].",
       "description": "Nhập mật khẩu hiện tại và mật khẩu mới.",
       "currentLabel": "Mật khẩu hiện tại",
       "newLabel": "Mật khẩu mới",
@@ -55,6 +56,8 @@
     "menuLabel": "Menu tài khoản",
     "profile": "Hồ sơ",
     "signOut": "Đăng xuất",
+    "signOutTitle": "Đăng xuất?",
+    "signOutDescription": "[You] sẽ cần đăng nhập lại để tiếp tục sử dụng SeatMate.",
     "settings": "Cài đặt"
   },
   "nav": {
@@ -84,6 +87,10 @@
       "delete": "Xóa",
       "save": "Lưu",
       "saving": "Đang lưu...",
+      "uploading": "Đang tải ảnh...",
+      "copy": "Sao chép",
+      "copied": "Đã sao chép",
+      "clearSearch": "Xóa tìm kiếm",
       "cancel": "Hủy",
       "searchLabel": "Tìm kiếm",
       "searchPlaceholder": "Tìm theo tên",
@@ -98,16 +105,16 @@
         "validation": "Kiểm tra lại các ô được đánh dấu.",
         "duplicate": "Đã có mục trùng.",
         "in_use": "Đang được dùng ở nơi khác nên chưa xóa được.",
-        "item_invalid": "Có món không còn tồn tại hoặc không thuộc thương hiệu này. Hãy chọn lại món.",
+        "item_invalid": "Có món không còn tồn tại hoặc không thuộc thương hiệu này. Chọn lại món nha.",
         "discount_too_high": "Chiết khấu lớn hơn tổng giá các món.",
-        "not_found": "Mục này không còn tồn tại. Hãy tải lại trang.",
-        "unknown": "Không lưu được. Hãy thử lại.",
+        "not_found": "Mục này không còn tồn tại. Tải lại trang nha.",
+        "unknown": "Không lưu được. Thử lại nha.",
         "last_admin": "Phải còn ít nhất một quản trị viên đang hoạt động.",
         "self": "[You] không thể tự thực hiện thao tác này với tài khoản của mình.",
         "no_password": "Tài khoản này không dùng mật khẩu (chỉ đăng nhập bằng Google).",
         "invalid_config": "Cấu hình sơ đồ không hợp lệ. Kiểm tra lại số hàng, số cột và lối đi.",
-        "branch_not_found": "Chi nhánh không còn tồn tại. Hãy chọn lại.",
-        "seat_type_not_found": "Có loại ghế không còn tồn tại. Hãy chọn lại."
+        "branch_not_found": "Chi nhánh không còn tồn tại. Chọn lại nha.",
+        "seat_type_not_found": "Có loại ghế không còn tồn tại. Chọn lại nha."
       },
       "activeLabel": "Đang bật",
       "inactiveBadge": "Đang tắt"
@@ -118,7 +125,7 @@
       "invalid_url": "Đường dẫn không hợp lệ, cần bắt đầu bằng https://",
       "invalid_color": "Màu không hợp lệ",
       "no_items": "Chọn ít nhất một món",
-      "too_gray": "Màu quá xám, hãy chọn màu có sắc rõ hơn",
+      "too_gray": "Màu quá xám, chọn màu có sắc rõ hơn",
       "too_dark": "Màu quá tối, nút sẽ khó thấy trên nền tối",
       "invalid_number": "Số không hợp lệ",
       "out_of_range": "Giá trị ngoài phạm vi cho phép",
@@ -211,7 +218,7 @@
     "bottomNav": {
       "overview": "Tổng quan",
       "users": "Người dùng",
-      "auditoriums": "Phòng chiếu",
+      "auditoriums": "Phòng",
       "movies": "Phim",
       "label": "Menu quản trị",
       "settings": "Cài đặt",
@@ -251,7 +258,7 @@
         },
         "parkingFee": {
           "label": "Phí gửi xe (đồng)",
-          "placeholder": "vd. 5000"
+          "placeholder": "vd. 5.000"
         },
         "parkingLocation": {
           "label": "Nơi gửi xe"
@@ -339,10 +346,20 @@
         },
         "color": {
           "label": "Màu trên sơ đồ"
+        },
+        "style": {
+          "label": "Kiểu dáng ghế (3D)",
+          "placeholder": "Chọn kiểu dáng ghế"
         }
       },
       "capacitySingle": "Ghế đơn",
-      "capacityCouple": "Ghế đôi"
+      "capacityCouple": "Ghế đôi",
+      "styles": {
+        "standard": "Ghế thường",
+        "vip": "Ghế VIP lưng cao",
+        "recliner": "Ghế ngả có gác chân",
+        "bed": "Giường nằm"
+      }
     },
     "holidays": {
       "title": "Ngày lễ",
@@ -611,6 +628,15 @@
         }
       },
       "pickColor": "Chọn màu",
+      "presetsLabel": "Màu gợi ý",
+      "presets": {
+        "raspberry": "Hồng mâm xôi",
+        "crimson": "Đỏ thẫm",
+        "tangerine": "Cam rực",
+        "teal": "Xanh ngọc",
+        "cobalt": "Xanh dương",
+        "violet": "Tím"
+      },
       "reset": "Đặt lại màu mặc định",
       "resetTitle": "Đặt lại về màu mặc định?",
       "resetDescription": "Mọi người dùng sẽ thấy bộ màu mặc định ngay. [You] vẫn chọn lại được màu khác sau đó.",
@@ -618,10 +644,54 @@
       "resetDone": "Đã đặt lại màu mặc định",
       "preview": {
         "label": "Xem trước",
+        "dark": "Giao diện tối",
+        "light": "Giao diện sáng",
         "heading": "Chọn ghế",
         "seats": "Còn 3 ghế",
         "link": "Xem chi tiết",
         "button": "Chốt người tham gia"
+      }
+    },
+    "cinemaDimensions": {
+      "title": "Kích thước phòng chiếu chuẩn",
+      "cardDescription": "Thông số mặc định (bề rộng ghế, khoảng cách hàng, bậc thang, lối đi, màn hình) dùng cho chấm điểm ghế và 3D.",
+      "open": "Cấu hình kích thước chuẩn",
+      "intro": "Mặc định theo chuẩn TCVN 5577:2012, QCVN 06:2022/BXD, SMPTE và Neufert. Khi lưu thay đổi, hệ thống sẽ tự tính lại điểm ghế và Heatmap cho toàn bộ phòng chiếu đã lưu.",
+      "reset": "Khôi phục chuẩn",
+      "resetNotice": "Đã điền lại thông số chuẩn mặc định. Bấm Lưu để áp dụng.",
+      "savedWithRescore": "Đã lưu và tính lại điểm cho {count} phiên bản phòng.",
+      "validationError": "Có giá trị nằm ngoài giới hạn hợp lệ. Kiểm tra lại các ô số.",
+      "sections": {
+        "general": "Kích thước cơ bản",
+        "generalHint": "Bề rộng ghế, chiều cao mỗi bậc thang, bề rộng lối đi dọc và lối đi ngang dùng chung cho cả chấm điểm lẫn 3D.",
+        "rowPitch": "Khoảng cách giữa các hàng",
+        "rowPitchHint": "Áp dụng cho 4 mức chọn nhanh trong form sửa phòng.",
+        "screen": "Độ cao treo & tỉ lệ màn hình",
+        "screenHint": "Độ cao mép dưới màn so với sàn hàng đầu và tỉ lệ rộng:cao của khung màn.",
+        "screenDistance": "Màn hình cách hàng đầu",
+        "screenDistanceHint": "Tính bằng hệ số × bề rộng màn hình (W), không nhỏ hơn mức tối thiểu."
+      },
+      "fields": {
+        "seatPitchM": "Bề rộng 1 ghế (tâm–tâm)",
+        "stepHeightM": "Chiều cao mỗi bậc thang",
+        "aisleWidthM": "Bề rộng lối đi dọc",
+        "horizontalAisleWidthM": "Bề rộng lối đi ngang",
+        "rowPitchTight": "Hẹp (rạp nhỏ/cũ)",
+        "rowPitchStandard": "Chuẩn (phổ thông)",
+        "rowPitchVip": "Rộng (VIP / Ngả)",
+        "rowPitchBed": "Giường nằm",
+        "mountLow": "Treo thấp (từ sàn)",
+        "mountMid": "Treo vừa (từ sàn)",
+        "mountHigh": "Treo cao (từ sàn)",
+        "aspectScope": "Tỉ lệ rộng",
+        "aspectStandard": "Tỉ lệ chuẩn",
+        "aspectSquare": "Tỉ lệ vuông",
+        "distNearRatio": "Gần · hệ số × rộng màn",
+        "distNearMin": "Gần · tối thiểu",
+        "distMedRatio": "Vừa · hệ số × rộng màn",
+        "distMedMin": "Vừa · tối thiểu",
+        "distFarRatio": "Xa · hệ số × rộng màn",
+        "distFarMin": "Xa · tối thiểu"
       }
     },
     "systemSettings": {
@@ -672,7 +742,7 @@
       "newTitle": "Thêm phòng chiếu",
       "needSetup": {
         "title": "Cần thêm dữ liệu nền trước",
-        "description": "Phòng chiếu cần có chi nhánh và loại ghế. Hãy thêm ở Danh mục.",
+        "description": "Phòng chiếu cần có chi nhánh và loại ghế. Thêm ở Danh mục nha.",
         "action": "Mở Danh mục"
       },
       "editor": {
@@ -682,6 +752,16 @@
           "seats": "Ghế"
         },
         "heatmap": "Heatmap",
+        "view3d": "Xem 3D",
+        "showMap": "Hiện sơ đồ",
+        "hideMap": "Ẩn sơ đồ",
+        "decrease": "Giảm",
+        "increase": "Tăng",
+        "sections": {
+          "screen": "Màn hình",
+          "seating": "Ghế & độ dốc",
+          "aisles": "Lối đi & cửa ra vào"
+        },
         "mapHint": "Kéo hai ngón để phóng to sơ đồ",
         "fields": {
           "name": {
@@ -699,10 +779,13 @@
             "label": "Số cột"
           },
           "rowLabelOrder": {
-            "label": "Nhãn hàng"
+            "label": "Đánh chữ hàng ghế"
+          },
+          "skipRowLetters": {
+            "label": "Bỏ chữ I, O (tránh nhầm số 1, 0)"
           },
           "colNumbering": {
-            "label": "Đánh số cột"
+            "label": "Đánh số cột ghế"
           },
           "defaultSeatType": {
             "label": "Loại ghế mặc định",
@@ -717,15 +800,41 @@
           "screenDistance": {
             "label": "Màn hình cách hàng đầu"
           },
-          "stadiumFromRow": {
-            "label": "Bậc bắt đầu từ hàng",
-            "placeholder": "vd. 3"
+          "screenShape": {
+            "label": "Tỉ lệ khung màn hình"
+          },
+          "screenMount": {
+            "label": "Độ cao treo màn (từ sàn)"
+          },
+          "screenTilt": {
+            "label": "Độ nghiêng màn hình"
+          },
+          "seatStagger": {
+            "label": "Cách xếp ghế giữa các hàng"
+          },
+          "rowPitch": {
+            "label": "Khoảng cách giữa các hàng"
+          },
+          "seatRecline": {
+            "label": "Độ ngả lưng ghế"
           },
           "stepsPerRow": {
             "label": "Số bậc giữa hai hàng"
           },
+          "sideAisles": {
+            "label": "Lối đi dọc sát tường"
+          },
           "verticalAisles": {
-            "label": "Lối đi dọc (sau cột)"
+            "label": "Lối đi dọc giữa các cột (sau cột)"
+          },
+          "aisleFillRow": {
+            "label": "Hàng chạy liền qua lối đi dọc (chọn hàng)"
+          },
+          "aisleFillCols": {
+            "label": "Hàng {row} chạy qua lối đi sau cột"
+          },
+          "aisleFillSeats": {
+            "label": "Số ghế đặt vào khoảng lối đi"
           },
           "horizontalAisles": {
             "label": "Lối đi ngang (sau hàng)"
@@ -748,10 +857,45 @@
             "medium": "Vừa",
             "far": "Xa"
           },
+          "screenShape": {
+            "scope": "Rộng",
+            "standard": "Chuẩn",
+            "square": "Vuông"
+          },
+          "screenMount": {
+            "low": "Thấp",
+            "mid": "Vừa",
+            "high": "Cao"
+          },
+          "screenTilt": {
+            "flat": "Thẳng",
+            "slight": "Úp nhẹ",
+            "tilted": "Úp vừa"
+          },
+          "seatStagger": {
+            "aligned": "Thẳng cột",
+            "staggered": "So le"
+          },
+          "rowPitch": {
+            "tight": "Hẹp",
+            "standard": "Chuẩn",
+            "vip": "Rộng",
+            "bed": "Giường"
+          },
+          "seatRecline": {
+            "upright": "Dựng thẳng",
+            "slight": "Ngả nhẹ",
+            "deep": "Ngả sâu"
+          },
+          "stepsFlat": "Phẳng",
           "side": {
             "left": "Trái",
             "center": "Giữa",
             "right": "Phải"
+          },
+          "sideAisle": {
+            "left": "Sát tường trái",
+            "right": "Sát tường phải"
           },
           "position": {
             "front": "Trước",
@@ -809,6 +953,7 @@
       "showtimes": {
         "emptyTitle": "Chưa có suất chiếu",
         "emptyDescription": "Tạo hàng loạt hoặc nhập từ file CSV.",
+        "searchPlaceholder": "Tìm phim, rạp, phòng, định dạng...",
         "bulkButton": "Tạo hàng loạt",
         "importButton": "Nhập CSV",
         "noPrice": "Chưa có giá",
@@ -826,7 +971,7 @@
         "times": "Giờ chiếu",
         "addTime": "Thêm",
         "removeTime": "Bỏ giờ {time}",
-        "price": "Giá riêng (VND)",
+        "price": "Giá riêng (đồng)",
         "summary": "{count, plural, =0 {Chưa có suất nào để tạo} other {Sẽ tạo # suất}}",
         "submit": "Tạo suất chiếu",
         "creating": "Đang tạo...",
@@ -838,17 +983,20 @@
         },
         "errors": {
           "not_found": "Không tìm thấy dữ liệu.",
-          "movie_not_found": "Phim không còn tồn tại. Hãy chọn lại.",
-          "auditorium_not_found": "Có phòng chiếu không còn tồn tại. Hãy chọn lại.",
+          "movie_not_found": "Phim không còn tồn tại. Chọn lại nha.",
+          "auditorium_not_found": "Có phòng chiếu không còn tồn tại. Chọn lại nha.",
           "no_layout": "Có phòng chưa có sơ đồ ghế.",
-          "format_not_found": "Định dạng không còn tồn tại. Hãy chọn lại.",
+          "format_not_found": "Định dạng không còn tồn tại. Chọn lại nha.",
           "invalid": "Ngày hoặc giờ không hợp lệ.",
           "validation": "Kiểm tra lại các ô được đánh dấu.",
-          "too_many": "Tối đa {max} suất mỗi lần. Hãy chia nhỏ khoảng ngày hoặc số phòng."
+          "too_many": "Tối đa {max} suất mỗi lần. Chia nhỏ khoảng ngày hoặc số phòng nha."
         }
       },
       "import": {
         "title": "Nhập suất từ CSV",
+        "columnsLabel": "Thứ tự các cột CSV",
+        "downloadTemplate": "Tải file mẫu",
+        "rowCount": "{count, plural, other {# dòng dữ liệu}}",
         "csv": "Nội dung CSV",
         "pickFile": "Chọn file CSV",
         "submit": "Nhập suất chiếu",
@@ -896,13 +1044,17 @@
       "openCount": "{count, plural, other {# báo cáo chưa xử lý}}",
       "noneOpen": "Không có báo cáo nào đang chờ",
       "open": "Mở",
+      "filterLabel": "Lọc trạng thái báo cáo",
+      "filterAll": "Tất cả",
       "emptyTitle": "Chưa có báo cáo nào",
+      "emptyFilterTitle": "Không có báo cáo ở mục này",
       "emptyDescription": "Người dùng báo sai thông tin phòng sẽ hiện ở đây.",
       "status": {
         "open": "Đang chờ",
         "resolved": "Đã xử lý"
       },
       "by": "Từ {name}",
+      "openRoom": "Mở phòng",
       "resolve": "Đánh dấu đã xử lý",
       "resolved": "Đã đánh dấu xử lý",
       "errors": {
@@ -934,7 +1086,12 @@
       },
       "settings": {
         "title": "Cài đặt",
-        "description": "Sắp có: cài đặt AI và thông báo."
+        "description": "Sắp có: cài đặt AI và thông báo.",
+        "sections": {
+          "general": "Chung",
+          "operations": "Vận hành & hệ thống",
+          "account": "Tài khoản"
+        }
       }
     },
     "user": {
@@ -946,6 +1103,7 @@
   },
   "states": {
     "comingSoon": "Đang phát triển",
+    "backHome": "Về trang chủ",
     "loading": "Đang tải...",
     "welcome": {
       "title": "Chào mừng [you]!",
@@ -958,7 +1116,7 @@
     },
     "error": {
       "title": "Có gì đó trục trặc",
-      "description": "Đã xảy ra lỗi ngoài ý muốn. Hãy thử tải lại.",
+      "description": "Đã xảy ra lỗi ngoài ý muốn. Thử tải lại nha.",
       "retry": "Thử lại"
     },
     "network": {
@@ -1020,8 +1178,9 @@
     },
     "budget": {
       "title": "Ngân sách tháng",
-      "ticket": "Vé",
-      "fnb": "Đồ ăn",
+      "description": "Nhận cảnh báo khi chi tiêu tháng đạt 80% và 100%. Để trống nếu không muốn theo dõi.",
+      "ticket": "Vé (đồng)",
+      "fnb": "Đồ ăn (đồng)",
       "placeholder": "vd. 500.000",
       "save": "Lưu ngân sách",
       "saved": "Đã lưu ngân sách",
@@ -1031,6 +1190,11 @@
       "title": "Thông báo đẩy",
       "notConfigured": "Máy chủ chưa bật thông báo đẩy. Nhờ quản trị viên cài đặt giúp [me] nha. Thông báo trong app vẫn chạy bình thường.",
       "needsInstall": "Trên iPhone và iPad, thông báo đẩy chỉ chạy khi app đã nằm ở màn hình chính. Làm theo hướng dẫn bên dưới, rồi mở app từ màn hình chính và quay lại đây nha.",
+      "needsInstallTitle": "Thêm SeatMate vào Màn hình chính để bật thông báo",
+      "needsInstallStep1": "Nhấn nút Chia sẻ ở thanh trình duyệt Safari.",
+      "needsInstallStep2": "Chọn \"Thêm vào MH chính\" rồi nhấn \"Thêm\".",
+      "needsInstallStep3": "Mở SeatMate từ Màn hình chính và quay lại đây để bật thông báo.",
+      "retry": "Thử lại",
       "unsupported": "Trình duyệt này chưa hỗ trợ thông báo đẩy. Thông báo trong app vẫn chạy bình thường.",
       "denied": "[you] đang chặn thông báo của app này. Mở cài đặt của trình duyệt hoặc điện thoại để cho phép lại nha.",
       "deviceSwitch": "Nhận thông báo trên thiết bị này",
@@ -1041,6 +1205,9 @@
       "thisDevice": "Thiết bị này",
       "since": "Từ {date}",
       "removeDevice": "Tắt thông báo trên {name}",
+      "removeDeviceTitle": "Tắt thông báo trên {name}?",
+      "removeDeviceDescription": "Thiết bị này sẽ không còn nhận thông báo đẩy nữa.",
+      "removeDeviceConfirm": "Xóa thiết bị",
       "devices": {
         "iphone": "iPhone",
         "ipad": "iPad",
@@ -1051,6 +1218,7 @@
         "other": "Thiết bị khác"
       },
       "typesTitle": "Loại thông báo được đẩy",
+      "typesInactiveNote": "Bật thông báo trên ít nhất 1 thiết bị để nhận thông báo đẩy.",
       "types": {
         "appointment_invited": "Có người mời [you] vào lịch hẹn",
         "appointment_reply": "Người được mời trả lời lịch hẹn của [you]",
@@ -1089,11 +1257,11 @@
     "remove": "Bỏ ảnh",
     "uploading": "Đang tải ảnh...",
     "errors": {
-      "notImage": "Hãy chọn một tệp ảnh.",
-      "tooBig": "Ảnh lớn quá 8 MB. Hãy chọn ảnh nhỏ hơn.",
-      "failed": "Không tải được ảnh. Hãy thử ảnh khác.",
-      "network": "Mất kết nối khi tải ảnh. Hãy thử lại.",
-      "not_configured": "Chưa cấu hình Cloudinary nên chưa tải ảnh được."
+      "notImage": "Chọn một tệp ảnh nha.",
+      "tooBig": "Ảnh lớn quá 8 MB. Chọn ảnh nhỏ hơn nha.",
+      "failed": "Không tải được ảnh. Thử ảnh khác nha.",
+      "network": "Mất kết nối khi tải ảnh. Thử lại nha.",
+      "not_configured": "Tính năng tải ảnh chưa được bật trên máy chủ."
     }
   },
   "seatMap": {
@@ -1139,7 +1307,9 @@
         "slot": "Khung giờ"
       }
     },
-    "createPlan": "Tạo lịch hẹn từ suất này"
+    "createPlan": "Tạo lịch hẹn từ suất này",
+    "planShort": "Tạo kèo",
+    "upcomingBadge": "Sắp chiếu"
   },
   "movie": {
     "posterAlt": "Poster phim {title}",
@@ -1150,14 +1320,19 @@
       "ended": "Đã ngừng chiếu"
     },
     "synopsis": "Nội dung",
+    "showMore": "Xem thêm",
+    "showLess": "Thu gọn",
     "director": "Đạo diễn",
     "cast": "Diễn viên",
     "language": "Ngôn ngữ",
     "showtimes": "Suất chiếu",
+    "noShowtimes": "Hiện chưa có suất chiếu nào cho phim này.",
+    "browseShowtimes": "Xem lịch chiếu khác",
     "trailer": {
       "watch": "Xem trailer",
       "play": "Xem trailer {title}",
       "playerTitle": "Trailer {title}",
+      "close": "Đóng trailer",
       "pause": "Tạm dừng",
       "resume": "Phát tiếp",
       "seek": "Tua trailer",
@@ -1184,9 +1359,12 @@
     "parkingFee": "Gửi xe {fee}",
     "directions": "Chỉ đường",
     "rooms": "Phòng chiếu",
+    "emptyRooms": "Chưa có phòng chiếu nào.",
     "room": {
       "sittingHistory": {
-        "summary": "[you] đã ngồi phòng này {count, plural, other {# lần}}: {seats}"
+        "summary": "[you] đã ngồi phòng này {count, plural, other {# lần}}: {seats}",
+        "heading": "[You] đã ngồi phòng này {count, plural, other {# lần}}",
+        "seatVisits": "[You] đã ngồi ghế này {count, plural, other {# lần}}"
       },
       "review": {
         "title": "Đánh giá phòng",
@@ -1213,6 +1391,55 @@
       "layers": "Lớp hiển thị",
       "layerScore": "Điểm ghế",
       "layerMine": "Đánh dấu của mình",
+      "viewLabel": "Chế độ xem",
+      "view2d": "Sơ đồ 2D",
+      "view3d": "Xem 3D",
+      "orbit": "Toàn phòng",
+      "fromSeat": "Nhìn từ ghế {code}",
+      "fromSeatEmpty": "Góc nhìn từ ghế",
+      "recenter3d": "Đưa góc nhìn về giữa",
+      "seatBadge": "Ghế {code}",
+      "audienceFront": "Người ngồi trước",
+      "pickSeat3d": "Chạm ghế trong phòng hoặc mở Chọn ghế để ngồi thử.",
+      "threeDLabel": "Mô hình 3D phòng chiếu",
+      "threeDFailed": "Thiết bị không hỗ trợ 3D (WebGL). Chuyển về Sơ đồ 2D để xem ghế.",
+      "sampleSubtitle": "Phụ đề mẫu — kiểm tra xem góc nhìn có thoải mái không",
+      "chooseSeat": "Chọn ghế",
+      "chooseSeatTitle": "Chọn ghế ngồi thử",
+      "seatCount": "{count} ghế trong phòng",
+      "screenBadge": "Màn hình",
+      "bestSeat": "Ghế đẹp nhất",
+      "lightsOn": "Bật đèn rạp",
+      "lightsOff": "Tắt đèn chiếu phim",
+      "lightsShort": "Đèn rạp",
+      "expand3d": "Xem toàn màn hình",
+      "collapse3d": "Thu gọn",
+      "dragToLookHint": "Kéo để nhìn quanh · Chạm đúp về màn hình",
+      "hoverSeatHint": "Ghế {code} · {score}đ — chạm để ngồi thử",
+      "seatScoreShort": "{score}đ",
+      "seatPickerTitle": "Ghế {code} · {score} điểm",
+      "legendSelected": "Đang chọn",
+      "legendBest": "Đẹp nhất ({code})",
+      "legendHeatLow": "Thấp",
+      "legendHeatHigh": "Cao",
+      "quality": {
+        "best": "Tuyệt đẹp",
+        "great": "Rất đẹp",
+        "good": "Ổn áp",
+        "fair": "Trung bình",
+        "poor": "Hơi lệch"
+      },
+      "stepSeatLabel": "Đổi sang ghế lân cận",
+      "stepFront": "Hàng trước",
+      "stepBack": "Hàng sau",
+      "stepLeft": "Ghế bên trái",
+      "stepRight": "Ghế bên phải",
+      "myHeight": "Chiều cao của [you]",
+      "myHeightLabel": "Chọn chiều cao của [you]",
+      "frontHeight": "Người ngồi trước",
+      "frontHeightLabel": "Chọn chiều cao người ngồi trước",
+      "viewMetrics": "Cách màn {distance}m · Góc ngang {horizontal}° · Ngước lên {vertical}°",
+      "neckStrainHint": "· Hơi mỏi cổ",
       "tapSeat": "Chạm một ghế để xem điểm và đánh dấu.",
       "seatTitle": "Ghế {code}",
       "score": "điểm {score}",
@@ -1275,7 +1502,11 @@
     },
     "linkTitle": "Link mời bạn bè",
     "copyLink": "Sao chép link",
+    "copiedShort": "Đã chép",
     "shareLink": "Chia sẻ link",
+    "searchPlaceholder": "Tìm bạn bè...",
+    "clearSearch": "Xóa tìm kiếm",
+    "noSearchMatch": "Không tìm thấy ai khớp từ khóa.",
     "linkCopied": "Đã chép link, gửi cho bạn bè nha",
     "linkCopyFailed": "Chưa chép được link. Thử lại nha.",
     "shareTitle": "Cùng xem phim trên SeatMate",
@@ -1301,7 +1532,9 @@
     "invite": {
       "title": "Lời mời bạn bè",
       "prompt": "{name} muốn làm bạn bè với [you]",
+      "incomingPrompt": "{name} đã gửi lời mời bạn bè cho [you]",
       "button": "Gửi lời mời",
+      "acceptButton": "Chấp nhận lời mời",
       "networkError": "Mạng đang chập chờn, thử lại giúp [me] nha.",
       "notFoundTitle": "Link này không dùng được nữa",
       "notFoundDescription": "Link có thể bị gõ sai hoặc chủ link không còn dùng. Nhờ bạn bè gửi lại link mới nha.",
@@ -1330,9 +1563,13 @@
       "nameLabel": "Tên nhóm",
       "namePlaceholder": "vd. Hội cuối tuần",
       "membersLabel": "Thành viên",
+      "selectedCount": "Đã chọn {count}",
       "noFriends": "Thêm bạn bè trước rồi quay lại lập nhóm nha.",
+      "addFriendsLink": "Mở danh sách bạn bè",
       "save": "Lưu nhóm",
       "delete": "Xóa nhóm",
+      "deleteTitle": "Xóa nhóm \"{name}\"?",
+      "deleteDescription": "Nhóm này sẽ bị xóa. Bạn bè trong nhóm vẫn được giữ nguyên.",
       "saved": "Đã lưu nhóm",
       "deleted": "Đã xóa nhóm",
       "networkError": "Mạng đang chập chờn, thử lại giúp [me] nha.",
@@ -1347,6 +1584,8 @@
   "appointments": {
     "title": "Lịch hẹn",
     "add": "Tạo lịch hẹn",
+    "sectionActive": "Đang diễn ra",
+    "sectionPast": "Đã qua",
     "emptyTitle": "Chưa có kèo nào hết",
     "emptyDescription": "Chọn phim, chọn giờ rồi rủ bạn bè đi xem thôi!",
     "byMe": "[you] tạo",
@@ -1383,6 +1622,7 @@
       "nobody_to_remind": "Ai cũng vote giờ này rồi nè, không còn ai để nhắc.",
       "reminder_too_soon": "Vừa nhắc xong, đợi một lúc rồi nhắc lại nha.",
       "no_showtime": "Suất chiếu này không chọn được nha, thử suất khác.",
+      "needs_showtime": "Chọn một suất chiếu trước khi xác nhận nha.",
       "seat_taken": "Ghế này vừa có người giữ rồi, chọn ghế khác nha.",
       "invalid_seat": "Ghế này không chọn được (hỏng, không có hoặc quá số chỗ).",
       "needs_seat": "Còn người chưa có ghế, xếp đủ ghế rồi xác nhận nha.",
@@ -1405,6 +1645,11 @@
       "inviteesLabel": "Mời ai",
       "groupsLabel": "Nhóm",
       "noFriends": "Chưa có bạn bè để mời. Thêm bạn bè trong Hồ sơ trước nha.",
+      "addFriendsLink": "Thêm bạn bè",
+      "noMoviesTitle": "Chưa có phim đang mở lịch",
+      "noMoviesDescription": "Xem lịch chiếu để kiểm tra các suất sắp tới nha.",
+      "browseShowtimes": "Xem lịch chiếu",
+      "pickedSummary": "Đã chọn {count}/{max} suất chiếu",
       "allPaidByCreatorLabel": "Mình bao hết chi phí",
       "allPaidByCreatorHint": "Mọi người vẫn chọn ghế và đồ ăn riêng, nhưng toàn bộ chi phí buổi này sẽ tính cho mình.",
       "deadlineLabel": "Trả lời trước",
@@ -1484,6 +1729,10 @@
         "excluded": "Không tham gia"
       },
       "deadlinePassed": "Đã hết hạn trả lời. Chờ người tạo chốt nha.",
+      "deadlinePassedCreator": "Đã quá hạn trả lời. [You] có thể chốt một khung giờ bên dưới hoặc hủy lịch hẹn.",
+      "notGoingCount": "Không tham gia ({count})",
+      "waitingShort": "Chưa trả lời",
+      "remindShort": "Nhắc",
       "save": "Lưu trả lời",
       "discard": "Bỏ thay đổi",
       "saved": "Đã lưu trả lời của [you]",
@@ -1502,6 +1751,10 @@
         "waitingForCreator": "Người tạo đang chọn suất và xếp ghế, chờ xíu nha.",
         "showtimeTitle": "Suất chiếu",
         "changeShowtime": "Đổi suất chiếu",
+        "changeShowtimeConfirmTitle": "Đổi sang suất chiếu khác?",
+        "changeShowtimeConfirmDescription": "Ghế đã xếp và đồ ăn đang chọn sẽ bị xóa để chọn lại theo phòng mới.",
+        "draftProgress": "Đã xếp {seated}/{total} ghế · {food} món",
+        "foodOrderedTitle": "Đồ ăn đã đặt",
         "showtimeSaved": "Đã chọn suất chiếu, ghế xếp lại từ đầu nha",
         "seatsTitle": "Xếp ghế",
         "whoIsSeated": "Chọn người để xếp ghế",
@@ -1534,8 +1787,12 @@
         "allPaidByCreatorNote": "{name} bao hết chi phí buổi này.",
         "total": "Cả nhóm",
         "confirm": "Xác nhận",
+        "confirmDialogTitle": "Xác nhận lịch hẹn này?",
+        "confirmDialogDescription": "Chốt cho {count} người với tổng ước tính {total}. Mọi người sẽ nhận thông báo và không sửa ghế được nữa.",
         "confirmed": "Đã xác nhận, cả nhóm sẽ nhận thông báo",
         "complete": "Đã xem xong",
+        "completeDialogTitle": "Đánh dấu đã xem xong?",
+        "completeDialogDescription": "Chi phí ước tính sẽ được lưu thành chi tiêu thực tế cho từng người và mở phần đánh giá.",
         "completed": "Xem xong rồi, nhập chi phí nha"
       },
       "cost": {
@@ -1565,7 +1822,8 @@
       "title": "Mời thêm",
       "groups": "Nhóm",
       "button": "{count, plural, =0 {Gửi lời mời} other {Mời # người}}",
-      "done": "Đã mời thêm {count, plural, one {# người} other {# người}}"
+      "done": "Đã mời thêm {count, plural, one {# người} other {# người}}",
+      "limitReached": "Đã đủ số người tối đa cho lịch hẹn này rồi nha."
     },
     "answered": "{answered}/{total} đã trả lời",
     "peopleGoing": "{count, plural, one {# người đi} other {# người đi}}",
@@ -1608,6 +1866,7 @@
     "emptyDescription": "Có ai rủ đi xem phim hay trả lời kèo là báo ở đây liền.",
     "markAll": "Đọc hết",
     "allRead": "Đã đánh dấu đọc hết",
+    "todayAt": "Hôm nay · {time}",
     "new": "Mới.",
     "networkError": "Mạng đang chập chờn, thử lại giúp [me] nha.",
     "types": {
@@ -1729,11 +1988,16 @@
       "room": "Rạp đã xem",
       "noRoom": "Không nhớ/không chọn",
       "ticket": "Tiền vé (đồng)",
+      "ticketPlaceholder": "vd. 95.000",
       "food": "Tiền đồ ăn (đồng)",
+      "foodPlaceholder": "vd. 85.000",
       "other": "Khoản khác (đồng)",
+      "otherPlaceholder": "vd. 15.000",
       "note": "Ghi chú",
+      "notePlaceholder": "vd. Xem suất tối ở CGV",
       "date": "Ngày xem",
       "submit": "Lưu buổi xem",
+      "submitting": "Đang lưu...",
       "saved": "Đã lưu buổi xem",
       "futureDate": "Chưa ghi được buổi xem ở ngày chưa tới nha.",
       "error": "Chưa lưu được, thử lại nha"
@@ -1746,11 +2010,14 @@
         "year": "Năm"
       },
       "ticket": "Vé",
-      "food": "Đồ ăn"
+      "food": "Đồ ăn",
+      "other": "Khác"
     },
     "budget": {
       "title": "Ngân sách tháng",
       "notSet": "Chưa đặt ngân sách. Vào Cài đặt để đặt và nhận cảnh báo khi gần hết nha.",
+      "configure": "Đặt ngân sách",
+      "edit": "Chỉnh sửa",
       "categories": {
         "ticket": "Vé",
         "fnb": "Đồ ăn"

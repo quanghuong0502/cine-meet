@@ -58,8 +58,8 @@ interface MascotProps {
    * that must fit the screen. Otherwise it is drawn at exactly `size` px wide.
    */
   fillHeight?: boolean;
-  /** Only for mascots above the fold on first paint. */
-  priority?: boolean;
+  /** Only for the single above-the-fold LCP mascot on first paint. */
+  preload?: boolean;
   className?: string;
 }
 
@@ -82,7 +82,7 @@ function MascotImage({
   decorative = false,
   flip = false,
   fillHeight = false,
-  priority = false,
+  preload = false,
   className,
   alt,
 }: MascotProps & { alt: string }) {
@@ -97,7 +97,7 @@ function MascotImage({
       aria-hidden={decorative ? true : undefined}
       width={width}
       height={height}
-      priority={priority}
+      preload={preload}
       draggable={false}
       // Both dimensions are also set in CSS (as Next.js asks, so the page's reset styles cannot change one of them).
       style={fillHeight ? undefined : { width, height }}

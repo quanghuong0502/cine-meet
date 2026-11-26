@@ -17,6 +17,7 @@ export function UserBottomNav() {
         href: item.href,
         label: t(item.key),
         icon: item.icon,
+        activeIcon: item.activeIcon,
         exact: item.href === "/",
         alsoActive: item.alsoActive,
       }))}

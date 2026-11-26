@@ -1,8 +1,8 @@
 "use client";
 
-import { X } from "lucide-react";
+import { CloseIcon, RefreshIcon } from "@solar-icons/react/line-duotone";
 import { useLocale, useTranslations } from "next-intl";
-import { useMemo, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { findShowtimesFromAction } from "@/actions/appointments";
 import { Button } from "@/components/ui/button";
 import { Chip } from "@/components/admin/auditorium-editor/chips";
@@ -10,10 +10,12 @@ import { ShowtimePicker, toShowtimeChoice, type ShowtimeChoice } from "@/compone
 import { DateTimeField } from "@/components/date-time-field";
 import { LoadingState } from "@/components/loading-state";
 import { vietnamToIso } from "@/lib/appointment/datetime";
+import { MAX_TIME_OPTIONS } from "@/lib/appointment/limits";
 import { formatDayLong, formatTime } from "@/lib/datetime";
+import { vietnamToday } from "@/lib/movie/status";
 import { availableValues, type FacetRecord } from "@/lib/showtime/facets";
 import type { FilterKey, FilterValues } from "@/lib/showtime/filters";
-import { slotName, slotRange, timeInSlot, type TimeSlot } from "@/lib/showtime/slots";
+import { slotName, slotRange, timeInSlot, type TimeSlot } from "@/lib/showtime/slots.helpers";
 import type { ShowtimeRow } from "@/services/showtime.service";
 
 /** Filters that make sense for the showtimes of one movie (the genre is the movie's, so it never narrows anything). */
@@ -38,25 +40,95 @@ interface Props {
 export function ShowtimeFinder({ movieId, slots, chosen, onPick, onUnpick, onError }: Props) {
   const t = useTranslations("appointments.new");
   const tf = useTranslations("showtimes.filters");
+  const te = useTranslations("states.error");
   const locale = useLocale();
   const [searching, startSearch] = useTransition();
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [rows, setRows] = useState<ShowtimeRow[] | null>(null);
+  const [failed, setFailed] = useState(false);
   const [filters, setFilters] = useState<FilterValues>({});
 
   // The picker fires `onChange` while it is still being turned. The search waits until the choice is final: the field loses focus (the
   // picker closed) or nothing changes for a moment. Only the newest search may show its result.
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const latest = useRef(0);
+  const onErrorRef = useRef(onError);
+  useEffect(() => {
+    onErrorRef.current = onError;
+  });
   const SETTLE_MS = 600;
+
+  const runFetch = useCallback(
+    (iso: string) => {
+      setFailed(false);
+      setFilters({});
+      onErrorRef.current("");
+      const mine = ++latest.current;
+      startSearch(async () => {
+        const result = await findShowtimesFromAction(movieId, iso).catch(() => null);
+        if (mine !== latest.current) return;
+        if (!result?.ok) {
+          setFailed(true);
+          onErrorRef.current(t("errors.searchFailed"));
+          return;
+        }
+        setRows(result.showtimes);
+      });
+    },
+    [movieId, t],
+  );
+
+  // Load upcoming showtimes straight away when a movie is picked so users don't have to guess a date + exact time first.
+  useEffect(() => {
+    let cancelled = false;
+    const mine = ++latest.current;
+    async function loadInitial() {
+      const result = await findShowtimesFromAction(movieId, new Date().toISOString()).catch(() => null);
+      if (cancelled || mine !== latest.current) return;
+      if (!result?.ok) {
+        setFailed(true);
+        onErrorRef.current(t("errors.searchFailed"));
+        return;
+      }
+      setFailed(false);
+      setFilters({});
+      setRows(result.showtimes);
+    }
+    void loadInitial();
+    return () => {
+      cancelled = true;
+      if (timer.current) clearTimeout(timer.current);
+    };
+  }, [movieId, t]);
+
+  const busy = searching || (rows === null && !failed);
+
+  function search(nextDate: string, nextTime: string) {
+    timer.current = null;
+    if (!nextDate && !nextTime) {
+      runFetch(new Date().toISOString());
+      return;
+    }
+    if (!nextDate) return;
+    const effectiveTime = nextTime || "00:00";
+    const iso = vietnamToIso(nextDate, effectiveTime);
+    if (!iso) return onError(t("errors.customInvalid"));
+    const now = Date.now();
+    const targetIso = !nextTime && new Date(iso).getTime() <= now ? new Date(now).toISOString() : iso;
+    if (nextTime && new Date(iso).getTime() <= now) return onError(t("errors.past"));
+    setRows(null);
+    runFetch(targetIso);
+  }
 
   function schedule(nextDate: string, nextTime: string) {
     if (timer.current) clearTimeout(timer.current);
-    setRows(null);
-    setFilters({});
     latest.current += 1;
-    if (nextDate && nextTime) timer.current = setTimeout(() => search(nextDate, nextTime), SETTLE_MS);
+    if (!nextDate && !nextTime) {
+      runFetch(new Date().toISOString());
+      return;
+    }
+    if (nextDate) timer.current = setTimeout(() => search(nextDate, nextTime), SETTLE_MS);
   }
 
   function settle() {
@@ -64,24 +136,6 @@ export function ShowtimeFinder({ movieId, slots, chosen, onPick, onUnpick, onErr
     clearTimeout(timer.current);
     timer.current = null;
     search(date, time);
-  }
-
-  function search(nextDate: string, nextTime: string) {
-    timer.current = null;
-    setRows(null);
-    setFilters({});
-    if (!nextDate || !nextTime) return;
-    const iso = vietnamToIso(nextDate, nextTime);
-    if (!iso) return onError(t("errors.customInvalid"));
-    if (new Date(iso).getTime() <= Date.now()) return onError(t("errors.past"));
-    onError("");
-    const mine = ++latest.current;
-    startSearch(async () => {
-      const result = await findShowtimesFromAction(movieId, iso).catch(() => null);
-      if (mine !== latest.current) return;
-      if (!result?.ok) return onError(t("errors.searchFailed"));
-      setRows(result.showtimes);
-    });
   }
 
   const records = useMemo<(FacetRecord & { id: string })[]>(
@@ -110,53 +164,81 @@ export function ShowtimeFinder({ movieId, slots, chosen, onPick, onUnpick, onErr
   );
   const shown = (rows ?? []).filter((row) => shownIds.has(row.id)).map(toShowtimeChoice);
   const chosenIds = chosen.map((c) => c.id);
-  // Picked showtimes that the list on screen does not hold (picked for another time, or filtered out): shown here so none hides.
-  const listed = new Set(shown.map((s) => s.id));
-  const elsewhere = chosen.filter((c) => !listed.has(c.id));
+  const browsingAllDays = !date;
 
   return (
     <div className="flex flex-col gap-item">
-      {elsewhere.length > 0 ? (
-        <ul className="flex flex-col gap-stack">
-          {elsewhere.map((c) => (
-            <li key={c.id} className="flex items-center gap-item rounded-xl border border-primary bg-accent p-inset-sm">
-              <span className="flex min-w-0 flex-1 flex-col gap-tight">
-                <span className="break-words type-item-title tabular-nums">
-                  {formatDayLong(c.startAt, locale)} · {formatTime(c.startAt, locale)}
+      {chosen.length > 0 ? (
+        <div className="flex flex-col gap-stack">
+          <span className="type-caption text-muted-foreground tabular-nums">
+            {t("pickedSummary", { count: chosen.length, max: MAX_TIME_OPTIONS })}
+          </span>
+          <ul className="flex flex-col gap-stack">
+            {chosen.map((c) => (
+              <li key={c.id} className="flex items-center gap-item rounded-xl border border-primary bg-accent p-inset-sm">
+                <span className="flex min-w-0 flex-1 flex-col gap-tight">
+                  <span className="break-words type-item-title tabular-nums">
+                    {formatDayLong(c.startAt, locale)} · {formatTime(c.startAt, locale)}
+                  </span>
+                  <span className="break-words type-secondary text-muted-foreground">
+                    {c.branchName} · {c.roomName} · {c.formatName}
+                  </span>
                 </span>
-                <span className="break-words type-secondary text-muted-foreground">
-                  {c.branchName} · {c.roomName} · {c.formatName}
-                </span>
-              </span>
-              <Button type="button" variant="ghost" size="icon" className="shrink-0" aria-label={t("removeTime")} onClick={() => onUnpick(c.id)}>
-                <X aria-hidden />
-              </Button>
-            </li>
-          ))}
-        </ul>
+                <Button type="button" variant="ghost" size="icon" className="shrink-0" aria-label={t("removeTime")} onClick={() => onUnpick(c.id)}>
+                  <CloseIcon aria-hidden />
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </div>
       ) : null}
-      <span className="type-secondary text-muted-foreground">{t("pickTimeLabel")}</span>
-      <div className="flex gap-stack">
-        <DateTimeField kind="date" label={t("customDate")} value={date} onChange={(v) => { setDate(v); schedule(v, time); }} onBlur={settle} className="min-w-0 flex-1" />
-        <DateTimeField kind="time" label={t("customTime")} value={time} onChange={(v) => { setTime(v); schedule(date, v); }} onBlur={settle} className="w-time-field" />
+
+      <div className="flex items-center justify-between gap-stack">
+        <span className="type-secondary text-muted-foreground">{t("pickTimeLabel")}</span>
+        {date || time ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setDate("");
+              setTime("");
+              schedule("", "");
+            }}
+            className="-mr-inset-sm text-primary-text"
+          >
+            {tf("clear")}
+          </Button>
+        ) : null}
+      </div>
+      <div className="flex flex-wrap gap-stack">
+        <DateTimeField kind="date" label={t("customDate")} value={date} min={vietnamToday()} onChange={(v) => { setDate(v); schedule(v, time); }} onBlur={settle} className="min-w-menu-min flex-1" />
+        <DateTimeField kind="time" label={t("customTime")} value={time} onChange={(v) => { setTime(v); schedule(date, v); }} onBlur={settle} className="min-w-time-field flex-1" />
       </div>
 
-      {searching ? <LoadingState compact /> : null}
+      {busy ? <LoadingState compact /> : null}
 
-      {!searching && rows !== null && rows.length === 0 ? <p role="status" className="type-secondary text-muted-foreground">{t("noneFromThen")}</p> : null}
+      {!busy && failed ? (
+        <Button type="button" variant="outline" size="pill" onClick={() => search(date, time)} className="self-start">
+          <RefreshIcon aria-hidden />
+          {te("retry")}
+        </Button>
+      ) : null}
 
-      {!searching && rows !== null && rows.length > 0 ? (
+      {!busy && !failed && rows !== null && rows.length === 0 ? <p role="status" className="type-secondary text-muted-foreground">{t("noneFromThen")}</p> : null}
+
+      {!busy && !failed && rows !== null && rows.length > 0 ? (
         <div className="flex flex-col gap-item">
           {groups.map((key) => (
             <div key={key} role="group" aria-label={tf(`labels.${key}`)} className="flex flex-col gap-stack">
               <span className="type-secondary text-muted-foreground">{tf(`labels.${key}`)}</span>
               <div className="scroll-strip flex gap-stack pb-tight">
                 <Chip selected={!filters[key]} onClick={() => setFilters({ ...filters, [key]: undefined })}>
-                  {tf("all")}
+                  <span className="truncate">{tf("all")}</span>
                 </Chip>
                 {offered(key).map((value) => (
                   <Chip key={value} selected={filters[key] === value} onClick={() => setFilters({ ...filters, [key]: value })}>
-                    {labelOf(key, value)}
+                    <span className="min-w-0 truncate">{labelOf(key, value)}</span>
                   </Chip>
                 ))}
               </div>
@@ -165,7 +247,7 @@ export function ShowtimeFinder({ movieId, slots, chosen, onPick, onUnpick, onErr
           <ShowtimePicker
             showtimes={shown}
             selectedIds={chosenIds}
-            hideDays
+            hideDays={!browsingAllDays}
             hideBranchFilter
             onToggle={(id) => {
               // The day, time and list stay, so several showtimes can be picked without typing the time again.

@@ -1,6 +1,6 @@
 "use client";
 
-import { LoaderCircle, Send } from "lucide-react";
+import { LoaderIcon, PlaneIcon } from "@solar-icons/react/line-duotone";
 import { useTranslations } from "next-intl";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -73,7 +73,7 @@ export function PushTestForm({ targets, configured }: { targets: PushTarget[]; c
         ) : null}
       </div>
       <Button type="submit" size="cta" disabled={pending || !configured}>
-        {pending ? <LoaderCircle className="motion-safe:animate-spin" aria-hidden /> : <Send aria-hidden />}
+        {pending ? <LoaderIcon className="motion-safe:animate-spin" aria-hidden /> : <PlaneIcon aria-hidden />}
         {t("send")}
       </Button>
     </form>

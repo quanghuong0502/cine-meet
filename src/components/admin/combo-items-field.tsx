@@ -1,6 +1,6 @@
 "use client";
 
-import { Minus, Plus, Trash2 } from "lucide-react";
+import { AddIcon, MinusIcon, TrashBinMinimalisticIcon } from "@solar-icons/react/line-duotone";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { MoneyInput } from "@/components/money-input";
@@ -94,7 +94,7 @@ export function ComboItemsField({ config, brandId, initialItems, initialDiscount
                     className="-mt-tight -mr-tight size-target shrink-0 text-muted-foreground"
                     onClick={() => setLines((current) => current.filter((entry) => entry.itemId !== line.itemId))}
                   >
-                    <Trash2 aria-hidden />
+                    <TrashBinMinimalisticIcon aria-hidden />
                   </Button>
                 </div>
                 <div className="flex items-center justify-between gap-stack">
@@ -108,7 +108,7 @@ export function ComboItemsField({ config, brandId, initialItems, initialDiscount
                       className="size-target rounded-full"
                       onClick={() => setQuantity(line.itemId, line.quantity - 1)}
                     >
-                      <Minus aria-hidden />
+                      <MinusIcon aria-hidden />
                     </Button>
                     <span className="min-w-stepper text-center type-item-title tabular-nums" aria-live="polite">
                       {line.quantity}
@@ -122,7 +122,7 @@ export function ComboItemsField({ config, brandId, initialItems, initialDiscount
                       className="size-target rounded-full"
                       onClick={() => setQuantity(line.itemId, line.quantity + 1)}
                     >
-                      <Plus aria-hidden />
+                      <AddIcon aria-hidden />
                     </Button>
                   </div>
                   <span className="type-body font-medium! tabular-nums">{formatVnd(item.price * line.quantity, locale)}</span>

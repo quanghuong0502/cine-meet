@@ -19,8 +19,8 @@ export function Chip({ selected, onClick, role, className, children, ...props }:
       aria-checked={role ? selected : undefined}
       onClick={onClick}
       className={cn(
-        "inline-flex h-target min-w-target max-w-full shrink-0 items-center justify-center gap-stack rounded-full border px-inset type-label whitespace-nowrap transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:translate-y-px disabled:pointer-events-none disabled:opacity-50",
-        selected ? "border-transparent bg-primary text-primary-foreground" : "bg-card text-muted-foreground",
+        "inline-flex min-h-target min-w-target max-w-full shrink-0 items-center justify-center gap-stack rounded-full border px-inset py-inset-xs type-label whitespace-nowrap transition-[color,background-color,border-color,opacity,transform,filter] outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:brightness-90 motion-safe:active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50",
+        selected ? "border-transparent bg-primary text-primary-foreground" : "bg-card text-muted-foreground hover:bg-muted/50",
         className,
       )}
       {...props}
@@ -38,12 +38,22 @@ interface ChoiceGroupProps<T extends string> {
   disabled?: boolean;
 }
 
-/** Pick exactly one of a few options; the options share the row's width. */
+/**
+ * Pick exactly one of a few options; sizes each pill by its label (`flex-auto`) so narrow screens wrap onto tidy rows
+ * instead of squeezing and clipping text.
+ */
 export function ChoiceGroup<T extends string>({ label, value, options, onChange, disabled }: ChoiceGroupProps<T>) {
   return (
-    <div role="radiogroup" aria-label={label} className="flex gap-stack">
+    <div role="radiogroup" aria-label={label} className="flex flex-wrap gap-stack">
       {options.map((option) => (
-        <Chip key={option.value} role="radio" disabled={disabled} selected={option.value === value} onClick={() => onChange(option.value)} className="min-w-0 flex-1 px-inset-xs">
+        <Chip
+          key={option.value}
+          role="radio"
+          disabled={disabled}
+          selected={option.value === value}
+          onClick={() => onChange(option.value)}
+          className="flex-auto px-inset-sm whitespace-normal text-center leading-tight"
+        >
           {option.label}
         </Chip>
       ))}

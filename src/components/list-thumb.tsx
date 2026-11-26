@@ -1,7 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import { useState } from "react";
+import { RemoteImage } from "@/components/remote-image";
 import { PX } from "@/lib/ui-sizes";
 import { cn } from "@/lib/utils";
 
@@ -21,8 +21,8 @@ interface ListThumbProps {
  * Renders nothing when there is neither a picture nor a colour, so a card without them keeps no empty box.
  */
 export function ListThumb({ imageUrl, color, shape = "square", className }: ListThumbProps) {
-  const [failed, setFailed] = useState(false);
-  const showImage = imageUrl && !failed;
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  const showImage = Boolean(imageUrl) && failedUrl !== imageUrl;
   if (!showImage && !color) return null;
   return (
     <span
@@ -30,7 +30,7 @@ export function ListThumb({ imageUrl, color, shape = "square", className }: List
       className={cn("relative block shrink-0 overflow-hidden rounded-lg border bg-muted", shape === "poster" ? "aspect-[2/3] w-thumb-poster" : shape === "poster-lg" ? "aspect-[2/3] w-thumb-poster-lg" : "aspect-square w-thumb", className)}
       style={!showImage && color ? { backgroundColor: color } : undefined}
     >
-      {showImage ? <Image src={imageUrl} alt="" fill sizes={`${shape === "poster" ? PX.thumbPoster : shape === "poster-lg" ? PX.thumbPosterLg : PX.thumb}px`} unoptimized onError={() => setFailed(true)} className="object-cover" /> : null}
+      {showImage && imageUrl ? <RemoteImage src={imageUrl} alt="" fill sizes={`${shape === "poster" ? PX.thumbPoster : shape === "poster-lg" ? PX.thumbPosterLg : PX.thumb}px`} onError={() => setFailedUrl(imageUrl)} className="object-cover" /> : null}
     </span>
   );
 }

@@ -18,8 +18,9 @@ export function AdminNav() {
   return (
     <nav aria-label={t("menuLabel")}>
       <ul className="flex flex-col gap-tight">
-        {ENABLED_ADMIN_NAV_ITEMS.map(({ href, key, icon: Icon, exact }) => {
+        {ENABLED_ADMIN_NAV_ITEMS.map(({ href, key, icon, activeIcon, exact }) => {
           const active = isActive(current, href, exact);
+          const Icon = active ? activeIcon : icon;
           return (
             <li key={href}>
               <Link
@@ -33,7 +34,7 @@ export function AdminNav() {
                     : "text-muted-foreground hover:bg-accent/50",
                 )}
               >
-                <Icon className={cn("size-icon-sm", active && "fill-current stroke-accent")} aria-hidden />
+                <Icon className="size-icon shrink-0" aria-hidden />
                 {t(`nav.${key}`)}
               </Link>
             </li>

@@ -1,6 +1,6 @@
 "use client";
 
-import { LoaderCircle, UserPlus } from "lucide-react";
+import { LoaderIcon, UserPlusRoundedIcon } from "@solar-icons/react/line-duotone";
 import { useTranslations } from "next-intl";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -42,7 +42,7 @@ export function InviteMore({ appointmentId, candidates, groups }: Props) {
         return;
       }
       if (!result.ok) {
-        toast.error(tc(`errors.${result.error}`));
+        toast.error(result.error === "limit" ? t("limitReached") : tc(`errors.${result.error}`));
         return;
       }
       setPicked([]);
@@ -72,7 +72,7 @@ export function InviteMore({ appointmentId, candidates, groups }: Props) {
         ))}
       </div>
       <Button type="button" variant="outline" size="pill" disabled={pending || picked.length === 0} onClick={send} className="self-start">
-        {pending ? <LoaderCircle className="motion-safe:animate-spin" aria-hidden /> : <UserPlus aria-hidden />}
+        {pending ? <LoaderIcon className="motion-safe:animate-spin" aria-hidden /> : <UserPlusRoundedIcon aria-hidden />}
         {t("button", { count: picked.length })}
       </Button>
     </section>

@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { cn } from "cn"
+import { cn } from "@/lib/utils"
 import { Dialog as AlertDialogPrimitive } from "radix-ui"
 
 import { Button } from "@/components/ui/button"
@@ -42,7 +42,7 @@ function AlertDialogOverlay({
     <AlertDialogPrimitive.Overlay
       data-slot="alert-dialog-overlay"
       className={cn(
-        "fixed inset-0 z-50 bg-black/10 duration-100 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
+        "fixed inset-0 z-50 bg-black/50 duration-100 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
         className
       )}
       {...props}
@@ -78,7 +78,7 @@ function AlertDialogContent({
           if (busy()) event.preventDefault()
         }}
         className={cn(
-          "group/alert-dialog-content fixed top-1/2 left-1/2 z-50 grid w-full -translate-x-1/2 -translate-y-1/2 gap-group rounded-xl bg-popover p-inset text-popover-foreground ring-1 ring-foreground/10 duration-100 outline-none data-[size=default]:max-w-hint data-[size=sm]:max-w-hint data-[size=default]:sm:max-w-form data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+          "group/alert-dialog-content fixed top-1/2 left-1/2 z-50 grid max-h-[85dvh] w-[calc(100%-2*var(--spacing-inset))] -translate-x-1/2 -translate-y-1/2 gap-group overflow-y-auto rounded-xl bg-popover p-inset text-popover-foreground ring-1 ring-foreground/10 duration-100 outline-none data-[size=default]:max-w-form data-[size=sm]:max-w-hint data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
           className
         )}
         {...props}
@@ -143,7 +143,7 @@ function AlertDialogTitle({
     <AlertDialogPrimitive.Title
       data-slot="alert-dialog-title"
       className={cn(
-        "font-heading type-body font-medium! sm:group-data-[size=default]/alert-dialog-content:group-has-data-[slot=alert-dialog-media]/alert-dialog-content:col-start-2",
+        "font-heading sm:group-data-[size=default]/alert-dialog-content:group-has-data-[slot=alert-dialog-media]/alert-dialog-content:col-start-2",
         className
       )}
       {...props}
@@ -175,10 +175,9 @@ function AlertDialogAction({
 }: React.ComponentProps<typeof AlertDialogPrimitive.Close> &
   Pick<React.ComponentProps<typeof Button>, "variant" | "size">) {
   return (
-    <Button variant={variant} size={size} asChild>
+    <Button variant={variant} size={size} className={className} asChild>
       <AlertDialogPrimitive.Close
         data-slot="alert-dialog-action"
-        className={cn(className)}
         {...props}
       />
     </Button>
@@ -193,10 +192,9 @@ function AlertDialogCancel({
 }: React.ComponentProps<typeof AlertDialogPrimitive.Close> &
   Pick<React.ComponentProps<typeof Button>, "variant" | "size">) {
   return (
-    <Button variant={variant} size={size} asChild>
+    <Button variant={variant} size={size} className={className} asChild>
       <AlertDialogPrimitive.Close
         data-slot="alert-dialog-cancel"
-        className={cn(className)}
         {...props}
       />
     </Button>

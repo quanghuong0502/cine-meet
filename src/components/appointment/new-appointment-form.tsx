@@ -1,9 +1,10 @@
 "use client";
 
-import { LoaderCircle, Send } from "lucide-react";
+import { LoaderIcon, PlaneIcon, UserPlusRoundedIcon } from "@solar-icons/react/line-duotone";
 import { useTranslations } from "next-intl";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { DateTimeField } from "@/components/date-time-field";
 import { toast } from "sonner";
 import { createAppointmentAction } from "@/actions/appointments";
@@ -42,7 +43,9 @@ const CONTROL = "h-control rounded-xl bg-card px-inset type-body";
 export function NewAppointmentForm({ movies, movieId: initialMovieId, initialShowtime, slots, deadlineLeadMinutes, friends, groups }: Props) {
   const t = useTranslations("appointments.new");
   const tc = useTranslations("appointments");
+  const tf = useTranslations("showtimes.filters");
   const router = useRouter();
+  const formRef = useRef<HTMLFormElement>(null);
   const [pending, start] = useTransition();
   const [movieId, setMovieId] = useState(initialMovieId);
   const [chosen, setChosen] = useState<ShowtimeChoice[]>(initialShowtime ? [initialShowtime] : []);
@@ -86,6 +89,7 @@ export function NewAppointmentForm({ movies, movieId: initialMovieId, initialSho
   }
   function toggleGroup(memberIds: string[]) {
     setInvitees((current) => (groupChosen(memberIds) ? current.filter((id) => !memberIds.includes(id)) : [...new Set([...current, ...memberIds])]));
+    setErrors((e) => ({ ...e, invitees: "" }));
   }
 
   function submit(event: React.FormEvent) {
@@ -104,7 +108,12 @@ export function NewAppointmentForm({ movies, movieId: initialMovieId, initialSho
       else responseDeadline = iso;
     }
     setErrors(next);
-    if (Object.keys(next).length > 0) return;
+    if (Object.keys(next).length > 0) {
+      requestAnimationFrame(() => {
+        formRef.current?.querySelector('[role="alert"]')?.scrollIntoView({ behavior: "smooth", block: "center" });
+      });
+      return;
+    }
 
     start(async () => {
       const result = await createAppointmentAction({
@@ -136,7 +145,7 @@ export function NewAppointmentForm({ movies, movieId: initialMovieId, initialSho
     ) : null;
 
   return (
-    <form onSubmit={submit} noValidate className="flex flex-col gap-field">
+    <form ref={formRef} onSubmit={submit} noValidate className="flex flex-col gap-field">
       <div className="flex flex-col gap-item">
         <Label htmlFor="appointment-movie" className="type-label text-muted-foreground">
           {t("movieLabel")}
@@ -188,13 +197,28 @@ export function NewAppointmentForm({ movies, movieId: initialMovieId, initialSho
         {friends.length > 0 ? (
           <div role="group" aria-labelledby="appointment-invitees" className="flex flex-wrap gap-stack">
             {friends.map((friend) => (
-              <Chip key={friend.id} selected={invitees.includes(friend.id)} onClick={() => setInvitees(toggle(invitees, friend.id))}>
-                {friend.name}
+              <Chip
+                key={friend.id}
+                selected={invitees.includes(friend.id)}
+                onClick={() => {
+                  setInvitees(toggle(invitees, friend.id));
+                  setErrors((e) => ({ ...e, invitees: "" }));
+                }}
+              >
+                <span className="truncate">{friend.name}</span>
               </Chip>
             ))}
           </div>
         ) : (
-          <p className="type-secondary text-muted-foreground">{t("noFriends")}</p>
+          <div className="flex flex-col items-start gap-stack rounded-xl border bg-card p-inset-sm">
+            <p className="type-secondary text-muted-foreground">{t("noFriends")}</p>
+            <Button asChild variant="outline" size="sm" className="rounded-full">
+              <Link href="/friends">
+                <UserPlusRoundedIcon aria-hidden />
+                {t("addFriendsLink")}
+              </Link>
+            </Button>
+          </div>
         )}
         {fieldError("invitees")}
       </div>
@@ -208,10 +232,27 @@ export function NewAppointmentForm({ movies, movieId: initialMovieId, initialSho
       </div>
 
       <div className="flex flex-col gap-item">
-        <span className="type-label text-muted-foreground">{t("deadlineLabel")}</span>
-        <div className="flex gap-stack">
-          <DateTimeField kind="date" label={t("deadlineDate")} value={deadlineDate} onChange={setDeadlineDate} min={vietnamToday()} max={deadlineMaxDate} className="min-w-0 flex-1" />
-          <DateTimeField kind="time" label={t("deadlineTime")} value={deadlineTime} onChange={setDeadlineTime} className="w-time-field" />
+        <div className="flex items-center justify-between gap-stack">
+          <span className="type-label text-muted-foreground">{t("deadlineLabel")}</span>
+          {deadlineDate || deadlineTime ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setDeadlineDate("");
+                setDeadlineTime("");
+                setErrors((e) => ({ ...e, deadline: "" }));
+              }}
+              className="-mr-inset-sm text-primary-text"
+            >
+              {tf("clear")}
+            </Button>
+          ) : null}
+        </div>
+        <div className="flex flex-wrap gap-stack">
+          <DateTimeField kind="date" label={t("deadlineDate")} value={deadlineDate} onChange={setDeadlineDate} min={vietnamToday()} max={deadlineMaxDate} className="min-w-menu-min flex-1" />
+          <DateTimeField kind="time" label={t("deadlineTime")} value={deadlineTime} onChange={setDeadlineTime} className="min-w-time-field flex-1" />
         </div>
         {deadlineProblem ? (
           <p role="alert" className="type-secondary text-destructive">
@@ -223,10 +264,10 @@ export function NewAppointmentForm({ movies, movieId: initialMovieId, initialSho
       </div>
 
       <div aria-hidden className="h-save-clear shrink-0" />
-      <div data-save-bar className="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-inset pb-(--inset-bottom)">
+      <div data-save-bar className="pointer-events-none fixed inset-x-0 bottom-0 z-30 bg-gradient-to-t from-background via-background/90 to-transparent px-inset pt-inset pb-(--inset-bottom)">
         <div className="mx-auto flex max-w-form items-center">
           <Button type="submit" size="cta" disabled={pending} className="pointer-events-auto min-w-0 flex-1">
-            {pending ? <LoaderCircle className="motion-safe:animate-spin" aria-hidden /> : <Send aria-hidden />}
+            {pending ? <LoaderIcon className="motion-safe:animate-spin" aria-hidden /> : <PlaneIcon aria-hidden />}
             {t("submit")}
           </Button>
         </div>

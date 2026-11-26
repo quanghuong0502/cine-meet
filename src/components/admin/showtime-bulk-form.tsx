@@ -1,9 +1,9 @@
 "use client";
 
-import { LoaderCircle, Plus, X } from "lucide-react";
+import { AddIcon, CloseIcon, DangerCircleIcon, LoaderIcon } from "@solar-icons/react/line-duotone";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Chip } from "@/components/admin/auditorium-editor/chips";
 import { RequiredMark } from "@/components/required-mark";
@@ -19,6 +19,7 @@ import type { BulkState } from "@/app/admin/movies/actions";
 interface Option {
   value: string;
   label: string;
+  group?: string;
 }
 
 interface Props {
@@ -57,6 +58,15 @@ export function ShowtimeBulkForm({ movies, formats, rooms, backHref, action, tod
   const typed = state.status === "error" ? state.values : undefined;
   const days = datesBetween(from, to);
   const total = days.length * times.length * chosenRooms.length;
+  const tooMany = total > maxShowtimes;
+  const roomGroups = useMemo(() => {
+    const map = new Map<string, Option[]>();
+    for (const room of rooms) {
+      const key = room.group ?? "";
+      map.set(key, [...(map.get(key) ?? []), room]);
+    }
+    return [...map.entries()];
+  }, [rooms]);
 
   function addTime() {
     if (!/^([01]?\d|2[0-3]):[0-5]\d$/.test(draft)) return;
@@ -115,16 +125,23 @@ export function ShowtimeBulkForm({ movies, formats, rooms, backHref, action, tod
 
       <div className="flex flex-col gap-item">
         {label("rooms", t("rooms"), true)}
-        <div role="group" aria-label={t("rooms")} className="flex flex-wrap gap-stack">
+        <div role="group" aria-label={t("rooms")} className="flex flex-col gap-item">
           <input type="hidden" name="auditoriumIds" value={chosenRooms.join(",")} />
-          {rooms.map((room) => (
-            <Chip
-              key={room.value}
-              selected={chosenRooms.includes(room.value)}
-              onClick={() => setChosenRooms((c) => (c.includes(room.value) ? c.filter((v) => v !== room.value) : [...c, room.value]))}
-            >
-              {room.label}
-            </Chip>
+          {roomGroups.map(([group, groupRooms]) => (
+            <div key={group} className="flex flex-col gap-stack rounded-xl border bg-card/40 p-inset-sm">
+              {group ? <span className="type-secondary font-medium text-muted-foreground">{group}</span> : null}
+              <div className="flex flex-wrap gap-stack">
+                {groupRooms.map((room) => (
+                  <Chip
+                    key={room.value}
+                    selected={chosenRooms.includes(room.value)}
+                    onClick={() => setChosenRooms((c) => (c.includes(room.value) ? c.filter((v) => v !== room.value) : [...c, room.value]))}
+                  >
+                    {room.label}
+                  </Chip>
+                ))}
+              </div>
+            </div>
           ))}
         </div>
         {error("auditoriumIds")}
@@ -133,7 +150,17 @@ export function ShowtimeBulkForm({ movies, formats, rooms, backHref, action, tod
       <div className="grid grid-cols-2 gap-item">
         <div className="flex min-w-0 flex-col gap-item">
           {label("from", t("from"), true)}
-          <Input id="from" type="date" value={from} onChange={(e) => setFrom(e.target.value)} className={`${CONTROL_CLASS} text-left [&::-webkit-date-and-time-value]:text-left`} />
+          <Input
+            id="from"
+            type="date"
+            value={from}
+            onChange={(e) => {
+              const next = e.target.value;
+              setFrom(next);
+              if (next && to && next > to) setTo(next);
+            }}
+            className={`${CONTROL_CLASS} text-left [&::-webkit-date-and-time-value]:text-left`}
+          />
         </div>
         <div className="flex min-w-0 flex-col gap-item">
           {label("to", t("to"), true)}
@@ -160,7 +187,7 @@ export function ShowtimeBulkForm({ movies, formats, rooms, backHref, action, tod
             className={`${CONTROL_CLASS} min-w-0 flex-1 text-left [&::-webkit-date-and-time-value]:text-left`}
           />
           <Button type="button" variant="secondary" size="cta" onClick={addTime} className="w-auto shrink-0">
-            <Plus aria-hidden />
+            <AddIcon aria-hidden />
             {t("addTime")}
           </Button>
         </div>
@@ -171,7 +198,7 @@ export function ShowtimeBulkForm({ movies, formats, rooms, backHref, action, tod
               <li key={time}>
                 <Chip selected onClick={() => setTimes((c) => c.filter((v) => v !== time))} aria-label={t("removeTime", { time })}>
                   {time}
-                  <X className="size-icon-sm" aria-hidden />
+                  <CloseIcon className="size-icon-sm" aria-hidden />
                 </Chip>
               </li>
             ))}
@@ -186,9 +213,16 @@ export function ShowtimeBulkForm({ movies, formats, rooms, backHref, action, tod
         {error("priceOverride")}
       </div>
 
-      <p className="type-secondary text-muted-foreground" aria-live="polite">
+      <p className="type-secondary text-muted-foreground tabular-nums" aria-live="polite">
         {t("summary", { count: total })}
       </p>
+
+      {tooMany ? (
+        <p role="alert" className="flex items-start gap-stack rounded-xl border border-destructive/30 bg-destructive/10 px-inset py-inset-sm type-secondary text-destructive">
+          <DangerCircleIcon className="mt-hair size-icon-sm shrink-0" aria-hidden />
+          {t("errors.too_many", { max: maxShowtimes })}
+        </p>
+      ) : null}
 
       {state.status === "error" && state.error !== "validation" ? (
         <p role="alert" className="rounded-xl border border-destructive/30 bg-destructive/10 px-inset py-inset-sm type-secondary text-destructive">
@@ -197,12 +231,12 @@ export function ShowtimeBulkForm({ movies, formats, rooms, backHref, action, tod
       ) : null}
 
       <div aria-hidden className="h-save-clear shrink-0" />
-      <div data-save-bar className="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-inset pb-(--inset-bottom) md:left-sidebar">
+      <div data-save-bar className="pointer-events-none fixed inset-x-0 bottom-0 z-30 bg-gradient-to-t from-background via-background/95 to-transparent px-inset pt-group pb-(--inset-bottom) md:left-sidebar">
         <div className="mx-auto flex max-w-form">
-          <Button type="submit" size="cta" disabled={isPending || total > maxShowtimes} className="pointer-events-auto min-w-0 flex-1">
+          <Button type="submit" size="cta" disabled={isPending || tooMany} className="pointer-events-auto min-w-0 flex-1">
             {isPending ? (
               <>
-                <LoaderCircle className="motion-safe:animate-spin" aria-hidden />
+                <LoaderIcon className="motion-safe:animate-spin" aria-hidden />
                 {t("creating")}
               </>
             ) : (

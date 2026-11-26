@@ -1,18 +1,19 @@
 "use client";
 
-import { Plus, Search, Trash2 } from "lucide-react";
+import { AddIcon, CloseIcon, LoaderIcon, RoundedMagnifierIcon, TrashBinMinimalisticIcon } from "@solar-icons/react/line-duotone";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/empty-state";
+import { LazyConfirmDialog } from "@/components/lazy-dialogs";
 import { ListThumb } from "@/components/list-thumb";
-import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { RemoveResult } from "@/lib/admin/action-result";
+import { cn } from "@/lib/utils";
 import type { ResourceItem, ResourceLabels } from "./resource-types";
 
 interface ResourceManagerProps {
@@ -52,8 +53,15 @@ export function ResourceManager({ items, basePath, query, labels, removeAction, 
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [term, setTerm] = useState(query);
+  const [syncedQuery, setSyncedQuery] = useState(query);
+  const [searching, startSearch] = useTransition();
   const [pendingDelete, setPendingDelete] = useState<ResourceItem | null>(null);
   const [isDeleting, startDeleting] = useTransition();
+
+  if (query !== syncedQuery) {
+    setSyncedQuery(query);
+    setTerm(query);
+  }
 
   // Search runs on the server (the term lives in the URL), after a short pause in typing.
   useEffect(() => {
@@ -63,10 +71,21 @@ export function ResourceManager({ items, basePath, query, labels, removeAction, 
       const params = new URLSearchParams(searchParams.toString());
       if (term.trim()) params.set("q", term.trim());
       else params.delete("q");
-      router.replace(params.size ? `${pathname}?${params}` : pathname);
+      startSearch(() => {
+        router.replace(params.size ? `${pathname}?${params}` : pathname);
+      });
     }, 300);
     return () => clearTimeout(timer);
   }, [term, query, pathname, router, searchParams]);
+
+  function clearSearch() {
+    setTerm("");
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("q");
+    startSearch(() => {
+      router.replace(params.size ? `${pathname}?${params}` : pathname);
+    });
+  }
 
   // This exact list, tab and search included: the entry screen sends the person back to it.
   const here = searchParams.size ? `${pathname}?${searchParams.toString()}` : pathname;
@@ -95,7 +114,11 @@ export function ResourceManager({ items, basePath, query, labels, removeAction, 
           so the list needs no row or fixed bar of its own. */}
       <div className="flex items-center gap-item">
         <div className="relative min-w-0 flex-1">
-          <Search className="pointer-events-none absolute top-1/2 left-inset size-icon-sm -translate-y-1/2 text-muted-foreground" aria-hidden />
+          {searching ? (
+            <LoaderIcon className="pointer-events-none absolute top-1/2 left-inset size-icon-sm -translate-y-1/2 text-muted-foreground motion-safe:animate-spin" aria-hidden />
+          ) : (
+            <RoundedMagnifierIcon className="pointer-events-none absolute top-1/2 left-inset size-icon-sm -translate-y-1/2 text-muted-foreground" aria-hidden />
+          )}
           <Input
             type="search"
             enterKeyHint="search"
@@ -103,12 +126,24 @@ export function ResourceManager({ items, basePath, query, labels, removeAction, 
             onChange={(event) => setTerm(event.target.value)}
             placeholder={searchLabels?.placeholder ?? t("searchPlaceholder")}
             aria-label={searchLabels?.label ?? t("searchLabel")}
-            className={`${CONTROL_CLASS} pl-target`}
+            className={cn(CONTROL_CLASS, "pl-target", term && "pr-target")}
           />
+          {term ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={clearSearch}
+              aria-label={t("clearSearch")}
+              className="absolute top-1/2 right-hair size-target -translate-y-1/2 text-muted-foreground"
+            >
+              <CloseIcon aria-hidden />
+            </Button>
+          ) : null}
         </div>
         <Button asChild size="icon" className="size-control shrink-0 rounded-full">
           <Link href={withBack(`${base}/new`)} aria-label={labels.addButton}>
-            <Plus aria-hidden />
+            <AddIcon aria-hidden />
           </Link>
         </Button>
       </div>
@@ -119,14 +154,32 @@ export function ResourceManager({ items, basePath, query, labels, removeAction, 
           className="flex-1 justify-center"
           title={hasSearch ? t("noResultsTitle") : labels.emptyTitle}
           description={hasSearch ? t("noResultsDescription") : labels.emptyDescription}
+          action={
+            hasSearch ? (
+              <Button type="button" variant="outline" size="pill" onClick={clearSearch}>
+                {t("clearSearch")}
+              </Button>
+            ) : (
+              <Button asChild size="pill">
+                <Link href={withBack(`${base}/new`)}>
+                  <AddIcon aria-hidden />
+                  {labels.addButton}
+                </Link>
+              </Button>
+            )
+          }
         />
       ) : (
         <>
-          <p className="type-secondary text-muted-foreground">{t("itemCount", { count: items.length })}</p>
+          <p className="type-secondary text-muted-foreground tabular-nums">{t("itemCount", { count: items.length })}</p>
           <ul className="grid gap-item md:grid-cols-2">
             {items.map((item) => (
-              <li key={item.id} className="flex min-w-0 items-center rounded-xl border bg-card pr-inset-xs">
-                <Link href={withBack(`${base}/${item.id}`)} className="flex min-h-row min-w-0 flex-1 items-center gap-item rounded-xl py-inset-sm pr-0 pl-inset-sm text-left">
+              <li key={item.id} className="flex min-w-0 items-center gap-stack rounded-xl border bg-card pr-inset-xs">
+                <Link
+                  href={withBack(`${base}/${item.id}`)}
+                  prefetch={false}
+                  className="flex min-h-row min-w-0 flex-1 items-center gap-item rounded-xl py-inset-sm pr-inset-xs pl-inset-sm text-left transition-colors outline-none hover:bg-muted/50 focus-visible:ring-3 focus-visible:ring-ring/50 active:bg-muted/80"
+                >
                   <Marker item={item} />
                   <span className="flex min-w-0 flex-1 flex-col gap-tight">
                     <span className="truncate type-item-title">{item.title}</span>
@@ -143,16 +196,16 @@ export function ResourceManager({ items, basePath, query, labels, removeAction, 
                   </span>
                 </Link>
                 {removeAction ? (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setPendingDelete(item)}
-                  aria-label={`${t("delete")}: ${item.title}`}
-                  className="size-target shrink-0 text-muted-foreground"
-                >
-                  <Trash2 aria-hidden />
-                </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setPendingDelete(item)}
+                    aria-label={`${t("delete")}: ${item.title}`}
+                    className="size-target shrink-0 text-muted-foreground hover:text-destructive"
+                  >
+                    <TrashBinMinimalisticIcon aria-hidden />
+                  </Button>
                 ) : null}
               </li>
             ))}
@@ -160,17 +213,19 @@ export function ResourceManager({ items, basePath, query, labels, removeAction, 
         </>
       )}
 
-      <ConfirmDialog
-        open={pendingDelete !== null}
-        onOpenChange={(open) => (open ? undefined : setPendingDelete(null))}
-        title={t("deleteTitle", { name: pendingDelete?.title ?? "" })}
-        description={t("deleteDescription")}
-        tone="destructive"
-        icon={<Trash2 aria-hidden />}
-        confirmLabel={t("delete")}
-        pending={isDeleting}
-        onConfirm={confirmDelete}
-      />
+      {pendingDelete !== null ? (
+        <LazyConfirmDialog
+          open
+          onOpenChange={(open) => (open ? undefined : setPendingDelete(null))}
+          title={t("deleteTitle", { name: pendingDelete.title })}
+          description={t("deleteDescription")}
+          tone="destructive"
+          icon={<TrashBinMinimalisticIcon aria-hidden />}
+          confirmLabel={t("delete")}
+          pending={isDeleting}
+          onConfirm={confirmDelete}
+        />
+      ) : null}
     </div>
   );
 }

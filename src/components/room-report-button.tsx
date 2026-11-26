@@ -1,11 +1,11 @@
 "use client";
 
-import { Flag } from "lucide-react";
+import { FlagIcon } from "@solar-icons/react/line-duotone";
 import { useTranslations } from "next-intl";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { reportRoomAction } from "@/actions/room-reports";
-import { ReasonDialog } from "@/components/appointment/reason-dialog";
+import { LazyReasonDialog } from "@/components/lazy-dialogs";
 import { Button } from "@/components/ui/button";
 
 /** Lets anyone flag that this room's info or seat map looks wrong (design 2.7). Admin reads these later. */
@@ -29,24 +29,27 @@ export function RoomReportButton({ auditoriumId }: { auditoriumId: string }) {
 
   return (
     <>
-      <Button type="button" variant="ghost" size="pill" onClick={() => setOpen(true)}>
-        <Flag aria-hidden />
-        {t("action")}
+      <Button type="button" variant="ghost" size="icon" onClick={() => setOpen(true)} aria-label={t("action")} className="rounded-full text-muted-foreground">
+        <FlagIcon className="size-icon" aria-hidden />
       </Button>
-      <ReasonDialog
-        open={open}
-        onOpenChange={setOpen}
-        title={t("title")}
-        description={t("description")}
-        reasonLabel={t("noteLabel")}
-        reasonPlaceholder={t("notePlaceholder")}
-        cancelLabel={t("cancel")}
-        confirmLabel={t("send")}
-        pending={pending}
-        icon={<Flag aria-hidden />}
-        onConfirm={submit}
-        tone="default"
-      />
+      {open ? (
+        <LazyReasonDialog
+          open={open}
+          onOpenChange={setOpen}
+          title={t("title")}
+          description={t("description")}
+          reasonLabel={t("noteLabel")}
+          reasonPlaceholder={t("notePlaceholder")}
+          required
+          maxLength={500}
+          cancelLabel={t("cancel")}
+          confirmLabel={t("send")}
+          pending={pending}
+          icon={<FlagIcon aria-hidden />}
+          onConfirm={submit}
+          tone="default"
+        />
+      ) : null}
     </>
   );
 }

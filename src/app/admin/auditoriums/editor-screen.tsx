@@ -7,8 +7,9 @@ import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { resolveBackHref } from "@/lib/admin/back-href";
 import { defaultLayoutConfig } from "@/lib/seat-layout/config";
-import type { LayoutConfig } from "@/lib/seat-layout/types";
+import type { LayoutConfig, SeatStyle } from "@/lib/seat-layout/types";
 import { getAuditorium, getLayout } from "@/services/auditorium.service";
+import { getCinemaDimensions } from "@/services/cinema-dimensions.service";
 import { branchService } from "@/services/master-data/branch.service";
 import { getBrandOptions } from "@/services/master-data/brand-options";
 import { seatTypeService } from "@/services/master-data/seat-type.service";
@@ -25,7 +26,12 @@ export async function AuditoriumEditorScreen({ id, back }: Props) {
   const locale = await getLocale();
   const backHref = resolveBackHref(back, "/admin/auditoriums");
 
-  const [branches, brands, types] = await Promise.all([branchService.list({}), getBrandOptions(), seatTypeService.list({})]);
+  const [branches, brands, types, dimensionDefaults] = await Promise.all([
+    branchService.list({}),
+    getBrandOptions(),
+    seatTypeService.list({}),
+    getCinemaDimensions(),
+  ]);
   if (branches.length === 0 || types.length === 0) {
     return (
       <div className="mx-auto flex w-full max-w-page flex-1 flex-col gap-section p-inset">
@@ -55,6 +61,7 @@ export async function AuditoriumEditorScreen({ id, back }: Props) {
     name: locale === "en" && type.nameEn ? type.nameEn : type.name,
     color: type.color ?? null,
     capacity: type.capacity,
+    style: (type.style as SeatStyle | undefined) ?? "standard",
   }));
 
   if (id === null) {
@@ -67,6 +74,7 @@ export async function AuditoriumEditorScreen({ id, back }: Props) {
           branches={optionsFor()}
           seatTypes={seatTypes}
           initialConfig={defaultLayoutConfig(defaultType.id)}
+          dimensionDefaults={dimensionDefaults}
           backHref={backHref}
         />
       </div>
@@ -88,6 +96,7 @@ export async function AuditoriumEditorScreen({ id, back }: Props) {
         branches={optionsFor(room.branchId.toString())}
         seatTypes={seatTypes}
         initialConfig={current.config as LayoutConfig}
+        dimensionDefaults={dimensionDefaults}
         backHref={backHref}
       />
     </div>

@@ -1,16 +1,16 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
+import Link from "next/link";
 import { NewAppointmentForm } from "@/components/appointment/new-appointment-form";
+import { EmptyState } from "@/components/empty-state";
 import { toShowtimeChoice } from "@/lib/appointment/showtime-choice";
 import { PageHeader } from "@/components/page-header";
+import { Button } from "@/components/ui/button";
 import { requireUser } from "@/lib/auth/guards";
 import { getSystemSettings } from "@/services/settings.service";
 import { getFriendOverview, listGroups } from "@/services/friend.service";
 import { listFilterMovies } from "@/services/movie.service";
-import { listMovieIdsWithShowtimes, searchShowtimes } from "@/services/showtime.service";
-import { Showtime } from "@/models/showtime";
-import { connectToDatabase } from "@/lib/db";
-import { isValidObjectId } from "mongoose";
+import { getShowtimeById, listMovieIdsWithShowtimes } from "@/services/showtime.service";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("appointments.new");
@@ -22,46 +22,50 @@ const first = (value: string | string[] | undefined) => (Array.isArray(value) ? 
 
 /** `?showtimeId=` (the "plan this showtime" button) fills the movie and the first time; `?movieId=` only the movie. */
 export default async function NewAppointmentPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
-  const user = await requireUser();
-  const t = await getTranslations("appointments.new");
-  const params = await searchParams;
+  const [user, t, params] = await Promise.all([requireUser(), getTranslations("appointments.new"), searchParams]);
 
   let movieId = first(params.movieId);
-  let showtimeId = first(params.showtimeId);
-  if (showtimeId) {
-    await connectToDatabase();
-    const showtime = isValidObjectId(showtimeId) ? await Showtime.findById(showtimeId, "movieId").lean() : null;
-    if (showtime) movieId = showtime.movieId.toString();
-    else showtimeId = undefined;
-  }
+  const showtimeId = first(params.showtimeId);
 
-  const [allMovies, withShowtimes, overview, groups, rows, settings] = await Promise.all([
+  const [allMovies, withShowtimes, overview, groups, initialShowtime, settings] = await Promise.all([
     listFilterMovies(),
     listMovieIdsWithShowtimes(),
     getFriendOverview(user.userId),
     listGroups(user.userId),
-    // Only to find the showtime the person came from; every other showtime is loaded after they type the time they want.
-    showtimeId && movieId && isValidObjectId(movieId) ? searchShowtimes({ movieId }) : Promise.resolve([]),
+    showtimeId ? getShowtimeById(showtimeId) : Promise.resolve(null),
     getSystemSettings(),
   ]);
+  if (initialShowtime) movieId = initialShowtime.movie.id;
   // Only movies that can actually be watched: one with no showtime to come would be a dead end in the list.
   const movies = allMovies.filter((m) => withShowtimes.has(m._id.toString()));
   if (movieId && !movies.some((m) => m._id.toString() === movieId)) movieId = undefined;
 
-  const initialShowtime = rows.find((row) => row.id === showtimeId);
-
   return (
-    <div className="flex w-full flex-col gap-section p-inset">
+    <div className="flex w-full flex-1 flex-col gap-section p-inset">
       <PageHeader title={t("title")} backHref="/appointments" />
-      <NewAppointmentForm
-        movies={movies.map((m) => ({ id: m._id.toString(), title: m.title }))}
-        movieId={movieId}
-        initialShowtime={initialShowtime ? toShowtimeChoice(initialShowtime) : undefined}
-        slots={settings.timeSlots}
-        deadlineLeadMinutes={settings.responseDeadlineMinutes}
-        friends={overview.friends.map((f) => ({ id: f.id, name: f.name }))}
-        groups={groups.map((g) => ({ id: g.id, name: g.name, memberIds: g.members.map((m) => m.id) }))}
-      />
+      {movies.length === 0 ? (
+        <EmptyState
+          className="flex-1 justify-center"
+          mascot="bubu-sleepy"
+          title={t("noMoviesTitle")}
+          description={t("noMoviesDescription")}
+          action={
+            <Button asChild size="pill">
+              <Link href="/showtimes">{t("browseShowtimes")}</Link>
+            </Button>
+          }
+        />
+      ) : (
+        <NewAppointmentForm
+          movies={movies.map((m) => ({ id: m._id.toString(), title: m.title }))}
+          movieId={movieId}
+          initialShowtime={initialShowtime ? toShowtimeChoice(initialShowtime) : undefined}
+          slots={settings.timeSlots}
+          deadlineLeadMinutes={settings.responseDeadlineMinutes}
+          friends={overview.friends.map((f) => ({ id: f.id, name: f.name }))}
+          groups={groups.map((g) => ({ id: g.id, name: g.name, memberIds: g.members.map((m) => m.id) }))}
+        />
+      )}
     </div>
   );
 }

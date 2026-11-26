@@ -46,7 +46,7 @@ export function usePlanDraft(view: AppointmentView, plan: PlanData | null) {
   /** Another showtime: the old seats and food belong to the old room, so they are cleared; the new room is read (nothing is written). */
   const changeShowtime = useCallback(
     async (id: string) => {
-      if (id === pickedShowtimeId && id === loadedFor.current) return;
+      if (id === showtimeId && (pickedShowtimeId === undefined ? Boolean(plan?.room) : id === loadedFor.current)) return;
       const call = ++latest.current;
       setPickedShowtimeId(id);
       setSeats(new Map());
@@ -63,7 +63,7 @@ export function usePlanDraft(view: AppointmentView, plan: PlanData | null) {
       setPickedRoom(result.room);
       setPickedFood(result.food);
     },
-    [pickedShowtimeId, view.id, t],
+    [showtimeId, pickedShowtimeId, plan?.room, view.id, t],
   );
 
   const payload = useCallback(() => {
@@ -77,6 +77,7 @@ export function usePlanDraft(view: AppointmentView, plan: PlanData | null) {
 
   /** What each person pays for what is on the screen right now (ticket and food), worked out here so it follows every tap. */
   const estimate = useMemo(() => {
+    if (view.status !== "PLANNING" || !view.isCreator) return view.estimate;
     const going = view.attendees.map((p) => p.id);
     const holders = new Map<string, string[]>();
     for (const [userId, code] of seats) if (going.includes(userId)) holders.set(code, [...(holders.get(code) ?? []), userId]);
@@ -87,7 +88,7 @@ export function usePlanDraft(view: AppointmentView, plan: PlanData | null) {
       food: lines.map((l) => ({ ownerId: l.ownerId ?? null, unitPrice: unitPrice(l), quantity: l.quantity })),
     });
     return perUser.map((p) => ({ userId: p.userId, ticket: p.ticket, fnb: p.fnb, other: 0 }));
-  }, [seats, lines, room, food, view.attendees]);
+  }, [seats, lines, room, food, view.attendees, view.status, view.isCreator, view.estimate]);
 
   return useMemo(() => ({ showtimeId, seats, setSeats, lines, setLines, room, food, loading, changeShowtime, payload, estimate }), [showtimeId, seats, lines, room, food, loading, changeShowtime, payload, estimate]);
 }

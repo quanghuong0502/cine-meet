@@ -1,5 +1,3 @@
-"use client";
-
 import { useLocale, useTranslations } from "next-intl";
 import { UserAvatar } from "@/components/user-avatar";
 import { formatVnd } from "@/lib/money";
@@ -16,6 +14,7 @@ export function EstimateList({ view, title, estimate = view.estimate }: { view: 
     const fnb = e?.fnb ?? 0;
     return { person, ticket, fnb, total: ticket + fnb };
   });
+  const groupTotal = rows.reduce((sum, r) => sum + r.total, 0);
   return (
     <section aria-labelledby="appt-estimate" className="flex flex-col gap-item">
       <h2 id="appt-estimate" className="type-heading">
@@ -35,6 +34,10 @@ export function EstimateList({ view, title, estimate = view.estimate }: { view: 
           </li>
         ))}
       </ul>
+      <p className="flex items-center justify-between gap-item type-item-title">
+        <span>{t("total")}</span>
+        <span className="tabular-nums">{formatVnd(groupTotal, locale)}</span>
+      </p>
     </section>
   );
 }

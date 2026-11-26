@@ -22,16 +22,22 @@ export function PersonChip({ selected, onClick, person, icon, label, trailing }:
       aria-pressed={selected}
       onClick={onClick}
       className={cn(
-        "flex min-h-target shrink-0 items-center gap-stack rounded-full border py-tight pr-inset pl-tight outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
-        selected ? "border-transparent bg-primary text-primary-foreground" : "bg-card",
+        "flex min-h-target shrink-0 items-center gap-stack rounded-full border py-tight pr-inset pl-tight transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:opacity-80",
+        selected ? "border-transparent bg-primary text-primary-foreground" : "bg-card hover:bg-muted/40",
       )}
     >
-      {person ? <UserAvatar name={person.name} image={person.avatar} size={PX.avatar} /> : icon}
-      <span className="type-label">{person?.name ?? label}</span>
+      {person ? (
+        <UserAvatar name={person.name} image={person.avatar} size={PX.avatar} />
+      ) : icon ? (
+        <span className={cn("flex size-avatar shrink-0 items-center justify-center rounded-full", selected ? "bg-primary-foreground/15" : "bg-muted")}>
+          {icon}
+        </span>
+      ) : null}
+      <span className="max-w-area-cap truncate type-label">{person?.name ?? label}</span>
       {trailing ? (
         <>
           <span aria-hidden className="size-tight shrink-0 rounded-full bg-current" />
-          <span className="type-label tabular-nums">{trailing}</span>
+          <span className="shrink-0 type-label tabular-nums">{trailing}</span>
         </>
       ) : null}
     </button>

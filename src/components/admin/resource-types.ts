@@ -27,6 +27,8 @@ export interface ResourceField {
   imageShape?: "poster";
   /** An identifier or code: no auto-capitalisation, auto-correct or spell-check. */
   plain?: boolean;
+  /** Shows a one-tap copy button inside the input (used for generated temporary passwords). */
+  copyable?: boolean;
   /** For `comboItems` fields: what the items editor needs. */
   combo?: ComboFieldConfig;
 }

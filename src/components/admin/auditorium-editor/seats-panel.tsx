@@ -1,8 +1,9 @@
 "use client";
 
-import { RotateCcw, X } from "lucide-react";
+import { CloseIcon, RestartIcon } from "@solar-icons/react/line-duotone";
 import { useTranslations } from "next-intl";
 import { NO_SEAT, type SeatFlag } from "@/lib/seat-layout/types";
+import { cn } from "@/lib/utils";
 import { Chip } from "./chips";
 import type { EditorSeatType } from "./types";
 
@@ -25,12 +26,15 @@ export function SeatsPanel({ seatTypes, selectedCount, allHaveFlag, allHaveType,
 
   return (
     <div className="flex flex-col gap-group" role="tabpanel">
-      {/* Nothing to say while no cell is picked; once some are, the count is the only feedback of the selection. */}
-      {idle ? null : (
-        <p role="status" className="type-secondary text-muted-foreground">
-          {t("selected", { count: selectedCount })}
-        </p>
-      )}
+      <p
+        role="status"
+        className={cn(
+          "type-secondary",
+          idle ? "rounded-xl border bg-card px-inset py-inset-sm text-muted-foreground" : "font-medium text-foreground tabular-nums",
+        )}
+      >
+        {t("selected", { count: selectedCount })}
+      </p>
       <Section title={t("typeGroup")}>
         {seatTypes.map((type) => (
           <Chip key={type.id} disabled={idle} selected={!idle && allHaveType(type.id)} onClick={() => onType(type.id)}>
@@ -56,11 +60,11 @@ export function SeatsPanel({ seatTypes, selectedCount, allHaveFlag, allHaveType,
 
       <Section title={t("actionGroup")}>
         <Chip selected={false} disabled={idle} onClick={onReset}>
-          <RotateCcw className="size-icon-sm" aria-hidden />
+          <RestartIcon className="size-icon-sm" aria-hidden />
           {t("reset")}
         </Chip>
         <Chip selected={false} disabled={idle} onClick={onClear}>
-          <X className="size-icon-sm" aria-hidden />
+          <CloseIcon className="size-icon-sm" aria-hidden />
           {t("clear")}
         </Chip>
       </Section>

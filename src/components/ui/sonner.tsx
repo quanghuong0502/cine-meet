@@ -1,32 +1,29 @@
 "use client"
 
-import { useTheme } from "next-themes"
 import { Toaster as Sonner, type ToasterProps } from "sonner"
-import { CircleCheckIcon, InfoIcon, TriangleAlertIcon, OctagonXIcon, Loader2Icon } from "lucide-react"
+import { CheckCircleIcon, CloseCircleIcon, DangerTriangleIcon, InfoCircleIcon, LoaderIcon } from "@solar-icons/react/line-duotone";
 
-const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = "system" } = useTheme()
-
+const Toaster = ({ theme = "dark", ...props }: ToasterProps) => {
   return (
     <Sonner
-      theme={theme as ToasterProps["theme"]}
+      theme={theme}
       className="toaster group"
       mobileOffset={{ bottom: "var(--toast-offset)" }}
       icons={{
         success: (
-          <CircleCheckIcon className="size-icon-sm" />
+          <CheckCircleIcon className="size-icon text-success" />
         ),
         info: (
-          <InfoIcon className="size-icon-sm" />
+          <InfoCircleIcon className="size-icon text-info" />
         ),
         warning: (
-          <TriangleAlertIcon className="size-icon-sm" />
+          <DangerTriangleIcon className="size-icon text-warning" />
         ),
         error: (
-          <OctagonXIcon className="size-icon-sm" />
+          <CloseCircleIcon className="size-icon text-destructive" />
         ),
         loading: (
-          <Loader2Icon className="size-icon-sm animate-spin" />
+          <LoaderIcon className="size-icon text-primary-text motion-safe:animate-spin" />
         ),
       }}
       style={

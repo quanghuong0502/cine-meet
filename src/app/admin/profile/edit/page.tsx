@@ -8,5 +8,5 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default function AdminEditProfilePage() {
-  return <ProfileEditScreen backHref="/admin/profile" />;
+  return <ProfileEditScreen backHref="/admin/profile" hasSidebar />;
 }

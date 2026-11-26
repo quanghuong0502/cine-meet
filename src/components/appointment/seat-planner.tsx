@@ -1,17 +1,19 @@
 "use client";
 
-import { Sparkles } from "lucide-react";
+import { StarsMinimalisticIcon } from "@solar-icons/react/line-duotone";
 import { useLocale, useTranslations } from "next-intl";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { assignSeatsAction, type ActionResult } from "@/actions/appointments";
 import { SeatMap, type SeatMapSeatType } from "@/components/seat-map/seat-map";
 import { PersonChip } from "@/components/appointment/person-chip";
 import { getInitials } from "@/components/user-avatar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { suggestTogether } from "@/lib/appointment/suggest";
+import { formatVnd } from "@/lib/money";
 import type { LayoutSeat } from "@/lib/seat-layout/types";
 import type { AppointmentView } from "@/services/appointment.service";
 import type { PlanData } from "@/services/appointment-plan.service";
@@ -45,18 +47,45 @@ export function SeatPlanner({ view, room, onSave, busy, onDraft, initialSeats }:
   const [heat, setHeat] = useState(true);
   const [active, setActive] = useState(() => firstFree(draft));
 
+  const chipStripRef = useRef<HTMLDivElement>(null);
   const seatByCode = useMemo(() => new Map(room.seats.map((s) => [s.code, s])), [room.seats]);
   const taken = useMemo(() => new Set(room.taken), [room.taken]);
   const types = useMemo<SeatMapSeatType[]>(() => room.seatTypes.map(({ id, name, nameEn, color }) => ({ id, name: locale === "en" && nameEn ? nameEn : name, color })), [room.seatTypes, locale]);
-  const nameOf = (userId: string) => view.attendees.find((p) => p.id === userId)?.name ?? "?";
+
+  // Disambiguate colliding initials (e.g. "Minh Anh" & "Mai An" -> "MA1", "MA2") so seats stay distinguishable on the map.
+  const uniqueInitials = useMemo(() => {
+    const raw = view.attendees.map((p) => ({ id: p.id, base: getInitials(p.name) }));
+    const counts = new Map<string, number>();
+    for (const r of raw) counts.set(r.base, (counts.get(r.base) ?? 0) + 1);
+    const seen = new Map<string, number>();
+    return new Map(
+      raw.map((r) => {
+        if ((counts.get(r.base) ?? 0) <= 1) return [r.id, r.base];
+        const next = (seen.get(r.base) ?? 0) + 1;
+        seen.set(r.base, next);
+        return [r.id, `${r.base}${next}`];
+      }),
+    );
+  }, [view.attendees]);
 
   const holderLabels = useMemo(() => {
     const labels = new Map<string, string>();
-    for (const [userId, code] of draft) labels.set(code, [labels.get(code), getInitials(nameOf(userId))].filter(Boolean).join("+"));
+    for (const [userId, code] of draft) labels.set(code, [labels.get(code), uniqueInitials.get(userId) ?? "?"].filter(Boolean).join("+"));
     return labels;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [draft, view.attendees]);
+  }, [draft, uniqueInitials]);
   const selectedCodes = useMemo(() => (draft.get(active) ? new Set([draft.get(active)!]) : undefined), [draft, active]);
+
+  // Auto-scroll the active attendee's chip into view when seat selection advances to the next unseated person.
+  useEffect(() => {
+    const el = chipStripRef.current?.querySelector(`[data-person-chip="${active}"]`);
+    if (el instanceof HTMLElement) el.scrollIntoView({ inline: "nearest", block: "nearest", behavior: "smooth" });
+  }, [active]);
+
+  const seatedCount = view.attendees.filter((p) => draft.has(p.id)).length;
+  const activeSeatCode = draft.get(active);
+  const activeSeat = activeSeatCode ? seatByCode.get(activeSeatCode) : undefined;
+  const activeSeatType = activeSeat ? types.find((type) => type.id === activeSeat.type)?.name : undefined;
+  const activeSeatPrice = activeSeatCode ? room.prices[activeSeatCode] : undefined;
 
   function save(next: Map<string, string>, previous: Map<string, string>) {
     setDraft(next);
@@ -113,15 +142,27 @@ export function SeatPlanner({ view, room, onSave, busy, onDraft, initialSeats }:
 
   return (
     <section aria-labelledby="appt-seats" className="flex flex-col gap-item">
-      <h2 id="appt-seats" className="type-heading">
-        {t("seatsTitle")}
-      </h2>
-      <div role="group" aria-label={t("whoIsSeated")} className="scroll-strip flex gap-stack pb-tight">
+      <div className="flex items-center justify-between gap-stack">
+        <h2 id="appt-seats" className="type-heading">
+          {t("seatsTitle")}
+        </h2>
+        <Badge variant={seatedCount === view.attendees.length ? "accent" : "secondary"} className="tabular-nums">
+          {seatedCount}/{view.attendees.length}
+        </Badge>
+      </div>
+      <div ref={chipStripRef} role="group" aria-label={t("whoIsSeated")} className="scroll-strip flex gap-stack pb-tight">
         {view.attendees.map((p) => (
-          <PersonChip key={p.id} person={{ name: p.name, avatar: p.avatar }} selected={active === p.id} onClick={() => setActive(p.id)} trailing={draft.get(p.id) ?? t("noSeat")} />
+          <div key={p.id} data-person-chip={p.id} className="shrink-0">
+            <PersonChip person={{ name: p.name, avatar: p.avatar }} selected={active === p.id} onClick={() => setActive(p.id)} trailing={draft.get(p.id) ?? t("noSeat")} />
+          </div>
         ))}
       </div>
-      <SeatMap showHeatmap={heat} geometry={room.geometry} seats={room.seats} seatTypes={types} selectedCodes={selectedCodes} reservedCodes={taken} holderLabels={holderLabels} onSeatTap={onSeatTap} />
+      <SeatMap showHeatmap={heat} geometry={room.geometry} seats={room.seats} seatTypes={types} selectedCodes={selectedCodes} reservedCodes={taken} holderLabels={holderLabels} onSeatTap={onSeatTap} maxHeight="46dvh" />
+      {activeSeatCode ? (
+        <p className="type-caption text-muted-foreground tabular-nums">
+          {[activeSeatCode, activeSeatType, activeSeatPrice !== undefined ? formatVnd(activeSeatPrice, locale) : null].filter(Boolean).join(" · ")}
+        </p>
+      ) : null}
       <div className="flex min-h-target items-center justify-between gap-group">
         <Label htmlFor="seat-heat" className="text-muted-foreground">
           {t("layerScore")}
@@ -130,7 +171,7 @@ export function SeatPlanner({ view, room, onSave, busy, onDraft, initialSeats }:
       </div>
       {SHOW_SUGGEST ? (
         <Button type="button" variant="outline" size="cta" disabled={busy} onClick={suggest}>
-          <Sparkles aria-hidden />
+          <StarsMinimalisticIcon aria-hidden />
           {t("suggest")}
         </Button>
       ) : null}

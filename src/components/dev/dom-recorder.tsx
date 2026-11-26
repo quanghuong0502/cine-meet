@@ -1,6 +1,6 @@
 "use client";
 
-import { Radio } from "lucide-react";
+import { RadioMinimalisticIcon } from "@solar-icons/react/line-duotone";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -403,7 +403,7 @@ export function DomRecorder() {
         on && link === "lost" && "bg-destructive text-destructive-foreground",
       )}
     >
-      <Radio aria-hidden />
+      <RadioMinimalisticIcon aria-hidden />
     </Button>
   );
 }

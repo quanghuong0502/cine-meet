@@ -1,18 +1,12 @@
 "use client";
 
-import { SlidersHorizontal, X } from "lucide-react";
+import { CloseIcon, Tuning2Icon } from "@solar-icons/react/line-duotone";
 import { useTranslations } from "next-intl";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { Chip } from "@/components/admin/auditorium-editor/chips";
+import { LazyFilterDrawer } from "@/components/filter-drawer";
 import { Button } from "@/components/ui/button";
-import {
-  Drawer,
-  DrawerContent,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-} from "@/components/ui/drawer";
 import {
   applyFilters,
   availableValues,
@@ -36,30 +30,38 @@ export function AppointmentFilters({ values, records, action }: Props) {
   const t = useTranslations("appointments.filters");
   const router = useRouter();
   const pathname = usePathname();
-  const [, startTransition] = useTransition();
+  const [isPending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
-  const [applied, setApplied] = useState(values);
+  const [drawerMounted, setDrawerMounted] = useState(false);
+  const [optimistic, setOptimistic] = useState<{ key: string; values: FilterValues } | null>(null);
   const [draft, setDraft] = useState(values);
   const anchor = useRef<HTMLDivElement>(null);
   // True once the filter button at the top has scrolled out of the screen: the floating button then takes its place.
   const [floating, setFloating] = useState(false);
+  const valuesKey = FILTER_KEYS.map((k) => values[k] ?? "").join("|");
+  const applied = optimistic && optimistic.key === valuesKey ? optimistic.values : values;
 
   const activeKeys = FILTER_KEYS.filter((key) => applied[key]);
-  const available = availableValues(records, draft);
-  // Only choices that still leave an appointment (given the other group's choice) are offered; the one in force stays, so it can be undone.
-  const offered = (key: FilterKey) =>
-    FILTER_CHOICES[key].filter(
-      (value) => available[key].has(value) || draft[key] === value,
-    );
-  // A group with fewer than two choices left has nothing to choose, unless one is in force.
-  const groups = FILTER_KEYS.filter(
-    (key) => offered(key).length >= 2 || draft[key],
-  );
+  const draftHasAny = FILTER_KEYS.some((key) => Boolean(draft[key]));
+  const { groups, offeredMap, matchCount } = useMemo(() => {
+    const source = open ? draft : applied;
+    const avail = availableValues(records, source);
+    const map = {} as Record<FilterKey, string[]>;
+    for (const key of FILTER_KEYS) {
+      map[key] = FILTER_CHOICES[key].filter((value) => avail[key].has(value) || source[key] === value);
+    }
+    const visibleGroups = FILTER_KEYS.filter((key) => map[key].length >= 2 || source[key]);
+    return {
+      groups: visibleGroups,
+      offeredMap: map,
+      matchCount: open ? applyFilters(records, draft).length : 0,
+    };
+  }, [records, open, draft, applied]);
   const labelOf = (key: FilterKey, value: string) =>
     t(`options.${key}.${value}` as Parameters<typeof t>[0]);
 
   function apply(next: FilterValues) {
-    setApplied(next);
+    setOptimistic({ key: valuesKey, values: next });
     const params = new URLSearchParams();
     for (const key of FILTER_KEYS)
       if (next[key]) params.set(key, next[key] as string);
@@ -71,7 +73,10 @@ export function AppointmentFilters({ values, records, action }: Props) {
   }
 
   function onOpenChange(next: boolean) {
-    if (next) setDraft(applied);
+    if (next) {
+      setDrawerMounted(true);
+      setDraft(applied);
+    }
     setOpen(next);
   }
 
@@ -97,7 +102,7 @@ export function AppointmentFilters({ values, records, action }: Props) {
       : t("title");
 
   return (
-    <section aria-label={t("title")} className="flex flex-col gap-stack">
+    <section aria-label={t("title")} aria-busy={isPending} className="flex flex-col gap-stack">
       <div ref={anchor} className="flex items-center justify-between gap-stack">
         {canFilter ? (
           <Chip
@@ -105,38 +110,29 @@ export function AppointmentFilters({ values, records, action }: Props) {
             onClick={() => onOpenChange(true)}
             aria-haspopup="dialog"
           >
-            <SlidersHorizontal className="size-icon-sm" aria-hidden />
-            {buttonLabel}
+            <Tuning2Icon className="size-icon-sm shrink-0" aria-hidden />
+            <span className="truncate">{buttonLabel}</span>
           </Chip>
         ) : (
           <span />
         )}
         {action}
       </div>
-      {/* Once the button above has scrolled away it floats at the bottom right, above the menu, as the icon alone, with a small count badge when filters are on (the label and count are also in aria-label). */}
       {canFilter && floating ? (
         <div
           data-bottom-fixed
           className="pointer-events-none fixed inset-x-0 bottom-[var(--nav-clearance)] z-30"
         >
-          <div className="mx-auto flex max-w-app justify-end px-inset">
+          <div className="mx-auto flex max-w-app justify-center px-inset">
             <Button
               type="button"
-              size="icon"
+              size="sm"
               onClick={() => onOpenChange(true)}
               aria-haspopup="dialog"
-              aria-label={buttonLabel}
-              className="pointer-events-auto relative rounded-full shadow-lg"
+              className="pointer-events-auto rounded-full px-inset shadow-lg"
             >
-              <SlidersHorizontal className="size-icon" aria-hidden />
-              {activeKeys.length > 0 ? (
-                <span
-                  aria-hidden
-                  className="absolute -top-tight -right-tight flex size-icon items-center justify-center rounded-full bg-foreground type-tag font-semibold! text-background tabular-nums"
-                >
-                  {activeKeys.length}
-                </span>
-              ) : null}
+              <Tuning2Icon className="size-icon-sm" aria-hidden />
+              {buttonLabel}
             </Button>
           </div>
         </div>
@@ -151,78 +147,83 @@ export function AppointmentFilters({ values, records, action }: Props) {
                 selected={false}
                 onClick={() => apply({ ...applied, [key]: undefined })}
                 aria-label={t("remove", { name })}
+                className="border-transparent bg-accent text-accent-foreground"
               >
-                {name}
-                <X className="size-icon-sm" aria-hidden />
+                <span className="min-w-0 truncate">{name}</span>
+                <CloseIcon className="size-icon-sm shrink-0" aria-hidden />
               </Chip>
             );
           })}
         </div>
       ) : null}
 
-      <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent aria-describedby={undefined}>
-          <DrawerHeader>
-            <DrawerTitle className="type-heading">{t("title")}</DrawerTitle>
-          </DrawerHeader>
-          <div className="flex min-h-0 flex-col gap-group overflow-y-auto overscroll-contain px-inset pb-inset">
-            {groups.map((key) => (
-              <div
-                key={key}
-                role="group"
-                aria-label={t(`labels.${key}`)}
-                className="flex flex-col gap-stack"
+      {drawerMounted ? (
+        <LazyFilterDrawer
+          open={open}
+          onOpenChange={onOpenChange}
+          title={t("title")}
+          footer={
+            <>
+              <Button
+                type="button"
+                size="cta"
+                disabled={matchCount === 0}
+                onClick={() => {
+                  apply(draft);
+                  setOpen(false);
+                }}
               >
-                <span className="type-secondary text-muted-foreground">
-                  {t(`labels.${key}`)}
-                </span>
-                <div className="flex flex-wrap gap-stack">
+                {t("show", { count: matchCount })}
+              </Button>
+              {draftHasAny || activeKeys.length > 0 ? (
+                <Button
+                  type="button"
+                  size="cta-sm"
+                  variant="ghost"
+                  onClick={() => {
+                    // Clearing is applied at once and closes the sheet: nothing is left to review.
+                    setDraft({});
+                    apply({});
+                    setOpen(false);
+                  }}
+                >
+                  {t("clear")}
+                </Button>
+              ) : null}
+            </>
+          }
+        >
+          {groups.map((key) => (
+            <div
+              key={key}
+              role="group"
+              aria-label={t(`labels.${key}`)}
+              className="flex flex-col gap-stack"
+            >
+              <span className="type-secondary text-muted-foreground">
+                {t(`labels.${key}`)}
+              </span>
+              <div className="flex flex-wrap gap-stack">
+                <Chip
+                  selected={!draft[key]}
+                  onClick={() => setDraft({ ...draft, [key]: undefined })}
+                >
+                  <span className="truncate">{t("all")}</span>
+                </Chip>
+                {offeredMap[key].map((value) => (
                   <Chip
-                    selected={!draft[key]}
-                    onClick={() => setDraft({ ...draft, [key]: undefined })}
+                    key={value}
+                    selected={draft[key] === value}
+                    onClick={() => setDraft({ ...draft, [key]: value })}
                   >
-                    {t("all")}
+                    <span className="min-w-0 truncate">{labelOf(key, value)}</span>
                   </Chip>
-                  {offered(key).map((value) => (
-                    <Chip
-                      key={value}
-                      selected={draft[key] === value}
-                      onClick={() => setDraft({ ...draft, [key]: value })}
-                    >
-                      {labelOf(key, value)}
-                    </Chip>
-                  ))}
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
-          <DrawerFooter className="pb-(--inset-bottom)">
-            <Button
-              type="button"
-              size="cta"
-              onClick={() => {
-                apply(draft);
-                setOpen(false);
-              }}
-            >
-              {t("show", { count: applyFilters(records, draft).length })}
-            </Button>
-            <Button
-              type="button"
-              size="cta-sm"
-              variant="ghost"
-              onClick={() => {
-                // Clearing is applied at once and closes the sheet: nothing is left to review.
-                setDraft({});
-                apply({});
-                setOpen(false);
-              }}
-            >
-              {t("clear")}
-            </Button>
-          </DrawerFooter>
-        </DrawerContent>
-      </Drawer>
+            </div>
+          ))}
+        </LazyFilterDrawer>
+      ) : null}
     </section>
   );
 }

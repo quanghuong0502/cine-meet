@@ -1,6 +1,6 @@
 "use client";
 
-import { UserLock } from "lucide-react";
+import { UserCheckRoundedIcon } from "@solar-icons/react/line-duotone";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { Chip } from "@/components/admin/auditorium-editor/chips";
@@ -34,17 +34,17 @@ export function LockDialog({ open, onOpenChange, timeText, voters, pending, onCo
       title={timeText}
       titleClassName="tabular-nums"
       description={t("lockDialogDescription")}
-      icon={<UserLock aria-hidden />}
+      icon={<UserCheckRoundedIcon aria-hidden />}
       confirmLabel={t("lockButton", { count: picked.length })}
       cancelLabel={t("back")}
       pending={pending}
       confirmDisabled={picked.length === 0}
       onConfirm={() => onConfirm(picked)}
     >
-      <div role="group" aria-label={t("lockPickPeople")} className="flex flex-wrap gap-stack">
+      <div role="group" aria-label={t("lockPickPeople")} className="flex max-h-area-cap flex-wrap gap-stack overflow-y-auto">
         {voters.map((voter) => (
           <Chip key={voter.id} selected={picked.includes(voter.id)} disabled={pending} onClick={() => toggle(voter.id)}>
-            {voter.name}
+            <span className="min-w-0 truncate">{voter.name}</span>
           </Chip>
         ))}
       </div>

@@ -1,9 +1,10 @@
 {
   "meta": {
-    "description": "Plan movie nights with friends, remember the best seats in every auditorium, split costs and track your spending."
+    "description": "Plan movie nights with friends, remember the best seats in every auditorium, and track your spending."
   },
   "locale": {
-    "label": "Language"
+    "label": "Language",
+    "error": "Could not change language. Try again."
   },
   "auth": {
     "login": {
@@ -55,6 +56,8 @@
     "menuLabel": "Account menu",
     "profile": "Profile",
     "signOut": "Sign out",
+    "signOutTitle": "Sign out?",
+    "signOutDescription": "You'll need to sign in again to use SeatMate.",
     "settings": "Settings"
   },
   "nav": {
@@ -84,6 +87,10 @@
       "delete": "Delete",
       "save": "Save",
       "saving": "Saving...",
+      "uploading": "Uploading...",
+      "copy": "Copy",
+      "copied": "Copied",
+      "clearSearch": "Clear search",
       "cancel": "Cancel",
       "searchLabel": "Search",
       "searchPlaceholder": "Search by name",
@@ -118,7 +125,7 @@
       "invalid_url": "Invalid link, it must start with https://",
       "invalid_color": "Invalid color",
       "no_items": "Pick at least one item",
-      "too_gray": "This color is too grey, pick one with a clearer tint",
+      "too_gray": "This color is too gray, pick one with a clearer tint",
       "too_dark": "This color is too dark, the button would be hard to see on the dark background",
       "invalid_number": "Invalid number",
       "out_of_range": "Value is out of the allowed range",
@@ -211,7 +218,7 @@
     "bottomNav": {
       "overview": "Overview",
       "users": "Users",
-      "auditoriums": "Auditoriums",
+      "auditoriums": "Rooms",
       "movies": "Movies",
       "label": "Admin menu",
       "settings": "Settings",
@@ -222,7 +229,7 @@
       "createTitle": "Add branch",
       "editTitle": "Edit branch",
       "addButton": "Add branch",
-      "emptyTitle": "No branchs yet",
+      "emptyTitle": "No branches yet",
       "emptyDescription": "Add a brand's cinema to use in showtimes.",
       "fields": {
         "brandId": {
@@ -251,7 +258,7 @@
         },
         "parkingFee": {
           "label": "Parking fee (VND)",
-          "placeholder": "e.g. 5000"
+          "placeholder": "e.g. 5.000"
         },
         "parkingLocation": {
           "label": "Parking spot"
@@ -314,7 +321,7 @@
           "label": "Minimum age"
         },
         "color": {
-          "label": "Tag colour"
+          "label": "Tag color"
         }
       },
       "minAgeBadge": "Age {age}+"
@@ -338,11 +345,21 @@
           "placeholder": "Select capacity"
         },
         "color": {
-          "label": "Map colour"
+          "label": "Map color"
+        },
+        "style": {
+          "label": "Chair style (3D)",
+          "placeholder": "Select chair style"
         }
       },
       "capacitySingle": "Single seat",
-      "capacityCouple": "Couple seat"
+      "capacityCouple": "Couple seat",
+      "styles": {
+        "standard": "Standard chair",
+        "vip": "VIP high-back",
+        "recliner": "Recliner with footrest",
+        "bed": "Cinema bed"
+      }
     },
     "holidays": {
       "title": "Holidays",
@@ -611,6 +628,15 @@
         }
       },
       "pickColor": "Pick a color",
+      "presetsLabel": "Preset colors",
+      "presets": {
+        "raspberry": "Raspberry",
+        "crimson": "Crimson",
+        "tangerine": "Tangerine",
+        "teal": "Teal",
+        "cobalt": "Cobalt",
+        "violet": "Violet"
+      },
       "reset": "Reset to default colors",
       "resetTitle": "Reset to the default color?",
       "resetDescription": "Everyone will see the default colors straight away. You can pick another color afterwards.",
@@ -618,10 +644,54 @@
       "resetDone": "Default colors restored",
       "preview": {
         "label": "Preview",
+        "dark": "Dark theme",
+        "light": "Light theme",
         "heading": "Choose seats",
         "seats": "3 seats left",
         "link": "See details",
         "button": "Lock in attendees"
+      }
+    },
+    "cinemaDimensions": {
+      "title": "Cinema dimension standards",
+      "cardDescription": "Default measurements (seat width, row spacing, stair steps, aisles, screen) used for seat scoring and 3D view.",
+      "open": "Configure standard dimensions",
+      "intro": "Defaults follow TCVN 5577:2012, QCVN 06:2022/BXD, SMPTE and Neufert standards. Saving automatically recalculates seat scores and Heatmaps for all saved rooms.",
+      "reset": "Reset to defaults",
+      "resetNotice": "Standard defaults restored. Click Save to apply.",
+      "savedWithRescore": "Saved and rescored {count} room layout versions.",
+      "validationError": "One or more values are out of range. Check the fields.",
+      "sections": {
+        "general": "Core dimensions",
+        "generalHint": "Seat width (center-to-center), height per stair step, vertical aisle and horizontal cross-aisle widths shared by scoring and 3D.",
+        "rowPitch": "Row spacing tiers",
+        "rowPitchHint": "Mapped to the 4 quick-select chips in the auditorium editor.",
+        "screen": "Screen mount height & aspect ratio",
+        "screenHint": "Bottom edge height above the front row floor and screen width:height ratio.",
+        "screenDistance": "Screen to front row",
+        "screenDistanceHint": "Calculated as multiplier × screen width (W), never below the minimum."
+      },
+      "fields": {
+        "seatPitchM": "Seat width (center–center)",
+        "stepHeightM": "Height per stair step",
+        "aisleWidthM": "Vertical aisle width",
+        "horizontalAisleWidthM": "Horizontal cross-aisle width",
+        "rowPitchTight": "Tight (small/older)",
+        "rowPitchStandard": "Standard",
+        "rowPitchVip": "Wide (VIP / Recliner)",
+        "rowPitchBed": "Cinema bed",
+        "mountLow": "Low mount (from floor)",
+        "mountMid": "Mid mount (from floor)",
+        "mountHigh": "High mount (from floor)",
+        "aspectScope": "Wide ratio",
+        "aspectStandard": "Standard ratio",
+        "aspectSquare": "Square ratio",
+        "distNearRatio": "Near · × screen width",
+        "distNearMin": "Near · minimum",
+        "distMedRatio": "Medium · × screen width",
+        "distMedMin": "Medium · minimum",
+        "distFarRatio": "Far · × screen width",
+        "distFarMin": "Far · minimum"
       }
     },
     "systemSettings": {
@@ -682,6 +752,16 @@
           "seats": "Seats"
         },
         "heatmap": "Heatmap",
+        "view3d": "3D view",
+        "showMap": "Show map",
+        "hideMap": "Hide map",
+        "decrease": "Decrease",
+        "increase": "Increase",
+        "sections": {
+          "screen": "Screen",
+          "seating": "Seating & elevation",
+          "aisles": "Aisles & entrances"
+        },
         "mapHint": "Pinch to zoom the map",
         "fields": {
           "name": {
@@ -699,7 +779,10 @@
             "label": "Columns"
           },
           "rowLabelOrder": {
-            "label": "Row labels"
+            "label": "Row letter order"
+          },
+          "skipRowLetters": {
+            "label": "Skip letters I, O (avoid 1, 0 confusion)"
           },
           "colNumbering": {
             "label": "Column numbering"
@@ -717,15 +800,41 @@
           "screenDistance": {
             "label": "Screen to front row"
           },
-          "stadiumFromRow": {
-            "label": "Steps start at row",
-            "placeholder": "e.g. 3"
+          "screenShape": {
+            "label": "Screen aspect ratio"
+          },
+          "screenMount": {
+            "label": "Screen mount height (from floor)"
+          },
+          "screenTilt": {
+            "label": "Screen downward tilt"
+          },
+          "seatStagger": {
+            "label": "Seat alignment across rows"
+          },
+          "rowPitch": {
+            "label": "Row spacing"
+          },
+          "seatRecline": {
+            "label": "Backrest recline"
           },
           "stepsPerRow": {
             "label": "Steps between two rows"
           },
+          "sideAisles": {
+            "label": "Side-wall vertical aisles"
+          },
           "verticalAisles": {
-            "label": "Vertical aisles (after column)"
+            "label": "Vertical aisles between columns (after col)"
+          },
+          "aisleFillRow": {
+            "label": "Rows running across vertical aisles (pick row)"
+          },
+          "aisleFillCols": {
+            "label": "Row {row} runs across aisle after column"
+          },
+          "aisleFillSeats": {
+            "label": "Seats placed in the aisle gap"
           },
           "horizontalAisles": {
             "label": "Horizontal aisles (after row)"
@@ -748,10 +857,45 @@
             "medium": "Medium",
             "far": "Far"
           },
+          "screenShape": {
+            "scope": "Wide",
+            "standard": "Standard",
+            "square": "Square"
+          },
+          "screenMount": {
+            "low": "Low",
+            "mid": "Mid",
+            "high": "High"
+          },
+          "screenTilt": {
+            "flat": "Vertical",
+            "slight": "Slight tilt",
+            "tilted": "Tilted"
+          },
+          "seatStagger": {
+            "aligned": "Aligned",
+            "staggered": "Staggered"
+          },
+          "rowPitch": {
+            "tight": "Tight",
+            "standard": "Standard",
+            "vip": "Wide",
+            "bed": "Bed"
+          },
+          "seatRecline": {
+            "upright": "Upright",
+            "slight": "Slight recline",
+            "deep": "Deep recline"
+          },
+          "stepsFlat": "Flat",
           "side": {
             "left": "Left",
             "center": "Center",
             "right": "Right"
+          },
+          "sideAisle": {
+            "left": "Along left wall",
+            "right": "Along right wall"
           },
           "position": {
             "front": "Front",
@@ -809,6 +953,7 @@
       "showtimes": {
         "emptyTitle": "No showtimes yet",
         "emptyDescription": "Create them in bulk or import a CSV file.",
+        "searchPlaceholder": "Search movie, cinema, room, format...",
         "bulkButton": "Create in bulk",
         "importButton": "Import CSV",
         "noPrice": "No price yet",
@@ -849,6 +994,9 @@
       },
       "import": {
         "title": "Import showtimes from CSV",
+        "columnsLabel": "CSV columns",
+        "downloadTemplate": "Download template",
+        "rowCount": "{count, plural, one {# row} other {# rows}}",
         "csv": "CSV content",
         "pickFile": "Choose a CSV file",
         "submit": "Import showtimes",
@@ -886,7 +1034,7 @@
       "notConfigured": "The server has no push provider set up, so nothing can be sent. Web Push needs VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY and VAPID_SUBJECT; OneSignal needs ONESIGNAL_APP_ID and ONESIGNAL_API_KEY (PUSH_PROVIDER picks one). Add them, then restart the server.",
       "errors": {
         "pick": "Pick who to send to first.",
-        "network": "Network is shaky, please try again.",
+        "network": "Network is shaky, try again.",
         "not_configured": "The server has no push provider set up.",
         "not_found": "Couldn't find this user."
       }
@@ -896,13 +1044,17 @@
       "openCount": "{count, plural, one {# report open} other {# reports open}}",
       "noneOpen": "No reports waiting",
       "open": "Open",
+      "filterLabel": "Filter report status",
+      "filterAll": "All",
       "emptyTitle": "No reports yet",
+      "emptyFilterTitle": "No reports in this view",
       "emptyDescription": "Reports users send about a room's info will show up here.",
       "status": {
         "open": "Open",
         "resolved": "Resolved"
       },
       "by": "From {name}",
+      "openRoom": "Open room",
       "resolve": "Mark resolved",
       "resolved": "Marked resolved",
       "errors": {
@@ -934,7 +1086,12 @@
       },
       "settings": {
         "title": "Settings",
-        "description": "Coming soon: AI and notification settings."
+        "description": "Coming soon: AI and notification settings.",
+        "sections": {
+          "general": "General",
+          "operations": "Operations & system",
+          "account": "Account"
+        }
       }
     },
     "user": {
@@ -946,6 +1103,7 @@
   },
   "states": {
     "comingSoon": "In progress",
+    "backHome": "Back to home",
     "loading": "Loading...",
     "welcome": {
       "title": "Welcome!",
@@ -1020,9 +1178,10 @@
     },
     "budget": {
       "title": "Monthly budget",
-      "ticket": "Tickets",
-      "fnb": "Food",
-      "placeholder": "e.g. 500000",
+      "description": "Get warned at 80% and 100% of your monthly spending. Leave blank to skip tracking.",
+      "ticket": "Tickets (VND)",
+      "fnb": "Food (VND)",
+      "placeholder": "e.g. 500.000",
       "save": "Save budget",
       "saved": "Budget saved",
       "error": "Could not save, try again"
@@ -1031,6 +1190,11 @@
       "title": "Push notifications",
       "notConfigured": "The server doesn't have push notifications turned on. Ask the admin to set it up. In-app notifications still work.",
       "needsInstall": "On iPhone and iPad, push only works once the app is on the home screen. Follow the steps below, then open the app from the home screen and come back here.",
+      "needsInstallTitle": "Add SeatMate to your Home Screen for notifications",
+      "needsInstallStep1": "Tap the Share button in Safari.",
+      "needsInstallStep2": "Choose \"Add to Home Screen\" and tap \"Add\".",
+      "needsInstallStep3": "Open SeatMate from your Home Screen and return here.",
+      "retry": "Try again",
       "unsupported": "This browser doesn't support push notifications. In-app notifications still work.",
       "denied": "You're blocking notifications for this app. Allow them again in your browser or phone settings.",
       "deviceSwitch": "Get notifications on this device",
@@ -1041,6 +1205,9 @@
       "thisDevice": "This device",
       "since": "Since {date}",
       "removeDevice": "Turn off notifications on {name}",
+      "removeDeviceTitle": "Remove {name}?",
+      "removeDeviceDescription": "This device will stop receiving push notifications.",
+      "removeDeviceConfirm": "Remove device",
       "devices": {
         "iphone": "iPhone",
         "ipad": "iPad",
@@ -1051,6 +1218,7 @@
         "other": "Other device"
       },
       "typesTitle": "Kinds of notification to push",
+      "typesInactiveNote": "Turn on notifications on at least one device to receive pushes.",
       "types": {
         "appointment_invited": "Someone invites you to a plan",
         "appointment_reply": "An invitee replies to your plan",
@@ -1068,8 +1236,8 @@
         "budget_warning": "Spending is close to or over your budget"
       },
       "errors": {
-        "network": "Network is shaky, please try again.",
-        "saveFailed": "Couldn't save this device, please try again.",
+        "network": "Network is shaky, try again.",
+        "saveFailed": "Couldn't save this device, try again.",
         "subscribeFailed": "Couldn't turn on notifications here. Try again or check the notification permission.",
         "notConfigured": "The server doesn't have push notifications turned on."
       },
@@ -1089,11 +1257,11 @@
     "remove": "Remove photo",
     "uploading": "Uploading...",
     "errors": {
-      "notImage": "Please choose an image file.",
+      "notImage": "Choose an image file.",
       "tooBig": "The photo is over 8 MB. Choose a smaller one.",
       "failed": "Couldn't upload the photo. Try another.",
       "network": "Connection lost while uploading. Try again.",
-      "not_configured": "Cloudinary isn't set up yet, so photos can't be uploaded."
+      "not_configured": "Photo uploads aren't enabled on this server yet."
     }
   },
   "seatMap": {
@@ -1112,7 +1280,7 @@
     "recommendedLegend": "Recommended seat",
     "heatHigh": "High score",
     "doorLabel": "Entrance",
-    "markFavorite": "marked as favourite",
+    "markFavorite": "marked as favorite",
     "markAvoid": "marked to avoid"
   },
   "showtimes": {
@@ -1139,7 +1307,9 @@
         "slot": "Time of day"
       }
     },
-    "createPlan": "Plan a movie night for this showtime"
+    "createPlan": "Plan a movie night for this showtime",
+    "planShort": "Plan",
+    "upcomingBadge": "Upcoming"
   },
   "movie": {
     "posterAlt": "Poster of {title}",
@@ -1150,14 +1320,19 @@
       "ended": "Ended"
     },
     "synopsis": "Synopsis",
+    "showMore": "Show more",
+    "showLess": "Show less",
     "director": "Director",
     "cast": "Cast",
     "language": "Language",
     "showtimes": "Showtimes",
+    "noShowtimes": "No upcoming showtimes for this movie yet.",
+    "browseShowtimes": "Browse all showtimes",
     "trailer": {
       "watch": "Watch trailer",
       "play": "Watch trailer of {title}",
       "playerTitle": "Trailer of {title}",
+      "close": "Close trailer",
       "pause": "Pause",
       "resume": "Resume",
       "seek": "Seek in trailer",
@@ -1184,9 +1359,12 @@
     "parkingFee": "Parking {fee}",
     "directions": "Get directions",
     "rooms": "Auditoriums",
+    "emptyRooms": "No auditoriums yet.",
     "room": {
       "sittingHistory": {
-        "summary": "You've sat in this room {count, plural, one {# time} other {# times}}: {seats}"
+        "summary": "You've sat in this room {count, plural, one {# time} other {# times}}: {seats}",
+        "heading": "You've sat in this room {count, plural, one {# time} other {# times}}",
+        "seatVisits": "Sat here {count, plural, one {# time} other {# times}}"
       },
       "review": {
         "title": "Rate this room",
@@ -1213,6 +1391,55 @@
       "layers": "Layers",
       "layerScore": "Seat score",
       "layerMine": "My marks",
+      "viewLabel": "View mode",
+      "view2d": "2D Map",
+      "view3d": "3D View",
+      "orbit": "Room overview",
+      "fromSeat": "From seat {code}",
+      "fromSeatEmpty": "Seat POV",
+      "recenter3d": "Recenter view",
+      "seatBadge": "Seat {code}",
+      "audienceFront": "People in front",
+      "pickSeat3d": "Tap any seat in the room or open Seat picker to sit in it.",
+      "threeDLabel": "3D auditorium view",
+      "threeDFailed": "3D (WebGL) is unavailable on this device. Switch back to 2D Map to browse seats.",
+      "sampleSubtitle": "Sample subtitle — check if screen height feels comfortable",
+      "chooseSeat": "Pick seat",
+      "chooseSeatTitle": "Choose a seat to preview",
+      "seatCount": "{count} seats in auditorium",
+      "screenBadge": "Screen",
+      "bestSeat": "Best seat",
+      "lightsOn": "Turn house lights on",
+      "lightsOff": "Dim lights for movie",
+      "lightsShort": "Lights",
+      "expand3d": "Fullscreen cinema view",
+      "collapse3d": "Exit fullscreen",
+      "dragToLookHint": "Drag to look around · Double-tap to center",
+      "hoverSeatHint": "Seat {code} · {score} pts — tap to sit",
+      "seatScoreShort": "{score} pts",
+      "seatPickerTitle": "Seat {code} · {score} pts",
+      "legendSelected": "Selected",
+      "legendBest": "Best ({code})",
+      "legendHeatLow": "Low",
+      "legendHeatHigh": "High",
+      "quality": {
+        "best": "Best view",
+        "great": "Great",
+        "good": "Good",
+        "fair": "Fair",
+        "poor": "Off-axis"
+      },
+      "stepSeatLabel": "Step to adjacent seat",
+      "stepFront": "Row ahead",
+      "stepBack": "Row behind",
+      "stepLeft": "Seat on left",
+      "stepRight": "Seat on right",
+      "myHeight": "Your height",
+      "myHeightLabel": "Select your height",
+      "frontHeight": "Person in front",
+      "frontHeightLabel": "Select height of person in front",
+      "viewMetrics": "{distance}m to screen · {horizontal}° wide · {vertical}° up",
+      "neckStrainHint": "· High neck tilt",
       "tapSeat": "Tap a seat to see its score and mark it.",
       "seatTitle": "Seat {code}",
       "score": "score {score}",
@@ -1267,7 +1494,7 @@
     "phonePlaceholder": "e.g. 0912 345 678",
     "addButton": "Add friend",
     "requestSent": "Done! If that number has an account, the request is on its way.",
-    "networkError": "Network is shaky, please try again.",
+    "networkError": "Network is shaky, try again.",
     "errors": {
       "invalid_phone": "That phone number doesn't look right. Use a 10-digit mobile number, e.g. 0912 345 678.",
       "throttled": "That's a lot of searching. Take a break and try again in about an hour.",
@@ -1275,7 +1502,11 @@
     },
     "linkTitle": "Friend invite link",
     "copyLink": "Copy link",
+    "copiedShort": "Copied",
     "shareLink": "Share link",
+    "searchPlaceholder": "Search friends...",
+    "clearSearch": "Clear search",
+    "noSearchMatch": "No friends match your search.",
     "linkCopied": "Link copied, send it to your friends",
     "linkCopyFailed": "Couldn't copy the link. Try again.",
     "shareTitle": "Be friends on SeatMate",
@@ -1301,8 +1532,10 @@
     "invite": {
       "title": "Friend request",
       "prompt": "{name} wants to be friends with you",
+      "incomingPrompt": "{name} already sent you a friend request",
       "button": "Send friend request",
-      "networkError": "Network is shaky, please try again.",
+      "acceptButton": "Accept request",
+      "networkError": "Network is shaky, try again.",
       "notFoundTitle": "This link doesn't work anymore",
       "notFoundDescription": "The link may be mistyped or its owner stopped using it. Ask your friend for a new one.",
       "toFriends": "Back to friends",
@@ -1330,12 +1563,16 @@
       "nameLabel": "Group name",
       "namePlaceholder": "e.g. Weekend crew",
       "membersLabel": "Members",
+      "selectedCount": "{count} selected",
       "noFriends": "Add some friends first, then come back to build a group.",
+      "addFriendsLink": "Go to Friends",
       "save": "Save group",
       "delete": "Delete group",
+      "deleteTitle": "Delete group \"{name}\"?",
+      "deleteDescription": "This group will be removed. Your friends will stay on your list.",
       "saved": "Group saved",
       "deleted": "Group deleted",
-      "networkError": "Network is shaky, please try again.",
+      "networkError": "Network is shaky, try again.",
       "errors": {
         "required": "Give the group a name.",
         "too_many": "That's a lot of groups. Delete an old one first.",
@@ -1347,13 +1584,15 @@
   "appointments": {
     "title": "Plans",
     "add": "Create plan",
+    "sectionActive": "Active",
+    "sectionPast": "Past",
     "emptyTitle": "No plans yet",
     "emptyDescription": "Pick a movie, pick a time, and invite your friends!",
     "byMe": "You made this",
     "byName": "By {name}",
     "needsReply": "Waiting for you",
     "timesCount": "{count, plural, one {# time to pick} other {# times to pick}}",
-    "networkError": "Network is shaky, please try again. Nothing was lost.",
+    "networkError": "Network is shaky, try again. Nothing was lost.",
     "status": {
       "DRAFT": "Draft",
       "INVITING": "Inviting",
@@ -1364,7 +1603,7 @@
       "CANCELLED": "Cancelled"
     },
     "errors": {
-      "validation": "Something looks off, please check it again.",
+      "validation": "Something looks off, check it again.",
       "not_found": "Couldn't find this plan.",
       "forbidden": "Only the person who made it can do this.",
       "bad_state": "The plan has moved on, reload the page to see it.",
@@ -1376,13 +1615,14 @@
       "duplicate": "That time is already on the list.",
       "needs_attendee": "Pick at least one person who hasn't declined.",
       "late": "The showtime has started, so you can't leave anymore.",
-      "conflict": "Several people edited at once, please try again.",
+      "conflict": "Several people edited at once, try again.",
       "deadline_passed": "The answer-by time has passed, so this can't change anymore.",
       "deadline_too_late": "The answer-by time has to be before the earliest viewing time.",
       "option_before_deadline": "That time is before the answer-by time, so it can't be suggested.",
       "nobody_to_remind": "Everyone has voted on this time, nobody to remind.",
       "reminder_too_soon": "You just sent a reminder, wait a bit before the next one.",
       "no_showtime": "That showtime can't be picked, try another one.",
+      "needs_showtime": "Pick a showtime before confirming.",
       "seat_taken": "Someone just took that seat, pick another one.",
       "invalid_seat": "That seat can't be used (broken, missing or already full).",
       "needs_seat": "Someone still has no seat. Seat everyone, then confirm.",
@@ -1405,6 +1645,11 @@
       "inviteesLabel": "Invite",
       "groupsLabel": "Groups",
       "noFriends": "No friends to invite yet. Add some in Profile first.",
+      "addFriendsLink": "Add friends",
+      "noMoviesTitle": "No movies with upcoming showtimes",
+      "noMoviesDescription": "Check showtimes to see upcoming screenings.",
+      "browseShowtimes": "Browse showtimes",
+      "pickedSummary": "Selected {count}/{max} showtimes",
       "allPaidByCreatorLabel": "I'm paying for everyone",
       "allPaidByCreatorHint": "Everyone still picks their own seat and food, but the whole cost of this viewing will count as mine.",
       "deadlineLabel": "Answer by",
@@ -1484,6 +1729,10 @@
         "excluded": "Not going"
       },
       "deadlinePassed": "The answer-by time has passed. Wait for the organizer to lock it in.",
+      "deadlinePassedCreator": "The response deadline has passed. You can lock in a time below or cancel the plan.",
+      "notGoingCount": "Not going ({count})",
+      "waitingShort": "Waiting",
+      "remindShort": "Remind",
       "save": "Save answers",
       "discard": "Discard changes",
       "saved": "Your answers are saved",
@@ -1502,6 +1751,10 @@
         "waitingForCreator": "The organizer is picking the showtime and seats, hang tight.",
         "showtimeTitle": "Showtime",
         "changeShowtime": "Change showtime",
+        "changeShowtimeConfirmTitle": "Switch to another showtime?",
+        "changeShowtimeConfirmDescription": "Assigned seats and selected food will be cleared for the new auditorium.",
+        "draftProgress": "{seated}/{total} seated · {food} food items",
+        "foodOrderedTitle": "Ordered food & drinks",
         "showtimeSaved": "Showtime picked, seats start over",
         "seatsTitle": "Seating",
         "whoIsSeated": "Pick who to seat",
@@ -1534,8 +1787,12 @@
         "allPaidByCreatorNote": "{name} is paying for everyone this time.",
         "total": "Whole group",
         "confirm": "Confirm",
+        "confirmDialogTitle": "Confirm this plan?",
+        "confirmDialogDescription": "Lock in for {count} people (est. {total}). Everyone will be notified and seats can't be changed after.",
         "confirmed": "Confirmed, everyone will be told",
         "complete": "Mark as watched",
+        "completeDialogTitle": "Mark as watched?",
+        "completeDialogDescription": "Estimated costs will be recorded as actual expenses for everyone and ratings will open.",
         "completed": "Watched! Add what it cost"
       },
       "cost": {
@@ -1565,7 +1822,8 @@
       "title": "Invite more",
       "groups": "Groups",
       "button": "{count, plural, =0 {Send invitations} one {Invite # person} other {Invite # people}}",
-      "done": "Invited {count, plural, one {# more person} other {# more people}}"
+      "done": "Invited {count, plural, one {# more person} other {# more people}}",
+      "limitReached": "You've reached the maximum number of invitees."
     },
     "answered": "{answered}/{total} replied",
     "peopleGoing": "{count, plural, one {# going} other {# going}}",
@@ -1608,8 +1866,9 @@
     "emptyDescription": "When someone invites you or replies to a plan, it shows up here.",
     "markAll": "Mark all read",
     "allRead": "All marked as read",
+    "todayAt": "Today · {time}",
     "new": "New.",
-    "networkError": "Network is shaky, please try again.",
+    "networkError": "Network is shaky, try again.",
     "types": {
       "appointment_invited": {
         "title": "New plan!",
@@ -1729,11 +1988,16 @@
       "room": "Room you watched in",
       "noRoom": "Don't remember / skip",
       "ticket": "Ticket cost (VND)",
+      "ticketPlaceholder": "e.g. 95.000",
       "food": "Food cost (VND)",
+      "foodPlaceholder": "e.g. 85.000",
       "other": "Other cost (VND)",
+      "otherPlaceholder": "e.g. 15.000",
       "note": "Note",
+      "notePlaceholder": "e.g. Watched solo at CGV",
       "date": "Date watched",
       "submit": "Save viewing",
+      "submitting": "Saving...",
       "saved": "Viewing saved",
       "futureDate": "Cannot log a viewing for a future date.",
       "error": "Could not save, try again"
@@ -1746,11 +2010,14 @@
         "year": "Year"
       },
       "ticket": "Ticket",
-      "food": "Food"
+      "food": "Food",
+      "other": "Other"
     },
     "budget": {
       "title": "Monthly budget",
       "notSet": "No budget set. Set one in Settings to get warned before you overspend.",
+      "configure": "Set budget",
+      "edit": "Edit",
       "categories": {
         "ticket": "Tickets",
         "fnb": "Food"

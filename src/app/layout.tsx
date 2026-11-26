@@ -1,13 +1,12 @@
 import type { Metadata, Viewport } from "next";
 import { NextIntlClientProvider } from "next-intl";
-import { getLocale, getTranslations } from "next-intl/server";
+import { getLocale, getMessages, getTranslations } from "next-intl/server";
 import { Be_Vietnam_Pro } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
-import { DomRecorder } from "@/components/dev/dom-recorder";
 import { KeyboardWatcher } from "@/components/keyboard-watcher";
 import { NetworkWatcher } from "@/components/network-watcher";
 import { NoZoom } from "@/components/no-zoom";
-import { BootSplash } from "@/components/route-loading";
+import { pickMessages, ROOT_CLIENT_NAMESPACES } from "@/components/scoped-intl-provider";
 import { ServiceWorkerRegister } from "@/components/service-worker-register";
 import { APP_NAME } from "@/components/wordmark";
 import splashScreens from "@/lib/splash-screens.json";
@@ -17,7 +16,7 @@ import "./globals.css";
 const beVietnamPro = Be_Vietnam_Pro({
   variable: "--font-sans",
   subsets: ["vietnamese", "latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "500", "600"],
   display: "swap",
 });
 
@@ -69,7 +68,10 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [locale, brand] = await Promise.all([getLocale(), getBrandTheme()]);
+  const [locale, brand, messages] = await Promise.all([getLocale(), getBrandTheme(), getMessages()]);
+  const rootMessages = pickMessages(messages as Record<string, unknown>, ROOT_CLIENT_NAMESPACES);
+  const DevDomRecorder =
+    process.env.NODE_ENV !== "production" ? (await import("@/components/dev/dom-recorder")).DomRecorder : null;
 
   return (
     // Dark mode is the default: the `dark` class activates the shadcn dark tokens.
@@ -78,18 +80,19 @@ export default async function RootLayout({
     <html lang={locale} className={`${beVietnamPro.variable} dark h-full antialiased`} style={{ backgroundColor: brand.theme.themeColorHex }}>
       {/* The brand colour variables, set before the first paint (numbers only, built and validated in src/lib/brand-theme.ts). */}
       <head>
+        <link rel="preconnect" href="https://res.cloudinary.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://res.cloudinary.com" />
         <style dangerouslySetInnerHTML={{ __html: brand.css }} />
       </head>
       <body className="min-h-full bg-background text-foreground">
-        <NextIntlClientProvider>
+        <NextIntlClientProvider messages={rootMessages}>
           <NoZoom />
           <KeyboardWatcher />
           <NetworkWatcher />
           <ServiceWorkerRegister />
-          <BootSplash />
           {children}
           <Toaster theme="dark" />
-          {process.env.NODE_ENV !== "production" ? <DomRecorder /> : null}
+          {DevDomRecorder ? <DevDomRecorder /> : null}
         </NextIntlClientProvider>
       </body>
     </html>

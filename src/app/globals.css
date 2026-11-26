@@ -154,7 +154,7 @@
   --container-hint: 20rem; /* 320: a short explanation under a picture */
 
   /* Shadows have names too. */
-  --shadow-menu: 0 8px 32px -8px rgb(0 0 0 / 0.6), inset 0 1px 0 rgb(255 255 255 / 0.12); /* the floating bottom menu */
+  --shadow-menu: var(--menu-shadow); /* the floating bottom menu */
 
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
@@ -171,7 +171,8 @@
  * Contrast checked (WCAG): text on card >= 4.5:1; success/warning/info 4.7:1+; form borders and seat
  * outlines >= 3:1; primary button text 5.3:1. Decorative borders (--border) are intentionally subtle.
  */
-:root {
+:root,
+.light {
   /*
    * The brand colour, as three numbers (OKLCH): hue, chroma, lightness of the main button. Every other colour of the app (surfaces,
    * borders, muted text, accents, seats) is computed from the hue below, so changing the brand colour means changing only these.
@@ -183,6 +184,9 @@
   /* Text on the main button, and the brand colour used as text on the light theme: chosen by the admin's colour for contrast. */
   --brand-fg: oklch(0.99 0.005 var(--brand-h));
   --brand-ink: oklch(var(--brand-l) var(--brand-c) var(--brand-h));
+  /* Solar Icons (LineDuotone / Linear): keep strokes delicate and airy (never heavy/bold) with a soft duotone accent. */
+  --solar-stroke-width: 1.6;
+  --solar-secondary-opacity: 0.45;
   /*
    * The floating bottom menu sits low: 8px above the screen edge, or on an iPhone with a home bar 20px less than the bar's inset (the
    * pill reaches down into the home-bar zone, the way the iOS tab bar does). Content and fixed buttons clear it by `--nav-clearance`.
@@ -240,6 +244,13 @@
   --seat-favorite: var(--warning);
   --seat-avoid: var(--destructive);
   --screen-glow: oklch(var(--brand-l) var(--brand-c) var(--brand-h) / 25%);
+  --menu-shadow: 0 8px 28px -8px rgb(0 0 0 / 0.16), inset 0 1px 0 rgb(255 255 255 / 0.8);
+  /* Heatmap stops in light theme: muted low -> warm mid -> vivid brand high so top seats stand out cleanly on white cards. */
+  --heat-low: oklch(0.91 0.025 var(--brand-h));
+  --heat-mid: oklch(0.72 0.14 var(--brand-h));
+  --heat-high: oklch(var(--brand-l) var(--brand-c) var(--brand-h));
+  --heat-low-fg: oklch(0.26 0.03 var(--brand-h));
+  --heat-high-fg: var(--brand-fg);
 }
 
 /*
@@ -299,6 +310,13 @@
   --seat-avoid: var(--destructive);
   /* Glow under the curved screen line in the seat map. */
   --screen-glow: oklch(var(--brand-l) var(--brand-c) var(--brand-h) / 35%);
+  --menu-shadow: 0 8px 32px -8px rgb(0 0 0 / 0.6), inset 0 1px 0 rgb(255 255 255 / 0.12);
+  /* Heatmap stops in dark theme: dark low -> brand mid -> luminous pale high. */
+  --heat-low: oklch(0.34 0.07 var(--brand-h));
+  --heat-mid: oklch(var(--brand-l) var(--brand-c) var(--brand-h));
+  --heat-high: oklch(0.94 0.07 var(--brand-h));
+  --heat-low-fg: oklch(0.97 0.01 var(--brand-h));
+  --heat-high-fg: oklch(0.2 0.04 var(--brand-h));
 }
 
 @layer base {
@@ -371,13 +389,40 @@
     /* No rubber-band at the top and bottom of the page: the app shell stays put like a native app. */
     overscroll-behavior: none;
   }
+  /* Ensure Solar SVGs resolve stroke-width reliably across iOS Safari and stay crisp without shrinking inside flex rows. */
+  svg.solar {
+    flex-shrink: 0;
+    stroke-width: var(--solar-stroke-width, 1.6);
+  }
 }
 
-/* No scrollbars anywhere, like a native phone app: scrolling still works by touch and wheel. Outside any layer so it wins over component styles. */
-* {
+/* No scrollbars on scrollable containers, like a native phone app: scoped to container tags so SVG seat-map nodes skip selector matching. */
+html,
+body,
+main,
+section,
+aside,
+nav,
+div,
+ul,
+ol,
+pre,
+textarea,
+dialog {
   scrollbar-width: none;
 }
-*::-webkit-scrollbar {
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+main::-webkit-scrollbar,
+section::-webkit-scrollbar,
+aside::-webkit-scrollbar,
+nav::-webkit-scrollbar,
+div::-webkit-scrollbar,
+ul::-webkit-scrollbar,
+ol::-webkit-scrollbar,
+pre::-webkit-scrollbar,
+textarea::-webkit-scrollbar,
+dialog::-webkit-scrollbar {
   display: none;
 }
 
@@ -386,6 +431,10 @@
    (see components/keyboard-watcher.tsx), so its title stays on screen and only the form body scrolls. */
 html[data-keyboard="open"] [data-slot="drawer-content"] {
   max-height: calc(var(--vv-height, 100dvh) - 1rem);
+}
+html[data-keyboard="open"] [data-slot="alert-dialog-content"] {
+  max-height: calc(var(--vv-height, 100dvh) - 2rem);
+  top: calc(var(--vv-height, 100dvh) / 2);
 }
 
 /* A sheet with the keyboard up: lock the page behind it so iOS has nothing to scroll to bring the field into view.

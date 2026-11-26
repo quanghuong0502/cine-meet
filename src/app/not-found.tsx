@@ -1,14 +1,12 @@
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { EmptyState } from "@/components/empty-state";
-import { AppOpenedMarker } from "@/components/route-loading";
 import { Button } from "@/components/ui/button";
 
 export default async function NotFound() {
   const t = await getTranslations("states.notFound");
   return (
     <main className="flex min-h-dvh items-center justify-center">
-      <AppOpenedMarker />
       <EmptyState
         mascot="bubu-sleepy"
         title={t("title")}

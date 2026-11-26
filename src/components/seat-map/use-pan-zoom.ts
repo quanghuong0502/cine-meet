@@ -79,6 +79,8 @@ export function viewBoxFor(view: View, base: Box, width: number, height: number)
 
 interface Options {
   onTap?: (target: EventTarget | null) => void;
+  /** Scale at which seat code labels appear; only threshold crossings trigger a React render. */
+  labelScale?: number;
 }
 
 /**
@@ -86,11 +88,14 @@ interface Options {
  * Zooming changes the SVG's `viewBox` (not a CSS transform): the browser redraws the vectors at the new size, so the map is
  * always sharp and there is no scaled bitmap or composited layer whose stale pieces could show through (the earlier transform
  * version left a ghost of the 1x map under the zoomed one).
- * The viewBox is written straight to the DOM during a gesture (no React render per frame);
- * only `scale` (coarse, for hiding/showing labels and disabling buttons) goes through state.
+ * The viewBox is coalesced via `requestAnimationFrame` straight to the DOM during gestures (zero `getBoundingClientRect`
+ * calls inside `pointermove`), and React state only updates on boolean threshold crossings (`zoomed`, `atMax`, `showLabels`).
  */
 export function usePanZoom(containerRef: RefObject<HTMLElement | null>, svgRef: RefObject<SVGSVGElement | null>, base: Box, options: Options) {
+  const labelScale = options.labelScale ?? 1.5;
   const view = useRef<View>({ s: 1, x: 0, y: 0 });
+  const rectRef = useRef<{ left: number; top: number; width: number; height: number } | null>(null);
+  const rafRef = useRef(0);
   const pointers = useRef(new Map<number, { x: number; y: number }>());
   const gesture = useRef<{
     startDist: number;
@@ -103,7 +108,10 @@ export function usePanZoom(containerRef: RefObject<HTMLElement | null>, svgRef: 
     last: { x: number; y: number };
   } | null>(null);
   const onTap = useRef(options.onTap);
-  const [scale, setScale] = useState(1);
+  const [zoomed, setZoomed] = useState(false);
+  const [atMax, setAtMax] = useState(false);
+  const [showLabels, setShowLabels] = useState(false);
+  const lastBgTap = useRef<{ time: number; x: number; y: number } | null>(null);
 
   useEffect(() => {
     onTap.current = options.onTap;
@@ -111,27 +119,52 @@ export function usePanZoom(containerRef: RefObject<HTMLElement | null>, svgRef: 
 
   const baseRef = useRef(base);
 
-  /** Writes the viewBox for a view (no state, no React render). */
-  const write = useCallback(
-    (v: View) => {
-      const box = containerRef.current?.getBoundingClientRect();
+  const measure = useCallback(() => {
+    const box = containerRef.current?.getBoundingClientRect();
+    if (!box || box.width === 0 || box.height === 0) return null;
+    const measured = { left: box.left, top: box.top, width: box.width, height: box.height };
+    rectRef.current = measured;
+    return measured;
+  }, [containerRef]);
+
+  /** Writes the viewBox synchronously for a view (used on mount/resize/base-change). */
+  const writeNow = useCallback(
+    (v: View, box = rectRef.current ?? measure()) => {
       const svg = svgRef.current;
       if (!box || !svg || box.width === 0 || box.height === 0) return;
       const b = viewBoxFor(v, baseRef.current, box.width, box.height);
       svg.setAttribute("viewBox", `${b.x} ${b.y} ${b.w} ${b.h}`);
     },
-    [containerRef, svgRef],
+    [measure, svgRef],
   );
 
+  /** Coalesces DOM viewBox mutations during high-frequency touch/wheel gestures to 1 write per animation frame. */
+  const scheduleWrite = useCallback(() => {
+    if (rafRef.current) return;
+    rafRef.current = requestAnimationFrame(() => {
+      rafRef.current = 0;
+      writeNow(view.current);
+    });
+  }, [writeNow]);
+
+  useEffect(() => {
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      rafRef.current = 0;
+    };
+  }, []);
+
   const apply = useCallback(
-    (next: View) => {
-      const box = containerRef.current?.getBoundingClientRect();
+    (next: View, box = rectRef.current ?? measure(), immediate = false) => {
       const v = box ? clampView(next, box.width, box.height) : next;
       view.current = v;
-      write(v);
-      setScale(Math.round(v.s * 20) / 20);
+      if (immediate) writeNow(v, box);
+      else scheduleWrite();
+      setZoomed(v.s > MIN_SCALE + 0.001);
+      setAtMax(v.s >= MAX_SCALE - 0.001);
+      setShowLabels(v.s >= labelScale);
     },
-    [containerRef, write],
+    [labelScale, measure, scheduleWrite, writeNow],
   );
 
   // The map's own size changed (rows, columns or doors edited): React has just set the new base viewBox, so put the current
@@ -139,27 +172,38 @@ export function usePanZoom(containerRef: RefObject<HTMLElement | null>, svgRef: 
   const { x: bx, y: by, w: bw, h: bh } = base;
   useLayoutEffect(() => {
     baseRef.current = { x: bx, y: by, w: bw, h: bh };
-    write(view.current);
-  }, [bx, by, bw, bh, write]);
+    writeNow(view.current, measure());
+  }, [bx, by, bw, bh, measure, writeNow]);
+
+  // Keep the SVG viewBox calibrated when the viewport rotates or changes height.
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(() => writeNow(view.current, measure()));
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [containerRef, measure, writeNow]);
 
   /** Zoom by `factor` keeping the point (px, py), relative to the container, still. */
   const zoomAt = useCallback(
-    (factor: number, px: number, py: number) => {
-      const box = containerRef.current?.getBoundingClientRect();
+    (factor: number, px: number, py: number, box = measure()) => {
       if (!box) return;
-      apply(zoomAround(view.current, view.current.s * factor, px, py, box.width, box.height));
+      apply(zoomAround(view.current, view.current.s * factor, px, py, box.width, box.height), box, true);
     },
-    [apply, containerRef],
+    [apply, measure],
   );
 
-  const center = useCallback(() => {
-    const box = containerRef.current?.getBoundingClientRect();
-    return { x: (box?.width ?? 0) / 2, y: (box?.height ?? 0) / 2 };
-  }, [containerRef]);
+  const zoomIn = useCallback(() => {
+    const box = measure();
+    if (box) zoomAt(BUTTON_STEP, box.width / 2, box.height / 2, box);
+  }, [measure, zoomAt]);
 
-  const zoomIn = useCallback(() => zoomAt(BUTTON_STEP, center().x, center().y), [zoomAt, center]);
-  const zoomOut = useCallback(() => zoomAt(1 / BUTTON_STEP, center().x, center().y), [zoomAt, center]);
-  const reset = useCallback(() => apply({ s: 1, x: 0, y: 0 }), [apply]);
+  const zoomOut = useCallback(() => {
+    const box = measure();
+    if (box) zoomAt(1 / BUTTON_STEP, box.width / 2, box.height / 2, box);
+  }, [measure, zoomAt]);
+
+  const reset = useCallback(() => apply({ s: 1, x: 0, y: 0 }, measure(), true), [apply, measure]);
 
   // Ctrl/Cmd + wheel zooms (plain wheel keeps scrolling the page). Needs a non-passive listener.
   useEffect(() => {
@@ -168,27 +212,54 @@ export function usePanZoom(containerRef: RefObject<HTMLElement | null>, svgRef: 
     const onWheel = (e: WheelEvent) => {
       if (!e.ctrlKey && !e.metaKey) return;
       e.preventDefault();
-      const box = el.getBoundingClientRect();
-      zoomAt(Math.exp(-e.deltaY * 0.01), e.clientX - box.left, e.clientY - box.top);
+      const box = measure();
+      if (!box) return;
+      apply(zoomAround(view.current, view.current.s * Math.exp(-e.deltaY * 0.01), e.clientX - box.left, e.clientY - box.top, box.width, box.height), box);
     };
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => el.removeEventListener("wheel", onWheel);
-  }, [containerRef, zoomAt]);
+  }, [apply, containerRef, measure]);
 
-  const local = (e: React.PointerEvent) => {
-    const box = containerRef.current?.getBoundingClientRect();
-    return { x: e.clientX - (box?.left ?? 0), y: e.clientY - (box?.top ?? 0) };
-  };
+  const localFromRect = (e: React.PointerEvent, box: { left: number; top: number } | null) => ({
+    x: e.clientX - (box?.left ?? 0),
+    y: e.clientY - (box?.top ?? 0),
+  });
 
   const distanceAndMid = () => {
     const [a, b] = [...pointers.current.values()];
     return { dist: Math.hypot(a.x - b.x, a.y - b.y), mid: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 } };
   };
 
+  const releasePointer = (e: React.PointerEvent) => {
+    if (e.currentTarget.hasPointerCapture?.(e.pointerId)) {
+      try {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      } catch {
+        // Ignore if capture was already dropped.
+      }
+    }
+  };
+
+  const dropPointer = (pointerId: number) => {
+    pointers.current.delete(pointerId);
+    if (pointers.current.size === 0) {
+      gesture.current = null;
+    } else if (gesture.current && pointers.current.size === 1) {
+      gesture.current.last = [...pointers.current.values()][0];
+    }
+  };
+
   const handlers = {
     onPointerDown(e: React.PointerEvent) {
       if (e.pointerType === "touch" && e.clientX < EDGE_GUARD) return;
-      const p = local(e);
+      try {
+        e.currentTarget.setPointerCapture?.(e.pointerId);
+      } catch {
+        // Synthetic or unsupported pointer events.
+      }
+      // Measure once on pointerdown so pointermove never forces layout reflow.
+      const box = measure();
+      const p = localFromRect(e, box);
       pointers.current.set(e.pointerId, p);
       if (pointers.current.size === 1) {
         gesture.current = {
@@ -214,27 +285,49 @@ export function usePanZoom(containerRef: RefObject<HTMLElement | null>, svgRef: 
     onPointerMove(e: React.PointerEvent) {
       const g = gesture.current;
       if (!g || !pointers.current.has(e.pointerId)) return;
-      const p = local(e);
+      const box = rectRef.current;
+      const p = localFromRect(e, box);
       pointers.current.set(e.pointerId, p);
 
       if (pointers.current.size >= 2) {
         const { dist, mid } = distanceAndMid();
-        const box = containerRef.current?.getBoundingClientRect();
-        if (box) apply(pinchView(g.startScale, g.anchor, g.startDist, dist, mid, box.width, box.height));
+        if (box) apply(pinchView(g.startScale, g.anchor, g.startDist, dist, mid, box.width, box.height), box);
         return;
       }
       if (!g.moved && Math.hypot(p.x - g.downAt.x, p.y - g.downAt.y) > TAP_SLOP) g.moved = true;
       if (g.moved && view.current.s > 1) {
-        apply({ s: view.current.s, x: view.current.x + (p.x - g.last.x), y: view.current.y + (p.y - g.last.y) });
+        apply({ s: view.current.s, x: view.current.x + (p.x - g.last.x), y: view.current.y + (p.y - g.last.y) }, box);
       }
       g.last = p;
     },
     onPointerUp(e: React.PointerEvent) {
+      releasePointer(e);
       const g = gesture.current;
       pointers.current.delete(e.pointerId);
       if (!g) return;
       if (pointers.current.size === 0) {
-        if (!g.moved && !g.pinched) onTap.current?.(g.downTarget);
+        if (!g.moved && !g.pinched) {
+          const target = g.downTarget instanceof Element ? g.downTarget : null;
+          const isInteractiveTarget = Boolean(target?.closest("[data-seat],[data-row],[data-col]"));
+          if (isInteractiveTarget) {
+            lastBgTap.current = null;
+            onTap.current?.(g.downTarget);
+          } else {
+            // Double-tap on the map background toggles 1x <-> 2.5x zoom around the tapped point (one-handed iPhone zoom).
+            const now = Date.now();
+            const prev = lastBgTap.current;
+            if (prev && now - prev.time < 300 && Math.hypot(g.downAt.x - prev.x, g.downAt.y - prev.y) < 32) {
+              lastBgTap.current = null;
+              const box = rectRef.current ?? measure();
+              if (box) {
+                const targetScale = view.current.s > MIN_SCALE + 0.1 ? MIN_SCALE : 2.5;
+                apply(zoomAround(view.current, targetScale, g.downAt.x, g.downAt.y, box.width, box.height), box, true);
+              }
+            } else {
+              lastBgTap.current = { time: now, x: g.downAt.x, y: g.downAt.y };
+            }
+          }
+        }
         gesture.current = null;
       } else if (pointers.current.size === 1) {
         // One finger of a pinch lifted: the other carries on as a drag from where it is NOW, not from where it was
@@ -243,12 +336,13 @@ export function usePanZoom(containerRef: RefObject<HTMLElement | null>, svgRef: 
       }
     },
     onPointerCancel(e: React.PointerEvent) {
-      pointers.current.delete(e.pointerId);
-      if (pointers.current.size === 0) {
-        gesture.current = null;
-      } else if (gesture.current && pointers.current.size === 1) gesture.current.last = [...pointers.current.values()][0];
+      releasePointer(e);
+      dropPointer(e.pointerId);
+    },
+    onLostPointerCapture(e: React.PointerEvent) {
+      dropPointer(e.pointerId);
     },
   };
 
-  return { scale, handlers, zoomIn, zoomOut, reset };
+  return { zoomed, atMax, showLabels, handlers, zoomIn, zoomOut, reset };
 }

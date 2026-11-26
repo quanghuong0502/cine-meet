@@ -26,7 +26,7 @@ export function EmptyState({
         className,
       )}
     >
-      <Mascot pose={mascot} size={PX.mascot} decorative priority />
+      <Mascot pose={mascot} size={PX.mascot} decorative />
       <h2 className="type-heading">{title}</h2>
       {description ? (
         <p className="max-w-hint type-secondary text-muted-foreground">{description}</p>

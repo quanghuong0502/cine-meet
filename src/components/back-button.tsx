@@ -1,4 +1,4 @@
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeftIcon } from "@solar-icons/react/line-duotone";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,7 @@ export function BackButton({ href, className }: BackButtonProps) {
   return (
     <Button asChild variant="ghost" size="icon" className={`-ml-stack shrink-0 rounded-full ${className ?? ""}`} aria-label={t("back")}>
       <Link href={href}>
-        <ArrowLeft className="size-icon-lg" aria-hidden />
+        <ArrowLeftIcon className="size-icon-lg" aria-hidden />
       </Link>
     </Button>
   );

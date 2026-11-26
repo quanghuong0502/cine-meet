@@ -1,6 +1,6 @@
 "use client";
 
-import { Pencil } from "lucide-react";
+import { LoaderIcon, Pen2Icon } from "@solar-icons/react/line-duotone";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { setPersonCostAction, type ActionResult } from "@/actions/appointments";
@@ -34,14 +34,29 @@ export function CostSection({ view, costs, onSave, busy }: Props) {
 
   function edit(userId: string) {
     const c = byUser.get(userId);
-    setForm({ ticket: String(c?.ticket ?? 0), fnb: String(c?.fnb ?? 0), other: String(c?.other ?? 0), note: c?.note ?? "" });
+    setForm({
+      ticket: c?.ticket ? String(c.ticket) : "",
+      fnb: c?.fnb ? String(c.fnb) : "",
+      other: c?.other ? String(c.other) : "",
+      note: c?.note ?? "",
+    });
     setEditing(userId);
   }
 
+  const editingTotal = toNumber(form.ticket) + toNumber(form.fnb) + toNumber(form.other);
+
   const money = (id: string, label: string, field: "ticket" | "fnb" | "other") => (
     <div className="flex flex-col gap-item">
-      <Label htmlFor={id}>{label}</Label>
-      <MoneyInput id={id} enterKeyHint="done" value={form[field]} onValueChange={(digits) => setForm({ ...form, [field]: digits })} />
+      <Label htmlFor={id} className="text-muted-foreground">{label}</Label>
+      <MoneyInput
+        id={id}
+        placeholder="0"
+        enterKeyHint="next"
+        disabled={busy}
+        value={form[field]}
+        onValueChange={(digits) => setForm({ ...form, [field]: digits })}
+        className="rounded-xl bg-background px-inset"
+      />
     </div>
   );
 
@@ -58,33 +73,35 @@ export function CostSection({ view, costs, onSave, busy }: Props) {
           const isPayerRow = view.allPaidByCreator && p.id === view.creator.id;
           // The creator pays for everyone: only their own row can be edited, and only by them.
           const canEdit = view.allPaidByCreator ? view.isCreator && isPayerRow : view.isCreator || mine;
+          const isEditing = editing === p.id;
           return (
-            <li key={p.id} className="flex flex-col gap-item rounded-xl border bg-card p-inset-sm">
+            <li key={p.id} className="flex flex-col gap-item rounded-xl border bg-card p-inset">
               <div className="flex items-center gap-item">
                 <UserAvatar name={p.name} image={p.avatar} size={PX.avatar} />
-                <span className="flex min-w-0 flex-1 flex-col gap-tight">
-                  <span className="break-words type-item-title">{p.name}</span>
-                  {view.allPaidByCreator && !isPayerRow ? (
-                    <span className="type-secondary text-muted-foreground">{t("paidByCreator")}</span>
-                  ) : (
-                    <>
-                      <span className="type-secondary text-muted-foreground tabular-nums">
-                        {t("breakdown", { ticket: formatVnd(c?.ticket ?? 0, locale), food: formatVnd(c?.fnb ?? 0, locale), other: formatVnd(c?.other ?? 0, locale) })}
-                      </span>
-                      {c?.note ? <span className="break-words type-secondary text-muted-foreground">{c.note}</span> : null}
-                    </>
-                  )}
-                </span>
-                {view.allPaidByCreator && !isPayerRow ? null : <span className="shrink-0 type-item-title tabular-nums">{formatVnd(c?.total ?? 0, locale)}</span>}
-                {canEdit && editing !== p.id ? (
+                <span className="min-w-0 flex-1 break-words type-item-title">{p.name}</span>
+                {view.allPaidByCreator && !isPayerRow ? null : (
+                  <span className="shrink-0 type-item-title tabular-nums">{formatVnd(isEditing ? editingTotal : (c?.total ?? 0), locale)}</span>
+                )}
+                {canEdit && !isEditing ? (
                   <Button type="button" variant="ghost" size="icon" aria-label={t("edit", { name: p.name })} disabled={busy} onClick={() => edit(p.id)}>
-                    <Pencil aria-hidden />
+                    <Pen2Icon aria-hidden />
                   </Button>
                 ) : null}
               </div>
-              {editing === p.id ? (
+              {!isEditing ? (
+                view.allPaidByCreator && !isPayerRow ? (
+                  <p className="type-secondary text-muted-foreground">{t("paidByCreator")}</p>
+                ) : (
+                  <div className="flex flex-col gap-tight">
+                    <p className="type-secondary text-muted-foreground tabular-nums">
+                      {t("breakdown", { ticket: formatVnd(c?.ticket ?? 0, locale), food: formatVnd(c?.fnb ?? 0, locale), other: formatVnd(c?.other ?? 0, locale) })}
+                    </p>
+                    {c?.note ? <p className="break-words type-secondary text-muted-foreground">{c.note}</p> : null}
+                  </div>
+                )
+              ) : (
                 <form
-                  className="flex flex-col gap-field"
+                  className="flex flex-col gap-field border-t pt-group"
                   onSubmit={(event) => {
                     event.preventDefault();
                     onSave(
@@ -98,19 +115,20 @@ export function CostSection({ view, costs, onSave, busy }: Props) {
                   {money(`cost-fnb-${p.id}`, t("food"), "fnb")}
                   {money(`cost-other-${p.id}`, t("other"), "other")}
                   <div className="flex flex-col gap-item">
-                    <Label htmlFor={`cost-note-${p.id}`}>{t("reason")}</Label>
-                    <Input id={`cost-note-${p.id}`} maxLength={200} placeholder={t("reasonPlaceholder")} value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} />
+                    <Label htmlFor={`cost-note-${p.id}`} className="text-muted-foreground">{t("reason")}</Label>
+                    <Input id={`cost-note-${p.id}`} maxLength={200} enterKeyHint="done" disabled={busy} placeholder={t("reasonPlaceholder")} value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} className="rounded-xl bg-background px-inset" />
                   </div>
-                  <div className="flex gap-stack">
-                    <Button type="button" variant="outline" size="cta" disabled={busy} onClick={() => setEditing(null)} className="flex-1">
-                      {t("cancel")}
-                    </Button>
-                    <Button type="submit" size="cta" disabled={busy} className="flex-1">
+                  <div className="flex flex-col gap-stack sm:flex-row-reverse">
+                    <Button type="submit" size="cta" disabled={busy} className="sm:flex-1">
+                      {busy ? <LoaderIcon className="motion-safe:animate-spin" aria-hidden /> : null}
                       {t("save")}
+                    </Button>
+                    <Button type="button" variant="outline" size="cta-sm" disabled={busy} onClick={() => setEditing(null)} className="sm:min-h-control sm:flex-1">
+                      {t("cancel")}
                     </Button>
                   </div>
                 </form>
-              ) : null}
+              )}
             </li>
           );
         })}

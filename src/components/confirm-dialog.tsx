@@ -1,6 +1,6 @@
 "use client";
 
-import { LoaderCircle } from "lucide-react";
+import { LoaderIcon } from "@solar-icons/react/line-duotone";
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 import {
@@ -68,18 +68,27 @@ export function ConfirmDialog({
           {description ? <AlertDialogDescription className="text-balance">{description}</AlertDialogDescription> : null}
         </AlertDialogHeader>
         {children}
-        <AlertDialogFooter className="flex-row">
-          <AlertDialogCancel disabled={pending} className="min-w-0 flex-1 gap-tight px-inset-xs whitespace-nowrap [&_svg]:size-icon-sm">{cancelLabel ?? t("cancel")}</AlertDialogCancel>
+        <AlertDialogFooter className="flex-row flex-wrap">
+          <AlertDialogCancel
+            disabled={pending}
+            className="h-auto min-h-control flex-auto gap-tight px-inset-sm py-inset-xs whitespace-normal text-center [&_svg]:size-icon-sm"
+          >
+            {cancelLabel ?? t("cancel")}
+          </AlertDialogCancel>
           <AlertDialogAction
+            variant={tone === "destructive" ? "outline" : "default"}
             disabled={pending || confirmDisabled}
-            className={cn("min-w-0 flex-1 gap-tight px-inset-xs whitespace-nowrap [&_svg]:size-icon-sm", tone === "destructive" && "border border-destructive/40 bg-destructive/10 text-destructive hover:bg-destructive/20")}
+            className={cn(
+              "h-auto min-h-control flex-auto gap-tight px-inset-sm py-inset-xs whitespace-normal text-center [&_svg]:size-icon-sm",
+              tone === "destructive" && "border-destructive/40 bg-destructive/10 text-destructive hover:bg-destructive/20 active:bg-destructive/25",
+            )}
             onClick={(event) => {
               // The popup stays open until the work is done; the parent closes it.
               event.preventDefault();
               onConfirm();
             }}
           >
-            {pending ? <LoaderCircle className="motion-safe:animate-spin" aria-hidden /> : icon}
+            {pending ? <LoaderIcon className="motion-safe:animate-spin" aria-hidden /> : icon}
             {pending ? t("pending") : confirmLabel}
           </AlertDialogAction>
         </AlertDialogFooter>

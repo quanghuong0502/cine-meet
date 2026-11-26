@@ -1,6 +1,6 @@
 "use client";
 
-import { RotateCcw } from "lucide-react";
+import { CheckIcon, RestartIcon } from "@solar-icons/react/line-duotone";
 import { useTranslations } from "next-intl";
 import { useState, useTransition, type CSSProperties } from "react";
 import { toast } from "sonner";
@@ -8,12 +8,20 @@ import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DEFAULT_BRAND_HEX, defaultBrandTheme, deriveBrandTheme, parseHex } from "@/lib/brand-theme";
+import { cn } from "@/lib/utils";
+
+const PRESETS = [
+  { hex: "#C61583", key: "raspberry" },
+  { hex: "#E11D48", key: "crimson" },
+  { hex: "#EA580C", key: "tangerine" },
+  { hex: "#0D9488", key: "teal" },
+  { hex: "#2563EB", key: "cobalt" },
+  { hex: "#7C3AED", key: "violet" },
+] as const;
 
 /**
- * The brand colour field of the Appearance screen: a colour picker and a hex box, with a live preview of the real tokens.
- * It sits in `ResourceForm`'s `lead` slot, so the hidden `color` input below is what Save sends. The preview is a `.dark` box that
- * carries the brand variables itself: the stylesheet's dark block recomputes every colour there from them, so it shows the exact
- * result without touching the page around it.
+ * The brand colour field of the Appearance screen: curated swatches, colour picker and hex box, with live Dark & Light previews
+ * of the real tokens. It sits in `ResourceForm`'s `lead` slot, so the hidden `color` input below is what Save sends.
  */
 export function BrandColorPicker({
   initialHex,
@@ -68,6 +76,27 @@ export function BrandColorPicker({
         <label htmlFor="brand-hex" className="type-label text-muted-foreground">
           {label}
         </label>
+        <div role="group" aria-label={t("presetsLabel")} className="flex flex-wrap gap-stack">
+          {PRESETS.map((preset) => {
+            const active = hex === preset.hex;
+            return (
+              <button
+                key={preset.hex}
+                type="button"
+                aria-label={`${t(`presets.${preset.key}`)} (${preset.hex})`}
+                aria-pressed={active}
+                onClick={() => setHex(preset.hex)}
+                style={{ backgroundColor: preset.hex }}
+                className={cn(
+                  "flex size-target items-center justify-center rounded-full border-2 text-white transition-transform outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-95",
+                  active ? "border-foreground" : "border-transparent",
+                )}
+              >
+                {active ? <CheckIcon className="size-icon-sm" aria-hidden /> : null}
+              </button>
+            );
+          })}
+        </div>
         <div className="flex items-center gap-item">
           <input
             type="color"
@@ -103,7 +132,7 @@ export function BrandColorPicker({
           disabled={hex === DEFAULT_BRAND_HEX && savedHex === DEFAULT_BRAND_HEX}
           onClick={() => setConfirmOpen(true)}
         >
-          <RotateCcw aria-hidden />
+          <RestartIcon aria-hidden />
           {t("reset")}
         </Button>
         <ConfirmDialog
@@ -111,7 +140,7 @@ export function BrandColorPicker({
           onOpenChange={setConfirmOpen}
           title={t("resetTitle")}
           description={t("resetDescription")}
-          icon={<RotateCcw aria-hidden />}
+          icon={<RestartIcon aria-hidden />}
           confirmLabel={t("resetConfirm")}
           pending={isResetting}
           onConfirm={reset}
@@ -120,13 +149,20 @@ export function BrandColorPicker({
 
       <div className="flex flex-col gap-item" aria-hidden>
         <span className="type-label text-muted-foreground">{t("preview.label")}</span>
-        <div className="dark flex flex-col gap-group rounded-xl border bg-background p-inset text-foreground" style={previewStyle}>
-          <div className="flex items-center justify-between gap-item rounded-xl border bg-card p-inset">
-            <span className="type-item-title">{t("preview.heading")}</span>
-            <span className="rounded-full bg-accent px-inset-sm py-tight type-label text-accent-foreground">{t("preview.seats")}</span>
-          </div>
-          <span className="type-body font-medium! text-primary-text">{t("preview.link")}</span>
-          <div className="flex h-control items-center justify-center rounded-full bg-primary px-inset-xl type-item-title text-primary-foreground">{t("preview.button")}</div>
+        <div className="grid gap-item sm:grid-cols-2">
+          {(["dark", "light"] as const).map((mode) => (
+            <div key={mode} className="flex flex-col gap-stack">
+              <span className="type-secondary text-muted-foreground">{t(`preview.${mode}`)}</span>
+              <div className={cn(mode, "flex flex-col gap-group rounded-xl border bg-background p-inset text-foreground")} style={previewStyle}>
+                <div className="flex items-center justify-between gap-item rounded-xl border bg-card p-inset-sm">
+                  <span className="truncate type-item-title">{t("preview.heading")}</span>
+                  <span className="shrink-0 rounded-full bg-accent px-inset-sm py-tight type-label text-accent-foreground">{t("preview.seats")}</span>
+                </div>
+                <span className="type-body font-medium! text-primary-text">{t("preview.link")}</span>
+                <div className="flex h-control items-center justify-center rounded-full bg-primary px-inset type-item-title text-primary-foreground">{t("preview.button")}</div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>

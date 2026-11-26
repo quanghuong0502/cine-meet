@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/user-avatar";
 import { requireUser } from "@/lib/auth/guards";
 import { PX } from "@/lib/ui-sizes";
-import { findInviter } from "@/services/friend.service";
+import { findInviter, getRelationshipState } from "@/services/friend.service";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("friends.invite");
@@ -21,6 +21,7 @@ export default async function InvitePage({ params }: { params: Promise<{ code: s
   const { code } = await params;
   const t = await getTranslations("friends.invite");
   const inviter = await findInviter(code);
+  const relation = inviter && inviter.id !== user.userId ? await getRelationshipState(user.userId, inviter.id) : "none";
 
   return (
     <div className="flex w-full flex-col gap-section p-inset">
@@ -36,13 +37,36 @@ export default async function InvitePage({ params }: { params: Promise<{ code: s
           }
         />
       ) : inviter.id === user.userId ? (
-        <EmptyState mascot="dudu-happy" title={t("selfTitle")} description={t("selfDescription")} />
+        <EmptyState
+          mascot="dudu-happy"
+          title={t("selfTitle")}
+          description={t("selfDescription")}
+          action={
+            <Button asChild size="pill">
+              <Link href="/friends">{t("toFriends")}</Link>
+            </Button>
+          }
+        />
       ) : (
         <div className="flex flex-col items-center gap-section px-inset-lg py-inset-xl text-center">
           <UserAvatar name={inviter.name} image={inviter.avatar} size={PX.avatarLg} />
-          <p className="type-heading break-words">{t("prompt", { name: inviter.name })}</p>
+          <p className="type-heading break-words">
+            {relation === "friends"
+              ? t("done.already_friends", { name: inviter.name })
+              : relation === "outgoing"
+                ? t("done.already_requested", { name: inviter.name })
+                : relation === "incoming"
+                  ? t("incomingPrompt", { name: inviter.name })
+                  : t("prompt", { name: inviter.name })}
+          </p>
           <div className="w-full max-w-form">
-            <InviteAccept code={code} name={inviter.name} />
+            {relation === "friends" || relation === "outgoing" ? (
+              <Button asChild size="cta">
+                <Link href="/friends">{t("toFriends")}</Link>
+              </Button>
+            ) : (
+              <InviteAccept code={code} name={inviter.name} label={relation === "incoming" ? t("acceptButton") : undefined} />
+            )}
           </div>
         </div>
       )}

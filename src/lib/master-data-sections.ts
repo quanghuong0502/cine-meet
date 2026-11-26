@@ -1,6 +1,7 @@
+import type { Icon as SolarIcon } from "@solar-icons/react/lib/types";
 import {
-  Armchair, Building2, CalendarHeart, Clapperboard, Film, MapPin, Shapes, ShieldAlert, Tag, Ticket, UtensilsCrossed, type LucideIcon,
-} from "lucide-react";
+  Armchair2Icon, CakeIcon, CalendarMarkIcon, CrownStarIcon, CupPaperIcon, DonutBittenIcon, MapPointIcon, MasksIcon, Reel2Icon, ShieldCheckIcon, TicketSaleIcon,
+} from "@solar-icons/react/line-duotone";
 
 /** Tabs of the Catalog page. Keys of `admin.masterData.sections.*` in src/messages/*.json. Add one per master-data type. */
 export type MasterDataSectionKey =
@@ -21,21 +22,21 @@ export interface MasterDataSection {
   /** Route segment of the entry screens: /admin/master-data/<slug>/new and /<id>. */
   slug: string;
   href: string;
-  icon: LucideIcon;
+  icon: SolarIcon;
 }
 
 export const MASTER_DATA_SECTIONS: MasterDataSection[] = [
-  { key: "brands", slug: "brands", href: "/admin/master-data/brands", icon: Building2 },
-  { key: "branches", slug: "branches", href: "/admin/master-data/branches", icon: MapPin },
-  { key: "genres", slug: "genres", href: "/admin/master-data/genres", icon: Clapperboard },
-  { key: "formats", slug: "formats", href: "/admin/master-data/formats", icon: Film },
-  { key: "ageRatings", slug: "age-ratings", href: "/admin/master-data/age-ratings", icon: ShieldAlert },
-  { key: "seatTypes", slug: "seat-types", href: "/admin/master-data/seat-types", icon: Armchair },
-  { key: "priceRules", slug: "price-rules", href: "/admin/master-data/price-rules", icon: Ticket },
-  { key: "holidays", slug: "holidays", href: "/admin/master-data/holidays", icon: CalendarHeart },
-  { key: "fnbCategories", slug: "fnb-categories", href: "/admin/master-data/fnb-categories", icon: Shapes },
-  { key: "fnbItems", slug: "fnb-items", href: "/admin/master-data/fnb-items", icon: UtensilsCrossed },
-  { key: "fnbCombos", slug: "fnb-combos", href: "/admin/master-data/fnb-combos", icon: Tag },
+  { key: "brands", slug: "brands", href: "/admin/master-data/brands", icon: CrownStarIcon },
+  { key: "branches", slug: "branches", href: "/admin/master-data/branches", icon: MapPointIcon },
+  { key: "genres", slug: "genres", href: "/admin/master-data/genres", icon: MasksIcon },
+  { key: "formats", slug: "formats", href: "/admin/master-data/formats", icon: Reel2Icon },
+  { key: "ageRatings", slug: "age-ratings", href: "/admin/master-data/age-ratings", icon: ShieldCheckIcon },
+  { key: "seatTypes", slug: "seat-types", href: "/admin/master-data/seat-types", icon: Armchair2Icon },
+  { key: "priceRules", slug: "price-rules", href: "/admin/master-data/price-rules", icon: TicketSaleIcon },
+  { key: "holidays", slug: "holidays", href: "/admin/master-data/holidays", icon: CalendarMarkIcon },
+  { key: "fnbCategories", slug: "fnb-categories", href: "/admin/master-data/fnb-categories", icon: CakeIcon },
+  { key: "fnbItems", slug: "fnb-items", href: "/admin/master-data/fnb-items", icon: CupPaperIcon },
+  { key: "fnbCombos", slug: "fnb-combos", href: "/admin/master-data/fnb-combos", icon: DonutBittenIcon },
 ];
 
 /** The section whose entry screens live under /admin/master-data/<slug>, if any. */

@@ -1,16 +1,18 @@
 "use client";
 
-import { ImageIcon, LoaderCircle } from "lucide-react";
+import { CheckIcon, CopyIcon, GalleryIcon, LoaderIcon } from "@solar-icons/react/line-duotone";
 import { useTranslations } from "next-intl";
-import Image from "next/image";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { ComboItemsField } from "@/components/admin/combo-items-field";
-import { DeleteRecordButton } from "@/components/admin/delete-record-button";
+import { RemoteImage } from "@/components/remote-image";
 import { Chip } from "@/components/admin/auditorium-editor/chips";
 import { ImageUpload, UploadBusyContext } from "@/components/image-upload";
-import { TimeSlotsField } from "@/components/admin/time-slots-field";
 import { RequiredMark } from "@/components/required-mark";
-import { useActionState, useCallback, useEffect, useState } from "react";
+
+const ComboItemsField = dynamic(() => import("@/components/admin/combo-items-field").then((m) => m.ComboItemsField), { ssr: false });
+const DeleteRecordButton = dynamic(() => import("@/components/admin/delete-record-button").then((m) => m.DeleteRecordButton), { ssr: false });
+const TimeSlotsField = dynamic(() => import("@/components/admin/time-slots-field").then((m) => m.TimeSlotsField), { ssr: false });
+import { useActionState, useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { MoneyInput } from "@/components/money-input";
@@ -26,6 +28,7 @@ import {
   type SaveState,
   type ValidationCode,
 } from "@/lib/admin/action-result";
+import { cn } from "@/lib/utils";
 import type { ResourceField } from "./resource-types";
 import { PX } from "@/lib/ui-sizes";
 
@@ -36,9 +39,12 @@ function isValidationCode(code: string): code is ValidationCode {
 const CONTROL_CLASS = "h-control rounded-xl bg-card px-inset type-body";
 
 /** Pick any number of options (chips); the choice travels as one comma-separated hidden field. */
-function MultiSelectField({ name, label, options, initial }: { name: string; label: string; options: { value: string; label: string }[]; initial: string }) {
+function MultiSelectField({ name, label, options, initial, onEdit }: { name: string; label: string; options: { value: string; label: string }[]; initial: string; onEdit: () => void }) {
   const [chosen, setChosen] = useState<string[]>(() => initial.split(",").filter(Boolean));
-  const toggle = (value: string) => setChosen((current) => (current.includes(value) ? current.filter((v) => v !== value) : [...current, value]));
+  const toggle = (value: string) => {
+    onEdit();
+    setChosen((current) => (current.includes(value) ? current.filter((v) => v !== value) : [...current, value]));
+  };
   return (
     <div role="group" aria-label={label} className="flex flex-wrap gap-stack">
       <input type="hidden" name={name} value={chosen.join(",")} />
@@ -51,6 +57,124 @@ function MultiSelectField({ name, label, options, initial }: { name: string; lab
   );
 }
 
+/** Color swatch paired with a hex text input so admins can pick visually or paste an exact brand color. */
+function ColorField({ id, name, initial, invalid, onEdit }: { id: string; name: string; initial: string; invalid: boolean; onEdit: () => void }) {
+  const [hex, setHex] = useState((initial || "#c61583").toUpperCase());
+  const validHex = /^#[0-9A-F]{6}$/i.test(hex) ? hex.toLowerCase() : "#c61583";
+  return (
+    <div className="flex items-center gap-item">
+      <input type="hidden" name={name} value={hex} />
+      <input
+        type="color"
+        aria-label={name}
+        value={validHex}
+        onChange={(event) => {
+          onEdit();
+          setHex(event.target.value.toUpperCase());
+        }}
+        className="h-control w-swatch shrink-0 cursor-pointer rounded-xl border bg-card p-tight"
+      />
+      <Input
+        id={id}
+        value={hex}
+        onChange={(event) => {
+          onEdit();
+          setHex(event.target.value.toUpperCase());
+        }}
+        maxLength={7}
+        autoCapitalize="characters"
+        autoCorrect="off"
+        spellCheck={false}
+        autoComplete="off"
+        aria-invalid={invalid || undefined}
+        className={`${CONTROL_CLASS} tabular-nums`}
+      />
+    </div>
+  );
+}
+
+/** Text field with a 44px copy button inside it (used for generated temporary passwords). */
+function CopyableTextField({
+  id,
+  name,
+  initial,
+  invalid,
+  required,
+  maxLength,
+  placeholder,
+  last,
+  onEdit,
+}: {
+  id: string;
+  name: string;
+  initial: string;
+  invalid: boolean;
+  required?: boolean;
+  maxLength?: number;
+  placeholder?: string;
+  last: boolean;
+  onEdit: () => void;
+}) {
+  const t = useTranslations("admin.common");
+  const [text, setText] = useState(initial);
+  const [copied, setCopied] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
+
+  async function copy() {
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      if (timerRef.current) clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(() => setCopied(false), 2000);
+      toast.success(t("copied"));
+    } catch {
+      toast.error(t("errors.unknown"));
+    }
+  }
+
+  return (
+    <div className="relative">
+      <Input
+        id={id}
+        name={name}
+        type="text"
+        value={text}
+        onChange={(event) => {
+          onEdit();
+          setText(event.target.value);
+        }}
+        maxLength={maxLength}
+        placeholder={placeholder}
+        autoCapitalize="none"
+        autoCorrect="off"
+        spellCheck={false}
+        autoComplete="off"
+        enterKeyHint={last ? "done" : "next"}
+        aria-invalid={invalid || undefined}
+        aria-required={required || undefined}
+        className={`${CONTROL_CLASS} pr-control font-mono`}
+      />
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        onClick={copy}
+        aria-label={t("copy")}
+        className="absolute top-1/2 right-hair size-target -translate-y-1/2 text-muted-foreground"
+      >
+        {copied ? <CheckIcon className="text-success" aria-hidden /> : <CopyIcon aria-hidden />}
+      </Button>
+    </div>
+  );
+}
+
 interface FieldControlProps {
   field: ResourceField;
   value: string;
@@ -59,6 +183,8 @@ interface FieldControlProps {
   last: boolean;
   /** Called when a select changes, so a field that depends on it (combo items on the brand) can follow. */
   onSelect: (name: string, value: string) => void;
+  /** Clears an inline field error as soon as the person edits the field. */
+  onEdit: () => void;
   /** Current value of every select of the form, by name. */
   selected: Record<string, string>;
   /** Starting values of the whole form (what was typed after a failed save, else the saved record). */
@@ -67,22 +193,25 @@ interface FieldControlProps {
   discountError?: string;
 }
 
-function FieldControl({ field, value, invalid, last, onSelect, selected, siblings, discountError }: FieldControlProps) {
+function FieldControl({ field, value, invalid, last, onSelect, onEdit, selected, siblings, discountError }: FieldControlProps) {
   const isPlain = field.plain || field.kind === "url" || field.kind === "email";
   const common = { id: field.name, name: field.name, "aria-invalid": invalid || undefined, "aria-required": field.required || undefined } as const;
 
   switch (field.kind) {
     case "textarea":
-      return <Textarea {...common} defaultValue={value} maxLength={field.maxLength} rows={3} placeholder={field.placeholder} className="resize-none overflow-y-auto rounded-xl bg-card px-inset py-inset-sm type-body" />;
-    case "color":
       return (
-        <input
+        <Textarea
           {...common}
-          type="color"
-          defaultValue={value || "#c61583"}
-          className="h-control w-swatch cursor-pointer rounded-xl border bg-card p-tight"
+          defaultValue={value}
+          onChange={onEdit}
+          maxLength={field.maxLength}
+          rows={3}
+          placeholder={field.placeholder}
+          className="resize-none overflow-y-auto rounded-xl bg-card px-inset py-inset-sm type-body"
         />
       );
+    case "color":
+      return <ColorField id={field.name} name={field.name} initial={value} invalid={invalid} onEdit={onEdit} />;
     case "comboItems":
       return field.combo ? (
         <ComboItemsField
@@ -104,7 +233,7 @@ function FieldControl({ field, value, invalid, last, onSelect, selected, sibling
           preview={(url) => (
             // A logo previews as a square; a movie poster keeps its 2:3 shape (same width, taller) so it is not cropped.
             <span aria-hidden className={`relative flex w-swatch shrink-0 items-center justify-center overflow-hidden rounded-xl border bg-card ${field.imageShape === "poster" ? "aspect-[2/3]" : "aspect-square"}`}>
-              {url ? <Image src={url} alt="" fill sizes={`${PX.swatch}px`} unoptimized className="object-cover" /> : <ImageIcon className="size-icon-lg text-muted-foreground" />}
+              {url ? <RemoteImage src={url} alt="" fill sizes={`${PX.swatch}px`} className="object-cover" /> : <GalleryIcon className="size-icon-lg text-muted-foreground" />}
             </span>
           )}
         />
@@ -112,12 +241,19 @@ function FieldControl({ field, value, invalid, last, onSelect, selected, sibling
     case "timeSlots":
       return <TimeSlotsField name={field.name} initial={value} invalid={invalid} />;
     case "multiSelect":
-      return <MultiSelectField name={field.name} label={field.label} options={field.options ?? []} initial={value} />;
+      return <MultiSelectField name={field.name} label={field.label} options={field.options ?? []} initial={value} onEdit={onEdit} />;
     case "switch":
-      return <Switch {...common} defaultChecked={value === "on"} />;
+      return <Switch {...common} defaultChecked={value === "on"} onCheckedChange={onEdit} />;
     case "select":
       return (
-        <Select name={field.name} defaultValue={value || undefined} onValueChange={(next) => onSelect(field.name, next)}>
+        <Select
+          name={field.name}
+          defaultValue={value || undefined}
+          onValueChange={(next) => {
+            onEdit();
+            onSelect(field.name, next);
+          }}
+        >
           <SelectTrigger id={field.name} aria-invalid={invalid || undefined} aria-required={field.required || undefined} className={`${CONTROL_CLASS} w-full`}>
             <SelectValue placeholder={field.placeholder} />
           </SelectTrigger>
@@ -132,7 +268,22 @@ function FieldControl({ field, value, invalid, last, onSelect, selected, sibling
       );
     default:
       if (field.kind === "number" && field.money) {
-        return <MoneyInput {...common} enterKeyHint={last ? "done" : "next"} placeholder={field.placeholder} defaultValue={value} className={CONTROL_CLASS} />;
+        return <MoneyInput {...common} enterKeyHint={last ? "done" : "next"} placeholder={field.placeholder} defaultValue={value} onValueChange={onEdit} className={CONTROL_CLASS} />;
+      }
+      if (field.kind === "text" && field.copyable) {
+        return (
+          <CopyableTextField
+            id={field.name}
+            name={field.name}
+            initial={value}
+            invalid={invalid}
+            required={field.required}
+            maxLength={field.maxLength}
+            placeholder={field.placeholder}
+            last={last}
+            onEdit={onEdit}
+          />
+        );
       }
       return (
         <Input
@@ -151,6 +302,7 @@ function FieldControl({ field, value, invalid, last, onSelect, selected, sibling
           // Off: otherwise iOS guesses a contact field and offers "AutoFill Contact" above the keyboard.
           autoComplete="off"
           defaultValue={value}
+          onChange={onEdit}
           className={field.kind === "date" || field.kind === "time" ? `${CONTROL_CLASS} text-left [&::-webkit-date-and-time-value]:text-left` : CONTROL_CLASS}
         />
       );
@@ -170,13 +322,15 @@ interface ResourceFormProps {
   deleteItem?: { id: string; name: string; removeAction: (id: string) => Promise<RemoveResult> };
   /** Extra content at the top of the form (for example the avatar picker); it is inside the form, so hidden inputs it holds are saved. */
   lead?: React.ReactNode;
+  /** Admin pages sit beside a desktop sidebar (`md:left-sidebar`); user screens like `/profile/edit` center full-width. */
+  hasSidebar?: boolean;
 }
 
 /**
  * The entry screen of a master-data record: a normal page (own URL, back button), not a sheet. Save is the one fixed
  * action at the bottom; once saved, the person goes back to the list they came from, which is refreshed to show the change.
  */
-export function ResourceForm({ itemId, fields, values, backHref, saveAction, deleteItem, lead }: ResourceFormProps) {
+export function ResourceForm({ itemId, fields, values, backHref, saveAction, deleteItem, lead, hasSidebar = true }: ResourceFormProps) {
   const t = useTranslations("admin.common");
   const tv = useTranslations("admin.validation");
   const router = useRouter();
@@ -185,6 +339,18 @@ export function ResourceForm({ itemId, fields, values, backHref, saveAction, del
   const [selected, setSelected] = useState<Record<string, string>>(() =>
     Object.fromEntries(fields.filter((field) => field.kind === "select").map((field) => [field.name, values[field.name] ?? ""])),
   );
+  // Track which field errors the person has started fixing since the last submit.
+  const [cleared, setCleared] = useState<{ state: SaveState; names: Set<string> }>({ state: IDLE_STATE, names: new Set() });
+  const clearedNames = cleared.state === state ? cleared.names : new Set<string>();
+  const clearFieldError = (name: string) => {
+    setCleared((prev) => {
+      const base = prev.state === state ? prev.names : new Set<string>();
+      if (base.has(name)) return prev;
+      const next = new Set(base);
+      next.add(name);
+      return { state, names: next };
+    });
+  };
 
   useEffect(() => {
     if (state.status !== "success") return;
@@ -201,7 +367,8 @@ export function ResourceForm({ itemId, fields, values, backHref, saveAction, del
     target?.scrollIntoView({ block: "center", behavior: "smooth" });
   }, [state]);
 
-  const fieldErrors = state.status === "error" ? (state.fieldErrors ?? {}) : {};
+  const rawFieldErrors = state.status === "error" ? (state.fieldErrors ?? {}) : {};
+  const fieldErrors = Object.fromEntries(Object.entries(rawFieldErrors).filter(([name]) => !clearedNames.has(name)));
   // Pictures still going up: Save waits for them (see UploadBusyContext).
   const [uploads, setUploads] = useState(0);
   const reportUpload = useCallback((busy: boolean) => setUploads((n) => Math.max(0, n + (busy ? 1 : -1))), []);
@@ -210,6 +377,11 @@ export function ResourceForm({ itemId, fields, values, backHref, saveAction, del
   // After a failed save, start from what the user typed; otherwise from the saved record.
   const typed = state.status === "error" ? state.values : undefined;
   const formError = state.status === "error" && state.error !== "validation" ? state.error : null;
+  const renderedNames = new Set(fields.map((f) => f.name));
+  if (fields.some((f) => f.kind === "comboItems")) renderedNames.add("discountValue");
+  const unrenderedErrors = Object.entries(fieldErrors)
+    .filter(([name]) => !renderedNames.has(name))
+    .map(([, code]) => tv(isValidationCode(code) ? code : "invalid"));
   const lastTypingField = fields.findLast((field) => !["switch", "color", "select", "textarea", "multiSelect", "image", "timeSlots"].includes(field.kind))?.name;
 
   // noValidate on the form: the server validates and returns translated messages, so the browser must not show its own.
@@ -240,6 +412,7 @@ export function ResourceForm({ itemId, fields, values, backHref, saveAction, del
               invalid={Boolean(code)}
               last={field.name === lastTypingField}
               onSelect={(name, next) => setSelected((current) => ({ ...current, [name]: next }))}
+              onEdit={() => clearFieldError(field.name)}
               selected={selected}
               siblings={typed ?? values}
               discountError={field.kind === "comboItems" && fieldErrors.discountValue ? tv(isValidationCode(fieldErrors.discountValue) ? fieldErrors.discountValue : "invalid") : undefined}
@@ -259,19 +432,36 @@ export function ResourceForm({ itemId, fields, values, backHref, saveAction, del
         </p>
       ) : null}
 
+      {unrenderedErrors.length > 0 ? (
+        <p role="alert" className="rounded-xl border border-destructive/30 bg-destructive/10 px-inset py-inset-sm type-secondary text-destructive">
+          {unrenderedErrors[0]}
+        </p>
+      ) : null}
+
       {/* Room for the fixed Save button, so the last field can scroll clear of it. */}
       <div aria-hidden className="h-save-clear shrink-0" />
 
       {/* Fixed to the bottom, in thumb reach. It stays while the keyboard is open: on the installed app the keyboard shrinks the page, so
           the bar rides just above it and Save is always reachable while typing (unlike the menu and the list's Add button, which hide). */}
-      <div data-save-bar className="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-inset pb-(--inset-bottom) md:left-sidebar">
+      <div
+        data-save-bar
+        className={cn(
+          "pointer-events-none fixed inset-x-0 bottom-0 z-30 bg-gradient-to-t from-background via-background/95 to-transparent px-inset pt-group pb-(--inset-bottom)",
+          hasSidebar && "md:left-sidebar",
+        )}
+      >
         <div className="mx-auto flex max-w-form items-center gap-stack">
           {deleteItem ? <DeleteRecordButton id={deleteItem.id} name={deleteItem.name} backHref={backHref} removeAction={deleteItem.removeAction} /> : null}
           <Button type="submit" size="cta" disabled={isPending || uploading} className="pointer-events-auto min-w-0 flex-1">
             {isPending ? (
               <>
-                <LoaderCircle className="motion-safe:animate-spin" aria-hidden />
+                <LoaderIcon className="motion-safe:animate-spin" aria-hidden />
                 {t("saving")}
+              </>
+            ) : uploading ? (
+              <>
+                <LoaderIcon className="motion-safe:animate-spin" aria-hidden />
+                {t("uploading")}
               </>
             ) : (
               t("save")

@@ -1,21 +1,22 @@
 "use client";
 
-import { Check, Copy, LoaderCircle, Share2, UserMinus, UserPlus, Users, X } from "lucide-react";
+import { CheckIcon, CloseIcon, CopyIcon, LoaderIcon, RoundedMagnifierIcon, ShareIcon, UserMinusRoundedIcon, UserPlusRoundedIcon, UsersGroupRoundedIcon } from "@solar-icons/react/line-duotone";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
-import { useState, useSyncExternalStore, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore, useTransition } from "react";
 import { toast } from "sonner";
 import { removeFriendAction, respondRequestAction, sendFriendRequestAction } from "@/actions/friends";
+import { EmptyState } from "@/components/empty-state";
 import { PersonRow } from "@/components/friends/person-row";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Mascot } from "@/components/mascot";
-import { PX } from "@/lib/ui-sizes";
 import type { FriendOverview, PersonView } from "@/services/friend.service";
 
 const subscribeNothing = () => () => undefined;
+const SEARCH_THRESHOLD = 8;
 
 interface Props {
   overview: FriendOverview;
@@ -27,10 +28,20 @@ export function FriendsScreen({ overview, inviteCode }: Props) {
   const t = useTranslations("friends");
   const [phone, setPhone] = useState("");
   const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [copied, setCopied] = useState(false);
+  const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [sending, startSending] = useTransition();
+  const [busyId, setBusyId] = useState<string | null>(null);
   const [, startAnswer] = useTransition();
   const [removing, setRemoving] = useState<PersonView | null>(null);
   const [removePending, startRemove] = useTransition();
+
+  useEffect(() => {
+    return () => {
+      if (copyTimer.current) clearTimeout(copyTimer.current);
+    };
+  }, []);
 
   function submitPhone(event: React.FormEvent) {
     event.preventDefault();
@@ -46,8 +57,10 @@ export function FriendsScreen({ overview, inviteCode }: Props) {
   }
 
   function answer(person: PersonView & { friendshipId: string }, accept: boolean) {
+    setBusyId(person.friendshipId);
     startAnswer(async () => {
       const result = await respondRequestAction(person.friendshipId, accept).catch(() => null);
+      setBusyId(null);
       if (!result) { toast.error(t("networkError")); return; }
       if (!result.ok) { toast.error(t("errors.not_found")); return; }
       toast.success(accept ? t("accepted", { name: person.name }) : t("declined"));
@@ -68,8 +81,10 @@ export function FriendsScreen({ overview, inviteCode }: Props) {
 
   // Taking back a request is easy to redo, so no confirmation.
   function cancelOutgoing(person: PersonView) {
+    setBusyId(person.id);
     startAnswer(async () => {
       const result = await removeFriendAction(person.id).catch(() => null);
+      setBusyId(null);
       if (!result) { toast.error(t("networkError")); return; }
       if (!result.ok) { toast.error(t("errors.not_found")); return; }
       toast.success(t("requestCancelled"));
@@ -81,6 +96,9 @@ export function FriendsScreen({ overview, inviteCode }: Props) {
   async function copyLink() {
     try {
       await navigator.clipboard.writeText(inviteUrl());
+      setCopied(true);
+      if (copyTimer.current) clearTimeout(copyTimer.current);
+      copyTimer.current = setTimeout(() => setCopied(false), 2000);
       toast.success(t("linkCopied"));
     } catch {
       toast.error(t("linkCopyFailed"));
@@ -90,14 +108,21 @@ export function FriendsScreen({ overview, inviteCode }: Props) {
   async function shareLink() {
     try {
       await navigator.share({ title: t("shareTitle"), url: inviteUrl() });
-    } catch {
-      // The person closed the share sheet: nothing to report.
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return;
+      await copyLink();
     }
   }
 
   // The share sheet exists only in the browser: the server draws no button, and the client adds it without a mismatch.
   const canShare = useSyncExternalStore(subscribeNothing, () => typeof navigator.share === "function", () => false);
   const empty = overview.friends.length === 0 && overview.incoming.length === 0 && overview.outgoing.length === 0;
+  const showSearch = overview.friends.length >= SEARCH_THRESHOLD;
+  const filteredFriends = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return overview.friends;
+    return overview.friends.filter((f) => f.name.toLowerCase().includes(q));
+  }, [overview.friends, search]);
 
   return (
     <div className="flex flex-col gap-section">
@@ -114,13 +139,16 @@ export function FriendsScreen({ overview, inviteCode }: Props) {
             enterKeyHint="send"
             maxLength={20}
             value={phone}
-            onChange={(event) => setPhone(event.target.value)}
+            onChange={(event) => {
+              setPhone(event.target.value);
+              if (phoneError) setPhoneError(null);
+            }}
             placeholder={t("phonePlaceholder")}
             aria-invalid={phoneError ? true : undefined}
             className="h-control min-w-0 flex-1 rounded-xl bg-card px-inset type-body"
           />
-          <Button type="submit" size="pill" disabled={sending} className="shrink-0 px-inset">
-            {sending ? <LoaderCircle className="motion-safe:animate-spin" aria-hidden /> : <UserPlus aria-hidden />}
+          <Button type="submit" size="cta" disabled={sending} className="w-auto shrink-0 px-inset">
+            {sending ? <LoaderIcon className="motion-safe:animate-spin" aria-hidden /> : <UserPlusRoundedIcon aria-hidden />}
             {t("addButton")}
           </Button>
         </div>
@@ -136,14 +164,14 @@ export function FriendsScreen({ overview, inviteCode }: Props) {
           <h2 id="friends-link" className="type-heading">
             {t("linkTitle")}
           </h2>
-          <div className="flex gap-stack">
-            <Button type="button" variant="outline" size="pill" onClick={copyLink} className="flex-1">
-              <Copy aria-hidden />
-              {t("copyLink")}
+          <div className="flex flex-wrap gap-stack">
+            <Button type="button" variant="outline" size="cta-sm" onClick={copyLink} className="w-auto flex-auto px-inset-sm">
+              {copied ? <CheckIcon aria-hidden /> : <CopyIcon aria-hidden />}
+              {copied ? t("copiedShort") : t("copyLink")}
             </Button>
             {canShare ? (
-              <Button type="button" variant="outline" size="pill" onClick={shareLink} className="flex-1">
-                <Share2 aria-hidden />
+              <Button type="button" variant="outline" size="cta-sm" onClick={shareLink} className="w-auto flex-auto px-inset-sm">
+                <ShareIcon aria-hidden />
                 {t("shareLink")}
               </Button>
             ) : null}
@@ -153,52 +181,103 @@ export function FriendsScreen({ overview, inviteCode }: Props) {
 
       {overview.incoming.length > 0 ? (
         <section aria-labelledby="friends-incoming" className="flex flex-col gap-item">
-          <h2 id="friends-incoming" className="type-heading">
-            {t("incomingTitle")}
-          </h2>
+          <div className="flex items-center gap-stack">
+            <h2 id="friends-incoming" className="type-heading">
+              {t("incomingTitle")}
+            </h2>
+            <Badge variant="secondary" className="tabular-nums">{overview.incoming.length}</Badge>
+          </div>
           <ul className="flex flex-col gap-stack">
-            {overview.incoming.map((person) => (
-              <PersonRow key={person.friendshipId} name={person.name} avatar={person.avatar}>
-                <Button type="button" variant="ghost" size="icon" aria-label={t("decline", { name: person.name })} onClick={() => answer(person, false)}>
-                  <X aria-hidden />
-                </Button>
-                <Button type="button" size="icon" aria-label={t("accept", { name: person.name })} onClick={() => answer(person, true)}>
-                  <Check aria-hidden />
-                </Button>
-              </PersonRow>
-            ))}
+            {overview.incoming.map((person) => {
+              const rowBusy = busyId === person.friendshipId;
+              return (
+                <PersonRow key={person.friendshipId} name={person.name} avatar={person.avatar}>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    disabled={rowBusy}
+                    aria-label={t("decline", { name: person.name })}
+                    onClick={() => answer(person, false)}
+                  >
+                    <CloseIcon aria-hidden />
+                  </Button>
+                  <Button
+                    type="button"
+                    size="icon"
+                    disabled={rowBusy}
+                    aria-label={t("accept", { name: person.name })}
+                    onClick={() => answer(person, true)}
+                  >
+                    {rowBusy ? <LoaderIcon className="motion-safe:animate-spin" aria-hidden /> : <CheckIcon aria-hidden />}
+                  </Button>
+                </PersonRow>
+              );
+            })}
           </ul>
         </section>
       ) : null}
 
       <section aria-labelledby="friends-list" className="flex flex-col gap-item">
         <div className="flex items-center justify-between gap-item">
-          <h2 id="friends-list" className="type-heading">
-            {t("listTitle")}
-          </h2>
+          <div className="flex items-center gap-stack">
+            <h2 id="friends-list" className="type-heading">
+              {t("listTitle")}
+            </h2>
+            {overview.friends.length > 0 ? (
+              <Badge variant="secondary" className="tabular-nums">{overview.friends.length}</Badge>
+            ) : null}
+          </div>
           <Button asChild variant="ghost" className="h-target">
             <Link href="/friends/groups">
-              <Users aria-hidden />
+              <UsersGroupRoundedIcon aria-hidden />
               {t("groupsLink")}
             </Link>
           </Button>
         </div>
-        {overview.friends.length > 0 ? (
-          <ul className="flex flex-col gap-stack">
-            {overview.friends.map((person) => (
-              <PersonRow key={person.id} name={person.name} avatar={person.avatar}>
-                <Button type="button" variant="ghost" size="icon" aria-label={t("remove", { name: person.name })} onClick={() => setRemoving(person)}>
-                  <UserMinus aria-hidden />
-                </Button>
-              </PersonRow>
-            ))}
-          </ul>
-        ) : empty ? (
-          <div className="flex flex-col items-center gap-item px-inset-lg py-inset-xl text-center">
-            <Mascot pose="dudu-happy" size={PX.mascot} decorative />
-            <p className="type-heading">{t("emptyTitle")}</p>
-            <p className="max-w-hint type-secondary text-muted-foreground">{t("emptyDescription")}</p>
+
+        {showSearch ? (
+          <div className="relative">
+            <RoundedMagnifierIcon className="pointer-events-none absolute top-1/2 left-inset size-icon-sm -translate-y-1/2 text-muted-foreground" aria-hidden />
+            <Input
+              type="search"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder={t("searchPlaceholder")}
+              aria-label={t("searchPlaceholder")}
+              className="h-control rounded-xl bg-card pr-target pl-target type-body"
+            />
+            {search ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => setSearch("")}
+                aria-label={t("clearSearch")}
+                className="absolute top-1/2 right-hair size-target -translate-y-1/2 text-muted-foreground"
+              >
+                <CloseIcon aria-hidden />
+              </Button>
+            ) : null}
           </div>
+        ) : null}
+
+        {overview.friends.length > 0 ? (
+          filteredFriends.length > 0 ? (
+            <ul className="flex flex-col gap-stack">
+              {filteredFriends.map((person) => (
+                <PersonRow key={person.id} name={person.name} avatar={person.avatar}>
+                  <Button type="button" variant="ghost" size="icon" aria-label={t("remove", { name: person.name })} onClick={() => setRemoving(person)}>
+                    <UserMinusRoundedIcon aria-hidden />
+                  </Button>
+                </PersonRow>
+              ))}
+            </ul>
+          ) : (
+            <p className="type-secondary text-muted-foreground">{t("noSearchMatch")}</p>
+          )
+        ) : empty ? (
+          <EmptyState mascot="dudu-happy" title={t("emptyTitle")} description={t("emptyDescription")} />
         ) : (
           <p className="type-secondary text-muted-foreground">{t("noFriendsYet")}</p>
         )}
@@ -206,17 +285,30 @@ export function FriendsScreen({ overview, inviteCode }: Props) {
 
       {overview.outgoing.length > 0 ? (
         <section aria-labelledby="friends-outgoing" className="flex flex-col gap-item">
-          <h2 id="friends-outgoing" className="type-heading">
-            {t("outgoingTitle")}
-          </h2>
+          <div className="flex items-center gap-stack">
+            <h2 id="friends-outgoing" className="type-heading">
+              {t("outgoingTitle")}
+            </h2>
+            <Badge variant="secondary" className="tabular-nums">{overview.outgoing.length}</Badge>
+          </div>
           <ul className="flex flex-col gap-stack">
-            {overview.outgoing.map((person) => (
-              <PersonRow key={person.id} name={person.name} avatar={person.avatar}>
-                <Button type="button" variant="ghost" size="icon" aria-label={t("cancelRequest", { name: person.name })} onClick={() => cancelOutgoing(person)}>
-                  <X aria-hidden />
-                </Button>
-              </PersonRow>
-            ))}
+            {overview.outgoing.map((person) => {
+              const rowBusy = busyId === person.id;
+              return (
+                <PersonRow key={person.id} name={person.name} avatar={person.avatar}>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    disabled={rowBusy}
+                    aria-label={t("cancelRequest", { name: person.name })}
+                    onClick={() => cancelOutgoing(person)}
+                  >
+                    {rowBusy ? <LoaderIcon className="motion-safe:animate-spin" aria-hidden /> : <CloseIcon aria-hidden />}
+                  </Button>
+                </PersonRow>
+              );
+            })}
           </ul>
         </section>
       ) : null}
@@ -227,7 +319,7 @@ export function FriendsScreen({ overview, inviteCode }: Props) {
         title={t("removeTitle", { name: removing?.name ?? "" })}
         description={t("removeDescription")}
         tone="destructive"
-        icon={<UserMinus aria-hidden />}
+        icon={<UserMinusRoundedIcon aria-hidden />}
         confirmLabel={t("removeConfirm")}
         pending={removePending}
         onConfirm={confirmRemove}

@@ -1,9 +1,9 @@
 "use client"
 
 import * as React from "react"
-import { cn } from "cn"
+import { cn } from "@/lib/utils"
 import { Select as SelectPrimitive } from "radix-ui"
-import { ChevronDownIcon, CheckIcon, ChevronUpIcon } from "lucide-react"
+import { AltArrowDownIcon, AltArrowUpIcon, CheckIcon } from "@solar-icons/react/line-duotone";
 
 function Select({
   ...props
@@ -38,15 +38,16 @@ function SelectTrigger({
   return (
     <SelectPrimitive.Trigger
       data-slot="select-trigger"
+      data-size="default"
       className={cn(
-        "flex w-fit min-w-0 items-center justify-between gap-stack rounded-lg border border-input bg-transparent py-inset-xs pr-inset-sm pl-inset type-body whitespace-nowrap transition-colors outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 data-placeholder:text-muted-foreground data-[size=default]:h-control *:data-[slot=select-value]:min-w-0 *:data-[slot=select-value]:truncate *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-stack dark:bg-input/30 dark:hover:bg-input/50 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-icon-sm",
+        "flex h-control w-full min-w-0 items-center justify-between gap-stack rounded-lg border border-input bg-card py-inset-xs pr-inset-sm pl-inset type-body whitespace-nowrap transition-colors outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 data-placeholder:text-muted-foreground *:data-[slot=select-value]:min-w-0 *:data-[slot=select-value]:truncate *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-stack hover:bg-muted/40 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-icon-sm",
         className
       )}
       {...props}
     >
       {children}
       <SelectPrimitive.Icon asChild>
-        <ChevronDownIcon className="pointer-events-none size-icon-sm text-muted-foreground" />
+        <AltArrowDownIcon className="pointer-events-none size-icon-sm text-muted-foreground" />
       </SelectPrimitive.Icon>
     </SelectPrimitive.Trigger>
   )
@@ -148,8 +149,7 @@ function SelectScrollUpButton({
       )}
       {...props}
     >
-      <ChevronUpIcon
-      />
+      <AltArrowUpIcon />
     </SelectPrimitive.ScrollUpButton>
   )
 }
@@ -167,8 +167,7 @@ function SelectScrollDownButton({
       )}
       {...props}
     >
-      <ChevronDownIcon
-      />
+      <AltArrowDownIcon />
     </SelectPrimitive.ScrollDownButton>
   )
 }

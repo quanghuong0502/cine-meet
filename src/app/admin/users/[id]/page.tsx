@@ -57,15 +57,6 @@ export default async function EditUserPage({
           ))}
       </dl>
 
-      <UserActions
-        id={user.id}
-        locked={user.status === "locked"}
-        name={user.name}
-        isSelf={user.id === admin.userId}
-        canResetPassword={user.authProviders.includes("credentials")}
-        resetHref={`/admin/users/${user.id}/reset-password?back=${encodeURIComponent(`/admin/users/${user.id}?back=${encodeURIComponent(backHref)}`)}`}
-      />
-
       <ResourceForm
         itemId={user.id}
         fields={await userFields("edit")}
@@ -73,6 +64,17 @@ export default async function EditUserPage({
         backHref={backHref}
         saveAction={updateUserAction}
       />
+
+      <div className="-mt-save-clear pb-save-clear">
+        <UserActions
+          id={user.id}
+          locked={user.status === "locked"}
+          name={user.name}
+          isSelf={user.id === admin.userId}
+          canResetPassword={user.authProviders.includes("credentials")}
+          resetHref={`/admin/users/${user.id}/reset-password?back=${encodeURIComponent(`/admin/users/${user.id}?back=${encodeURIComponent(backHref)}`)}`}
+        />
+      </div>
     </div>
   );
 }

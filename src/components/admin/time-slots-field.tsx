@@ -1,14 +1,14 @@
 "use client";
 
-import { Plus, Trash2 } from "lucide-react";
+import { AddIcon, TrashBinMinimalisticIcon } from "@solar-icons/react/line-duotone";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { MAX_TIME_SLOTS, type TimeSlot } from "@/lib/showtime/slots";
+import { MAX_TIME_SLOTS, type TimeSlot } from "@/lib/showtime/slots.helpers";
 
-const CONTROL_CLASS = "h-control rounded-xl bg-card px-inset type-body";
+const CONTROL_CLASS = "h-control rounded-xl bg-background px-inset type-body";
 
 function parse(initial: string): TimeSlot[] {
   try {
@@ -33,10 +33,50 @@ export function TimeSlotsField({ name, initial, invalid }: { name: string; initi
       <input type="hidden" name={name} value={JSON.stringify(slots)} />
       {slots.length === 0 ? <p className="type-secondary text-muted-foreground">{t("empty")}</p> : null}
       {slots.map((slot, index) => (
-        <fieldset key={slot.id} className="flex min-w-0 flex-col gap-item rounded-xl border bg-card/50 p-inset-sm">
-          <legend className="sr-only">{t("slotNumber", { number: index + 1 })}</legend>
-          <Input value={slot.name} onChange={(e) => change(index, { name: e.target.value })} maxLength={30} placeholder={t("name")} aria-label={`${t("name")} ${index + 1}`} autoComplete="off" className={CONTROL_CLASS} />
-          <Input value={slot.nameEn ?? ""} onChange={(e) => change(index, { nameEn: e.target.value })} maxLength={30} placeholder={t("nameEn")} aria-label={`${t("nameEn")} ${index + 1}`} autoComplete="off" className={CONTROL_CLASS} />
+        <fieldset key={slot.id} className="flex min-w-0 flex-col gap-item rounded-xl border bg-card p-inset-sm">
+          <div className="flex items-center justify-between gap-item">
+            <legend className="type-item-title">{t("slotNumber", { number: index + 1 })}</legend>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label={`${t("remove")} ${index + 1}`}
+              onClick={() => setSlots((current) => current.filter((_, i) => i !== index))}
+              className="size-target shrink-0 text-muted-foreground hover:text-destructive"
+            >
+              <TrashBinMinimalisticIcon aria-hidden />
+            </Button>
+          </div>
+          <div className="grid grid-cols-1 gap-item sm:grid-cols-2">
+            <div className="flex min-w-0 flex-col gap-stack">
+              <Label htmlFor={`${slot.id}-name`} className="text-muted-foreground">
+                {t("name")}
+              </Label>
+              <Input
+                id={`${slot.id}-name`}
+                value={slot.name}
+                onChange={(e) => change(index, { name: e.target.value })}
+                maxLength={30}
+                placeholder={t("name")}
+                autoComplete="off"
+                className={CONTROL_CLASS}
+              />
+            </div>
+            <div className="flex min-w-0 flex-col gap-stack">
+              <Label htmlFor={`${slot.id}-name-en`} className="text-muted-foreground">
+                {t("nameEn")}
+              </Label>
+              <Input
+                id={`${slot.id}-name-en`}
+                value={slot.nameEn ?? ""}
+                onChange={(e) => change(index, { nameEn: e.target.value })}
+                maxLength={30}
+                placeholder={t("nameEn")}
+                autoComplete="off"
+                className={CONTROL_CLASS}
+              />
+            </div>
+          </div>
           <div className="grid grid-cols-2 gap-item">
             <div className="flex min-w-0 flex-col gap-stack">
               <Label htmlFor={`${slot.id}-from`} className="text-muted-foreground">
@@ -51,10 +91,6 @@ export function TimeSlotsField({ name, initial, invalid }: { name: string; initi
               <Input id={`${slot.id}-to`} type="time" value={slot.to} onChange={(e) => change(index, { to: e.target.value })} className={CONTROL_CLASS} />
             </div>
           </div>
-          <Button type="button" variant="destructive" size="cta-sm" onClick={() => setSlots((current) => current.filter((_, i) => i !== index))}>
-            <Trash2 aria-hidden />
-            {t("remove")}
-          </Button>
         </fieldset>
       ))}
       <Button
@@ -64,7 +100,7 @@ export function TimeSlotsField({ name, initial, invalid }: { name: string; initi
         disabled={slots.length >= MAX_TIME_SLOTS}
         onClick={() => setSlots((current) => [...current, { id: `s${Date.now().toString(36)}`, name: "", from: "", to: "" }])}
       >
-        <Plus aria-hidden />
+        <AddIcon aria-hidden />
         {t("add")}
       </Button>
     </div>
