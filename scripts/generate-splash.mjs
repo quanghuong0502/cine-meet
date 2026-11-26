@@ -41,7 +41,8 @@ for (const { width, height, ratio } of devices) {
   const file = join(OUT, `splash-${pixelWidth}x${pixelHeight}.png`);
   await sharp({ create: { width: pixelWidth, height: pixelHeight, channels: 3, background } })
     .composite([{ input: picture, left, top }])
-    .png({ compressionLevel: 9 })
+    .flatten({ background })
+    .png({ palette: true, quality: 90, compressionLevel: 9 })
     .toFile(file);
   console.log(`${pixelWidth}x${pixelHeight}  (${width}x${height} @${ratio}x)  picture at ${left},${top}`);
 }

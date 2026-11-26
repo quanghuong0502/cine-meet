@@ -33,7 +33,10 @@ for (const file of readdirSync(DIR).filter((name) => name.endsWith(".png"))) {
   if (cropW === width && cropH === height) { console.log(`${file}: already tight (${width}x${height})`); continue; }
 
   const temp = `${path}.tmp`;
-  await sharp(path).extract({ left, top, width: cropW, height: cropH }).png().toFile(temp);
+  await sharp(path)
+    .extract({ left, top, width: cropW, height: cropH })
+    .png({ palette: true, quality: 90, compressionLevel: 9 })
+    .toFile(temp);
   renameSync(temp, path);
   console.log(`${file}: ${width}x${height} -> ${cropW}x${cropH}`);
 }

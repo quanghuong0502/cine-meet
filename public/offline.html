@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="vi" class="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#13080d" />
+    <title>Mất kết nối · SeatMate</title>
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: #13080d;
+        color: #f8f2f5;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      main {
+        min-height: 100dvh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        padding: 24px;
+        text-align: center;
+      }
+      img {
+        width: 88px;
+        height: 88px;
+        border-radius: 22px;
+      }
+      h1 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 600;
+        line-height: 1.3;
+      }
+      p {
+        margin: 0;
+        max-width: 300px;
+        font-size: 14px;
+        line-height: 1.5;
+        color: rgba(248, 242, 245, 0.72);
+      }
+      button {
+        margin-top: 8px;
+        min-height: 44px;
+        padding: 0 24px;
+        border: 0;
+        border-radius: 9999px;
+        background: #e11d74;
+        color: #ffffff;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      button:active {
+        opacity: 0.85;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <img src="/icons/icon-192.png" alt="" width="88" height="88" />
+      <h1>Không có kết nối mạng</h1>
+      <p>Kiểm tra lại Wi‑Fi hoặc dữ liệu di động rồi thử tải lại trang.</p>
+      <button type="button" onclick="location.reload()">Thử lại</button>
+    </main>
+  </body>
+</html>
