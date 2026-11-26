@@ -6,7 +6,7 @@ import { DELIVERY_STATUSES, NOTIFICATION_CHANNELS } from "@/notifications/types"
 // `webpush` starts `pending` and the worker claims it.
 const deliverySchema = new Schema(
   {
-    notificationId: { type: Schema.Types.ObjectId, ref: "Notification", required: true, index: true },
+    notificationId: { type: Schema.Types.ObjectId, ref: "Notification", required: true },
     channel: { type: String, enum: NOTIFICATION_CHANNELS, required: true },
     status: { type: String, enum: DELIVERY_STATUSES, default: "pending", required: true },
     attempts: { type: Number, default: 0 },
@@ -18,6 +18,7 @@ const deliverySchema = new Schema(
 );
 
 deliverySchema.index({ channel: 1, status: 1, nextAttemptAt: 1 });
+deliverySchema.index({ channel: 1, status: 1, updatedAt: 1 });
 // Old finished rows clean themselves up after 30 days.
 deliverySchema.index({ updatedAt: 1 }, { expireAfterSeconds: 30 * 24 * 3600, partialFilterExpression: { status: { $in: ["sent", "failed"] } } });
 

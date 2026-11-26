@@ -60,6 +60,8 @@ const userSchema = new Schema(
 
 // Many users have no phone: the index skips them, so only real numbers must be unique.
 userSchema.index({ phone: 1 }, { unique: true, sparse: true });
+userSchema.index({ createdAt: -1 });
+userSchema.index({ role: 1, status: 1, name: 1 });
 
 userSchema.pre("validate", function requireUsernameOrEmail() {
   if (!this.username && !this.email) {

@@ -25,6 +25,7 @@ const seatMarkSchema = new Schema(
 
 // One mark per person per seat of a room (the newest layout it was made on is kept).
 seatMarkSchema.index({ userId: 1, auditoriumId: 1, seatCode: 1 }, { unique: true });
+seatMarkSchema.index({ auditoriumId: 1 });
 
 export type SeatMarkDoc = InferSchemaType<typeof seatMarkSchema>;
 

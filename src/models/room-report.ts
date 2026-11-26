@@ -16,6 +16,7 @@ const roomReportSchema = new Schema(
 );
 
 roomReportSchema.index({ status: 1, createdAt: -1 });
+roomReportSchema.index({ createdAt: -1 });
 
 export type RoomReportDoc = InferSchemaType<typeof roomReportSchema>;
 

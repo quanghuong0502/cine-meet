@@ -62,7 +62,7 @@ const costSchema = new Schema(
 
 const appointmentSchema = new Schema(
   {
-    creatorId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
+    creatorId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     movieId: { type: Schema.Types.ObjectId, ref: "Movie", required: true },
     status: { type: String, enum: APPOINTMENT_STATUSES, default: "DRAFT", required: true },
     responseDeadline: { type: Date },
@@ -94,7 +94,10 @@ const appointmentSchema = new Schema(
   { timestamps: true, optimisticConcurrency: true },
 );
 
-appointmentSchema.index({ "participants.userId": 1 });
+appointmentSchema.index({ creatorId: 1, updatedAt: -1 });
+appointmentSchema.index({ creatorId: 1, status: 1 });
+appointmentSchema.index({ "participants.userId": 1, status: 1, updatedAt: -1 });
+appointmentSchema.index({ status: 1, showtimeId: 1 }, { partialFilterExpression: { status: "CONFIRMED" } });
 
 export type AppointmentDoc = InferSchemaType<typeof appointmentSchema>;
 

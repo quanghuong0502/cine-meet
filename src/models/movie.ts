@@ -29,8 +29,11 @@ const movieSchema = new Schema(
   { timestamps: true },
 );
 
-movieSchema.index({ releaseDate: -1 });
+movieSchema.index({ releaseDate: -1, title: 1 });
 movieSchema.index({ title: 1 });
+movieSchema.index({ genreIds: 1 });
+movieSchema.index({ formatIds: 1 });
+movieSchema.index({ ageRatingId: 1 });
 
 export type MovieDoc = InferSchemaType<typeof movieSchema>;
 

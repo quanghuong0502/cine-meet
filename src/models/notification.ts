@@ -15,6 +15,8 @@ const notificationSchema = new Schema(
 
 notificationSchema.index({ recipientId: 1, createdAt: -1 });
 notificationSchema.index({ recipientId: 1, readAt: 1 });
+// Clean up old in-app notifications automatically after 180 days.
+notificationSchema.index({ createdAt: 1 }, { expireAfterSeconds: 180 * 24 * 3600 });
 
 export type NotificationDoc = InferSchemaType<typeof notificationSchema>;
 

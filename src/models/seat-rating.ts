@@ -22,7 +22,7 @@ seatRatingSchema.index(
   { userId: 1, appointmentId: 1, seatCode: 1 },
   { unique: true, partialFilterExpression: { appointmentId: { $exists: true } } },
 );
-seatRatingSchema.index({ userId: 1, auditoriumId: 1 });
+seatRatingSchema.index({ userId: 1, auditoriumId: 1, updatedAt: 1 });
 
 export type SeatRatingDoc = InferSchemaType<typeof seatRatingSchema>;
 

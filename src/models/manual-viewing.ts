@@ -8,7 +8,7 @@ import { defineModel } from "@/lib/define-model";
  */
 const manualViewingSchema = new Schema(
   {
-    userId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
+    userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     movieId: { type: Schema.Types.ObjectId, ref: "Movie" },
     auditoriumId: { type: Schema.Types.ObjectId, ref: "Auditorium" },
     layoutId: { type: Schema.Types.ObjectId, ref: "AuditoriumLayout" },

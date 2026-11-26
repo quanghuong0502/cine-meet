@@ -4,7 +4,7 @@ import { defineModel } from "@/lib/define-model";
 /** One screening: a movie in a room, in the layout version the room had when it was created. */
 const showtimeSchema = new Schema(
   {
-    movieId: { type: Schema.Types.ObjectId, ref: "Movie", required: true, index: true },
+    movieId: { type: Schema.Types.ObjectId, ref: "Movie", required: true },
     auditoriumId: { type: Schema.Types.ObjectId, ref: "Auditorium", required: true },
     layoutId: { type: Schema.Types.ObjectId, ref: "AuditoriumLayout", required: true },
     startAt: { type: Date, required: true },
@@ -18,6 +18,8 @@ const showtimeSchema = new Schema(
 );
 
 showtimeSchema.index({ startAt: 1 });
+showtimeSchema.index({ movieId: 1, startAt: 1 });
+showtimeSchema.index({ formatId: 1, startAt: 1 });
 showtimeSchema.index({ auditoriumId: 1, startAt: 1 });
 
 export type ShowtimeDoc = InferSchemaType<typeof showtimeSchema>;

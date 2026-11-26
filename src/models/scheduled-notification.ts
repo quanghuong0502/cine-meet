@@ -10,7 +10,7 @@ export type ScheduledNotificationStatus = (typeof SCHEDULED_NOTIFICATION_STATUSE
 
 const scheduledNotificationSchema = new Schema(
   {
-    appointmentId: { type: Schema.Types.ObjectId, ref: "Appointment", required: true, index: true },
+    appointmentId: { type: Schema.Types.ObjectId, ref: "Appointment", required: true },
     type: { type: String, enum: SCHEDULED_NOTIFICATION_TYPES, required: true },
     // Only for "reminder": which of the admin's `reminderMinutesBefore` values this row is for. Lets a changed list cancel exactly
     // the old rows (by value) and add the new ones, instead of guessing which row is which.
@@ -29,7 +29,12 @@ const scheduledNotificationSchema = new Schema(
 );
 
 scheduledNotificationSchema.index({ status: 1, sendAt: 1 });
-scheduledNotificationSchema.index({ appointmentId: 1, type: 1 });
+scheduledNotificationSchema.index({ status: 1, updatedAt: 1 });
+scheduledNotificationSchema.index({ appointmentId: 1, status: 1, type: 1 });
+scheduledNotificationSchema.index(
+  { updatedAt: 1 },
+  { expireAfterSeconds: 30 * 24 * 3600, partialFilterExpression: { status: { $in: ["sent", "cancelled"] } } },
+);
 
 export type ScheduledNotificationDoc = InferSchemaType<typeof scheduledNotificationSchema>;
 
