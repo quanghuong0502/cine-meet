@@ -42,7 +42,7 @@ function isDuplicateKeyError(error: unknown): boolean {
 }
 
 async function loadSeatTypes(): Promise<SeatTypeInfo[]> {
-  const docs = await SeatType.find({}).lean();
+  const docs = await SeatType.find({}, "name capacity").lean();
   return docs.map((d) => ({ id: d._id.toString(), name: d.name, capacity: d.capacity }));
 }
 
@@ -66,12 +66,14 @@ async function prepareConfig(
 export async function listAuditoriums(options: { branchId?: string } = {}): Promise<AuditoriumSummary[]> {
   await connectToDatabase();
   const filter = options.branchId && isValidObjectId(options.branchId) ? { branchId: options.branchId } : {};
-  const rooms = await Auditorium.find(filter).sort({ name: 1 }).lean();
+  const rooms = await Auditorium.find(filter, "branchId name currentLayoutId").sort({ name: 1 }).lean();
   const layoutIds = rooms.map((r) => r.currentLayoutId).filter(Boolean);
-  const layouts = await AuditoriumLayout.aggregate<{ _id: mongoose.Types.ObjectId; version: number; seatCount: number }>([
-    { $match: { _id: { $in: layoutIds } } },
-    { $project: { version: 1, seatCount: { $size: "$seats" } } },
-  ]);
+  const layouts = layoutIds.length
+    ? await AuditoriumLayout.aggregate<{ _id: mongoose.Types.ObjectId; version: number; seatCount: number }>([
+        { $match: { _id: { $in: layoutIds } } },
+        { $project: { version: 1, seatCount: { $size: "$seats" } } },
+      ])
+    : [];
   const byId = new Map(layouts.map((l) => [l._id.toString(), l]));
   return rooms.map((r) => {
     const layout = r.currentLayoutId ? byId.get(r.currentLayoutId.toString()) : undefined;
@@ -89,7 +91,15 @@ export async function listAuditoriums(options: { branchId?: string } = {}): Prom
 export async function getAuditorium(id: string) {
   if (!isValidObjectId(id)) return null;
   await connectToDatabase();
-  return Auditorium.findById(id).lean();
+  return Auditorium.findById(id, "branchId name currentLayoutId").lean();
+}
+
+/** Reads only `config` from a layout document by id (skips transferring 150-400 seat objects for the editor). */
+export async function getLayoutConfigById(layoutId: string): Promise<LayoutConfig | null> {
+  if (!isValidObjectId(layoutId)) return null;
+  await connectToDatabase();
+  const doc = await AuditoriumLayout.findById(layoutId, "config").lean();
+  return (doc?.config as LayoutConfig | undefined) ?? null;
 }
 
 /** One layout version, or the current one when `layoutId` is omitted. Must belong to the room. */

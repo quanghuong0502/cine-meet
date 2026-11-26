@@ -78,8 +78,8 @@ export async function processDeliveries({ sender, oneSignal, provider = pushProv
         $or: [{ status: "pending", nextAttemptAt: { $lte: now } }, { status: "processing", updatedAt: { $lte: new Date(now.getTime() - STALE_MS) } }],
       },
       { $set: { status: "processing" }, $inc: { attempts: 1 } },
-      { sort: { nextAttemptAt: 1 }, returnDocument: "after" },
-    );
+      { sort: { nextAttemptAt: 1 }, returnDocument: "after", projection: "notificationId attempts" },
+    ).lean();
     if (!delivery) break;
     handled++;
     ttlSeconds ??= (await getSystemSettings()).pushTtlHours * 3600;
@@ -108,12 +108,13 @@ async function deliverViaOneSignal(
   options: PushSendOptions,
 ): Promise<void> {
   if (!sender) return finish(deliveryId, "failed", { error: "not_configured" });
-  const notification = await Notification.findById(notificationId).lean();
+  const notification = await Notification.findById(notificationId, "recipientId type payload").lean();
   if (!notification) return finish(deliveryId, "failed", { error: "notification_missing" });
-  const user = await User.findById(notification.recipientId, "locale status").lean();
+  const [user, devices] = await Promise.all([
+    User.findById(notification.recipientId, "locale status").lean(),
+    OneSignalDevice.find({ userId: notification.recipientId }, "subscriptionId").lean(),
+  ]);
   if (!user || user.status === "locked") return finish(deliveryId, "sent", { error: "recipient_unavailable" });
-
-  const devices = await OneSignalDevice.find({ userId: notification.recipientId }).lean();
   if (devices.length === 0) return finish(deliveryId, "sent", { error: "no_subscription" });
 
   const payload = await buildPushPayload(notification.type, notification.payload as NotificationPayload, user.locale ?? "vi");
@@ -132,12 +133,13 @@ async function finish(id: string, status: "sent" | "failed" | "pending", extra: 
 }
 
 async function deliverOne(deliveryId: string, notificationId: string, attempts: number, sender: PushSender, now: Date, options: PushSendOptions): Promise<void> {
-  const notification = await Notification.findById(notificationId).lean();
+  const notification = await Notification.findById(notificationId, "recipientId type payload").lean();
   if (!notification) return finish(deliveryId, "failed", { error: "notification_missing" });
-  const user = await User.findById(notification.recipientId, "locale status").lean();
+  const [user, subscriptions] = await Promise.all([
+    User.findById(notification.recipientId, "locale status").lean(),
+    PushSubscription.find({ userId: notification.recipientId }, "endpoint keys").lean(),
+  ]);
   if (!user || user.status === "locked") return finish(deliveryId, "sent", { error: "recipient_unavailable" });
-
-  const subscriptions = await PushSubscription.find({ userId: notification.recipientId }).lean();
   // Turned off since it was queued: nothing left to do, and that is not a failure.
   if (subscriptions.length === 0) return finish(deliveryId, "sent", { error: "no_subscription" });
 

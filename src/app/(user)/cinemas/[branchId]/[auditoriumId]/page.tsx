@@ -33,14 +33,17 @@ export default async function RoomPage({ params }: Props) {
   const marks = await getSeatMarks(user.userId, auditoriumId, view.layoutId);
   const sitting = sittingHistoryOf(sessions, auditoriumId, seatRatings);
 
+  const { branch, version: _version, ...clientView } = view;
+  void _version;
+
   return (
     <ScopedIntlProvider namespaces={["cinemas.room", "seatMap", "admin.common"]}>
       <div className="flex flex-1 flex-col gap-section p-inset">
         <PageHeader title={view.auditorium.name} backHref={`/cinemas/${branchId}`}>
           <RoomReportButton auditoriumId={auditoriumId} />
         </PageHeader>
-        <p className="-mt-item type-secondary text-muted-foreground">{view.branch.name}</p>
-        <RoomSeatView view={view} marks={marks} sitting={sitting} saveAction={saveSeatMarkAction} removeAction={removeSeatMarkAction} />
+        <p className="-mt-item type-secondary text-muted-foreground">{branch.name}</p>
+        <RoomSeatView view={clientView} marks={marks} sitting={sitting} saveAction={saveSeatMarkAction} removeAction={removeSeatMarkAction} />
         <Suspense fallback={null}>
           <RoomReviewSection userId={user.userId} auditoriumId={auditoriumId} />
         </Suspense>

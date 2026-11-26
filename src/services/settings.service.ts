@@ -124,7 +124,9 @@ export async function updateSystemSettings(input: SystemSettingsInput, actorId: 
     });
   }
   const after = await readSystemSettings();
-  // The lead times moved: every confirmed appointment's scheduled reminders (#8) have to match the new values.
-  if (JSON.stringify(before.reminderMinutesBefore) !== JSON.stringify(after.reminderMinutesBefore)) await recomputeAllReminders();
+  // The lead times moved: pass the freshly saved values directly so we never read stale `unstable_cache` before `updateTag`.
+  if (JSON.stringify(before.reminderMinutesBefore) !== JSON.stringify(after.reminderMinutesBefore)) {
+    await recomputeAllReminders(new Date(), after.reminderMinutesBefore);
+  }
   return after;
 }

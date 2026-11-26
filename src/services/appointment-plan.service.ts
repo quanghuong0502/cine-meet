@@ -67,7 +67,13 @@ async function clearSeats(id: string): Promise<void> {
  * The creator picks the showtime (it must be this movie's and not started). The appointment's time follows the showtime. Seats are
  * cleared because they belong to the old room.
  */
-export async function chooseShowtime(creatorId: string, id: string, showtimeId: string, now = new Date()): Promise<{ ok: true } | Failure> {
+export async function chooseShowtime(
+  creatorId: string,
+  id: string,
+  showtimeId: string,
+  now = new Date(),
+  options: { skipEstimate?: boolean } = {},
+): Promise<{ ok: true } | Failure> {
   if (!isValidObjectId(showtimeId)) return { ok: false, error: "no_showtime" };
   await connectToDatabase();
   const result = await mutate(id, async (doc) => {
@@ -87,7 +93,7 @@ export async function chooseShowtime(creatorId: string, id: string, showtimeId: 
     doc.chosenOptionId = option._id;
     doc.set("showtimeId", showtime._id);
     doc.set("seats", []);
-    await recomputeEstimate(doc);
+    if (!options.skipEstimate) await recomputeEstimate(doc);
     return { ok: true as const, changed: true };
   });
   if (!result.ok) return result;
@@ -110,7 +116,12 @@ const SEAT_TRIES = 3;
  * transaction; a seat another appointment already holds fails the claim (unique index) and nothing is saved. Broken seats, seats
  * that do not exist, more people than places and people not going are refused.
  */
-export async function assignSeats(creatorId: string, id: string, input: AssignSeatsInput): Promise<{ ok: true; affectedIds: string[] } | Failure> {
+export async function assignSeats(
+  creatorId: string,
+  id: string,
+  input: AssignSeatsInput,
+  options: { skipEstimate?: boolean } = {},
+): Promise<{ ok: true; affectedIds: string[] } | Failure> {
   if (!isValidObjectId(id)) return { ok: false, error: "not_found" };
   await connectToDatabase();
   const first = await Appointment.findById(id, "creatorId status showtimeId").lean();
@@ -123,11 +134,11 @@ export async function assignSeats(creatorId: string, id: string, input: AssignSe
     ? await Promise.all([
         AuditoriumLayout.findById(showtime.layoutId, "seats").lean(),
         Auditorium.findById(showtime.auditoriumId, "branchId").lean(),
-        loadPricing(),
+        options.skipEstimate ? Promise.resolve(null) : loadPricing(),
       ])
     : [null, null, null];
-  const branch = room ? await Branch.findById(room.branchId, "brandId").lean() : null;
-  if (!showtime || !layout || !branch || !pricing) return { ok: false, error: "no_showtime" };
+  const branch = room && !options.skipEstimate ? await Branch.findById(room.branchId, "brandId").lean() : null;
+  if (!showtime || !layout || (!options.skipEstimate && (!branch || !pricing))) return { ok: false, error: "no_showtime" };
   const seatByCode = new Map(layout.seats.map((s) => [s.code, s]));
 
   const people = new Set<string>();
@@ -142,7 +153,7 @@ export async function assignSeats(creatorId: string, id: string, input: AssignSe
   }
   const codes = [...perSeat.keys()];
   // Compute seat prices outside the MongoDB transaction so the lock covers only the write ops.
-  const preloadedPrices = computeSeatPrices(showtime, branch, layout.seats, pricing);
+  const preloadedPrices = !options.skipEstimate && branch && pricing ? computeSeatPrices(showtime, branch, layout.seats, pricing) : undefined;
 
   for (let attempt = 0; attempt < SEAT_TRIES; attempt++) {
     const session = await mongoose.startSession();
@@ -164,7 +175,7 @@ export async function assignSeats(creatorId: string, id: string, input: AssignSe
         await SeatClaim.deleteMany({ appointmentId: id }, { session });
         if (codes.length > 0) await SeatClaim.insertMany(codes.map((seatCode) => ({ showtimeId: doc.showtimeId, seatCode, appointmentId: id })), { session, ordered: true });
         doc.set("seats", input.assignments.map((a) => ({ userId: a.userId, seatCode: a.seatCode })));
-        await recomputeEstimate(doc, preloadedPrices);
+        if (!options.skipEstimate) await recomputeEstimate(doc, preloadedPrices);
         await doc.save({ session });
         const after = new Map(input.assignments.map((a) => [a.userId, a.seatCode]));
         const affectedIds = [...new Set([...before.keys(), ...after.keys()])].filter((userId) => before.get(userId) !== after.get(userId));
@@ -207,7 +218,12 @@ export const setFoodSchema = z.object({
 export type SetFoodInput = z.infer<typeof setFoodSchema>;
 
 /** Replaces the food and drink list. Names and prices are read now and kept with the line. Only this cinema brand's items count. */
-export async function setFood(creatorId: string, id: string, input: SetFoodInput): Promise<{ ok: true } | Failure> {
+export async function setFood(
+  creatorId: string,
+  id: string,
+  input: SetFoodInput,
+  options: { skipEstimate?: boolean } = {},
+): Promise<{ ok: true } | Failure> {
   await connectToDatabase();
   return mutate(id, async (doc) => {
     if (!sameId(doc.creatorId, creatorId)) return { ok: false as const, error: "forbidden" as const };
@@ -224,13 +240,13 @@ export async function setFood(creatorId: string, id: string, input: SetFoodInput
     const itemIds = input.lines.filter((l) => l.kind === "item").map((l) => l.refId);
     const comboIds = input.lines.filter((l) => l.kind === "combo").map((l) => l.refId);
     const [items, combos] = await Promise.all([
-      itemIds.length ? FnbItem.find({ brandId: branch.brandId, _id: { $in: itemIds } }).lean() : Promise.resolve([]),
-      comboIds.length ? FnbCombo.find({ brandId: branch.brandId, _id: { $in: comboIds } }).lean() : Promise.resolve([]),
+      itemIds.length ? FnbItem.find({ brandId: branch.brandId, _id: { $in: itemIds } }, "name size price").lean() : Promise.resolve([]),
+      comboIds.length ? FnbCombo.find({ brandId: branch.brandId, _id: { $in: comboIds } }, "name items discountType discountValue").lean() : Promise.resolve([]),
     ]);
     const itemById = new Map(items.map((i) => [i._id.toString(), i]));
     const comboItemIds = [...new Set(combos.flatMap((c) => c.items.map((i) => i.itemId.toString())))];
     const comboItems = new Map(
-      (comboItemIds.length ? await FnbItem.find({ _id: { $in: comboItemIds } }).lean() : []).map((i) => [i._id.toString(), i]),
+      (comboItemIds.length ? await FnbItem.find({ _id: { $in: comboItemIds } }, "price").lean() : []).map((i) => [i._id.toString(), i]),
     );
     const comboById = new Map(combos.map((c) => [c._id.toString(), c]));
 
@@ -251,7 +267,7 @@ export async function setFood(creatorId: string, id: string, input: SetFoodInput
       }
     }
     doc.set("fnb", lines);
-    await recomputeEstimate(doc);
+    if (!options.skipEstimate) await recomputeEstimate(doc);
     return { ok: true as const };
   });
 }
@@ -307,13 +323,14 @@ export type ConfirmPlanInput = z.infer<typeof confirmPlanSchema>;
  * what the creator had, so they fix that one thing and press confirm again.
  */
 export async function confirmPlan(creatorId: string, id: string, input: ConfirmPlanInput): Promise<{ ok: true } | Failure> {
+  // Skip intermediate `recomputeEstimate` passes; `confirmAppointment` computes the final estimate once.
   if (input.showtimeId) {
-    const chosen = await chooseShowtime(creatorId, id, input.showtimeId);
+    const chosen = await chooseShowtime(creatorId, id, input.showtimeId, new Date(), { skipEstimate: true });
     if (!chosen.ok) return chosen;
   }
-  const seated = await assignSeats(creatorId, id, { assignments: input.assignments });
+  const seated = await assignSeats(creatorId, id, { assignments: input.assignments }, { skipEstimate: true });
   if (!seated.ok) return seated;
-  const fed = await setFood(creatorId, id, { lines: input.lines });
+  const fed = await setFood(creatorId, id, { lines: input.lines }, { skipEstimate: true });
   if (!fed.ok) return fed;
   return confirmAppointment(creatorId, id);
 }
@@ -438,7 +455,8 @@ export interface CostView {
 
 /** Everyone's real cost of a finished appointment, and the group's total (which is their sum). */
 export async function getCosts(id: string): Promise<{ perUser: CostView[]; totals: ReturnType<typeof sumCosts> }> {
-  const rows = await Expense.find({ appointmentId: id }).lean();
+  await connectToDatabase();
+  const rows = await Expense.find({ appointmentId: id }, "userId category amount note").lean();
   const byUser = new Map<string, CostView>();
   for (const r of rows) {
     const key = r.userId.toString();
@@ -487,7 +505,7 @@ export async function getPlanData(userId: string, id: string, roomOf?: string): 
   if (!showtimeId || !showtime) return data;
 
   const [layout, room, types, taken, pricing] = await Promise.all([
-    AuditoriumLayout.findById(showtime.layoutId).lean(),
+    AuditoriumLayout.findById(showtime.layoutId, "config seats").lean(),
     Auditorium.findById(showtime.auditoriumId, "branchId").lean(),
     getCachedSeatTypes(),
     takenSeatCodes(showtimeId, id),
@@ -508,11 +526,14 @@ export async function getPlanData(userId: string, id: string, roomOf?: string): 
 
   const today = vietnamParts(showtime.startAt).date;
   const current = (r: { validFrom?: string | null; validTo?: string | null }) => (!r.validFrom || r.validFrom <= today) && (!r.validTo || r.validTo >= today);
-  const [items, combos] = await Promise.all([FnbItem.find({ brandId: branch.brandId }).sort({ name: 1 }).lean(), FnbCombo.find({ brandId: branch.brandId }).sort({ name: 1 }).lean()]);
+  const [items, combos] = await Promise.all([
+    FnbItem.find({ brandId: branch.brandId }, "name size price categoryId validFrom validTo").sort({ name: 1 }).lean(),
+    FnbCombo.find({ brandId: branch.brandId }, "name items discountType discountValue validFrom validTo").sort({ name: 1 }).lean(),
+  ]);
   const itemById = new Map(items.map((i) => [i._id.toString(), i]));
   data.food.items = items.filter(current).map((i) => ({ id: i._id.toString(), name: [i.name, i.size].filter(Boolean).join(" "), price: i.price, categoryId: i.categoryId?.toString() }));
   const usedCategories = new Set(data.food.items.map((i) => i.categoryId).filter(Boolean));
-  const categories = usedCategories.size > 0 ? await FnbCategory.find({ _id: { $in: [...usedCategories] } }).sort({ name: 1 }).lean() : [];
+  const categories = usedCategories.size > 0 ? await FnbCategory.find({ _id: { $in: [...usedCategories] } }, "name nameEn").sort({ name: 1 }).lean() : [];
   data.food.categories = categories.map((c) => ({ id: c._id.toString(), name: c.name, nameEn: c.nameEn ?? null }));
   data.food.combos = combos.filter(current).map((c) => ({
     id: c._id.toString(),

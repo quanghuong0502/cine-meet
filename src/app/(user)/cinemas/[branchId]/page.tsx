@@ -27,14 +27,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function CinemaPage({ params, searchParams }: Props) {
-  const user = await requireUser();
-  const [{ branchId }, sp] = await Promise.all([params, searchParams]);
+  const [user, { branchId }, sp, t, locale] = await Promise.all([
+    requireUser(),
+    params,
+    searchParams,
+    getTranslations("cinemas"),
+    getLocale(),
+  ]);
   const rawBack = Array.isArray(sp.back) ? sp.back[0] : sp.back;
   const backHref = rawBack && rawBack.startsWith("/cinemas") && !rawBack.startsWith("//") ? rawBack : "/cinemas";
   const cinema = await getCinema(branchId, user.userId);
   if (!cinema) notFound();
-  const t = await getTranslations("cinemas");
-  const locale = await getLocale();
   const { branch, brand, rooms } = cinema;
   const parking = [
     branch.parkingFee !== null ? { key: "fee", text: t("parkingFee", { fee: formatVnd(branch.parkingFee, locale) }) } : null,

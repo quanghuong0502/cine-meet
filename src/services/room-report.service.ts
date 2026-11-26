@@ -3,9 +3,9 @@ import { z } from "zod";
 import { connectToDatabase } from "@/lib/db";
 import { objectIdField, requiredText } from "@/lib/validation/fields";
 import { Auditorium } from "@/models/auditorium";
-import { Branch } from "@/models/branch";
 import { RoomReport, type RoomReportStatus } from "@/models/room-report";
 import { User } from "@/models/user";
+import { getCachedBranches } from "@/services/master-data/catalog-cache";
 
 export const roomReportInputSchema = z.object({ auditoriumId: objectIdField, note: requiredText(500) });
 export type RoomReportInput = z.infer<typeof roomReportInputSchema>;
@@ -40,17 +40,16 @@ export async function countOpenRoomReports(): Promise<number> {
 /** Every report, newest first, for the admin screen. */
 export async function listRoomReports(): Promise<RoomReportRow[]> {
   await connectToDatabase();
-  const reports = await RoomReport.find({}).sort({ createdAt: -1 }).limit(200).lean();
+  const reports = await RoomReport.find({}, "auditoriumId userId note status createdAt").sort({ createdAt: -1 }).limit(200).lean();
   if (reports.length === 0) return [];
   const roomIds = [...new Set(reports.map((r) => r.auditoriumId.toString()))];
   const userIds = [...new Set(reports.map((r) => r.userId.toString()))];
-  const [rooms, users] = await Promise.all([
+  const [rooms, users, branches] = await Promise.all([
     Auditorium.find({ _id: { $in: roomIds } }, "name branchId").lean(),
     User.find({ _id: { $in: userIds } }, "name").lean(),
+    getCachedBranches(),
   ]);
-  const branchIds = [...new Set(rooms.map((r) => r.branchId.toString()))];
-  const branches = branchIds.length ? await Branch.find({ _id: { $in: branchIds } }, "name").lean() : [];
-  const branchById = new Map(branches.map((b) => [b._id.toString(), b.name]));
+  const branchById = new Map(branches.map((b) => [b.id, b.name]));
   const roomById = new Map(rooms.map((r) => [r._id.toString(), r]));
   const userById = new Map(users.map((u) => [u._id.toString(), u.name]));
   return reports.map((r) => {

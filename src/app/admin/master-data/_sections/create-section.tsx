@@ -129,9 +129,8 @@ export function createSection<Doc extends { _id: { toString(): string } }, Extra
     },
 
     async loadForm(id) {
-      const context = await buildContext();
+      const [context, doc] = await Promise.all([buildContext(), id ? config.service.getById(id) : Promise.resolve(null)]);
       if (config.needsBrand && context.brandOptions.length === 0) return null;
-      const doc = id ? await config.service.getById(id) : null;
       if (id && !doc) return null;
 
       const values = doc ? config.values(doc) : (config.defaults ?? {});

@@ -14,8 +14,8 @@ async function claimOne(now: Date) {
   return ScheduledNotification.findOneAndUpdate(
     { $or: [{ status: "pending", sendAt: { $lte: now } }, { status: "processing", updatedAt: { $lte: new Date(now.getTime() - STALE_MS) } }] },
     { $set: { status: "processing" }, $inc: { attempts: 1 } },
-    { sort: { sendAt: 1 }, returnDocument: "after" },
-  );
+    { sort: { sendAt: 1 }, returnDocument: "after", projection: "type appointmentId pushIds" },
+  ).lean();
 }
 
 /**

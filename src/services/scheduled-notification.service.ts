@@ -44,20 +44,26 @@ export async function dropDeadlineWarningFor(appointmentId: string, userId: stri
   const rows = await ScheduledNotification.find({ appointmentId, type: "deadline_warning", status: "pending", "pushIds.userId": userId }, "pushIds").lean();
   if (rows.length === 0) return;
   const { cancelRemote } = await import("@/notifications/remote-schedule");
-  for (const row of rows) {
-    await cancelRemote(row.pushIds.filter((p) => p.userId.toString() === userId).map((p) => p.id));
-    await ScheduledNotification.updateOne({ _id: row._id }, { $pull: { pushIds: { userId } } });
-  }
+  const pushIds = rows.flatMap((row) => row.pushIds.filter((p) => p.userId.toString() === userId).map((p) => p.id));
+  await Promise.all([
+    cancelRemote(pushIds),
+    ScheduledNotification.updateMany({ _id: { $in: rows.map((r) => r._id) } }, { $pull: { pushIds: { userId } } }),
+  ]);
 }
 
 /**
  * The reminders (#8) for one appointment's showtime: replaces whatever was scheduled before with one row per configured lead time
  * that is still ahead of `now`. Called when the plan is confirmed, and again whenever the admin changes the lead times.
  */
-export async function scheduleReminders(appointmentId: string, startAt: Date, now = new Date()): Promise<void> {
+export async function scheduleReminders(
+  appointmentId: string,
+  startAt: Date,
+  now = new Date(),
+  leadMinutes?: number[],
+): Promise<void> {
   await connectToDatabase();
   await cancelScheduled(appointmentId, ["reminder"]);
-  const { reminderMinutesBefore } = await getSystemSettings();
+  const reminderMinutesBefore = leadMinutes ?? (await getSystemSettings()).reminderMinutesBefore;
   const rows = reminderSendTimes(startAt, reminderMinutesBefore, now);
   if (rows.length === 0) return;
   const created = await ScheduledNotification.insertMany(rows.map((r) => ({ appointmentId, type: "reminder" as const, minutesBefore: r.minutesBefore, sendAt: r.sendAt })));
@@ -83,14 +89,17 @@ export async function scheduleExpenseReminder(appointmentId: string, endAt: Date
 }
 
 /** Admin changed `reminderMinutesBefore`: every confirmed, not-yet-started appointment gets its reminders recomputed from scratch. */
-export async function recomputeAllReminders(now = new Date()): Promise<number> {
+export async function recomputeAllReminders(now = new Date(), leadMinutes?: number[]): Promise<number> {
   await connectToDatabase();
-  const docs = await Appointment.find({ status: "CONFIRMED", showtimeId: { $exists: true } }, "chosenOptionId timeOptions").lean();
+  const [docs, resolvedLead] = await Promise.all([
+    Appointment.find({ status: "CONFIRMED", showtimeId: { $exists: true } }, "chosenOptionId timeOptions._id timeOptions.startAt").lean(),
+    leadMinutes ? Promise.resolve(leadMinutes) : getSystemSettings().then((s) => s.reminderMinutesBefore),
+  ]);
   let count = 0;
   for (const doc of docs) {
     const option = doc.timeOptions.find((o) => o._id.toString() === doc.chosenOptionId?.toString());
     if (!option || option.startAt.getTime() <= now.getTime()) continue;
-    await scheduleReminders(doc._id.toString(), option.startAt, now);
+    await scheduleReminders(doc._id.toString(), option.startAt, now, resolvedLead);
     count++;
   }
   return count;

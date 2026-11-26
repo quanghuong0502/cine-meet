@@ -8,6 +8,7 @@ import { useEffect, useMemo, useOptimistic, useRef, useState, useTransition } fr
 import { toast } from "sonner";
 import { Chip } from "@/components/admin/auditorium-editor/chips";
 import { LoadingState } from "@/components/loading-state";
+import { preloadRoom3D } from "@/components/seat-map/preload-room-3d";
 import { SeatMap, type SeatMapSeatType } from "@/components/seat-map/seat-map";
 import { SittingHistorySummary } from "@/components/sitting-history-list";
 import { Button } from "@/components/ui/button";
@@ -16,7 +17,7 @@ import { buildRoomScene, type SceneSeatType } from "@/lib/seat-layout/scene";
 import { cn } from "@/lib/utils";
 import { SEAT_MARK_TAGS, type SeatMarkKind, type SeatMarkTag } from "@/models/seat-mark-constants";
 import type { LayoutSeat } from "@/lib/seat-layout/types";
-import type { RoomView } from "@/services/cinema.service";
+import type { RoomSeatClientView } from "@/services/cinema.service";
 import type { SeatMarkView } from "@/services/seat-mark.service";
 import type { SittingHistoryRow } from "@/services/viewing-history.service";
 import type { MarkActionResult } from "@/app/(user)/cinemas/actions";
@@ -31,7 +32,7 @@ const Room3DView = dynamic(() => import("@/components/seat-map/room-3d-view").th
 });
 
 interface Props {
-  view: RoomView;
+  view: RoomSeatClientView;
   marks: { active: SeatMarkView[]; old: SeatMarkView[] };
   sitting?: SittingHistoryRow[];
   saveAction: (input: unknown) => Promise<MarkActionResult>;
@@ -64,7 +65,7 @@ export function RoomSeatView({ view, marks: serverMarks, sitting = [], saveActio
   const panelRef = useRef<HTMLDivElement>(null);
 
   const mapTypes = useMemo<SeatMapSeatType[]>(() => view.seatTypes.map(({ id, name, nameEn, color }) => ({ id, name: locale === "en" && nameEn ? nameEn : name, color })), [view.seatTypes, locale]);
-  const sceneTypes = useMemo<SceneSeatType[]>(() => view.seatTypes.map(({ id, color, style }) => ({ id, color, style })), [view.seatTypes]);
+  const sceneTypes = useMemo<SceneSeatType[]>(() => view.seatTypes.map(({ id, color, color3d, style }) => ({ id, color, color3d, style })), [view.seatTypes]);
   const needScene = selected !== null || view3d;
   const metricsScene = useMemo(
     () => (needScene ? buildRoomScene(view.seats, view.geometry, view.room3d, sceneTypes) : null),
@@ -124,6 +125,9 @@ export function RoomSeatView({ view, marks: serverMarks, sitting = [], saveActio
             type="button"
             role="radio"
             aria-checked={view3d}
+            onPointerEnter={preloadRoom3D}
+            onTouchStart={preloadRoom3D}
+            onFocus={preloadRoom3D}
             onClick={() => setView3d(true)}
             className={cn(
               "flex min-h-target items-center justify-center rounded-full px-inset-sm type-label whitespace-nowrap transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
@@ -164,6 +168,7 @@ export function RoomSeatView({ view, marks: serverMarks, sitting = [], saveActio
           seats={view.seats}
           geometry={view.geometry}
           roomConfig={view.room3d}
+          appearance={view.room3dAppearance}
           seatTypes={sceneTypes}
           marks={mapMarks}
           showHeightControls

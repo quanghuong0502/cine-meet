@@ -20,7 +20,8 @@ interface EntityService<Input> {
 function refreshMasterData() {
   revalidatePath(PAGE, "layout");
   revalidatePath("/showtimes");
-  revalidatePath("/cinemas");
+  revalidatePath("/cinemas", "layout");
+  revalidatePath("/log-viewing");
   updateTag(BRAND_OPTIONS_TAG);
   updateTag(MASTER_DATA_CATALOG_TAG);
   updateTag(MASTER_DATA_PRICING_TAG);

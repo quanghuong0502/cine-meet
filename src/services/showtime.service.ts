@@ -11,7 +11,6 @@ import { isCalendarDate, objectIdField } from "@/lib/validation/fields";
 import { Auditorium } from "@/models/auditorium";
 import { AuditoriumLayout } from "@/models/auditorium-layout";
 import { Branch } from "@/models/branch";
-import { Brand } from "@/models/brand";
 import { Format } from "@/models/format";
 import { Holiday } from "@/models/holiday";
 import { Movie } from "@/models/movie";
@@ -242,7 +241,10 @@ interface SerializedPricing {
 const loadPricingCached = safeCache(
   async (): Promise<SerializedPricing> => {
     await connectToDatabase();
-    const [rules, holidays] = await Promise.all([PriceRule.find({}).lean(), Holiday.find({}, "date").lean()]);
+    const [rules, holidays] = await Promise.all([
+      PriceRule.find({}, "brandId branchId formatId seatTypeId dayType weekday timeFrom timeTo price priority validFrom validTo createdAt").lean(),
+      Holiday.find({}, "date").lean(),
+    ]);
     return {
       rules: rules.map((r) => ({
         id: r._id.toString(),
@@ -341,19 +343,26 @@ export async function searchShowtimes(filters: ShowtimeFilters = {}): Promise<Sh
   }
   if (filters.movieId) query.movieId = filters.movieId;
   if (filters.formatId) query.formatId = filters.formatId;
-  if (filters.genreId) {
-    const movies = await Movie.find({ genreIds: filters.genreId }, "_id").lean();
+  const [genreMovies, branchRooms, settings] = await Promise.all([
+    filters.genreId ? Movie.find({ genreIds: filters.genreId }, "_id").lean() : Promise.resolve(null),
+    filters.branchId ? Auditorium.find({ branchId: filters.branchId }, "_id").lean() : Promise.resolve(null),
+    filters.slot ? getSystemSettings() : Promise.resolve(null),
+  ]);
+  if (genreMovies) {
     query.movieId = filters.movieId
-      ? (movies.some((m) => m._id.toString() === filters.movieId) ? filters.movieId : { $in: [] })
-      : { $in: movies.map((m) => m._id) };
+      ? (genreMovies.some((m) => m._id.toString() === filters.movieId) ? filters.movieId : { $in: [] })
+      : { $in: genreMovies.map((m) => m._id) };
   }
-  if (filters.branchId) {
-    const rooms = await Auditorium.find({ branchId: filters.branchId }, "_id").lean();
-    query.auditoriumId = { $in: rooms.map((r) => r._id) };
+  if (branchRooms) {
+    if (branchRooms.length === 0) return [];
+    query.auditoriumId = { $in: branchRooms.map((r) => r._id) };
   }
 
-  const slot = filters.slot ? (await getSystemSettings()).timeSlots.find((candidate) => candidate.id === filters.slot) : undefined;
-  const found = await Showtime.find(query).sort({ startAt: 1 }).limit((filters.limit ?? 300) * (slot ? 4 : 1)).lean();
+  const slot = settings ? settings.timeSlots.find((candidate) => candidate.id === filters.slot) : undefined;
+  const found = await Showtime.find(query, "movieId auditoriumId layoutId formatId startAt endAt priceOverride")
+    .sort({ startAt: 1 })
+    .limit((filters.limit ?? 300) * (slot ? 4 : 1))
+    .lean();
   const inSlot = slot
     ? found.filter((s) => timeInSlot(slot, new Date(s.startAt.getTime() + 7 * 3600_000).toISOString().slice(11, 16)))
     : found;
@@ -362,10 +371,12 @@ export async function searchShowtimes(filters: ShowtimeFilters = {}): Promise<Sh
 
   const uniq = (values: Types.ObjectId[]) => [...new Set(values.map((v) => v.toString()))];
   const layoutObjectIds = uniq(rows.map((r) => r.layoutId)).map((id) => new Types.ObjectId(id));
-  const [movies, rooms, formats, layouts, pricing] = await Promise.all([
+  const [movies, rooms, formats, branches, brands, layouts, pricing] = await Promise.all([
     Movie.find({ _id: { $in: uniq(rows.map((r) => r.movieId)) } }, "title posterUrl durationMin").lean(),
     Auditorium.find({ _id: { $in: uniq(rows.map((r) => r.auditoriumId)) } }, "name branchId").lean(),
-    Format.find({ _id: { $in: uniq(rows.map((r) => r.formatId)) } }, "name active").lean(),
+    getCachedFormats(),
+    getCachedBranches(),
+    getBrandOptions(),
     // Aggregate unique seat types in MongoDB instead of shipping 150-400 seat.type strings per layout over the wire.
     AuditoriumLayout.aggregate<{ _id: Types.ObjectId; defaultSeatType?: string; seatTypes?: string[] }>([
       { $match: { _id: { $in: layoutObjectIds } } },
@@ -373,14 +384,12 @@ export async function searchShowtimes(filters: ShowtimeFilters = {}): Promise<Sh
     ]),
     loadPricing(),
   ]);
-  const branches = await Branch.find({ _id: { $in: uniq(rooms.map((r) => r.branchId)) } }, "name brandId active").lean();
-  const brands = await Brand.find({ _id: { $in: uniq(branches.map((b) => b.brandId)) } }, "name active").lean();
 
   const movieById = new Map(movies.map((m) => [m._id.toString(), m]));
   const roomById = new Map(rooms.map((r) => [r._id.toString(), r]));
-  const formatById = new Map(formats.map((f) => [f._id.toString(), f]));
-  const branchById = new Map(branches.map((b) => [b._id.toString(), b]));
-  const brandById = new Map(brands.map((b) => [b._id.toString(), b]));
+  const formatById = new Map(formats.map((f) => [f.id, f]));
+  const branchById = new Map(branches.map((b) => [b.id, b]));
+  const brandById = new Map(brands.map((b) => [b.id, b]));
   const seatTypeByLayout = new Map(layouts.map((l) => [l._id.toString(), l.defaultSeatType ?? ""]));
   // Every seat type the room has, so the price can be shown as a range (standard, VIP, couple...).
   const seatTypesByLayout = new Map(
@@ -395,14 +404,14 @@ export async function searchShowtimes(filters: ShowtimeFilters = {}): Promise<Sh
     const branch = room && branchById.get(room.branchId.toString());
     if (!movie || !room || !format || !branch) continue;
     // Switched off by an admin: not shown (the admin list shows everything).
-    const brand = brandById.get(branch.brandId.toString());
-    if (!filters.admin && (format.active === false || branch.active === false || brand?.active === false)) continue;
+    const brand = brandById.get(branch.brandId);
+    if (!filters.admin && (!format.active || !branch.active || brand?.active === false)) continue;
     const priceOf = (seatTypeId: string) =>
       resolveTicketPrice({
         showtime: {
           startAt: s.startAt,
-          brandId: branch.brandId.toString(),
-          branchId: branch._id.toString(),
+          brandId: branch.brandId,
+          branchId: branch.id,
           formatId: s.formatId.toString(),
           seatTypeId,
         },
@@ -417,10 +426,10 @@ export async function searchShowtimes(filters: ShowtimeFilters = {}): Promise<Sh
     result.push({
       id: s._id.toString(),
       movie: { id: movie._id.toString(), title: movie.title, posterUrl: movie.posterUrl ?? null, durationMin: movie.durationMin },
-      branch: { id: branch._id.toString(), name: branch.name, brandName: brand?.name ?? "" },
+      branch: { id: branch.id, name: branch.name, brandName: brand?.name ?? "" },
       auditorium: { id: room._id.toString(), name: room.name },
       layoutId: s.layoutId.toString(),
-      format: { id: format._id.toString(), name: format.name },
+      format: { id: format.id, name: format.name },
       startAt: s.startAt.toISOString(),
       endAt: s.endAt.toISOString(),
       price: price ?? null,
@@ -446,23 +455,24 @@ export async function searchShowtimesFrom(movieId: string, after: Date): Promise
 export async function getShowtimeById(showtimeId: string): Promise<ShowtimeRow | null> {
   if (!isValidObjectId(showtimeId)) return null;
   await connectToDatabase();
-  const s = await Showtime.findOne({ _id: showtimeId, startAt: { $gte: new Date() } }).lean();
+  const s = await Showtime.findOne({ _id: showtimeId, startAt: { $gte: new Date() } }, "movieId auditoriumId layoutId formatId startAt endAt priceOverride").lean();
   if (!s) return null;
-  const [movie, room, format, layoutAgg, pricing] = await Promise.all([
+  const [movie, room, formats, branches, brands, layoutAgg, pricing] = await Promise.all([
     Movie.findById(s.movieId, "title posterUrl durationMin").lean(),
     Auditorium.findById(s.auditoriumId, "name branchId").lean(),
-    Format.findById(s.formatId, "name active").lean(),
+    getCachedFormats(),
+    getCachedBranches(),
+    getBrandOptions(),
     AuditoriumLayout.aggregate<{ _id: Types.ObjectId; defaultSeatType?: string; seatTypes?: string[] }>([
       { $match: { _id: s.layoutId } },
       { $project: { defaultSeatType: "$config.defaultSeatType", seatTypes: { $setUnion: [{ $ifNull: ["$seats.type", []] }, []] } } },
     ]),
     loadPricing(),
   ]);
-  if (!movie || !room || !format || format.active === false) return null;
-  const branch = await Branch.findById(room.branchId, "name brandId active").lean();
-  if (!branch || branch.active === false) return null;
-  const brand = await Brand.findById(branch.brandId, "name active").lean();
-  if (brand?.active === false) return null;
+  const format = formats.find((f) => f.id === s.formatId.toString());
+  const branch = room ? branches.find((b) => b.id === room.branchId.toString()) : undefined;
+  const brand = branch ? brands.find((b) => b.id === branch.brandId) : undefined;
+  if (!movie || !room || !format || !format.active || !branch || !branch.active || brand?.active === false) return null;
   const layout = layoutAgg[0];
   const defaultSeatType = layout?.defaultSeatType ?? "";
   const seatTypeIds = [...new Set([defaultSeatType, ...(layout?.seatTypes ?? [])].filter(Boolean))];
@@ -470,8 +480,8 @@ export async function getShowtimeById(showtimeId: string): Promise<ShowtimeRow |
     resolveTicketPrice({
       showtime: {
         startAt: s.startAt,
-        brandId: branch.brandId.toString(),
-        branchId: branch._id.toString(),
+        brandId: branch.brandId,
+        branchId: branch.id,
         formatId: s.formatId.toString(),
         seatTypeId,
       },
@@ -484,10 +494,10 @@ export async function getShowtimeById(showtimeId: string): Promise<ShowtimeRow |
   return {
     id: s._id.toString(),
     movie: { id: movie._id.toString(), title: movie.title, posterUrl: movie.posterUrl ?? null, durationMin: movie.durationMin },
-    branch: { id: branch._id.toString(), name: branch.name, brandName: brand?.name ?? "" },
+    branch: { id: branch.id, name: branch.name, brandName: brand?.name ?? "" },
     auditorium: { id: room._id.toString(), name: room.name },
     layoutId: s.layoutId.toString(),
-    format: { id: format._id.toString(), name: format.name },
+    format: { id: format.id, name: format.name },
     startAt: s.startAt.toISOString(),
     endAt: s.endAt.toISOString(),
     price: price ?? null,

@@ -156,8 +156,10 @@ export async function removeFriendship(userId: string, otherId: string): Promise
   await connectToDatabase();
   const removed = await Friendship.deleteOne({ pairKey: pairKey(userId, otherId), $or: [{ userA: userId }, { userB: userId }] });
   if (!removed.deletedCount) return { ok: false, error: "not_found" };
-  await FriendGroup.updateMany({ ownerId: userId }, { $pull: { memberIds: otherId } });
-  await FriendGroup.updateMany({ ownerId: otherId }, { $pull: { memberIds: userId } });
+  await Promise.all([
+    FriendGroup.updateMany({ ownerId: userId }, { $pull: { memberIds: otherId } }),
+    FriendGroup.updateMany({ ownerId: otherId }, { $pull: { memberIds: userId } }),
+  ]);
   return { ok: true };
 }
 
@@ -171,7 +173,8 @@ export interface FriendOverview {
 
 export async function getFriendOverview(userId: string): Promise<FriendOverview> {
   await connectToDatabase();
-  const rows = await Friendship.find({ $or: [{ userA: userId }, { userB: userId }] }).sort({ updatedAt: -1 }).lean();
+  const rows = await Friendship.find({ $or: [{ userA: userId }, { userB: userId }] }, "userA userB status").sort({ updatedAt: -1 }).lean();
+  if (rows.length === 0) return { friends: [], incoming: [], outgoing: [] };
   const otherId = (row: { userA: Types.ObjectId; userB: Types.ObjectId }) => (row.userA.toString() === userId ? row.userB : row.userA);
   const users = await User.find({ _id: { $in: rows.map(otherId) }, status: "active" }, "name avatar").lean();
   const byId = new Map(users.map((u) => [u._id.toString(), toPerson(u)]));
@@ -197,6 +200,7 @@ export async function filterFriendIds(userId: string, ids: string[]): Promise<st
   const rows = await Friendship.find({ status: "accepted", pairKey: { $in: valid.map((id) => pairKey(userId, id)) } }, "pairKey").lean();
   const keys = new Set(rows.map((r) => r.pairKey));
   const friends = valid.filter((id) => keys.has(pairKey(userId, id)));
+  if (friends.length === 0) return [];
   const active = await User.find({ _id: { $in: friends }, status: "active" }, "_id").lean();
   return active.map((u) => u._id.toString());
 }
@@ -218,9 +222,10 @@ export type SaveGroupResult = { ok: true } | { ok: false; error: "not_found" | "
 
 export async function listGroups(userId: string): Promise<GroupView[]> {
   await connectToDatabase();
-  const groups = await FriendGroup.find({ ownerId: userId }).sort({ name: 1 }).lean();
+  const groups = await FriendGroup.find({ ownerId: userId }, "name memberIds").sort({ name: 1 }).lean();
+  if (groups.length === 0) return [];
   const ids = [...new Set(groups.flatMap((g) => g.memberIds.map(String)))];
-  const users = await User.find({ _id: { $in: ids }, status: "active" }, "name avatar").lean();
+  const users = ids.length ? await User.find({ _id: { $in: ids }, status: "active" }, "name avatar").lean() : [];
   const byId = new Map(users.map((u) => [u._id.toString(), toPerson(u)]));
   return groups.map((g) => ({
     id: g._id.toString(),

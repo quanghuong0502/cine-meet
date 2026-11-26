@@ -17,7 +17,10 @@ function chosenOptionOf(doc: Pick<AppointmentDoc, "timeOptions" | "chosenOptionI
 
 /** #8: the reminder N minutes before the showtime, with each attendee's own seat. Not sent once the plan is no longer confirmed. */
 export async function reminderInputs(appointmentId: string): Promise<NotificationInput[]> {
-  const doc = await Appointment.findById(appointmentId).lean();
+  const doc = await Appointment.findById(
+    appointmentId,
+    "status showtimeId movieId creatorId participants chosenOptionId timeOptions._id timeOptions.startAt seats",
+  ).lean();
   if (!doc || doc.status !== "CONFIRMED" || !doc.showtimeId) return [];
   const [movie, place] = await Promise.all([Movie.findById(doc.movieId, "title").lean(), placeOf(doc.showtimeId.toString())]);
   const slotAt = chosenOptionOf(doc)?.startAt.toISOString();
@@ -31,7 +34,7 @@ export async function reminderInputs(appointmentId: string): Promise<Notificatio
 
 /** #9: nudge the group, a few hours after the showtime, to log the real cost and rate their seat. Not sent once it is undone. */
 export async function expenseReminderInputs(appointmentId: string): Promise<NotificationInput[]> {
-  const doc = await Appointment.findById(appointmentId).lean();
+  const doc = await Appointment.findById(appointmentId, "status movieId creatorId participants").lean();
   if (!doc || doc.status !== "COMPLETED") return [];
   const movie = await Movie.findById(doc.movieId, "title").lean();
   return attendeeIdsOf(doc as never).map((userId) => ({
@@ -47,7 +50,10 @@ export async function expenseReminderInputs(appointmentId: string): Promise<Noti
  * does), so that status alone cannot tell a silent person from one who voted no on everything.
  */
 export async function deadlineWarningInputs(appointmentId: string): Promise<NotificationInput[]> {
-  const doc = await Appointment.findById(appointmentId).lean();
+  const doc = await Appointment.findById(
+    appointmentId,
+    "status responseDeadline movieId participants timeOptions.votes.userId",
+  ).lean();
   if (!doc || doc.status !== "INVITING" || !doc.responseDeadline) return [];
   const voted = new Set(doc.timeOptions.flatMap((o) => o.votes.map((v) => v.userId.toString())));
   const recipientIds = doc.participants.filter((p) => p.status === "invited" && !voted.has(p.userId.toString())).map((p) => p.userId.toString());

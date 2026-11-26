@@ -42,7 +42,7 @@ export type ProfileInput = z.infer<typeof profileInputSchema>;
 
 export async function getProfile(userId: string): Promise<Profile | null> {
   await connectToDatabase();
-  const user = await User.findById(userId).lean().catch(() => null);
+  const user = await User.findById(userId, "name email username phone avatar seatPreference").lean().catch(() => null);
   if (!user) return null;
   return {
     name: user.name,

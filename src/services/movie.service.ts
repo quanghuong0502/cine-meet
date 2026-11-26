@@ -120,6 +120,17 @@ export async function listFilterMovies(): Promise<FilterMovieItem[]> {
   return loadFilterMoviesCached(vietnamToday(), settings.movieUpcomingDays);
 }
 
+/** Cached minimal movie list (`{ id, title }`) for pick-lists like manual viewing logs (skips synopsis/cast/etc.). */
+export const listMovieTitles = safeCache(
+  async (): Promise<{ id: string; title: string }[]> => {
+    await connectToDatabase();
+    const docs = await Movie.find({}, "title").sort({ releaseDate: -1, title: 1 }).limit(500).lean();
+    return docs.map((m) => ({ id: m._id.toString(), title: m.title }));
+  },
+  ["catalog-movie-titles"],
+  { tags: [CATALOG_MOVIES_TAG], revalidate: 300 },
+);
+
 /** Deduplicated per render via React `cache()` so `generateMetadata` and `MovieDetailPage` share one DB read. */
 export const getMovie = cache(async (id: string): Promise<MovieWithStatus | null> => {
   if (!isValidObjectId(id)) return null;

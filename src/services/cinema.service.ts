@@ -4,17 +4,18 @@ import { CATALOG_CINEMAS_TAG, safeCache } from "@/lib/cache";
 import { connectToDatabase } from "@/lib/db";
 import { DEFAULT_STEPS_PER_ROW } from "@/lib/seat-layout/config.constants";
 import { generateGrid } from "@/lib/seat-layout/generate";
+import type { Room3DAppearance } from "@/lib/seat-layout/room-3d-appearance.defaults";
 import type { Room3DConfig } from "@/lib/seat-layout/scene";
 import type { LayoutConfig, LayoutGeometry, LayoutSeat, SeatStyle, SeatTypeInfo } from "@/lib/seat-layout/types";
 import { Auditorium } from "@/models/auditorium";
 import { AuditoriumLayout } from "@/models/auditorium-layout";
 import { Branch } from "@/models/branch";
 import { Brand } from "@/models/brand";
-import { Format } from "@/models/format";
 import { SeatMark } from "@/models/seat-mark";
 import { Showtime } from "@/models/showtime";
 import { getCinemaDimensions } from "@/services/cinema-dimensions.service";
-import { getCachedSeatTypes } from "@/services/master-data/catalog-cache";
+import { getCachedFormats, getCachedSeatTypes } from "@/services/master-data/catalog-cache";
+import { getRoom3DAppearance } from "@/services/room-3d-appearance.service";
 import { listViewingSessions, rankFrequentBranches } from "@/services/viewing-history.service";
 
 /** Plain objects only (strings, numbers): they go straight to client components. */
@@ -124,14 +125,15 @@ export interface CinemaListItem extends CinemaBranch {
  */
 export async function listCinemaList(userId: string): Promise<CinemaListItem[]> {
   await connectToDatabase();
-  const [groups, frequent, upcomingPairs] = await Promise.all([
+  const [groups, sessions, upcomingPairs] = await Promise.all([
     listCinemaGroups(),
-    listFrequentBranches(userId),
+    listViewingSessions(userId),
     Showtime.aggregate<{ _id: { room: Types.ObjectId; format: Types.ObjectId } }>([
       { $match: { startAt: { $gte: new Date() } } },
       { $group: { _id: { room: "$auditoriumId", format: "$formatId" } } },
     ]),
   ]);
+  const frequent = rankFrequentBranches(sessions).slice(0, 5);
   const uniqueRoomIds = [...new Set(upcomingPairs.map((p) => p._id.room.toString()))];
   const rooms = uniqueRoomIds.length
     ? await Auditorium.find({ _id: { $in: uniqueRoomIds } }, "branchId").lean()
@@ -145,7 +147,7 @@ export async function listCinemaList(userId: string): Promise<CinemaListItem[]> 
     set.add(p._id.format.toString());
     formatsByBranch.set(branchId, set);
   }
-  const rank = new Map(frequent.map((b, index) => [b.id, index]));
+  const rank = new Map(frequent.map((b, index) => [b.branchId, index]));
   return groups
     .flatMap((group) =>
       group.branches.map((branch) => ({
@@ -184,7 +186,7 @@ const getCinemaBase = cache(async (branchId: string) => {
   if (!brand) return null;
   const roomIds = rooms.map((r) => r._id);
   const layoutIds = rooms.flatMap((r) => (r.currentLayoutId ? [r.currentLayoutId] : []));
-  const [layouts, types, upcoming] = await Promise.all([
+  const [layouts, types, formats, upcoming] = await Promise.all([
     layoutIds.length
       ? AuditoriumLayout.aggregate<{ _id: { toString(): string }; seatCount: number; types: string[] }>([
           { $match: { _id: { $in: layoutIds } } },
@@ -192,6 +194,7 @@ const getCinemaBase = cache(async (branchId: string) => {
         ])
       : Promise.resolve([]),
     getCachedSeatTypes(),
+    getCachedFormats(),
     roomIds.length
       ? Showtime.aggregate<{ _id: { room: { toString(): string }; format: { toString(): string } } }>([
           { $match: { auditoriumId: { $in: roomIds }, startAt: { $gte: new Date() } } },
@@ -199,9 +202,7 @@ const getCinemaBase = cache(async (branchId: string) => {
         ])
       : Promise.resolve([]),
   ]);
-  const formatIds = [...new Set(upcoming.map((u) => u._id.format.toString()))];
-  const formats = formatIds.length ? await Format.find({ _id: { $in: formatIds }, ...ACTIVE }, "name").lean() : [];
-  const formatName = new Map(formats.map((f) => [f._id.toString(), f.name]));
+  const formatName = new Map(formats.filter((f) => f.active).map((f) => [f.id, f.name]));
   const typeById = new Map(types.map((t) => [t.id, t]));
   const layoutById = new Map(layouts.map((l) => [l._id.toString(), l]));
 
@@ -277,23 +278,27 @@ export interface RoomView {
   seats: LayoutSeat[];
   geometry: LayoutGeometry;
   room3d: Room3DConfig;
-  seatTypes: { id: string; name: string; nameEn: string | null; color: string | null; style: SeatStyle }[];
-  summary: string;
+  room3dAppearance: Room3DAppearance;
+  seatTypes: { id: string; name: string; nameEn: string | null; color: string | null; color3d: string | null; style: SeatStyle }[];
 }
+
+/** Slim client prop for `<RoomSeatView>` — drops server-only `branch` and `version`. */
+export type RoomSeatClientView = Omit<RoomView, "branch" | "version">;
 
 /** The current layout of a room, deduplicated per render via React `cache()` so `generateMetadata` and `RoomPage` share one load. */
 export const getRoomView = cache(async (branchId: string, auditoriumId: string): Promise<RoomView | null> => {
   if (!isValidObjectId(branchId) || !isValidObjectId(auditoriumId)) return null;
   await connectToDatabase();
-  const [room, branch, types, dimensionDefaults] = await Promise.all([
+  const [room, branch, types, dimensionDefaults, room3dAppearance] = await Promise.all([
     Auditorium.findOne({ _id: auditoriumId, branchId }, "name currentLayoutId").lean(),
     Branch.findOne({ _id: branchId, ...ACTIVE }, "name brandId").lean(),
     getCachedSeatTypes(),
     getCinemaDimensions(),
+    getRoom3DAppearance(),
   ]);
   if (!room?.currentLayoutId || !branch) return null;
   const [layout, brand] = await Promise.all([
-    AuditoriumLayout.findById(room.currentLayoutId).lean(),
+    AuditoriumLayout.findById(room.currentLayoutId, "version config seats").lean(),
     Brand.findOne({ _id: branch.brandId, ...ACTIVE }, "name").lean(),
   ]);
   if (!layout || !brand) return null;
@@ -327,13 +332,14 @@ export const getRoomView = cache(async (branchId: string, auditoriumId: string):
       dimensions: config.dimensions,
       defaults: dimensionDefaults,
     },
+    room3dAppearance,
     seatTypes: types.map((t) => ({
       id: t.id,
       name: t.name,
       nameEn: t.nameEn,
       color: t.color,
+      color3d: t.color3d,
       style: t.style,
     })),
-    summary: layout.summary,
   };
 });

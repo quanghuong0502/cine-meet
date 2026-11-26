@@ -11,6 +11,7 @@ import type { Locale } from "@/i18n/config";
 import { MIN_PASSWORD_LENGTH, type UserRole } from "@/lib/user-constants";
 import { LoginAttempt } from "@/models/login-attempt";
 import { User } from "@/models/user";
+import { NOTIFICATION_TYPES, type NotificationType } from "@/notifications/types";
 
 export interface SessionUser {
   id: string;
@@ -33,6 +34,10 @@ export interface ActiveUser {
   hasPassword: boolean;
   /** The language chosen in Settings; undefined until the user picks one. */
   locale?: Locale;
+  /** Optional fields projected from the same per-request User read to avoid duplicate `User.findById` calls on `/settings`, `/friends`, `/`. */
+  monthlyBudget?: { ticket?: number; fnb?: number } | null;
+  pushOff: NotificationType[];
+  inviteCode?: string;
 }
 
 export type AuthFailureReason =
@@ -64,6 +69,9 @@ interface UserLike {
   role: UserRole;
   mustChangePassword?: boolean | null;
   locale?: Locale | null;
+  monthlyBudget?: { ticket?: number | null; fnb?: number | null } | null;
+  pushOff?: string[] | null;
+  inviteCode?: string | null;
 }
 
 function toSessionUser(doc: UserLike): SessionUser {
@@ -77,6 +85,12 @@ function toSessionUser(doc: UserLike): SessionUser {
 }
 
 function toActiveUser(doc: UserLike, hasPassword: boolean): ActiveUser {
+  const budget = doc.monthlyBudget
+    ? { ticket: doc.monthlyBudget.ticket ?? undefined, fnb: doc.monthlyBudget.fnb ?? undefined }
+    : null;
+  const pushOff = (doc.pushOff ?? []).filter((type): type is NotificationType =>
+    (NOTIFICATION_TYPES as readonly string[]).includes(type),
+  );
   return {
     userId: doc._id.toString(),
     role: doc.role,
@@ -87,6 +101,9 @@ function toActiveUser(doc: UserLike, hasPassword: boolean): ActiveUser {
     mustChangePassword: doc.mustChangePassword === true,
     hasPassword,
     locale: doc.locale ?? undefined,
+    monthlyBudget: budget,
+    pushOff,
+    inviteCode: doc.inviteCode ?? undefined,
   };
 }
 
@@ -160,7 +177,7 @@ export async function authenticateWithPassword(
   }
 
   const user = await User.findOne(identifierFilter(identifier))
-    .select("+passwordHash")
+    .select("name email avatar role status +passwordHash")
     .lean();
 
   const hash = user?.passwordHash ?? TIMING_DUMMY_HASH;
@@ -199,7 +216,7 @@ export async function signInWithGoogleProfile(
   }
 
   await connectToDatabase();
-  const user = await User.findOne({ email }).lean();
+  const user = await User.findOne({ email }, "name email avatar role status").lean();
   if (!user) return { ok: false, reason: "not_registered" };
   if (user.status === "locked") return { ok: false, reason: "locked" };
 
@@ -215,7 +232,7 @@ export async function findActiveSessionUserByEmail(
   email: string,
 ): Promise<SessionUser | null> {
   await connectToDatabase();
-  const user = await User.findOne({ email: email.trim().toLowerCase() }).lean();
+  const user = await User.findOne({ email: email.trim().toLowerCase() }, "name email avatar role status").lean();
   if (!user || user.status === "locked") return null;
   return toSessionUser(user);
 }
@@ -235,6 +252,9 @@ export async function findActiveUserById(id: string): Promise<ActiveUser | null>
         avatar: 1,
         mustChangePassword: 1,
         locale: 1,
+        monthlyBudget: 1,
+        pushOff: 1,
+        inviteCode: 1,
         status: 1,
         hasPassword: {
           $and: [

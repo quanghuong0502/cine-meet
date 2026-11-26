@@ -97,6 +97,8 @@ const appointmentSchema = new Schema(
 appointmentSchema.index({ creatorId: 1, updatedAt: -1 });
 appointmentSchema.index({ creatorId: 1, status: 1 });
 appointmentSchema.index({ "participants.userId": 1, status: 1, updatedAt: -1 });
+// ESR-aligned index for `listAppointments` (`status: { $ne: "DRAFT" }` sorted by `updatedAt: -1`).
+appointmentSchema.index({ "participants.userId": 1, updatedAt: -1, status: 1 });
 appointmentSchema.index({ status: 1, showtimeId: 1 }, { partialFilterExpression: { status: "CONFIRMED" } });
 
 export type AppointmentDoc = InferSchemaType<typeof appointmentSchema>;

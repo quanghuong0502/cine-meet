@@ -11,9 +11,11 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function FriendsPage() {
-  const user = await requireUser();
-  const t = await getTranslations("friends");
-  const [overview, inviteCode] = await Promise.all([getFriendOverview(user.userId), getInviteCode(user.userId)]);
+  const [user, t] = await Promise.all([requireUser(), getTranslations("friends")]);
+  const [overview, inviteCode] = await Promise.all([
+    getFriendOverview(user.userId),
+    user.inviteCode ? Promise.resolve(user.inviteCode) : getInviteCode(user.userId),
+  ]);
   return (
     <div className="flex w-full flex-col gap-section p-inset">
       <PageHeader title={t("title")} backHref="/profile" />

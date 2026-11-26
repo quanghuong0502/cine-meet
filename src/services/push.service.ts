@@ -71,7 +71,7 @@ export interface DeviceView {
 export async function listDevices(userId: string): Promise<DeviceView[]> {
   await connectToDatabase();
   if (pushProvider() === "onesignal") {
-    const rows = await OneSignalDevice.find({ userId }).sort({ createdAt: 1 }).lean();
+    const rows = await OneSignalDevice.find({ userId }, "subscriptionId userAgent createdAt lastUsedAt").sort({ createdAt: 1 }).lean();
     return rows.map((row) => ({
       id: row._id.toString(),
       endpoint: row.subscriptionId,
@@ -80,7 +80,8 @@ export async function listDevices(userId: string): Promise<DeviceView[]> {
       lastUsedAt: row.lastUsedAt?.toISOString(),
     }));
   }
-  const rows = await PushSubscription.find({ userId }).sort({ createdAt: 1 }).lean();
+  // Never project Web Push encryption keys (`keys.p256dh` / `keys.auth`) when listing devices for UI.
+  const rows = await PushSubscription.find({ userId }, "endpoint userAgent createdAt lastUsedAt").sort({ createdAt: 1 }).lean();
   return rows.map((row) => ({
     id: row._id.toString(),
     endpoint: row.endpoint,

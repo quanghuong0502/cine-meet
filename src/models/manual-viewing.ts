@@ -21,6 +21,7 @@ const manualViewingSchema = new Schema(
 );
 
 manualViewingSchema.index({ userId: 1, date: -1 });
+manualViewingSchema.index({ userId: 1, auditoriumId: 1 });
 
 export type ManualViewingDoc = InferSchemaType<typeof manualViewingSchema>;
 

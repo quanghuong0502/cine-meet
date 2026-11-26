@@ -143,15 +143,29 @@ function setOptionVote(option: Doc["timeOptions"][number], userId: string, vote:
 }
 export const participantOf = (doc: Doc, userId: string) => doc.participants.find((p) => sameId(p.userId, userId));
 
-/** Turns a time option from the form into a real start time, checking it against the movie and the clock. */
-async function resolveOption(movieId: string, input: OptionInput, now = new Date()): Promise<{ startAt: Date; showtimeId?: string } | null> {
-  if (input.showtimeId) {
-    const showtime = await Showtime.findOne({ _id: input.showtimeId, movieId }, "startAt").lean();
-    if (!showtime || showtime.startAt.getTime() <= now.getTime()) return null;
-    return { startAt: showtime.startAt, showtimeId: input.showtimeId };
+/** Turns time options from the form into real start times in ONE batched Showtime query (zero N+1). */
+async function resolveOptions(
+  movieId: string,
+  inputs: OptionInput[],
+  now = new Date(),
+): Promise<{ startAt: Date; showtimeId?: string }[] | null> {
+  const showtimeIds = [...new Set(inputs.flatMap((i) => (i.showtimeId ? [i.showtimeId] : [])))];
+  const showtimes = showtimeIds.length
+    ? await Showtime.find({ _id: { $in: showtimeIds }, movieId }, "startAt").lean()
+    : [];
+  const startById = new Map(showtimes.map((s) => [s._id.toString(), s.startAt]));
+  const out: { startAt: Date; showtimeId?: string }[] = [];
+  for (const input of inputs) {
+    if (input.showtimeId) {
+      const startAt = startById.get(input.showtimeId);
+      if (!startAt || startAt.getTime() <= now.getTime()) return null;
+      out.push({ startAt, showtimeId: input.showtimeId });
+    } else {
+      if (!input.startAt || Number.isNaN(input.startAt.getTime()) || input.startAt.getTime() <= now.getTime()) return null;
+      out.push({ startAt: input.startAt });
+    }
   }
-  if (!input.startAt || Number.isNaN(input.startAt.getTime()) || input.startAt.getTime() <= now.getTime()) return null;
-  return { startAt: input.startAt };
+  return out;
 }
 
 export type CreateResult = { ok: true; id: string; status: AppointmentStatus } | Failure;
@@ -159,24 +173,28 @@ export type CreateResult = { ok: true; id: string; status: AppointmentStatus } |
 /** A new appointment: the creator picks the movie, one or more times, and friends to invite. Sent right away unless it is a draft. */
 export async function createAppointment(creatorId: string, input: CreateAppointmentInput, now = new Date()): Promise<CreateResult> {
   await connectToDatabase();
-  if (!(await Movie.exists({ _id: input.movieId }))) return { ok: false, error: "movie_not_found" };
-
   const inviteeIds = [...new Set(input.inviteeIds)];
+  const [movieExists, validFriends, resolved, settings] = await Promise.all([
+    Movie.exists({ _id: input.movieId }),
+    filterFriendIds(creatorId, inviteeIds),
+    resolveOptions(input.movieId, input.options, now),
+    input.responseDeadline ? getSystemSettings() : Promise.resolve(null),
+  ]);
+  if (!movieExists) return { ok: false, error: "movie_not_found" };
   // Only current, active friends can be invited: that is also what keeps locked accounts out.
-  if ((await filterFriendIds(creatorId, inviteeIds)).length !== inviteeIds.length) return { ok: false, error: "not_friends" };
+  if (validFriends.length !== inviteeIds.length) return { ok: false, error: "not_friends" };
   if (input.responseDeadline && input.responseDeadline.getTime() <= now.getTime()) return { ok: false, error: "invalid_deadline" };
+  if (!resolved) return { ok: false, error: "invalid_option" };
 
   const options: { startAt: Date; showtimeId?: string }[] = [];
-  for (const raw of input.options) {
-    const option = await resolveOption(input.movieId, raw, now);
-    if (!option) return { ok: false, error: "invalid_option" };
+  for (const option of resolved) {
     const clash = options.some((o) => o.startAt.getTime() === option.startAt.getTime() && o.showtimeId === option.showtimeId);
     if (clash) return { ok: false, error: "duplicate" };
     options.push(option);
   }
   // The poll has to end at least the admin's number of minutes before the first time on it (after that nobody could plan to go anyway).
-  if (input.responseDeadline) {
-    const lead = (await getSystemSettings()).responseDeadlineMinutes * 60_000;
+  if (input.responseDeadline && settings) {
+    const lead = settings.responseDeadlineMinutes * 60_000;
     if (input.responseDeadline.getTime() > Math.min(...options.map((o) => o.startAt.getTime())) - lead) return { ok: false, error: "deadline_too_late" };
   }
 
@@ -342,10 +360,16 @@ export async function proposeOption(
     if (!isOpenForReplies(doc.status)) return { ok: false as const, error: "bad_state" as const };
     if (deadlinePassed(doc, now)) return { ok: false as const, error: "deadline_passed" as const };
     if (doc.timeOptions.length >= MAX_TIME_OPTIONS) return { ok: false as const, error: "limit" as const };
-    const option = await resolveOption(doc.movieId.toString(), input, now);
+    const [resolved, settings] = await Promise.all([
+      resolveOptions(doc.movieId.toString(), [input], now),
+      doc.responseDeadline ? getSystemSettings() : Promise.resolve(null),
+    ]);
+    const option = resolved?.[0] ?? null;
     if (!option) return { ok: false as const, error: "invalid_option" as const };
     // A time that comes too soon after the answer-by time (less than the admin's lead) would be over before people could vote on it.
-    if (doc.responseDeadline && option.startAt.getTime() < doc.responseDeadline.getTime() + (await getSystemSettings()).responseDeadlineMinutes * 60_000) return { ok: false as const, error: "option_before_deadline" as const };
+    if (doc.responseDeadline && settings && option.startAt.getTime() < doc.responseDeadline.getTime() + settings.responseDeadlineMinutes * 60_000) {
+      return { ok: false as const, error: "option_before_deadline" as const };
+    }
     if (doc.timeOptions.some((o) => o.startAt.getTime() === option.startAt.getTime() && o.showtimeId?.toString() === option.showtimeId)) {
       return { ok: false as const, error: "duplicate" as const };
     }
@@ -383,11 +407,18 @@ export async function submitResponse(
     if (input.votes.some((v) => !doc.timeOptions.some((o) => sameId(o._id, v.optionId)))) return { ok: false as const, error: "invalid_option" as const };
     if (doc.timeOptions.length + input.proposals.length > MAX_TIME_OPTIONS) return { ok: false as const, error: "limit" as const };
 
+    const [resolved, settings] = input.proposals.length
+      ? await Promise.all([
+          resolveOptions(doc.movieId.toString(), input.proposals, now),
+          doc.responseDeadline ? getSystemSettings() : Promise.resolve(null),
+        ])
+      : [[], null];
+    if (!resolved) return { ok: false as const, error: "invalid_option" as const };
     const added: { startAt: Date; showtimeId?: string }[] = [];
-    for (const proposal of input.proposals) {
-      const option = await resolveOption(doc.movieId.toString(), proposal, now);
-      if (!option) return { ok: false as const, error: "invalid_option" as const };
-      if (doc.responseDeadline && option.startAt.getTime() < doc.responseDeadline.getTime() + (await getSystemSettings()).responseDeadlineMinutes * 60_000) return { ok: false as const, error: "option_before_deadline" as const };
+    for (const option of resolved) {
+      if (doc.responseDeadline && settings && option.startAt.getTime() < doc.responseDeadline.getTime() + settings.responseDeadlineMinutes * 60_000) {
+        return { ok: false as const, error: "option_before_deadline" as const };
+      }
       const same = (o: { startAt: Date; showtimeId?: { toString(): string } | string | null }) => o.startAt.getTime() === option.startAt.getTime() && (o.showtimeId?.toString() ?? undefined) === option.showtimeId;
       if (doc.timeOptions.some(same) || added.some(same)) return { ok: false as const, error: "duplicate" as const };
       added.push(option);
@@ -563,15 +594,23 @@ async function loadPeople(ids: string[]): Promise<Map<string, PersonView>> {
   return new Map(users.map((u) => [u._id.toString(), { id: u._id.toString(), name: u.name, avatar: u.avatar ?? undefined }]));
 }
 
-/** "Branch · Room" for each showtime id. */
-async function loadPlaces(showtimeIds: string[]): Promise<Map<string, string>> {
-  if (showtimeIds.length === 0) return new Map();
-  const showtimes = await Showtime.find({ _id: { $in: showtimeIds } }, "auditoriumId").lean();
-  const rooms = await Auditorium.find({ _id: { $in: showtimes.map((s) => s.auditoriumId) } }, "name branchId").lean();
-  const branches = await Branch.find({ _id: { $in: rooms.map((r) => r.branchId) } }, "name").lean();
+/** "Branch · Room" for each showtime id, plus each showtime's `auditoriumId`/`layoutId` so callers skip duplicate lookups. */
+async function loadShowtimesWithPlaces(showtimeIds: string[]) {
+  const uniqueIds = [...new Set(showtimeIds)];
+  if (uniqueIds.length === 0) {
+    return { places: new Map<string, string>(), byId: new Map<string, { auditoriumId: { toString(): string }; layoutId: { toString(): string } }>() };
+  }
+  const showtimes = await Showtime.find({ _id: { $in: uniqueIds } }, "auditoriumId layoutId").lean();
+  const roomIds = [...new Set(showtimes.map((s) => s.auditoriumId.toString()))];
+  const rooms = roomIds.length ? await Auditorium.find({ _id: { $in: roomIds } }, "name branchId").lean() : [];
+  const branchIds = [...new Set(rooms.map((r) => r.branchId.toString()))];
+  const branches = branchIds.length ? await Branch.find({ _id: { $in: branchIds } }, "name").lean() : [];
   const branchName = new Map(branches.map((b) => [b._id.toString(), b.name]));
   const roomText = new Map(rooms.map((r) => [r._id.toString(), [branchName.get(r.branchId.toString()), r.name].filter(Boolean).join(" · ")]));
-  return new Map(showtimes.map((s) => [s._id.toString(), roomText.get(s.auditoriumId.toString()) ?? ""]));
+  return {
+    places: new Map(showtimes.map((s) => [s._id.toString(), roomText.get(s.auditoriumId.toString()) ?? ""])),
+    byId: new Map(showtimes.map((s) => [s._id.toString(), { auditoriumId: s.auditoriumId, layoutId: s.layoutId }])),
+  };
 }
 
 /** One appointment as the signed-in person may see it, or null when it does not exist or they are not part of it. */
@@ -586,12 +625,17 @@ export async function getAppointment(userId: string, id: string, now = new Date(
   if (!isCreator && (!me || doc.status === "DRAFT")) return null;
 
   const finalShowtimeId = (doc.showtimeId ?? doc.timeOptions.find((o) => o._id.toString() === doc.chosenOptionId?.toString())?.showtimeId)?.toString();
-  const [people, movie, places, finalShowtime] = await Promise.all([
+  const allShowtimeIds = [
+    ...doc.timeOptions.flatMap((o) => (o.showtimeId ? [o.showtimeId.toString()] : [])),
+    ...(finalShowtimeId ? [finalShowtimeId] : []),
+  ];
+  const [people, movie, showtimeData] = await Promise.all([
     loadPeople([doc.creatorId.toString(), ...doc.participants.map((p) => p.userId.toString()), ...doc.timeOptions.map((o) => o.proposedBy.toString())]),
     Movie.findById(doc.movieId, "title posterUrl").lean(),
-    loadPlaces(doc.timeOptions.flatMap((o) => (o.showtimeId ? [o.showtimeId.toString()] : []))),
-    finalShowtimeId ? Showtime.findById(finalShowtimeId, "auditoriumId layoutId").lean() : Promise.resolve(null),
+    loadShowtimesWithPlaces(allShowtimeIds),
   ]);
+  const places = showtimeData.places;
+  const finalShowtime = finalShowtimeId ? showtimeData.byId.get(finalShowtimeId) ?? null : null;
   const unknown = (pid: string): PersonView => ({ id: pid, name: "?" });
   const person = (pid: string) => people.get(pid) ?? unknown(pid);
 

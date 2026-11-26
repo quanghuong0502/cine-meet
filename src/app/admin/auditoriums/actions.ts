@@ -15,6 +15,7 @@ function refreshAuditoriums(id?: string) {
   if (id) revalidatePath(`${PAGE}/${id}`);
   revalidatePath("/cinemas", "layout");
   revalidatePath("/showtimes");
+  revalidatePath("/log-viewing");
 }
 
 const inputSchema = z.object({

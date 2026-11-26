@@ -105,14 +105,17 @@ export async function listUsers(options: { q?: string; limit?: number } = {}): P
     const pattern = new RegExp(escapeRegExp(q), "i");
     filter.$or = ["name", "username", "email", "phone"].map((field) => ({ [field]: pattern }));
   }
-  const docs = await User.find(filter).sort({ createdAt: -1 }).limit(options.limit ?? 200).lean();
+  const docs = await User.find(filter, "name username email phone role status authProviders mustChangePassword createdAt")
+    .sort({ createdAt: -1 })
+    .limit(options.limit ?? 200)
+    .lean();
   return docs.map((doc) => toManaged(doc as UserRecord));
 }
 
 export async function getManagedUser(id: string): Promise<ManagedUser | null> {
   if (!isValidObjectId(id)) return null;
   await connectToDatabase();
-  const doc = await User.findById(id).lean();
+  const doc = await User.findById(id, "name username email phone role status authProviders mustChangePassword createdAt").lean();
   return doc ? toManaged(doc as UserRecord) : null;
 }
 

@@ -5,7 +5,7 @@ import { PageHeader } from "@/components/page-header";
 import { ScopedIntlProvider } from "@/components/scoped-intl-provider";
 import { requireUser } from "@/lib/auth/guards";
 import { listRoomOptions } from "@/services/cinema.service";
-import { listMovies } from "@/services/movie.service";
+import { listMovieTitles } from "@/services/movie.service";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("dashboard.logViewing");
@@ -13,15 +13,13 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function LogViewingPage() {
-  await requireUser();
-  const t = await getTranslations("dashboard.logViewing");
-  const [movies, rooms] = await Promise.all([listMovies({}), listRoomOptions()]);
+  const [, t, movies, rooms] = await Promise.all([requireUser(), getTranslations("dashboard.logViewing"), listMovieTitles(), listRoomOptions()]);
   return (
     <ScopedIntlProvider namespaces={["dashboard.logViewing", "dateTimeField"]}>
       <div className="flex w-full flex-1 flex-col gap-section p-inset">
         <PageHeader title={t("title")} backHref="/" />
         <div className="mx-auto flex w-full max-w-form flex-1 flex-col">
-          <LogViewingForm movies={movies.map((m) => ({ id: m._id.toString(), title: m.title }))} rooms={rooms} />
+          <LogViewingForm movies={movies} rooms={rooms} />
         </div>
       </div>
     </ScopedIntlProvider>

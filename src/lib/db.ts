@@ -17,9 +17,9 @@ const cache: MongooseCache = (globalThis.mongooseCache ??= {
 
 export async function connectToDatabase(): Promise<typeof mongoose> {
   if (cache.conn) {
-    // Guard against reusing a dropped socket when `bufferCommands: false`.
+    // Guard against reusing a dropped or disconnecting socket when `bufferCommands: false`.
     if (cache.conn.connection.readyState === 1) return cache.conn;
-    if (cache.conn.connection.readyState === 0) {
+    if (cache.conn.connection.readyState === 0 || cache.conn.connection.readyState === 3) {
       cache.conn = null;
       cache.promise = null;
     }
