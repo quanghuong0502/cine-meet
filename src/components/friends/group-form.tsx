@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { deleteGroupAction, saveGroupAction } from "@/actions/friends";
-import { ConfirmDialog } from "@/components/confirm-dialog";
+import { LazyConfirmDialog } from "@/components/lazy-dialogs";
 import { RequiredMark } from "@/components/required-mark";
 import { UserAvatar } from "@/components/user-avatar";
 import { Badge } from "@/components/ui/badge";
@@ -174,8 +174,8 @@ export function GroupForm({ groupId, initialName, initialMemberIds, friends }: P
         </div>
       </form>
 
-      {groupId ? (
-        <ConfirmDialog
+      {groupId && deleteOpen ? (
+        <LazyConfirmDialog
           open={deleteOpen}
           onOpenChange={setDeleteOpen}
           title={t("deleteTitle", { name: name.trim() || initialName })}

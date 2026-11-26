@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { ConfirmDialog } from "@/components/confirm-dialog";
+import { LazyConfirmDialog } from "@/components/lazy-dialogs";
 import { Button } from "@/components/ui/button";
 import type { RemoveResult } from "@/lib/admin/action-result";
 
@@ -55,7 +55,9 @@ export function DeleteRecordButton({ id, name, backHref, removeAction }: DeleteR
         <TrashBinMinimalisticIcon aria-hidden />
         {t("delete")}
       </Button>
-      <ConfirmDialog open={open} onOpenChange={setOpen} title={t("deleteTitle", { name })} description={t("deleteDescription")} tone="destructive" icon={<TrashBinMinimalisticIcon aria-hidden />} confirmLabel={t("delete")} pending={isDeleting} onConfirm={confirm} />
+      {open ? (
+        <LazyConfirmDialog open={open} onOpenChange={setOpen} title={t("deleteTitle", { name })} description={t("deleteDescription")} tone="destructive" icon={<TrashBinMinimalisticIcon aria-hidden />} confirmLabel={t("delete")} pending={isDeleting} onConfirm={confirm} />
+      ) : null}
     </>
   );
 }

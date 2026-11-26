@@ -97,7 +97,7 @@ export default async function ShowtimesPage({ searchParams }: { searchParams: Pr
                         src={movie.posterUrl}
                         alt=""
                         fill
-                        sizes={`${PX.posterList}px`}
+                        sizes={`(max-width: ${PX.column}px) 36vw, ${PX.posterStripMax}px`}
                         loading={index < 3 ? "eager" : "lazy"}
                         fetchPriority={index === 0 ? "high" : undefined}
                         className="object-cover"
@@ -198,7 +198,11 @@ async function Results({ date, values }: { date: string; values: FilterValues })
     );
   }
   const byMovie = new Map<string, typeof rows>();
-  for (const row of rows) byMovie.set(row.movie.id, [...(byMovie.get(row.movie.id) ?? []), row]);
+  for (const row of rows) {
+    const group = byMovie.get(row.movie.id);
+    if (group) group.push(row);
+    else byMovie.set(row.movie.id, [row]);
+  }
   return (
     <div className="flex flex-col gap-section">
       {[...byMovie.values()].map((group) => (

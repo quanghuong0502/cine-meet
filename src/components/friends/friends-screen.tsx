@@ -3,12 +3,12 @@
 import { CheckIcon, CloseIcon, CopyIcon, LoaderIcon, RoundedMagnifierIcon, ShareIcon, UserMinusRoundedIcon, UserPlusRoundedIcon, UsersGroupRoundedIcon } from "@solar-icons/react/line-duotone";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore, useTransition } from "react";
+import { useDeferredValue, useEffect, useMemo, useRef, useState, useSyncExternalStore, useTransition } from "react";
 import { toast } from "sonner";
 import { removeFriendAction, respondRequestAction, sendFriendRequestAction } from "@/actions/friends";
 import { EmptyState } from "@/components/empty-state";
 import { PersonRow } from "@/components/friends/person-row";
-import { ConfirmDialog } from "@/components/confirm-dialog";
+import { LazyConfirmDialog } from "@/components/lazy-dialogs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -118,11 +118,12 @@ export function FriendsScreen({ overview, inviteCode }: Props) {
   const canShare = useSyncExternalStore(subscribeNothing, () => typeof navigator.share === "function", () => false);
   const empty = overview.friends.length === 0 && overview.incoming.length === 0 && overview.outgoing.length === 0;
   const showSearch = overview.friends.length >= SEARCH_THRESHOLD;
+  const deferredSearch = useDeferredValue(search);
   const filteredFriends = useMemo(() => {
-    const q = search.trim().toLowerCase();
+    const q = deferredSearch.trim().toLowerCase();
     if (!q) return overview.friends;
     return overview.friends.filter((f) => f.name.toLowerCase().includes(q));
-  }, [overview.friends, search]);
+  }, [overview.friends, deferredSearch]);
 
   return (
     <div className="flex flex-col gap-section">
@@ -313,17 +314,19 @@ export function FriendsScreen({ overview, inviteCode }: Props) {
         </section>
       ) : null}
 
-      <ConfirmDialog
-        open={removing !== null}
-        onOpenChange={(open) => (open ? undefined : setRemoving(null))}
-        title={t("removeTitle", { name: removing?.name ?? "" })}
-        description={t("removeDescription")}
-        tone="destructive"
-        icon={<UserMinusRoundedIcon aria-hidden />}
-        confirmLabel={t("removeConfirm")}
-        pending={removePending}
-        onConfirm={confirmRemove}
-      />
+      {removing !== null ? (
+        <LazyConfirmDialog
+          open
+          onOpenChange={(open) => (open ? undefined : setRemoving(null))}
+          title={t("removeTitle", { name: removing.name })}
+          description={t("removeDescription")}
+          tone="destructive"
+          icon={<UserMinusRoundedIcon aria-hidden />}
+          confirmLabel={t("removeConfirm")}
+          pending={removePending}
+          onConfirm={confirmRemove}
+        />
+      ) : null}
     </div>
   );
 }

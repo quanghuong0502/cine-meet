@@ -3,6 +3,7 @@ import { getFormatter, getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { ResourceForm } from "@/components/admin/resource-form";
 import { PageHeader } from "@/components/page-header";
+import { ADMIN_SHELL_NAMESPACES, ScopedIntlProvider } from "@/components/scoped-intl-provider";
 import { resolveBackHref } from "@/lib/admin/back-href";
 import { requireAdmin } from "@/lib/auth/guards";
 import { getManagedUser } from "@/services/admin-user.service";
@@ -43,38 +44,40 @@ export default async function EditUserPage({
   ];
 
   return (
-    <div className="mx-auto flex w-full max-w-page flex-1 flex-col gap-section p-inset">
-      <PageHeader title={user.name} backHref={backHref} />
+    <ScopedIntlProvider namespaces={[...ADMIN_SHELL_NAMESPACES, "admin.users"]}>
+      <div className="mx-auto flex w-full max-w-page flex-1 flex-col gap-section p-inset">
+        <PageHeader title={user.name} backHref={backHref} />
 
-      <dl className="grid gap-item rounded-xl border bg-card p-inset type-secondary">
-        {info
-          .filter(([, value]) => value)
-          .map(([label, value]) => (
-            <div key={label} className="flex justify-between gap-group">
-              <dt className="text-muted-foreground">{label}</dt>
-              <dd className="min-w-0 break-words text-right font-medium">{value}</dd>
-            </div>
-          ))}
-      </dl>
+        <dl className="grid gap-item rounded-xl border bg-card p-inset type-secondary">
+          {info
+            .filter(([, value]) => value)
+            .map(([label, value]) => (
+              <div key={label} className="flex justify-between gap-group">
+                <dt className="text-muted-foreground">{label}</dt>
+                <dd className="min-w-0 break-words text-right font-medium">{value}</dd>
+              </div>
+            ))}
+        </dl>
 
-      <ResourceForm
-        itemId={user.id}
-        fields={await userFields("edit")}
-        values={{ name: user.name, role: user.role }}
-        backHref={backHref}
-        saveAction={updateUserAction}
-      />
-
-      <div className="-mt-save-clear pb-save-clear">
-        <UserActions
-          id={user.id}
-          locked={user.status === "locked"}
-          name={user.name}
-          isSelf={user.id === admin.userId}
-          canResetPassword={user.authProviders.includes("credentials")}
-          resetHref={`/admin/users/${user.id}/reset-password?back=${encodeURIComponent(`/admin/users/${user.id}?back=${encodeURIComponent(backHref)}`)}`}
+        <ResourceForm
+          itemId={user.id}
+          fields={await userFields("edit")}
+          values={{ name: user.name, role: user.role }}
+          backHref={backHref}
+          saveAction={updateUserAction}
         />
+
+        <div className="-mt-save-clear pb-save-clear">
+          <UserActions
+            id={user.id}
+            locked={user.status === "locked"}
+            name={user.name}
+            isSelf={user.id === admin.userId}
+            canResetPassword={user.authProviders.includes("credentials")}
+            resetHref={`/admin/users/${user.id}/reset-password?back=${encodeURIComponent(`/admin/users/${user.id}?back=${encodeURIComponent(backHref)}`)}`}
+          />
+        </div>
       </div>
-    </div>
+    </ScopedIntlProvider>
   );
 }

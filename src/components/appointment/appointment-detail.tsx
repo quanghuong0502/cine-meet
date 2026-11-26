@@ -28,6 +28,7 @@ import { useFixedBarClearance } from "@/lib/use-fixed-bar-clearance";
 import { canWithdraw, isFinished, isOpenForReplies } from "@/lib/appointment/state";
 import { formatDayCompact, formatDayLong, formatTime } from "@/lib/datetime";
 import { formatVnd } from "@/lib/money";
+import { PX } from "@/lib/ui-sizes";
 import { cn } from "@/lib/utils";
 import type { AppointmentView, ParticipantView } from "@/services/appointment.service";
 import type { CostView, PlanData } from "@/services/appointment-plan.service";
@@ -118,7 +119,13 @@ export function AppointmentDetail({ view, friends = [], groups = [], plan = null
           href={`/movies/${view.movie.id}`}
           className="shrink-0 rounded-lg outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:opacity-80"
         >
-          <ListThumb shape="poster" imageUrl={view.movie.posterUrl} className="sm:w-thumb-poster-lg" />
+          <ListThumb
+            shape="poster"
+            imageUrl={view.movie.posterUrl}
+            sizes={`(min-width: ${PX.sm}px) ${PX.thumbPosterLg}px, ${PX.thumbPoster}px`}
+            preload
+            className="sm:w-thumb-poster-lg"
+          />
         </Link>
         <div className="flex min-w-0 flex-1 flex-col gap-stack">
           <Link

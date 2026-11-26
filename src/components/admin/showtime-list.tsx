@@ -2,9 +2,9 @@
 
 import { CloseIcon, RoundedMagnifierIcon, TrashBinMinimalisticIcon } from "@solar-icons/react/line-duotone";
 import { useLocale, useTranslations } from "next-intl";
-import { useMemo, useState, useTransition } from "react";
+import { useDeferredValue, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { ConfirmDialog } from "@/components/confirm-dialog";
+import { LazyConfirmDialog } from "@/components/lazy-dialogs";
 import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,11 +20,12 @@ export function AdminShowtimeList({ rows, removeAction }: { rows: ShowtimeRow[];
   const tc = useTranslations("admin.common");
   const locale = useLocale();
   const [query, setQuery] = useState("");
+  const deferredQuery = useDeferredValue(query);
   const [pending, setPending] = useState<ShowtimeRow | null>(null);
   const [isDeleting, startDeleting] = useTransition();
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const q = deferredQuery.trim().toLowerCase();
     if (!q) return rows;
     return rows.filter((row) =>
       [row.movie.title, row.branch.brandName, row.branch.name, row.auditorium.name, row.format.name]
@@ -33,13 +34,15 @@ export function AdminShowtimeList({ rows, removeAction }: { rows: ShowtimeRow[];
         .toLowerCase()
         .includes(q),
     );
-  }, [rows, query]);
+  }, [rows, deferredQuery]);
 
   const days = useMemo(() => {
     const map = new Map<string, ShowtimeRow[]>();
     for (const row of filtered) {
       const key = vietnamDayKey(row.startAt);
-      map.set(key, [...(map.get(key) ?? []), row]);
+      const bucket = map.get(key);
+      if (bucket) bucket.push(row);
+      else map.set(key, [row]);
     }
     return [...map.entries()];
   }, [filtered]);
@@ -101,7 +104,7 @@ export function AdminShowtimeList({ rows, removeAction }: { rows: ShowtimeRow[];
                 <h2 className="type-heading">{formatDayKey(day, locale)}</h2>
                 <ul className="flex flex-col gap-stack">
                   {items.map((row) => (
-                    <li key={row.id} className="flex min-w-0 items-center gap-stack rounded-xl border bg-card pr-inset-xs">
+                    <li key={row.id} className="list-card-cv flex min-w-0 items-center gap-stack rounded-xl border bg-card pr-inset-xs">
                       <div className="flex min-h-row min-w-0 flex-1 flex-col justify-center gap-tight py-inset-sm pl-inset">
                         <span className="truncate type-item-title tabular-nums">
                           {formatTime(row.startAt, locale)}–{formatTime(row.endAt, locale)} · {row.movie.title}
@@ -132,17 +135,19 @@ export function AdminShowtimeList({ rows, removeAction }: { rows: ShowtimeRow[];
         )}
       </div>
 
-      <ConfirmDialog
-        open={pending !== null}
-        onOpenChange={(open) => (open ? undefined : setPending(null))}
-        title={t("deleteTitle", { movie: pending?.movie.title ?? "", time: pending ? formatTime(pending.startAt, locale) : "" })}
-        description={tc("deleteDescription")}
-        tone="destructive"
-        icon={<TrashBinMinimalisticIcon aria-hidden />}
-        confirmLabel={tc("delete")}
-        pending={isDeleting}
-        onConfirm={confirm}
-      />
+      {pending !== null ? (
+        <LazyConfirmDialog
+          open
+          onOpenChange={(open) => (open ? undefined : setPending(null))}
+          title={t("deleteTitle", { movie: pending.movie.title, time: formatTime(pending.startAt, locale) })}
+          description={tc("deleteDescription")}
+          tone="destructive"
+          icon={<TrashBinMinimalisticIcon aria-hidden />}
+          confirmLabel={tc("delete")}
+          pending={isDeleting}
+          onConfirm={confirm}
+        />
+      ) : null}
     </>
   );
 }

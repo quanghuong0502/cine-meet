@@ -110,7 +110,7 @@ export function NotificationList({ items }: { items: NotificationItem[] }) {
             ? t("todayAt", { time: formatTime(item.createdAt, locale) })
             : `${formatDayLong(item.createdAt, locale)} · ${formatTime(item.createdAt, locale)}`;
           return (
-            <li key={item.id}>
+            <li key={item.id} className="list-card-cv">
               <Link
                 href={item.url}
                 prefetch={false}

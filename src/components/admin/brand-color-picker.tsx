@@ -4,7 +4,7 @@ import { CheckIcon, RestartIcon } from "@solar-icons/react/line-duotone";
 import { useTranslations } from "next-intl";
 import { useState, useTransition, type CSSProperties } from "react";
 import { toast } from "sonner";
-import { ConfirmDialog } from "@/components/confirm-dialog";
+import { LazyConfirmDialog } from "@/components/lazy-dialogs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DEFAULT_BRAND_HEX, defaultBrandTheme, deriveBrandTheme, parseHex } from "@/lib/brand-theme";
@@ -135,16 +135,18 @@ export function BrandColorPicker({
           <RestartIcon aria-hidden />
           {t("reset")}
         </Button>
-        <ConfirmDialog
-          open={confirmOpen}
-          onOpenChange={setConfirmOpen}
-          title={t("resetTitle")}
-          description={t("resetDescription")}
-          icon={<RestartIcon aria-hidden />}
-          confirmLabel={t("resetConfirm")}
-          pending={isResetting}
-          onConfirm={reset}
-        />
+        {confirmOpen ? (
+          <LazyConfirmDialog
+            open={confirmOpen}
+            onOpenChange={setConfirmOpen}
+            title={t("resetTitle")}
+            description={t("resetDescription")}
+            icon={<RestartIcon aria-hidden />}
+            confirmLabel={t("resetConfirm")}
+            pending={isResetting}
+            onConfirm={reset}
+          />
+        ) : null}
       </div>
 
       <div className="flex flex-col gap-item" aria-hidden>

@@ -3,11 +3,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { LoadingState } from "@/components/loading-state";
 
-/** `app/loading.tsx`: full-screen fallback while an initial route streams in. */
-export function RootLoading() {
-  return <LoadingState fullScreen />;
-}
-
 interface RouteLoadingProps {
   /** What shows in the content area while a route is loading (default: Bubu). */
   inline?: ReactNode;

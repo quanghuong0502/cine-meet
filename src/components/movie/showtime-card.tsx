@@ -23,7 +23,7 @@ export function ShowtimeCard({ row, showMovie = false }: { row: ShowtimeRow; sho
         ? t("noPrice")
         : t("price", { amount: formatVnd(row.price, locale) });
   return (
-    <li className="flex min-w-0 flex-col gap-item rounded-xl border bg-card p-inset">
+    <li className="list-card-cv flex min-w-0 flex-col gap-item rounded-xl border bg-card p-inset">
       <div className="flex flex-wrap items-center justify-between gap-stack">
         <div className="flex items-baseline gap-stack tabular-nums">
           <span className="type-heading leading-6!">{formatTime(row.startAt, locale)}</span>

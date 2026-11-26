@@ -4,6 +4,7 @@ import { getMoviePosterUploadTicket } from "@/actions/uploads";
 import { ResourceForm } from "@/components/admin/resource-form";
 import type { ResourceField } from "@/components/admin/resource-types";
 import { PageHeader } from "@/components/page-header";
+import { ADMIN_SHELL_NAMESPACES, ScopedIntlProvider } from "@/components/scoped-intl-provider";
 import { resolveBackHref } from "@/lib/admin/back-href";
 import { youtubeWatchUrl } from "@/lib/movie/youtube";
 import { ageRatingService } from "@/services/master-data/age-rating.service";
@@ -72,16 +73,18 @@ export async function MovieFormScreen({ id, back }: { id: string | null; back?: 
 
   const title = t(movie ? "editTitle" : "createTitle");
   return (
-    <div className="mx-auto flex w-full max-w-page flex-1 flex-col gap-section p-inset">
-      <PageHeader title={title} backHref={backHref} />
-      <ResourceForm
-        itemId={id}
-        fields={fields}
-        values={values}
-        backHref={backHref}
-        saveAction={saveMovie}
-        deleteItem={movie ? { id: movie._id.toString(), name: movie.title, removeAction: removeMovie } : undefined}
-      />
-    </div>
+    <ScopedIntlProvider namespaces={[...ADMIN_SHELL_NAMESPACES, "imageUpload", "dateTimeField"]}>
+      <div className="mx-auto flex w-full max-w-page flex-1 flex-col gap-section p-inset">
+        <PageHeader title={title} backHref={backHref} />
+        <ResourceForm
+          itemId={id}
+          fields={fields}
+          values={values}
+          backHref={backHref}
+          saveAction={saveMovie}
+          deleteItem={movie ? { id: movie._id.toString(), name: movie.title, removeAction: removeMovie } : undefined}
+        />
+      </div>
+    </ScopedIntlProvider>
   );
 }

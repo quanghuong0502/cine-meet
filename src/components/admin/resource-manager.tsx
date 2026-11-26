@@ -174,7 +174,7 @@ export function ResourceManager({ items, basePath, query, labels, removeAction, 
           <p className="type-secondary text-muted-foreground tabular-nums">{t("itemCount", { count: items.length })}</p>
           <ul className="grid gap-item md:grid-cols-2">
             {items.map((item) => (
-              <li key={item.id} className="flex min-w-0 items-center gap-stack rounded-xl border bg-card pr-inset-xs">
+              <li key={item.id} className="list-card-cv flex min-w-0 items-center gap-stack rounded-xl border bg-card pr-inset-xs">
                 <Link
                   href={withBack(`${base}/${item.id}`)}
                   prefetch={false}

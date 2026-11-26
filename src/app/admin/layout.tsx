@@ -4,7 +4,7 @@ import { AdminMain } from "@/components/admin/admin-main";
 import { AdminNav } from "@/components/admin/admin-nav";
 import { AppHeader } from "@/components/app-header";
 import { Logo } from "@/components/logo";
-import { ScopedIntlProvider } from "@/components/scoped-intl-provider";
+import { ADMIN_SHELL_NAMESPACES, ScopedIntlProvider } from "@/components/scoped-intl-provider";
 import { SignOutButton } from "@/components/sign-out-button";
 import { UserAvatar } from "@/components/user-avatar";
 import { ENABLED_ADMIN_NAV_ITEMS, MIN_BOTTOM_NAV_ITEMS } from "@/lib/admin-nav";
@@ -21,7 +21,7 @@ export default async function AdminLayout({
   const hasBottomNav = ENABLED_ADMIN_NAV_ITEMS.length >= MIN_BOTTOM_NAV_ITEMS;
 
   return (
-    <ScopedIntlProvider namespaces={["admin", "profile", "imageUpload", "seatMap", "cinemas.room", "dateTimeField"]}>
+    <ScopedIntlProvider namespaces={ADMIN_SHELL_NAMESPACES}>
       <div data-app-shell className="h-dvh overflow-hidden md:grid md:grid-cols-[var(--spacing-sidebar)_1fr] md:grid-rows-1">
         <aside className="sticky top-0 hidden h-dvh flex-col gap-group border-r p-inset md:flex">
           <span className="px-inset-sm py-inset-xs">

@@ -36,7 +36,7 @@ export function AppointmentCard({ item }: { item: AppointmentSummary }) {
   const past = item.status === "COMPLETED" || item.status === "CANCELLED";
 
   return (
-    <li>
+    <li className="list-card-cv">
       <Link
         href={`/appointments/${item.id}`}
         prefetch={false}

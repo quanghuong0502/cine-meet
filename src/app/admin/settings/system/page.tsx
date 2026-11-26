@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { ResourceForm } from "@/components/admin/resource-form";
 import type { ResourceField } from "@/components/admin/resource-types";
 import { PageHeader } from "@/components/page-header";
+import { ADMIN_SHELL_NAMESPACES, ScopedIntlProvider } from "@/components/scoped-intl-provider";
 import { requireAdmin } from "@/lib/auth/guards";
 import { getSystemSettings, MAX_DEADLINE_MINUTES, MAX_PUSH_TTL_HOURS } from "@/services/settings.service";
 import { saveSystemSettings } from "./actions";
@@ -26,22 +27,24 @@ export default async function SystemSettingsPage() {
   ];
 
   return (
-    <div className="mx-auto flex w-full max-w-page flex-1 flex-col gap-section p-inset">
-      <PageHeader title={t("title")} backHref="/admin/settings" />
-      <ResourceForm
-        itemId={null}
-        fields={fields}
-        values={{
-          reminderMinutesBefore: settings.reminderMinutesBefore.join(", "),
-          responseDeadlineMinutes: String(settings.responseDeadlineMinutes),
-          adMinutes: String(settings.adMinutes),
-          movieUpcomingDays: String(settings.movieUpcomingDays),
-          pushTtlHours: String(settings.pushTtlHours),
-          timeSlots: JSON.stringify(settings.timeSlots),
-        }}
-        backHref="/admin/settings"
-        saveAction={saveSystemSettings}
-      />
-    </div>
+    <ScopedIntlProvider namespaces={[...ADMIN_SHELL_NAMESPACES, "admin.systemSettings.slots"]}>
+      <div className="mx-auto flex w-full max-w-page flex-1 flex-col gap-section p-inset">
+        <PageHeader title={t("title")} backHref="/admin/settings" />
+        <ResourceForm
+          itemId={null}
+          fields={fields}
+          values={{
+            reminderMinutesBefore: settings.reminderMinutesBefore.join(", "),
+            responseDeadlineMinutes: String(settings.responseDeadlineMinutes),
+            adMinutes: String(settings.adMinutes),
+            movieUpcomingDays: String(settings.movieUpcomingDays),
+            pushTtlHours: String(settings.pushTtlHours),
+            timeSlots: JSON.stringify(settings.timeSlots),
+          }}
+          backHref="/admin/settings"
+          saveAction={saveSystemSettings}
+        />
+      </div>
+    </ScopedIntlProvider>
   );
 }

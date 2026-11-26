@@ -8,6 +8,7 @@ import { AppointmentCard } from "@/components/appointment/appointment-card";
 import { EmptyState } from "@/components/empty-state";
 import { LoadingState } from "@/components/loading-state";
 import { PageHeader } from "@/components/page-header";
+import { ScopedIntlProvider } from "@/components/scoped-intl-provider";
 import { Button } from "@/components/ui/button";
 import { applyFilters, FILTER_KEYS, parseFilters, type FilterValues } from "@/lib/appointment/filters";
 import { requireUser } from "@/lib/auth/guards";
@@ -26,12 +27,25 @@ export default async function AppointmentsPage({ searchParams }: { searchParams:
   const values = parseFilters(Object.fromEntries(FILTER_KEYS.map((key) => [key, first(params[key])])));
 
   return (
-    <div className="flex flex-1 flex-col gap-section p-inset pb-action-clear">
-      <PageHeader title={t("title")} />
-      <Suspense key={JSON.stringify(values)} fallback={<LoadingState compact />}>
-        <AppointmentsContent userId={user.userId} values={values} />
-      </Suspense>
-    </div>
+    <ScopedIntlProvider
+      namespaces={[
+        "appointments.byMe",
+        "appointments.byName",
+        "appointments.needsReply",
+        "appointments.timesCount",
+        "appointments.answered",
+        "appointments.peopleGoing",
+        "appointments.status",
+        "appointments.filters",
+      ]}
+    >
+      <div className="flex flex-1 flex-col gap-section p-inset pb-action-clear">
+        <PageHeader title={t("title")} />
+        <Suspense key={JSON.stringify(values)} fallback={<LoadingState compact />}>
+          <AppointmentsContent userId={user.userId} values={values} />
+        </Suspense>
+      </div>
+    </ScopedIntlProvider>
   );
 }
 

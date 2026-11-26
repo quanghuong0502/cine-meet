@@ -69,7 +69,7 @@ async function CinemasContent({ userId, values }: { userId: string; values: Cine
 
   function branchCard(branch: CinemaListItem) {
     return (
-      <li key={branch.id}>
+      <li key={branch.id} className="list-card-cv">
         <Link
           href={`/cinemas/${branch.id}${backParam}`}
           prefetch={false}

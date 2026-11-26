@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ShowtimeBulkForm } from "@/components/admin/showtime-bulk-form";
 import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
+import { ADMIN_SHELL_NAMESPACES, ScopedIntlProvider } from "@/components/scoped-intl-provider";
 import { Button } from "@/components/ui/button";
 import { resolveBackHref } from "@/lib/admin/back-href";
 import { vietnamToday } from "@/lib/movie/status";
@@ -57,21 +58,23 @@ export default async function BulkShowtimesPage({ searchParams }: { searchParams
   const branchName = new Map(branches.map((b) => [b._id.toString(), [brandName.get(b.brandId.toString()), b.name].filter(Boolean).join(" · ")]));
 
   return (
-    <div className="mx-auto flex w-full max-w-page flex-1 flex-col gap-section p-inset">
-      <PageHeader title={t("title")} backHref={backHref} />
-      <ShowtimeBulkForm
-        movies={movies.filter((m) => m.status !== "ended").map((m) => ({ value: m._id.toString(), label: m.title }))}
-        formats={formats.filter((f) => f.active !== false).map((f) => ({ value: f._id.toString(), label: f.name }))}
-        rooms={roomsReady
-          .map((r) => ({ value: r.id, label: r.name, group: branchName.get(r.branchId) ?? "" }))
-          .sort((a, b) =>
-            `${a.group} ${a.label}`.localeCompare(`${b.group} ${b.label}`, locale === "en" ? "en" : "vi"),
-          )}
-        backHref={backHref}
-        action={createShowtimesAction}
-        today={vietnamToday()}
-        maxShowtimes={BULK_MAX_SHOWTIMES}
-      />
-    </div>
+    <ScopedIntlProvider namespaces={[...ADMIN_SHELL_NAMESPACES, "admin.movies.bulk", "dateTimeField"]}>
+      <div className="mx-auto flex w-full max-w-page flex-1 flex-col gap-section p-inset">
+        <PageHeader title={t("title")} backHref={backHref} />
+        <ShowtimeBulkForm
+          movies={movies.filter((m) => m.status !== "ended").map((m) => ({ value: m._id.toString(), label: m.title }))}
+          formats={formats.filter((f) => f.active !== false).map((f) => ({ value: f._id.toString(), label: f.name }))}
+          rooms={roomsReady
+            .map((r) => ({ value: r.id, label: r.name, group: branchName.get(r.branchId) ?? "" }))
+            .sort((a, b) =>
+              `${a.group} ${a.label}`.localeCompare(`${b.group} ${b.label}`, locale === "en" ? "en" : "vi"),
+            )}
+          backHref={backHref}
+          action={createShowtimesAction}
+          today={vietnamToday()}
+          maxShowtimes={BULK_MAX_SHOWTIMES}
+        />
+      </div>
+    </ScopedIntlProvider>
   );
 }

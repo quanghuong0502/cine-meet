@@ -26,7 +26,11 @@ export const PX = {
   mascotLg: 200,
   /** A poster in the strip of movies (a hint of the size it is drawn at), and the poster on the movie page (= `--spacing-poster`). */
   posterList: 128,
+  /** Max rendered width of a 36%-wide poster inside the 672px app column. */
+  posterStripMax: 240,
   poster: 136,
+  /** Tailwind `sm:` breakpoint in px, for responsive `sizes` hints without loose pixel numbers. */
+  sm: 640,
   /** = `--container-app`: the width of the user app column. */
   column: 672,
 } as const;

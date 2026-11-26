@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import { RemoteImage } from "@/components/remote-image";
 import { cn } from "@/lib/utils";
 
@@ -17,7 +20,7 @@ export function getInitials(name: string): string {
 
 interface UserAvatarProps {
   name: string;
-  /** The picture; initials are shown when there is none. */
+  /** The picture; initials are shown when there is none or when loading fails. */
   image?: string;
   /** Diameter in px. */
   size: number;
@@ -26,6 +29,8 @@ interface UserAvatarProps {
 
 /** A person's round avatar: their picture, or their initials on the brand colour. */
 export function UserAvatar({ name, image, size, className }: UserAvatarProps) {
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
+  const showImage = Boolean(image) && failedSrc !== image;
   return (
     <span
       aria-hidden
@@ -36,8 +41,16 @@ export function UserAvatar({ name, image, size, className }: UserAvatarProps) {
         className,
       )}
     >
-      {image ? (
-        <RemoteImage src={image} alt="" width={size} height={size} sizes={`${size}px`} className="size-full object-cover" />
+      {showImage && image ? (
+        <RemoteImage
+          src={image}
+          alt=""
+          width={size}
+          height={size}
+          sizes={`${size}px`}
+          onError={() => setFailedSrc(image)}
+          className="size-full object-cover"
+        />
       ) : (
         getInitials(name)
       )}

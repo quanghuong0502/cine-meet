@@ -10,6 +10,17 @@ import { vietnamToday } from "@/lib/movie/status";
 import { cn } from "@/lib/utils";
 import type { ShowtimeRow } from "@/services/showtime.service";
 
+const weekdayFormatters = new Map<string, Intl.DateTimeFormat>();
+function weekdayFormatter(locale: string): Intl.DateTimeFormat {
+  const tag = locale === "en" ? "en-GB" : "vi-VN";
+  let fmt = weekdayFormatters.get(tag);
+  if (!fmt) {
+    fmt = new Intl.DateTimeFormat(tag, { timeZone: "UTC", weekday: "short" });
+    weekdayFormatters.set(tag, fmt);
+  }
+  return fmt;
+}
+
 /**
  * The showtimes of one movie, with filters so a long schedule is not one endless scroll: a strip of the days that have showtimes
  * (one day is shown at a time), then the cinema and the format available on that day. All rows are already here, so
@@ -48,7 +59,7 @@ export function MovieShowtimes({ rows }: { rows: ShowtimeRow[] }) {
   const shown = dayRows.filter((row) => (!branch || row.branch.id === branch) && (!format || row.format.id === format));
 
   const today = vietnamToday();
-  const weekday = new Intl.DateTimeFormat(locale === "en" ? "en-GB" : "vi-VN", { timeZone: "UTC", weekday: "short" });
+  const weekday = weekdayFormatter(locale);
 
   const choices = (label: string, items: [string, string][], value: string | null, set: (next: string | null) => void) =>
     items.length > 1 || value !== null ? (

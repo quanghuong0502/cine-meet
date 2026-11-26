@@ -16,6 +16,15 @@ export const ROOT_CLIENT_NAMESPACES = [
   "confirmDialog",
 ] as const;
 
+/** Minimal admin shell namespaces shared by `AdminNav`, `AdminBottomNav`, `ResourceManager`, `ResourceForm` and `DeleteRecordButton`. */
+export const ADMIN_SHELL_NAMESPACES = [
+  "admin.menuLabel",
+  "admin.nav",
+  "admin.bottomNav",
+  "admin.common",
+  "admin.validation",
+] as const;
+
 export function pickMessages(
   source: Record<string, unknown>,
   paths: readonly string[],

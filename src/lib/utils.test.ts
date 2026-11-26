@@ -1,6 +1,9 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { compileToSource, mergeConfigs } from "cn/compiler";
+import { defaultConfig } from "cn/config";
 import { describe, expect, it } from "vitest";
+import { CN_CONFIG_EXTENSION } from "./cn-tokens";
 import { cn, CUSTOM_CONTAINER_TOKENS, CUSTOM_SPACING_TOKENS, CUSTOM_TYPE_ROLES } from "./utils";
 
 describe("cn custom design-token merging", () => {
@@ -28,5 +31,11 @@ describe("cn custom design-token merging", () => {
     expect(spacingInCss.filter((t) => !(CUSTOM_SPACING_TOKENS as readonly string[]).includes(t))).toEqual([]);
     expect(containerInCss.filter((t) => !(CUSTOM_CONTAINER_TOKENS as readonly string[]).includes(t))).toEqual([]);
     expect(typeRolesInCss.filter((t) => !(CUSTOM_TYPE_ROLES as readonly string[]).includes(t))).toEqual([]);
+  });
+
+  it("keeps precompiled cn-tables.mjs in sync with CN_CONFIG_EXTENSION (run `npm run cn:build` if stale)", () => {
+    const expected = compileToSource(mergeConfigs(defaultConfig(), CN_CONFIG_EXTENSION));
+    const current = readFileSync(join(process.cwd(), "src", "lib", "cn-tables.mjs"), "utf8");
+    expect(current.endsWith(expected)).toBe(true);
   });
 });
