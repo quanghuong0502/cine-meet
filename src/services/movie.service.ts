@@ -1,5 +1,7 @@
 import { isValidObjectId } from "mongoose";
+import { cache } from "react";
 import { z } from "zod";
+import { CATALOG_MOVIES_TAG, safeCache } from "@/lib/cache";
 import { connectToDatabase } from "@/lib/db";
 import { isOfferedInFilter, movieStatus, vietnamToday, type MovieStatus } from "@/lib/movie/status";
 import { parseYoutubeId } from "@/lib/movie/youtube";
@@ -75,16 +77,53 @@ export async function listMovies(options: { q?: string; status?: MovieStatus } =
     .sort((a, b) => rank[a.status] - rank[b.status]);
 }
 
-/** Movies for the user's filter and poster strip: showing now, plus coming soon inside the window the admin set in the system settings. */
-export async function listFilterMovies(): Promise<MovieWithStatus[]> {
-  const [movies, settings] = await Promise.all([listMovies({}), getSystemSettings()]);
-  const today = vietnamToday();
-  return movies.filter((movie) => isOfferedInFilter(movie, today, settings.movieUpcomingDays));
+export interface FilterMovieItem {
+  _id: string;
+  title: string;
+  posterUrl?: string | null;
+  ageRatingId?: string | null;
+  releaseDate: string;
+  endDate?: string | null;
+  status: MovieStatus;
 }
 
-export async function getMovie(id: string): Promise<MovieWithStatus | null> {
+const loadFilterMoviesCached = safeCache(
+  async (today: string, upcomingDays: number): Promise<FilterMovieItem[]> => {
+    await connectToDatabase();
+    const docs = await Movie.find({}, "title posterUrl ageRatingId releaseDate endDate")
+      .sort({ releaseDate: -1, title: 1 })
+      .limit(500)
+      .lean();
+    const rank: Record<MovieStatus, number> = { showing: 0, upcoming: 1, ended: 2 };
+    return docs
+      .map((m) => {
+        const item = {
+          _id: m._id.toString(),
+          title: m.title,
+          posterUrl: m.posterUrl ?? null,
+          ageRatingId: m.ageRatingId ? m.ageRatingId.toString() : null,
+          releaseDate: m.releaseDate,
+          endDate: m.endDate ?? null,
+        };
+        return withStatus(item, today);
+      })
+      .filter((movie) => isOfferedInFilter(movie, today, upcomingDays))
+      .sort((a, b) => rank[a.status] - rank[b.status]);
+  },
+  ["catalog-filter-movies"],
+  { tags: [CATALOG_MOVIES_TAG], revalidate: 300 },
+);
+
+/** Movies for the user's filter and poster strip: showing now, plus coming soon inside the window the admin set in the system settings. */
+export async function listFilterMovies(): Promise<FilterMovieItem[]> {
+  const settings = await getSystemSettings();
+  return loadFilterMoviesCached(vietnamToday(), settings.movieUpcomingDays);
+}
+
+/** Deduplicated per render via React `cache()` so `generateMetadata` and `MovieDetailPage` share one DB read. */
+export const getMovie = cache(async (id: string): Promise<MovieWithStatus | null> => {
   if (!isValidObjectId(id)) return null;
   await connectToDatabase();
   const movie = await movieService.getById(id);
   return movie ? withStatus(movie) : null;
-}
+});

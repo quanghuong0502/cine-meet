@@ -7,6 +7,9 @@ import { findActiveUserById, type ActiveUser } from "@/services/user.service";
 export const INVALID_SESSION_PATH = "/api/session/invalid";
 export const CHANGE_PASSWORD_PATH = "/change-password";
 
+/** One JWT decryption per rendered request, shared across i18n, layout and page. */
+const getSession = cache(() => auth());
+
 /**
  * Reads the signed-in user from the database on every call, so locking an account or changing a role
  * takes effect on the very next request even though the JWT is still valid.
@@ -14,7 +17,7 @@ export const CHANGE_PASSWORD_PATH = "/change-password";
  * The only trusted source of `userId` and `role`: never take them from a body, query or AI tool.
  */
 export async function getActiveUser(): Promise<ActiveUser | null> {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user?.id) return null;
   return loadActiveUser(session.user.id);
 }
@@ -33,7 +36,7 @@ interface RequireUserOptions {
 
 /** For pages, layouts and server actions: returns the active user or redirects. */
 export async function requireUser(options: RequireUserOptions = {}): Promise<ActiveUser> {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user?.id) redirect("/login");
 
   const user = await loadActiveUser(session.user.id);

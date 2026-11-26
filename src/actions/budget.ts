@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth/guards";
 import { monthlyBudgetSchema, setMonthlyBudget } from "@/services/budget.service";
 
@@ -10,5 +11,7 @@ export async function saveBudgetAction(input: unknown): Promise<SaveBudgetResult
   const parsed = monthlyBudgetSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: "invalid" };
   await setMonthlyBudget(user.userId, parsed.data);
+  revalidatePath("/");
+  revalidatePath("/settings");
   return { ok: true };
 }

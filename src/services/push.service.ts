@@ -25,23 +25,37 @@ export const oneSignalDeviceSchema = z.object({
 export type OneSignalDeviceInput = z.infer<typeof oneSignalDeviceSchema>;
 
 /** Remembers this browser as a OneSignal device of the person. The same browser subscribing again (even after another person signed in on it) just moves the row. */
-export async function saveOneSignalDevice(userId: string, input: OneSignalDeviceInput): Promise<void> {
+export async function saveOneSignalDevice(userId: string, input: OneSignalDeviceInput): Promise<DeviceView> {
   await connectToDatabase();
-  await OneSignalDevice.updateOne(
+  const row = await OneSignalDevice.findOneAndUpdate(
     { subscriptionId: input.subscriptionId },
     { $set: { userId, userAgent: input.userAgent ?? "" }, $setOnInsert: { createdAt: new Date() } },
-    { upsert: true },
-  );
+    { upsert: true, returnDocument: "after" },
+  ).lean();
+  return {
+    id: row._id.toString(),
+    endpoint: row.subscriptionId,
+    device: describeDevice(row.userAgent ?? ""),
+    createdAt: row.createdAt.toISOString(),
+    lastUsedAt: row.lastUsedAt?.toISOString(),
+  };
 }
 
 /** Remembers this browser as a device of the person. The same browser subscribing again (even after another person signed in on it) just moves the row. */
-export async function saveSubscription(userId: string, input: SubscriptionInput): Promise<void> {
+export async function saveSubscription(userId: string, input: SubscriptionInput): Promise<DeviceView> {
   await connectToDatabase();
-  await PushSubscription.updateOne(
+  const row = await PushSubscription.findOneAndUpdate(
     { endpoint: input.endpoint },
     { $set: { userId, keys: input.keys, userAgent: input.userAgent ?? "" }, $setOnInsert: { createdAt: new Date() } },
-    { upsert: true },
-  );
+    { upsert: true, returnDocument: "after" },
+  ).lean();
+  return {
+    id: row._id.toString(),
+    endpoint: row.endpoint,
+    device: describeDevice(row.userAgent ?? ""),
+    createdAt: row.createdAt.toISOString(),
+    lastUsedAt: row.lastUsedAt?.toISOString(),
+  };
 }
 
 export interface DeviceView {

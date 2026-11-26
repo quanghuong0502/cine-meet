@@ -1,9 +1,11 @@
 import { isValidObjectId, Types } from "mongoose";
+import { cache } from "react";
 import { z } from "zod";
+import { MASTER_DATA_PRICING_TAG, safeCache } from "@/lib/cache";
 import { connectToDatabase } from "@/lib/db";
 import type { FacetRecord } from "@/lib/showtime/facets";
 import { resolveCsvRows, CSV_MAX_ROWS, type CsvRowError } from "@/lib/showtime/csv";
-import { timeInSlot } from "@/lib/showtime/slots";
+import { timeInSlot } from "@/lib/showtime/slots.helpers";
 import { overlaps, showtimeEnd, vietnamDayStart, vietnamInstant } from "@/lib/showtime/time";
 import { isCalendarDate, objectIdField } from "@/lib/validation/fields";
 import { Auditorium } from "@/models/auditorium";
@@ -16,6 +18,8 @@ import { Movie } from "@/models/movie";
 import { PriceRule } from "@/models/price-rule";
 import { Showtime } from "@/models/showtime";
 import { recordAudit } from "@/services/audit.service";
+import { getBrandOptions } from "@/services/master-data/brand-options";
+import { getCachedBranches, getCachedFormats } from "@/services/master-data/catalog-cache";
 import { resolveTicketPrice, type PriceRule as PriceRuleInfo } from "@/services/pricing/ticket-price";
 import { getSystemSettings } from "@/services/settings.service";
 
@@ -65,11 +69,15 @@ async function splitByOverlap<C extends Candidate>(candidates: C[]): Promise<{ f
   if (candidates.length === 0) return { fits: [], clashes: [] };
   const from = new Date(Math.min(...candidates.map((c) => c.startAt.getTime())));
   const to = new Date(Math.max(...candidates.map((c) => c.endAt.getTime())));
-  const stored = await Showtime.find({
-    auditoriumId: { $in: [...new Set(candidates.map((c) => c.auditoriumId))] },
-    startAt: { $lt: to },
-    endAt: { $gt: from },
-  }).lean();
+  const stored = await Showtime.find(
+    {
+      auditoriumId: { $in: [...new Set(candidates.map((c) => c.auditoriumId))] },
+      // Lower bound on `startAt` lets `{ auditoriumId: 1, startAt: 1 }` scan only a narrow time slice instead of all history.
+      startAt: { $gte: new Date(from.getTime() - 12 * 3600_000), $lt: to },
+      endAt: { $gt: from },
+    },
+    "auditoriumId startAt endAt",
+  ).lean();
   const taken = new Map<string, { start: Date; end: Date }[]>();
   for (const s of stored) {
     const key = s.auditoriumId.toString();
@@ -226,26 +234,46 @@ export interface ShowtimeFilters {
   limit?: number;
 }
 
-export async function loadPricing() {
-  const [rules, holidays] = await Promise.all([PriceRule.find({}).lean(), Holiday.find({}, "date").lean()]);
-  const info: PriceRuleInfo[] = rules.map((r) => ({
-    id: r._id.toString(),
-    brandId: r.brandId?.toString(),
-    branchId: r.branchId?.toString(),
-    formatId: r.formatId?.toString(),
-    seatTypeId: r.seatTypeId?.toString(),
-    dayType: r.dayType ?? undefined,
-    weekday: r.weekday ?? undefined,
-    timeFrom: r.timeFrom ?? undefined,
-    timeTo: r.timeTo ?? undefined,
-    price: r.price,
-    priority: r.priority,
-    validFrom: r.validFrom ?? undefined,
-    validTo: r.validTo ?? undefined,
-    createdAt: (r as unknown as { createdAt: Date }).createdAt,
-  }));
-  return { rules: info, holidays: new Set(holidays.map((h) => h.date)) };
+interface SerializedPricing {
+  rules: (Omit<PriceRuleInfo, "createdAt"> & { createdAt: string })[];
+  holidays: string[];
 }
+
+const loadPricingCached = safeCache(
+  async (): Promise<SerializedPricing> => {
+    await connectToDatabase();
+    const [rules, holidays] = await Promise.all([PriceRule.find({}).lean(), Holiday.find({}, "date").lean()]);
+    return {
+      rules: rules.map((r) => ({
+        id: r._id.toString(),
+        brandId: r.brandId?.toString(),
+        branchId: r.branchId?.toString(),
+        formatId: r.formatId?.toString(),
+        seatTypeId: r.seatTypeId?.toString(),
+        dayType: r.dayType ?? undefined,
+        weekday: r.weekday ?? undefined,
+        timeFrom: r.timeFrom ?? undefined,
+        timeTo: r.timeTo ?? undefined,
+        price: r.price,
+        priority: r.priority,
+        validFrom: r.validFrom ?? undefined,
+        validTo: r.validTo ?? undefined,
+        createdAt: ((r as unknown as { createdAt?: Date }).createdAt ?? new Date(0)).toISOString(),
+      })),
+      holidays: holidays.map((h) => h.date),
+    };
+  },
+  ["master-data-pricing"],
+  { tags: [MASTER_DATA_PRICING_TAG], revalidate: 300 },
+);
+
+export const loadPricing = cache(async () => {
+  const data = await loadPricingCached();
+  return {
+    rules: data.rules.map((r): PriceRuleInfo => ({ ...r, createdAt: new Date(r.createdAt) })),
+    holidays: new Set(data.holidays),
+  };
+});
 
 /**
  * One record per showtime a person can still book on a day (the same window and visibility rules as `searchShowtimes`), holding only
@@ -262,20 +290,20 @@ export async function listShowtimeFacets(date: string): Promise<FacetRecord[]> {
   if (found.length === 0) return [];
 
   const uniq = (values: Types.ObjectId[]) => [...new Set(values.map((v) => v.toString()))];
-  const [movies, rooms, formats, settings] = await Promise.all([
+  const [movies, rooms, formats, branches, brands, settings] = await Promise.all([
     Movie.find({ _id: { $in: uniq(found.map((s) => s.movieId)) } }, "genreIds").lean(),
     Auditorium.find({ _id: { $in: uniq(found.map((s) => s.auditoriumId)) } }, "branchId").lean(),
-    Format.find({ _id: { $in: uniq(found.map((s) => s.formatId)) } }, "active").lean(),
+    getCachedFormats(),
+    getCachedBranches(),
+    getBrandOptions(),
     getSystemSettings(),
   ]);
-  const branches = await Branch.find({ _id: { $in: uniq(rooms.map((r) => r.branchId)) } }, "brandId active").lean();
-  const brands = await Brand.find({ _id: { $in: uniq(branches.map((b) => b.brandId)) } }, "active").lean();
 
   const genresByMovie = new Map(movies.map((m) => [m._id.toString(), (m.genreIds ?? []).map((g) => g.toString())]));
   const branchByRoom = new Map(rooms.map((r) => [r._id.toString(), r.branchId.toString()]));
-  const formatActive = new Map(formats.map((f) => [f._id.toString(), f.active !== false]));
-  const branchById = new Map(branches.map((b) => [b._id.toString(), b]));
-  const brandActive = new Map(brands.map((b) => [b._id.toString(), b.active !== false]));
+  const formatActive = new Map(formats.map((f) => [f.id, f.active]));
+  const branchById = new Map(branches.map((b) => [b.id, b]));
+  const brandActive = new Map(brands.map((b) => [b.id, b.active]));
 
   const records: FacetRecord[] = [];
   for (const s of found) {
@@ -283,7 +311,7 @@ export async function listShowtimeFacets(date: string): Promise<FacetRecord[]> {
     const branch = branchId ? branchById.get(branchId) : undefined;
     const formatId = s.formatId.toString();
     // Switched off by an admin: not shown in the list, so not offered as a choice either.
-    if (!branchId || !branch || branch.active === false || brandActive.get(branch.brandId.toString()) === false || formatActive.get(formatId) === false) continue;
+    if (!branchId || !branch || !branch.active || brandActive.get(branch.brandId) === false || formatActive.get(formatId) === false) continue;
     const time = new Date(s.startAt.getTime() + 7 * 3600_000).toISOString().slice(11, 16);
     records.push({
       branch: branchId,
@@ -333,11 +361,16 @@ export async function searchShowtimes(filters: ShowtimeFilters = {}): Promise<Sh
   if (rows.length === 0) return [];
 
   const uniq = (values: Types.ObjectId[]) => [...new Set(values.map((v) => v.toString()))];
+  const layoutObjectIds = uniq(rows.map((r) => r.layoutId)).map((id) => new Types.ObjectId(id));
   const [movies, rooms, formats, layouts, pricing] = await Promise.all([
     Movie.find({ _id: { $in: uniq(rows.map((r) => r.movieId)) } }, "title posterUrl durationMin").lean(),
     Auditorium.find({ _id: { $in: uniq(rows.map((r) => r.auditoriumId)) } }, "name branchId").lean(),
     Format.find({ _id: { $in: uniq(rows.map((r) => r.formatId)) } }, "name active").lean(),
-    AuditoriumLayout.find({ _id: { $in: uniq(rows.map((r) => r.layoutId)) } }, "config.defaultSeatType seats.type").lean(),
+    // Aggregate unique seat types in MongoDB instead of shipping 150-400 seat.type strings per layout over the wire.
+    AuditoriumLayout.aggregate<{ _id: Types.ObjectId; defaultSeatType?: string; seatTypes?: string[] }>([
+      { $match: { _id: { $in: layoutObjectIds } } },
+      { $project: { defaultSeatType: "$config.defaultSeatType", seatTypes: { $setUnion: [{ $ifNull: ["$seats.type", []] }, []] } } },
+    ]),
     loadPricing(),
   ]);
   const branches = await Branch.find({ _id: { $in: uniq(rooms.map((r) => r.branchId)) } }, "name brandId active").lean();
@@ -348,10 +381,10 @@ export async function searchShowtimes(filters: ShowtimeFilters = {}): Promise<Sh
   const formatById = new Map(formats.map((f) => [f._id.toString(), f]));
   const branchById = new Map(branches.map((b) => [b._id.toString(), b]));
   const brandById = new Map(brands.map((b) => [b._id.toString(), b]));
-  const seatTypeByLayout = new Map(layouts.map((l) => [l._id.toString(), (l.config as { defaultSeatType: string }).defaultSeatType]));
+  const seatTypeByLayout = new Map(layouts.map((l) => [l._id.toString(), l.defaultSeatType ?? ""]));
   // Every seat type the room has, so the price can be shown as a range (standard, VIP, couple...).
   const seatTypesByLayout = new Map(
-    layouts.map((l) => [l._id.toString(), [...new Set([(l.config as { defaultSeatType: string }).defaultSeatType, ...(l.seats ?? []).map((seat) => seat.type)])]]),
+    layouts.map((l) => [l._id.toString(), [...new Set([l.defaultSeatType ?? "", ...(l.seatTypes ?? [])].filter(Boolean))]]),
   );
 
   const result: ShowtimeRow[] = [];
@@ -409,36 +442,91 @@ export async function searchShowtimesFrom(movieId: string, after: Date): Promise
   return rows.filter((row) => new Date(row.startAt).getTime() >= after.getTime());
 }
 
+/** Single targeted showtime lookup with pricing (avoids scanning & pricing up to 300 showtimes just to pick one by ID). */
+export async function getShowtimeById(showtimeId: string): Promise<ShowtimeRow | null> {
+  if (!isValidObjectId(showtimeId)) return null;
+  await connectToDatabase();
+  const s = await Showtime.findOne({ _id: showtimeId, startAt: { $gte: new Date() } }).lean();
+  if (!s) return null;
+  const [movie, room, format, layoutAgg, pricing] = await Promise.all([
+    Movie.findById(s.movieId, "title posterUrl durationMin").lean(),
+    Auditorium.findById(s.auditoriumId, "name branchId").lean(),
+    Format.findById(s.formatId, "name active").lean(),
+    AuditoriumLayout.aggregate<{ _id: Types.ObjectId; defaultSeatType?: string; seatTypes?: string[] }>([
+      { $match: { _id: s.layoutId } },
+      { $project: { defaultSeatType: "$config.defaultSeatType", seatTypes: { $setUnion: [{ $ifNull: ["$seats.type", []] }, []] } } },
+    ]),
+    loadPricing(),
+  ]);
+  if (!movie || !room || !format || format.active === false) return null;
+  const branch = await Branch.findById(room.branchId, "name brandId active").lean();
+  if (!branch || branch.active === false) return null;
+  const brand = await Brand.findById(branch.brandId, "name active").lean();
+  if (brand?.active === false) return null;
+  const layout = layoutAgg[0];
+  const defaultSeatType = layout?.defaultSeatType ?? "";
+  const seatTypeIds = [...new Set([defaultSeatType, ...(layout?.seatTypes ?? [])].filter(Boolean))];
+  const priceOf = (seatTypeId: string) =>
+    resolveTicketPrice({
+      showtime: {
+        startAt: s.startAt,
+        brandId: branch.brandId.toString(),
+        branchId: branch._id.toString(),
+        formatId: s.formatId.toString(),
+        seatTypeId,
+      },
+      rules: pricing.rules,
+      holidays: pricing.holidays,
+      priceOverride: s.priceOverride ?? undefined,
+    })?.price;
+  const price = priceOf(defaultSeatType);
+  const prices = seatTypeIds.length > 0 ? seatTypeIds.map((id) => priceOf(id)).filter((v): v is number => v !== undefined) : price === undefined ? [] : [price];
+  return {
+    id: s._id.toString(),
+    movie: { id: movie._id.toString(), title: movie.title, posterUrl: movie.posterUrl ?? null, durationMin: movie.durationMin },
+    branch: { id: branch._id.toString(), name: branch.name, brandName: brand?.name ?? "" },
+    auditorium: { id: room._id.toString(), name: room.name },
+    layoutId: s.layoutId.toString(),
+    format: { id: format._id.toString(), name: format.name },
+    startAt: s.startAt.toISOString(),
+    endAt: s.endAt.toISOString(),
+    price: price ?? null,
+    priceMin: prices.length > 0 ? Math.min(...prices) : null,
+    priceMax: prices.length > 0 ? Math.max(...prices) : null,
+  };
+}
+
 /**
  * Movies a person could actually watch: at least one showtime that has not started, in a cinema and format that are switched on
  * (the same rule `searchShowtimes` uses for users). A movie with none is left out of lists where picking it would lead nowhere.
  */
 export async function listMovieIdsWithShowtimes(): Promise<Set<string>> {
   await connectToDatabase();
-  const upcoming = await Showtime.find({ startAt: { $gte: new Date() } }, "movieId auditoriumId formatId").lean();
-  if (upcoming.length === 0) return new Set();
-
-  const uniq = (values: Types.ObjectId[]) => [...new Set(values.map((v) => v.toString()))];
-  const [rooms, formats] = await Promise.all([
-    Auditorium.find({ _id: { $in: uniq(upcoming.map((s) => s.auditoriumId)) } }, "branchId").lean(),
-    Format.find({ _id: { $in: uniq(upcoming.map((s) => s.formatId)) } }, "active").lean(),
+  const triples = await Showtime.aggregate<{ _id: { movie: Types.ObjectId; room: Types.ObjectId; format: Types.ObjectId } }>([
+    { $match: { startAt: { $gte: new Date() } } },
+    { $group: { _id: { movie: "$movieId", room: "$auditoriumId", format: "$formatId" } } },
   ]);
-  const branches = await Branch.find({ _id: { $in: uniq(rooms.map((r) => r.branchId)) } }, "brandId active").lean();
-  const brands = await Brand.find({ _id: { $in: uniq(branches.map((b) => b.brandId)) } }, "active").lean();
+  if (triples.length === 0) return new Set();
 
-  // A record with no value (made before the switch existed) counts as on.
-  const on = (doc: { active?: boolean | null } | undefined) => doc !== undefined && doc.active !== false;
+  const roomIds = [...new Set(triples.map((t) => t._id.room.toString()))];
+  const [rooms, formats, branches, brands] = await Promise.all([
+    Auditorium.find({ _id: { $in: roomIds } }, "branchId").lean(),
+    getCachedFormats(),
+    getCachedBranches(),
+    getBrandOptions(),
+  ]);
+
   const roomById = new Map(rooms.map((r) => [r._id.toString(), r]));
-  const formatById = new Map(formats.map((f) => [f._id.toString(), f]));
-  const branchById = new Map(branches.map((b) => [b._id.toString(), b]));
-  const brandById = new Map(brands.map((b) => [b._id.toString(), b]));
+  const formatActive = new Map(formats.map((f) => [f.id, f.active]));
+  const branchById = new Map(branches.map((b) => [b.id, b]));
+  const brandActive = new Map(brands.map((b) => [b.id, b.active]));
 
   const ids = new Set<string>();
-  for (const s of upcoming) {
-    const room = roomById.get(s.auditoriumId.toString());
+  for (const t of triples) {
+    const room = roomById.get(t._id.room.toString());
     const branch = room && branchById.get(room.branchId.toString());
-    if (!branch || !on(formatById.get(s.formatId.toString())) || !on(branch) || !on(brandById.get(branch.brandId.toString()))) continue;
-    ids.add(s.movieId.toString());
+    if (!branch || !branch.active || formatActive.get(t._id.format.toString()) !== true || brandActive.get(branch.brandId) !== true) continue;
+    ids.add(t._id.movie.toString());
   }
   return ids;
 }

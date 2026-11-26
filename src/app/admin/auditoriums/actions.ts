@@ -1,12 +1,21 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { z } from "zod";
 import type { RemoveResult, SaveError } from "@/lib/admin/action-result";
 import { requireAdmin } from "@/lib/auth/guards";
+import { CATALOG_CINEMAS_TAG } from "@/lib/cache";
 import { createAuditorium, removeAuditorium, updateAuditorium } from "@/services/auditorium.service";
 
 const PAGE = "/admin/auditoriums";
+
+function refreshAuditoriums(id?: string) {
+  updateTag(CATALOG_CINEMAS_TAG);
+  revalidatePath(PAGE);
+  if (id) revalidatePath(`${PAGE}/${id}`);
+  revalidatePath("/cinemas", "layout");
+  revalidatePath("/showtimes");
+}
 
 const inputSchema = z.object({
   id: z.string().optional(),
@@ -36,13 +45,12 @@ export async function saveAuditoriumAction(input: z.input<typeof inputSchema>): 
   if (id) {
     const result = await updateAuditorium(id, { name, config }, admin.userId);
     if (!result.ok) return { status: "error", error: result.error };
-    revalidatePath(PAGE);
-    revalidatePath(`${PAGE}/${id}`);
+    refreshAuditoriums(id);
     return { status: "success", id, version: result.data.version, createdVersion: result.data.createdVersion };
   }
   const result = await createAuditorium({ branchId, name, config }, admin.userId);
   if (!result.ok) return { status: "error", error: result.error };
-  revalidatePath(PAGE);
+  refreshAuditoriums();
   return { status: "success", id: result.data.id, version: 1, createdVersion: true };
 }
 
@@ -50,6 +58,6 @@ export async function removeAuditoriumAction(id: string): Promise<RemoveResult> 
   const admin = await requireAdmin();
   const result = await removeAuditorium(id, admin.userId);
   if (!result.ok) return result;
-  revalidatePath(PAGE);
+  refreshAuditoriums();
   return { ok: true };
 }

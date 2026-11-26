@@ -30,10 +30,14 @@ export type SeatMarkResult = { ok: true } | { ok: false; error: "not_found" | "i
  */
 export async function saveSeatMark(userId: string, input: SeatMarkInput): Promise<SeatMarkResult> {
   await connectToDatabase();
-  const layout = await AuditoriumLayout.findOne({ _id: input.layoutId, auditoriumId: input.auditoriumId }, "seats.code").lean();
-  if (!layout) return { ok: false, error: "not_found" };
-  if (!layout.seats.some((s) => s.code === input.seatCode)) return { ok: false, error: "invalid" };
-  await SeatMark.findOneAndUpdate(
+  // Check seat membership directly in MongoDB without transferring the entire `seats.code` array over the wire.
+  const [hasSeat, hasLayout] = await Promise.all([
+    AuditoriumLayout.exists({ _id: input.layoutId, auditoriumId: input.auditoriumId, "seats.code": input.seatCode }),
+    AuditoriumLayout.exists({ _id: input.layoutId, auditoriumId: input.auditoriumId }),
+  ]);
+  if (!hasLayout) return { ok: false, error: "not_found" };
+  if (!hasSeat) return { ok: false, error: "invalid" };
+  await SeatMark.updateOne(
     { userId, auditoriumId: input.auditoriumId, seatCode: input.seatCode },
     {
       $set: { layoutId: input.layoutId, kind: input.kind, tags: [...new Set(input.tags)], ...(input.note ? { note: input.note } : {}) },

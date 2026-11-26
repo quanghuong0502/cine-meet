@@ -30,25 +30,44 @@ declare global {
 /** `onStateChange` values. */
 export const YT_STATE = { ended: 0, playing: 1, paused: 2, buffering: 3, cued: 5 } as const;
 
+const LOAD_TIMEOUT_MS = 6_000;
 let loading: Promise<YtNamespace> | null = null;
 
-/** Adds the API script on first use; every later call shares the same promise. Rejects when the script cannot be loaded. */
+/** Adds the API script on first use; every later call shares the same promise. Rejects (with cleanup & timeout) when blocked. */
 export function loadYouTubeApi(): Promise<YtNamespace> {
   if (window.YT?.Player) return Promise.resolve(window.YT);
   loading ??= new Promise<YtNamespace>((resolve, reject) => {
     const previous = window.onYouTubeIframeAPIReady;
+    const script = document.createElement("script");
+    let settled = false;
+
+    const fail = (message: string) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      window.onYouTubeIframeAPIReady = previous;
+      script.remove();
+      loading = null;
+      reject(new Error(message));
+    };
+
+    const timer = setTimeout(() => fail("YouTube API timed out"), LOAD_TIMEOUT_MS);
+
     window.onYouTubeIframeAPIReady = () => {
       previous?.();
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
       if (window.YT) resolve(window.YT);
-      else reject(new Error("YouTube API missing"));
+      else {
+        loading = null;
+        reject(new Error("YouTube API missing"));
+      }
     };
-    const script = document.createElement("script");
+
     script.src = "https://www.youtube.com/iframe_api";
     script.async = true;
-    script.onerror = () => {
-      loading = null;
-      reject(new Error("YouTube API failed to load"));
-    };
+    script.onerror = () => fail("YouTube API failed to load");
     document.head.appendChild(script);
   });
   return loading;

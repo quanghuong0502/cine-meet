@@ -9,6 +9,7 @@ import { Showtime } from "@/models/showtime";
 import { SeatMark } from "@/models/seat-mark";
 import { SeatType } from "@/models/seat-type";
 import { recordAudit } from "@/services/audit.service";
+import { getCinemaDimensions } from "@/services/cinema-dimensions.service";
 import { buildLayout } from "@/services/seat-layout-build";
 
 export type AuditoriumError =
@@ -126,7 +127,8 @@ export async function createAuditorium(
   const prepared = await prepareConfig(input.config);
   if (!prepared.ok) return prepared;
   const { config, seatTypes } = prepared.data;
-  const built = buildLayout(config, seatTypes);
+  const defaults = await getCinemaDimensions();
+  const built = buildLayout(config, seatTypes, defaults);
 
   const session = await mongoose.startSession();
   try {
@@ -175,8 +177,13 @@ export async function updateAuditorium(
   if (!prepared.ok) return prepared;
   const { config, seatTypes } = prepared.data;
 
-  const current = room.currentLayoutId ? await AuditoriumLayout.findById(room.currentLayoutId).lean() : null;
+  const [current, defaults] = await Promise.all([
+    room.currentLayoutId ? AuditoriumLayout.findById(room.currentLayoutId, "config version").lean() : Promise.resolve(null),
+    getCinemaDimensions(),
+  ]);
   const unchanged = current && JSON.stringify(normalize(current.config)) === JSON.stringify(normalize(config));
+  // Compute layout outside the transaction so MongoDB holds locks only for the writes.
+  const built = current && unchanged ? null : buildLayout(config, seatTypes, defaults);
 
   const session = await mongoose.startSession();
   try {
@@ -187,11 +194,10 @@ export async function updateAuditorium(
         out.value = { layoutId: current._id.toString(), version: current.version, createdVersion: false };
         return;
       }
-      const latest = await AuditoriumLayout.findOne({ auditoriumId: id }).sort({ version: -1 }).session(session).lean();
+      const latest = await AuditoriumLayout.findOne({ auditoriumId: id }, "version").sort({ version: -1 }).session(session).lean();
       const version = (latest?.version ?? 0) + 1;
-      const built = buildLayout(config, seatTypes);
       const [layout] = await AuditoriumLayout.create(
-        [{ auditoriumId: id, version, config, seats: built.seats, summary: built.summary, createdBy: actorId }],
+        [{ auditoriumId: id, version, config, seats: built!.seats, summary: built!.summary, createdBy: actorId }],
         { session },
       );
       await Auditorium.updateOne({ _id: id }, { currentLayoutId: layout._id }, { session });
@@ -221,9 +227,11 @@ export async function removeAuditorium(id: string, actorId: string): Promise<Aud
   await connectToDatabase();
   const room = await getAuditorium(id);
   if (!room) return { ok: false, error: "not_found" };
-  if ((await Showtime.countDocuments({ auditoriumId: id })) > 0) return { ok: false, error: "in_use" };
-  await SeatMark.deleteMany({ auditoriumId: id });
-  await AuditoriumLayout.deleteMany({ auditoriumId: id });
+  if (await Showtime.exists({ auditoriumId: id })) return { ok: false, error: "in_use" };
+  await Promise.all([
+    SeatMark.deleteMany({ auditoriumId: id }),
+    AuditoriumLayout.deleteMany({ auditoriumId: id }),
+  ]);
   await Auditorium.deleteOne({ _id: id });
   await recordAudit({
     actorId,

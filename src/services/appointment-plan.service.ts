@@ -11,16 +11,19 @@ import { Expense } from "@/models/expense";
 import { FnbCategory } from "@/models/fnb-category";
 import { FnbCombo } from "@/models/fnb-combo";
 import { FnbItem } from "@/models/fnb-item";
+import { Movie } from "@/models/movie";
 import { SeatClaim } from "@/models/seat-claim";
 import { Showtime } from "@/models/showtime";
-import { attendeeIdsOf, loadSeatPrices, recomputeEstimate } from "@/services/appointment-estimate";
-import { mutate, notifyPeople, sameId, type Doc, type Failure } from "@/services/appointment.service";
+import { User } from "@/models/user";
+import { enqueueNotifications } from "@/notifications/outbox";
+import { attendeeIdsOf, computeSeatPrices, loadSeatPrices, recomputeEstimate } from "@/services/appointment-estimate";
+import { mutate, sameId, type Doc, type Failure } from "@/services/appointment.service";
 import { cancelScheduled, scheduleExpenseReminder, scheduleReminders } from "@/services/scheduled-notification.service";
 import { checkBudgetWarnings } from "@/services/budget.service";
 import { generateGrid } from "@/lib/seat-layout/generate";
 import type { LayoutConfig, LayoutGeometry, LayoutSeat, SeatTypeInfo } from "@/lib/seat-layout/types";
-import { SeatType } from "@/models/seat-type";
-import { searchShowtimes, type ShowtimeRow } from "@/services/showtime.service";
+import { getCachedSeatTypes } from "@/services/master-data/catalog-cache";
+import { loadPricing, searchShowtimes, type ShowtimeRow } from "@/services/showtime.service";
 import { vietnamDayKey } from "@/lib/datetime";
 import { vietnamParts } from "@/services/pricing/ticket-price";
 import { comboPrice } from "@/services/pricing/combo-price";
@@ -115,9 +118,16 @@ export async function assignSeats(creatorId: string, id: string, input: AssignSe
   if (!sameId(first.creatorId, creatorId)) return { ok: false, error: "forbidden" };
   if (first.status !== "PLANNING") return { ok: false, error: "bad_state" };
   if (!first.showtimeId) return { ok: false, error: "no_showtime" };
-  const showtime = await Showtime.findById(first.showtimeId, "layoutId").lean();
-  const layout = showtime ? await AuditoriumLayout.findById(showtime.layoutId, "seats").lean() : null;
-  if (!layout) return { ok: false, error: "no_showtime" };
+  const showtime = await Showtime.findById(first.showtimeId, "layoutId auditoriumId startAt formatId priceOverride").lean();
+  const [layout, room, pricing] = showtime
+    ? await Promise.all([
+        AuditoriumLayout.findById(showtime.layoutId, "seats").lean(),
+        Auditorium.findById(showtime.auditoriumId, "branchId").lean(),
+        loadPricing(),
+      ])
+    : [null, null, null];
+  const branch = room ? await Branch.findById(room.branchId, "brandId").lean() : null;
+  if (!showtime || !layout || !branch || !pricing) return { ok: false, error: "no_showtime" };
   const seatByCode = new Map(layout.seats.map((s) => [s.code, s]));
 
   const people = new Set<string>();
@@ -131,6 +141,8 @@ export async function assignSeats(creatorId: string, id: string, input: AssignSe
     if ((perSeat.get(a.seatCode) ?? 0) > seat.span) return { ok: false, error: "invalid_seat" };
   }
   const codes = [...perSeat.keys()];
+  // Compute seat prices outside the MongoDB transaction so the lock covers only the write ops.
+  const preloadedPrices = computeSeatPrices(showtime, branch, layout.seats, pricing);
 
   for (let attempt = 0; attempt < SEAT_TRIES; attempt++) {
     const session = await mongoose.startSession();
@@ -152,7 +164,7 @@ export async function assignSeats(creatorId: string, id: string, input: AssignSe
         await SeatClaim.deleteMany({ appointmentId: id }, { session });
         if (codes.length > 0) await SeatClaim.insertMany(codes.map((seatCode) => ({ showtimeId: doc.showtimeId, seatCode, appointmentId: id })), { session, ordered: true });
         doc.set("seats", input.assignments.map((a) => ({ userId: a.userId, seatCode: a.seatCode })));
-        await recomputeEstimate(doc);
+        await recomputeEstimate(doc, preloadedPrices);
         await doc.save({ session });
         const after = new Map(input.assignments.map((a) => [a.userId, a.seatCode]));
         const affectedIds = [...new Set([...before.keys(), ...after.keys()])].filter((userId) => before.get(userId) !== after.get(userId));
@@ -209,13 +221,17 @@ export async function setFood(creatorId: string, id: string, input: SetFoodInput
     const branch = room ? await Branch.findById(room.branchId, "brandId").lean() : null;
     if (!branch) return { ok: false as const, error: "no_showtime" as const };
 
+    const itemIds = input.lines.filter((l) => l.kind === "item").map((l) => l.refId);
+    const comboIds = input.lines.filter((l) => l.kind === "combo").map((l) => l.refId);
     const [items, combos] = await Promise.all([
-      FnbItem.find({ brandId: branch.brandId, _id: { $in: input.lines.filter((l) => l.kind === "item").map((l) => l.refId) } }).lean(),
-      FnbCombo.find({ brandId: branch.brandId, _id: { $in: input.lines.filter((l) => l.kind === "combo").map((l) => l.refId) } }).lean(),
+      itemIds.length ? FnbItem.find({ brandId: branch.brandId, _id: { $in: itemIds } }).lean() : Promise.resolve([]),
+      comboIds.length ? FnbCombo.find({ brandId: branch.brandId, _id: { $in: comboIds } }).lean() : Promise.resolve([]),
     ]);
     const itemById = new Map(items.map((i) => [i._id.toString(), i]));
     const comboItemIds = [...new Set(combos.flatMap((c) => c.items.map((i) => i.itemId.toString())))];
-    const comboItems = new Map((await FnbItem.find({ _id: { $in: comboItemIds } }).lean()).map((i) => [i._id.toString(), i]));
+    const comboItems = new Map(
+      (comboItemIds.length ? await FnbItem.find({ _id: { $in: comboItemIds } }).lean() : []).map((i) => [i._id.toString(), i]),
+    );
     const comboById = new Map(combos.map((c) => [c._id.toString(), c]));
 
     const lines = [];
@@ -253,11 +269,26 @@ export async function confirmAppointment(creatorId: string, id: string): Promise
     doc.status = "CONFIRMED";
     doc.confirmedAt = new Date();
     const mine = (userId: string) => doc.seats.find((s) => sameId(s.userId, userId))?.seatCode;
-    return { ok: true as const, showtimeId: doc.showtimeId.toString(), slotAt: chosenOption(doc)?.startAt.toISOString(), seats: attendees.filter((u) => u !== creatorId).map((u) => [u, mine(u)] as const) };
+    return { ok: true as const, movieId: doc.movieId.toString(), showtimeId: doc.showtimeId.toString(), slotAt: chosenOption(doc)?.startAt.toISOString(), seats: attendees.filter((u) => u !== creatorId).map((u) => [u, mine(u)] as const) };
   });
   if (!result.ok) return result;
-  const place = await placeOf(result.showtimeId);
-  for (const [userId, seatCode] of result.seats) await notifyPeople(id, creatorId, "appointment_confirmed", [userId], { slotAt: result.slotAt, place, seatCode });
+  const [place, movie, actor] = await Promise.all([
+    placeOf(result.showtimeId),
+    Movie.findById(result.movieId, "title").lean(),
+    User.findById(creatorId, "name").lean(),
+  ]);
+  // Batch all attendees' confirmation notifications in ONE outbox write instead of N sequential calls.
+  if (result.seats.length > 0) {
+    const movieTitle = movie?.title ?? "";
+    const actorName = actor?.name ?? "";
+    await enqueueNotifications(
+      result.seats.map(([recipientId, seatCode]) => ({
+        recipientId,
+        type: "appointment_confirmed",
+        payload: { appointmentId: id, movieTitle, actorName, slotAt: result.slotAt, place, seatCode },
+      })),
+    );
+  }
   if (result.slotAt) await scheduleReminders(id, new Date(result.slotAt));
   return { ok: true };
 }
@@ -324,17 +355,22 @@ export async function completeAppointment(creatorId: string, id: string, now = n
   const rows = result.allPaidByCreator
     ? [{ userId: result.creatorId, ...sumCosts(result.estimate) }]
     : result.estimate;
-  for (const e of rows) {
-    for (const category of EXPENSE_CATEGORIES) {
-      if (e[category] <= 0) continue;
-      await Expense.updateOne({ appointmentId: id, userId: e.userId, category }, { $setOnInsert: { amount: e[category], date: result.start } }, { upsert: true });
-    }
-  }
-  await checkBudgetWarnings(rows.map((r) => r.userId));
-  // #9: nudge to log the real cost and rate the seat, a few hours after the showtime ends.
-  const showtime = result.showtimeId ? await Showtime.findById(result.showtimeId, "endAt").lean() : null;
+  const expenseOps = rows.flatMap((e) =>
+    EXPENSE_CATEGORIES.filter((category) => e[category] > 0).map((category) => ({
+      updateOne: {
+        filter: { appointmentId: id, userId: e.userId, category },
+        update: { $setOnInsert: { amount: e[category], date: result.start } },
+        upsert: true,
+      },
+    })),
+  );
+  if (expenseOps.length > 0) await Expense.bulkWrite(expenseOps, { ordered: false });
+  const [, showtime] = await Promise.all([
+    checkBudgetWarnings(rows.map((r) => r.userId)),
+    result.showtimeId ? Showtime.findById(result.showtimeId, "endAt").lean() : Promise.resolve(null),
+    syncActualCost(id),
+  ]);
   if (showtime) await scheduleExpenseReminder(id, showtime.endAt);
-  await syncActualCost(id);
   return { ok: true };
 }
 
@@ -352,7 +388,10 @@ export type PersonCostInput = z.infer<typeof personCostSchema>;
 export async function setPersonCost(actorId: string, id: string, input: PersonCostInput): Promise<{ ok: true } | Failure> {
   if (!isValidObjectId(id)) return { ok: false, error: "not_found" };
   await connectToDatabase();
-  const doc = await Appointment.findById(id).lean();
+  const doc = await Appointment.findById(
+    id,
+    "creatorId participants allPaidByCreator status timeOptions._id timeOptions.startAt chosenOptionId completedAt",
+  ).lean();
   if (!doc) return { ok: false, error: "not_found" };
   const attendees = attendeeIdsOf(doc as never);
   const isCreator = sameId(doc.creatorId, actorId);
@@ -367,14 +406,23 @@ export async function setPersonCost(actorId: string, id: string, input: PersonCo
   if (!attendees.includes(input.userId)) return { ok: false, error: "not_attendee" };
   const date = doc.timeOptions.find((o) => sameId(o._id, doc.chosenOptionId?.toString() ?? ""))?.startAt ?? doc.completedAt ?? new Date();
 
-  for (const category of EXPENSE_CATEGORIES) {
-    const amount = input[category];
-    if (amount > 0) {
-      await Expense.updateOne({ appointmentId: id, userId: input.userId, category }, { $set: { amount, date, ...(input.note ? { note: input.note } : {}) } }, { upsert: true });
-    } else {
-      await Expense.deleteOne({ appointmentId: id, userId: input.userId, category });
-    }
-  }
+  await Expense.bulkWrite(
+    EXPENSE_CATEGORIES.map((category) => {
+      const amount = input[category];
+      return amount > 0
+        ? {
+            updateOne: {
+              filter: { appointmentId: id, userId: input.userId, category },
+              update: { $set: { amount, date, ...(input.note ? { note: input.note } : {}) } },
+              upsert: true,
+            },
+          }
+        : {
+            deleteOne: { filter: { appointmentId: id, userId: input.userId, category } },
+          };
+    }),
+    { ordered: false },
+  );
   await syncActualCost(id);
   return { ok: true };
 }
@@ -428,27 +476,34 @@ export async function getPlanData(userId: string, id: string, roomOf?: string): 
   // Only showtimes on the day the group agreed on, from the agreed time onwards.
   const agreedAt = doc.lockedStartAt ?? doc.timeOptions.find((o) => sameId(o._id, doc.chosenOptionId?.toString() ?? ""))?.startAt;
   const day = agreedAt ? vietnamDayKey(agreedAt.toISOString()) : undefined;
-  // `roomOf` = the room and food of a showtime the creator is trying on screen (not saved yet), so the list of showtimes is not needed.
-  const found = roomOf ? [] : await searchShowtimes({ movieId: doc.movieId.toString(), date: day, limit: 300 });
+  const showtimeId = roomOf ?? doc.showtimeId?.toString();
+  // Run showtime list search and chosen showtime lookup in parallel.
+  const [found, showtime] = await Promise.all([
+    roomOf ? Promise.resolve([]) : searchShowtimes({ movieId: doc.movieId.toString(), date: day, limit: 300 }),
+    showtimeId ? Showtime.findOne({ _id: showtimeId, movieId: doc.movieId }, "layoutId auditoriumId startAt formatId priceOverride").lean() : Promise.resolve(null),
+  ]);
   const showtimes = agreedAt ? found.filter((s) => new Date(s.startAt).getTime() >= agreedAt.getTime()) : found;
   const data: PlanData = { showtimes, food: { items: [], combos: [], categories: [] } };
-  const showtimeId = roomOf ?? doc.showtimeId?.toString();
-  if (!showtimeId) return data;
+  if (!showtimeId || !showtime) return data;
 
-  const showtime = await Showtime.findOne({ _id: showtimeId, movieId: doc.movieId }, "layoutId auditoriumId startAt").lean();
-  const layout = showtime ? await AuditoriumLayout.findById(showtime.layoutId).lean() : null;
-  const room = showtime ? await Auditorium.findById(showtime.auditoriumId, "branchId").lean() : null;
+  const [layout, room, types, taken, pricing] = await Promise.all([
+    AuditoriumLayout.findById(showtime.layoutId).lean(),
+    Auditorium.findById(showtime.auditoriumId, "branchId").lean(),
+    getCachedSeatTypes(),
+    takenSeatCodes(showtimeId, id),
+    loadPricing(),
+  ]);
   const branch = room ? await Branch.findById(room.branchId, "brandId").lean() : null;
-  if (!showtime || !layout || !branch) return data;
+  if (!layout || !branch) return data;
 
-  const types = await SeatType.find({}).lean();
-  const infos: SeatTypeInfo[] = types.map((t) => ({ id: t._id.toString(), name: t.name, capacity: t.capacity }));
+  const infos: SeatTypeInfo[] = types.map((t) => ({ id: t.id, name: t.name, capacity: t.capacity }));
+  const seatPrices = computeSeatPrices(showtime, branch, layout.seats, pricing);
   data.room = {
     seats: JSON.parse(JSON.stringify(layout.seats)) as LayoutSeat[],
     geometry: generateGrid(layout.config as LayoutConfig, infos).geometry,
-    seatTypes: types.map((t) => ({ id: t._id.toString(), name: t.name, nameEn: t.nameEn ?? null, color: t.color ?? null })),
-    taken: await takenSeatCodes(showtimeId, id),
-    prices: Object.fromEntries([...(await loadSeatPrices(showtimeId))].map(([code, info]) => [code, info.price ?? 0])),
+    seatTypes: types.map((t) => ({ id: t.id, name: t.name, nameEn: t.nameEn, color: t.color })),
+    taken,
+    prices: Object.fromEntries([...seatPrices].map(([code, info]) => [code, info.price ?? 0])),
   };
 
   const today = vietnamParts(showtime.startAt).date;

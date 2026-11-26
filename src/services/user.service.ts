@@ -1,4 +1,5 @@
 import bcrypt from "bcryptjs";
+import { isValidObjectId, Types } from "mongoose";
 import { connectToDatabase } from "@/lib/db";
 import {
   applyFailedAttempt,
@@ -219,13 +220,34 @@ export async function findActiveSessionUserByEmail(
   return toSessionUser(user);
 }
 
-/** Fresh read for guards: null when the user no longer exists or has been locked. */
+/** Fresh read for guards: null when the user no longer exists or has been locked. Never transfers `passwordHash` over the wire. */
 export async function findActiveUserById(id: string): Promise<ActiveUser | null> {
+  if (!isValidObjectId(id)) return null;
   await connectToDatabase();
-  // The hash is read only to tell whether one exists; it is never returned.
-  const user = await User.findById(id).select("+passwordHash").lean().catch(() => null);
+  const [user] = await User.aggregate<UserLike & { status: string; hasPassword: boolean }>([
+    { $match: { _id: new Types.ObjectId(id) } },
+    {
+      $project: {
+        role: 1,
+        name: 1,
+        email: 1,
+        username: 1,
+        avatar: 1,
+        mustChangePassword: 1,
+        locale: 1,
+        status: 1,
+        hasPassword: {
+          $and: [
+            { $ne: [{ $type: "$passwordHash" }, "missing"] },
+            { $ne: ["$passwordHash", null] },
+            { $ne: ["$passwordHash", ""] },
+          ],
+        },
+      },
+    },
+  ]).catch(() => []);
   if (!user || user.status === "locked") return null;
-  return toActiveUser(user, Boolean(user.passwordHash));
+  return toActiveUser(user, Boolean(user.hasPassword));
 }
 
 export type ChangePasswordResult =

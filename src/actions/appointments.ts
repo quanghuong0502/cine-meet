@@ -186,7 +186,10 @@ export async function completeAppointmentAction(id: string): Promise<ActionResul
   const user = await requireUser();
   if (!idSchema.safeParse(id).success) return { ok: false, error: "validation" };
   const result = await completeAppointment(user.userId, id);
-  if (result.ok) refresh(id);
+  if (result.ok) {
+    refresh(id);
+    revalidatePath("/");
+  }
   return result.ok ? { ok: true } : result;
 }
 
@@ -195,7 +198,10 @@ export async function setPersonCostAction(id: string, input: unknown): Promise<A
   const parsed = personCostSchema.safeParse(input);
   if (!idSchema.safeParse(id).success || !parsed.success) return { ok: false, error: "invalid_amount" };
   const result = await setPersonCost(user.userId, id, parsed.data);
-  if (result.ok) refresh(id);
+  if (result.ok) {
+    refresh(id);
+    revalidatePath("/");
+  }
   return result.ok ? { ok: true } : result;
 }
 

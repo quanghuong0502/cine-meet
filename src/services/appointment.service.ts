@@ -585,11 +585,13 @@ export async function getAppointment(userId: string, id: string, now = new Date(
   // A draft has not been sent: only its creator knows about it.
   if (!isCreator && (!me || doc.status === "DRAFT")) return null;
 
-  const people = await loadPeople([doc.creatorId.toString(), ...doc.participants.map((p) => p.userId.toString()), ...doc.timeOptions.map((o) => o.proposedBy.toString())]);
-  const movie = await Movie.findById(doc.movieId, "title posterUrl").lean();
-  const places = await loadPlaces(doc.timeOptions.flatMap((o) => (o.showtimeId ? [o.showtimeId.toString()] : [])));
   const finalShowtimeId = (doc.showtimeId ?? doc.timeOptions.find((o) => o._id.toString() === doc.chosenOptionId?.toString())?.showtimeId)?.toString();
-  const finalShowtime = finalShowtimeId ? await Showtime.findById(finalShowtimeId, "auditoriumId layoutId").lean() : null;
+  const [people, movie, places, finalShowtime] = await Promise.all([
+    loadPeople([doc.creatorId.toString(), ...doc.participants.map((p) => p.userId.toString()), ...doc.timeOptions.map((o) => o.proposedBy.toString())]),
+    Movie.findById(doc.movieId, "title posterUrl").lean(),
+    loadPlaces(doc.timeOptions.flatMap((o) => (o.showtimeId ? [o.showtimeId.toString()] : []))),
+    finalShowtimeId ? Showtime.findById(finalShowtimeId, "auditoriumId layoutId").lean() : Promise.resolve(null),
+  ]);
   const unknown = (pid: string): PersonView => ({ id: pid, name: "?" });
   const person = (pid: string) => people.get(pid) ?? unknown(pid);
 
@@ -662,15 +664,22 @@ export interface AppointmentSummary {
 /** The signed-in person's appointments, split into current and finished (watched or cancelled). */
 export async function listAppointments(userId: string, now = new Date()): Promise<{ active: AppointmentSummary[]; past: AppointmentSummary[] }> {
   await connectToDatabase();
-  const docs = await Appointment.find({
-    $or: [{ creatorId: userId }, { "participants.userId": userId, status: { $ne: "DRAFT" } }],
-  })
+  const docs = await Appointment.find(
+    { $or: [{ creatorId: userId }, { "participants.userId": userId, status: { $ne: "DRAFT" } }] },
+    "status creatorId movieId responseDeadline chosenOptionId createdAt timeOptions._id timeOptions.startAt participants.userId participants.status",
+  )
     .sort({ updatedAt: -1 })
     .limit(200)
     .lean();
-  const movies = await Movie.find({ _id: { $in: [...new Set(docs.map((d) => d.movieId.toString()))] } }, "title posterUrl").lean();
+  if (docs.length === 0) return { active: [], past: [] };
+  const movieIds = [...new Set(docs.map((d) => d.movieId.toString()))];
+  const creatorIds = [...new Set(docs.map((d) => d.creatorId.toString()))];
+  const [movies, creators] = await Promise.all([
+    Movie.find({ _id: { $in: movieIds } }, "title posterUrl").lean(),
+    User.find({ _id: { $in: creatorIds } }, "name").lean(),
+  ]);
   const movieById = new Map(movies.map((m) => [m._id.toString(), m]));
-  const people = await loadPeople(docs.map((d) => d.creatorId.toString()));
+  const creatorName = new Map(creators.map((u) => [u._id.toString(), u.name]));
 
   const summaries = docs.map((doc): AppointmentSummary => {
     const me = doc.participants.find((p) => p.userId.toString() === userId);
@@ -684,7 +693,7 @@ export async function listAppointments(userId: string, now = new Date()): Promis
       // Waiting for this person's answer, and the answer-by time has not passed.
       needsReply: doc.status === "INVITING" && me?.status === "invited" && !deadlinePassed(doc, now),
       createdAt: ((doc as unknown as { createdAt?: Date }).createdAt ?? new Date(0)).toISOString(),
-      creatorName: people.get(doc.creatorId.toString())?.name ?? "",
+      creatorName: creatorName.get(doc.creatorId.toString()) ?? "",
       movie: { title: movie?.title ?? "", posterUrl: movie?.posterUrl ?? undefined },
       startAt: (chosen?.startAt ?? new Date(Math.min(...times))).toISOString(),
       optionCount: doc.timeOptions.length,

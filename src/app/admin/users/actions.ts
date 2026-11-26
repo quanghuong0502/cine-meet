@@ -38,6 +38,7 @@ export async function updateUserAction(_previous: SaveState, formData: FormData)
   const result = await updateUser(id, parsed.data, admin.userId);
   if (!result.ok) return errorState(formData, result.error);
   revalidatePath(PAGE);
+  revalidatePath(`${PAGE}/${id}`);
   return { status: "success" };
 }
 
@@ -51,6 +52,7 @@ export async function resetPasswordAction(_previous: SaveState, formData: FormDa
   const result = await resetPassword(id, parsed.data.temporaryPassword, admin.userId);
   if (!result.ok) return errorState(formData, result.error);
   revalidatePath(PAGE);
+  revalidatePath(`${PAGE}/${id}`);
   return { status: "success" };
 }
 
@@ -60,5 +62,6 @@ export async function setUserStatusAction(id: string, status: UserStatus): Promi
   const result = await setUserStatus(id, status, admin.userId);
   if (!result.ok) return result;
   revalidatePath(PAGE);
+  revalidatePath(`${PAGE}/${id}`);
   return { ok: true };
 }

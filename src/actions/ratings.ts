@@ -17,14 +17,21 @@ export async function rateMovieAction(input: unknown): Promise<RatingResult> {
   const user = await requireUser();
   const parsed = movieRatingInputSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: "invalid" };
-  return rateMovie(user.userId, parsed.data);
+  const result = await rateMovie(user.userId, parsed.data);
+  if (result.ok) revalidatePath("/appointments", "layout");
+  return result;
 }
 
 export async function rateSeatAction(input: unknown): Promise<RatingResult> {
   const user = await requireUser();
   const parsed = seatRatingInputSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: "invalid" };
-  return rateSeat(user.userId, parsed.data);
+  const result = await rateSeat(user.userId, parsed.data);
+  if (result.ok) {
+    revalidatePath("/appointments", "layout");
+    revalidatePath("/cinemas", "layout");
+  }
+  return result;
 }
 
 export async function reviewAuditoriumAction(input: unknown): Promise<RatingResult> {

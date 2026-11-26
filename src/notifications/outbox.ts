@@ -16,24 +16,28 @@ export async function enqueueNotifications(inputs: NotificationInput[], options:
   try {
     await connectToDatabase();
     const rows = await Notification.insertMany(items.map((i) => ({ type: i.type, recipientId: i.recipientId, payload: i.payload })));
-    await NotificationDelivery.insertMany(rows.map((n) => ({ notificationId: n._id, channel: "inapp", status: "sent", attempts: 1 })));
     // `skipPushFor`: people whose phone is already (or will be) told by a push scheduled at OneSignal; they only get the in-app message.
     const toPush = rows.filter((n) => !options.skipPushFor?.has(n.recipientId.toString()));
-    await queuePush(toPush.map((n) => ({ id: n._id, recipientId: n.recipientId.toString(), type: n.type })));
+    const pushRows = await selectPushRows(toPush.map((n) => ({ id: n._id, recipientId: n.recipientId.toString(), type: n.type })));
+    // Combine in-app and webpush deliveries into a single `insertMany`.
+    await NotificationDelivery.insertMany([
+      ...rows.map((n) => ({ notificationId: n._id, channel: "inapp" as const, status: "sent" as const, attempts: 1 })),
+      ...pushRows.map((row) => ({ notificationId: row.id, channel: "webpush" as const, status: "pending" as const })),
+    ]);
     // Right after the response, so the push does not wait for a worker that may not be running (see kick.ts).
-    await kickDeliveries();
+    if (pushRows.length > 0) await kickDeliveries();
   } catch {
     console.error("notifications: could not write the outbox");
   }
 }
 
-/** A pending Web Push delivery for each notification whose person has a device and wants this kind pushed. The worker sends them. */
-async function queuePush(rows: { id: unknown; recipientId: string; type: NotificationType }[]): Promise<void> {
+/** Filters notifications whose person has a device and wants this kind pushed. */
+async function selectPushRows(rows: { id: unknown; recipientId: string; type: NotificationType }[]) {
+  if (rows.length === 0) return [];
   const byType = new Map<NotificationType, string[]>();
   for (const row of rows) byType.set(row.type, [...(byType.get(row.type) ?? []), row.recipientId]);
-  const wanted = new Map<NotificationType, Set<string>>();
-  for (const [type, ids] of byType) wanted.set(type, await pushRecipients(ids, type));
-  const pending = rows.filter((row) => wanted.get(row.type)?.has(row.recipientId));
-  if (pending.length === 0) return;
-  await NotificationDelivery.insertMany(pending.map((row) => ({ notificationId: row.id, channel: "webpush", status: "pending" })));
+  const entries = [...byType.entries()];
+  const results = await Promise.all(entries.map(([type, ids]) => pushRecipients(ids, type)));
+  const wanted = new Map(entries.map(([type], idx) => [type, results[idx]!]));
+  return rows.filter((row) => wanted.get(row.type)?.has(row.recipientId));
 }

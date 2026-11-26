@@ -1,4 +1,6 @@
+import { cache } from "react";
 import { z } from "zod";
+import { safeCache, SYSTEM_SETTINGS_TAG } from "@/lib/cache";
 import { connectToDatabase } from "@/lib/db";
 import { DEFAULT_TIME_SLOTS, timeSlotsFieldSchema, timeSlotsSchema, type TimeSlot } from "@/lib/showtime/slots";
 import { requiredInt } from "@/lib/validation/fields";
@@ -81,7 +83,7 @@ const storedSchemas: { [K in keyof SystemSettings]: z.ZodType<SystemSettings[K]>
   pushTtlHours: z.number().int().min(1).max(MAX_PUSH_TTL_HOURS),
 };
 
-export async function getSystemSettings(): Promise<SystemSettings> {
+async function readSystemSettings(): Promise<SystemSettings> {
   await connectToDatabase();
   const rows = await SystemSetting.find({}).lean();
   const stored = new Map(rows.map((row) => [row.key, row.value]));
@@ -93,9 +95,17 @@ export async function getSystemSettings(): Promise<SystemSettings> {
   return result;
 }
 
+const getSystemSettingsCached = safeCache(readSystemSettings, ["system-settings"], {
+  tags: [SYSTEM_SETTINGS_TAG],
+  revalidate: 3600,
+});
+
+/** Cached across requests (tag `settings:system`) and deduplicated within one render via React `cache()`. */
+export const getSystemSettings = cache(() => getSystemSettingsCached());
+
 /** Saves the settings; each setting that actually changed is written to the audit log. */
 export async function updateSystemSettings(input: SystemSettingsInput, actorId: string): Promise<SystemSettings> {
-  const before = await getSystemSettings();
+  const before = await readSystemSettings();
   for (const key of Object.keys(storedSchemas) as (keyof SystemSettings)[]) {
     const next = input[key];
     if (JSON.stringify(next) === JSON.stringify(before[key])) continue;
@@ -113,7 +123,7 @@ export async function updateSystemSettings(input: SystemSettingsInput, actorId: 
       after: { key, value: next },
     });
   }
-  const after = await getSystemSettings();
+  const after = await readSystemSettings();
   // The lead times moved: every confirmed appointment's scheduled reminders (#8) have to match the new values.
   if (JSON.stringify(before.reminderMinutesBefore) !== JSON.stringify(after.reminderMinutesBefore)) await recomputeAllReminders();
   return after;

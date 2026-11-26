@@ -23,10 +23,10 @@ export async function listViewingSessions(userId: string): Promise<ViewingSessio
   await connectToDatabase();
   const [appointments, manual] = await Promise.all([
     Appointment.find(
-      { status: "COMPLETED", $or: [{ creatorId: userId }, { "participants.userId": userId, "participants.status": "accepted" }] },
+      { status: "COMPLETED", $or: [{ creatorId: userId }, { participants: { $elemMatch: { userId, status: "accepted" } } }] },
       "movieId showtimeId seats completedAt",
     ).lean(),
-    ManualViewing.find({ userId }).lean(),
+    ManualViewing.find({ userId }, "movieId auditoriumId layoutId seatCode date").lean(),
   ]);
 
   const showtimeIds = appointments.flatMap((a) => (a.showtimeId ? [a.showtimeId] : []));
@@ -60,6 +60,47 @@ export async function listViewingSessions(userId: string): Promise<ViewingSessio
     movieId: m.movieId?.toString(),
     branchId: m.auditoriumId ? branchByAuditorium.get(m.auditoriumId.toString()) : undefined,
     auditoriumId: m.auditoriumId?.toString(),
+    layoutId: m.layoutId?.toString(),
+    seatCode: m.seatCode ?? undefined,
+  }));
+
+  return [...fromAppointments, ...fromManual].sort((a, b) => b.at.getTime() - a.at.getTime());
+}
+
+/** Room-scoped viewing sessions so a single room page never loads lifetime history across all cinemas. */
+export async function listViewingSessionsForRoom(userId: string, auditoriumId: string): Promise<ViewingSession[]> {
+  await connectToDatabase();
+  const [appointments, manual] = await Promise.all([
+    Appointment.find(
+      { status: "COMPLETED", $or: [{ creatorId: userId }, { participants: { $elemMatch: { userId, status: "accepted" } } }] },
+      "showtimeId seats completedAt",
+    ).lean(),
+    ManualViewing.find({ userId, auditoriumId, seatCode: { $exists: true, $ne: null } }, "seatCode date layoutId").lean(),
+  ]);
+
+  const showtimeIds = appointments.flatMap((a) => (a.showtimeId ? [a.showtimeId] : []));
+  const matchingShowtimes = showtimeIds.length
+    ? await Showtime.find({ _id: { $in: showtimeIds }, auditoriumId }, "_id layoutId").lean()
+    : [];
+  const showtimeById = new Map(matchingShowtimes.map((s) => [s._id.toString(), s]));
+
+  const fromAppointments: ViewingSession[] = appointments.flatMap((a): ViewingSession[] => {
+    const showtime = a.showtimeId ? showtimeById.get(a.showtimeId.toString()) : undefined;
+    if (!showtime) return [];
+    const seatCode = a.seats?.find((s) => s.userId.toString() === userId)?.seatCode;
+    return [
+      {
+        at: a.completedAt ?? new Date(0),
+        auditoriumId,
+        layoutId: showtime.layoutId.toString(),
+        seatCode,
+      },
+    ];
+  });
+
+  const fromManual: ViewingSession[] = manual.map((m) => ({
+    at: new Date(`${m.date}T12:00:00+07:00`),
+    auditoriumId,
     layoutId: m.layoutId?.toString(),
     seatCode: m.seatCode ?? undefined,
   }));

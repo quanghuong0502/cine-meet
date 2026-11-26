@@ -1,4 +1,5 @@
 import { unstable_cache } from "next/cache";
+import { cache } from "react";
 import { brandThemeCss, defaultBrandTheme, deriveBrandTheme, type BrandTheme } from "@/lib/brand-theme";
 import { getBrandColor } from "./brand-color.service";
 
@@ -25,11 +26,11 @@ const cached = unstable_cache(loadBrandTheme, ["brand-theme"], { tags: [BRAND_TH
  * The brand theme for the root layout, the viewport and the manifest: shared by everyone, changes rarely, so it is cached across
  * requests (plain strings and numbers only). If the database cannot be reached the default colour is used, so no page ever fails because of it.
  */
-export async function getBrandTheme(): Promise<BrandThemeData> {
+export const getBrandTheme = cache(async (): Promise<BrandThemeData> => {
   try {
     return await cached();
   } catch {
     const theme = defaultBrandTheme();
     return { hex: "#C61583", theme, css: brandThemeCss(theme) };
   }
-}
+});

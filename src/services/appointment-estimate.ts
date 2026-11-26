@@ -20,20 +20,26 @@ export interface ShowtimeSeatInfo {
   price: number | null;
 }
 
-/** The ticket price of every seat of a showtime (null when no price rule covers that seat type). */
-export async function loadSeatPrices(showtimeId: string): Promise<Map<string, ShowtimeSeatInfo>> {
-  const showtime = await Showtime.findById(showtimeId).lean();
-  if (!showtime) return new Map();
-  const [room, layout, pricing] = await Promise.all([Auditorium.findById(showtime.auditoriumId, "branchId").lean(), AuditoriumLayout.findById(showtime.layoutId, "seats").lean(), loadPricing()]);
-  const branch = room ? await Branch.findById(room.branchId, "brandId").lean() : null;
-  if (!room || !layout || !branch) return new Map();
+/** Pure seat-price map from already-loaded showtime, branch, layout seats, and pricing rules (avoids redundant DB hops). */
+export function computeSeatPrices(
+  showtime: { startAt: Date; formatId: { toString(): string }; priceOverride?: number | null },
+  branch: { _id: { toString(): string }; brandId: { toString(): string } },
+  seats: readonly { code: string; type: string; span: number }[],
+  pricing: Awaited<ReturnType<typeof loadPricing>>,
+): Map<string, ShowtimeSeatInfo> {
   const byType = new Map<string, number | null>();
   const priceOf = (seatTypeId: string) => {
     if (!byType.has(seatTypeId)) {
       byType.set(
         seatTypeId,
         resolveTicketPrice({
-          showtime: { startAt: showtime.startAt, brandId: branch.brandId.toString(), branchId: branch._id.toString(), formatId: showtime.formatId.toString(), seatTypeId },
+          showtime: {
+            startAt: showtime.startAt,
+            brandId: branch.brandId.toString(),
+            branchId: branch._id.toString(),
+            formatId: showtime.formatId.toString(),
+            seatTypeId,
+          },
           rules: pricing.rules,
           holidays: pricing.holidays,
           priceOverride: showtime.priceOverride ?? undefined,
@@ -42,13 +48,27 @@ export async function loadSeatPrices(showtimeId: string): Promise<Map<string, Sh
     }
     return byType.get(seatTypeId) ?? null;
   };
-  return new Map(layout.seats.map((s) => [s.code, { seatCode: s.code, type: s.type, span: s.span, price: priceOf(s.type) }]));
+  return new Map(seats.map((s) => [s.code, { seatCode: s.code, type: s.type, span: s.span, price: priceOf(s.type) }]));
+}
+
+/** The ticket price of every seat of a showtime (null when no price rule covers that seat type). */
+export async function loadSeatPrices(showtimeId: string): Promise<Map<string, ShowtimeSeatInfo>> {
+  const showtime = await Showtime.findById(showtimeId).lean();
+  if (!showtime) return new Map();
+  const [room, layout, pricing] = await Promise.all([
+    Auditorium.findById(showtime.auditoriumId, "branchId").lean(),
+    AuditoriumLayout.findById(showtime.layoutId, "seats").lean(),
+    loadPricing(),
+  ]);
+  const branch = room ? await Branch.findById(room.branchId, "brandId").lean() : null;
+  if (!room || !layout || !branch) return new Map();
+  return computeSeatPrices(showtime, branch, layout.seats, pricing);
 }
 
 /** Works out each attendee's ticket and food and stores it on the document (the caller saves). A seat with no price counts as 0. */
-export async function recomputeEstimate(doc: Doc): Promise<void> {
+export async function recomputeEstimate(doc: Doc, preloadedPrices?: Map<string, ShowtimeSeatInfo>): Promise<void> {
   const attendeeIds = attendeeIdsOf(doc);
-  const prices = doc.showtimeId ? await loadSeatPrices(doc.showtimeId.toString()) : new Map<string, ShowtimeSeatInfo>();
+  const prices = preloadedPrices ?? (doc.showtimeId ? await loadSeatPrices(doc.showtimeId.toString()) : new Map<string, ShowtimeSeatInfo>());
   const holders = new Map<string, string[]>();
   for (const seat of doc.seats) {
     if (!attendeeIds.includes(seat.userId.toString())) continue;

@@ -2,6 +2,7 @@ import { revalidatePath, updateTag } from "next/cache";
 import type { z } from "zod";
 import { requireAdmin } from "@/lib/auth/guards";
 import { errorState, parseForm, type RemoveResult, type SaveState } from "@/lib/admin/action-result";
+import { CATALOG_CINEMAS_TAG, MASTER_DATA_CATALOG_TAG, MASTER_DATA_PRICING_TAG } from "@/lib/cache";
 import { BRAND_OPTIONS_TAG } from "@/services/master-data/brand-options";
 import type { ServiceResult } from "@/services/master-data/crud";
 
@@ -14,12 +15,16 @@ interface EntityService<Input> {
 }
 
 /**
- * After any master-data change: drop the client's cached pages (revalidatePath) and the shared brand pick-list, so the admin sees the
- * change at once. The pick-list is expired on every change, not only brand changes, because this shared body does not know the type.
+ * After any master-data change: expire cached catalog/pricing tags and revalidate affected admin & user routes.
  */
 function refreshMasterData() {
-  revalidatePath(PAGE);
+  revalidatePath(PAGE, "layout");
+  revalidatePath("/showtimes");
+  revalidatePath("/cinemas");
   updateTag(BRAND_OPTIONS_TAG);
+  updateTag(MASTER_DATA_CATALOG_TAG);
+  updateTag(MASTER_DATA_PRICING_TAG);
+  updateTag(CATALOG_CINEMAS_TAG);
 }
 
 /**

@@ -54,6 +54,18 @@ export async function findInviter(code: string): Promise<PersonView | null> {
   return user ? toPerson(user) : null;
 }
 
+export type RelationshipState = "none" | "friends" | "outgoing" | "incoming";
+
+/** Current friendship state between two people, so the invite page shows accurate status before the person taps. */
+export async function getRelationshipState(userId: string, otherId: string): Promise<RelationshipState> {
+  if (userId === otherId) return "none";
+  await connectToDatabase();
+  const row = await Friendship.findOne({ pairKey: pairKey(userId, otherId) }, "status userA").lean();
+  if (!row) return "none";
+  if (row.status === "accepted") return "friends";
+  return row.userA.toString() === userId ? "outgoing" : "incoming";
+}
+
 export type RequestResult =
   | { ok: true; outcome: "sent" | "accepted" | "already_friends" | "already_requested" }
   | { ok: false; error: "not_found" | "self" };

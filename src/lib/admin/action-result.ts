@@ -1,4 +1,4 @@
-import { z } from "zod";
+import type { z } from "zod";
 
 /**
  * Result shapes shared by admin server actions and their forms. Errors are CODES, never sentences:

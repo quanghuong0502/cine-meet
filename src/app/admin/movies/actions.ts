@@ -1,19 +1,24 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { requireAdmin } from "@/lib/auth/guards";
 import { errorState, parseForm, type RemoveResult, type SaveState } from "@/lib/admin/action-result";
+import { CATALOG_MOVIES_TAG } from "@/lib/cache";
 import { movieInputSchema, movieService } from "@/services/movie.service";
 import {
   bulkShowtimeSchema, createShowtimesBulk, importShowtimesCsv, removeShowtime, type ShowtimeError,
 } from "@/services/showtime.service";
 import type { CsvRowError } from "@/lib/showtime/csv";
 
-/** Everything the user app shows about movies and showtimes; one call clears the client's cached copies of it. */
+/** Everything the user app shows about movies and showtimes; one call clears cached tags and routes. */
 function refreshMovies() {
+  updateTag(CATALOG_MOVIES_TAG);
   revalidatePath("/admin/movies", "layout");
   revalidatePath("/showtimes", "layout");
+  revalidatePath("/movies", "layout");
   revalidatePath("/cinemas", "layout");
+  revalidatePath("/log-viewing");
+  revalidatePath("/appointments/new");
 }
 
 export async function saveMovie(_previous: SaveState, formData: FormData): Promise<SaveState> {

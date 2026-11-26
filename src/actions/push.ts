@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { isValidObjectId } from "mongoose";
 import { requireAdmin, requireUser } from "@/lib/auth/guards";
 import { connectToDatabase } from "@/lib/db";
@@ -19,37 +20,44 @@ import {
   sendTestPush,
   setPushPreference,
   subscriptionSchema,
+  type DeviceView,
   type TestResult,
 } from "@/services/push.service";
 
 // The person is always the signed-in user; a device or setting of someone else can never be touched.
 
-export async function savePushSubscriptionAction(input: unknown): Promise<{ ok: boolean }> {
+export async function savePushSubscriptionAction(input: unknown): Promise<{ ok: true; device: DeviceView } | { ok: false }> {
   const user = await requireUser();
   const parsed = subscriptionSchema.safeParse(input);
   if (!parsed.success || pushProvider() !== "webpush" || !pushReady()) return { ok: false };
-  await saveSubscription(user.userId, parsed.data);
-  return { ok: true };
+  const device = await saveSubscription(user.userId, parsed.data);
+  revalidatePath("/settings");
+  return { ok: true, device };
 }
 
 /** With OneSignal: remembers the browser's OneSignal subscription id as a device of the signed-in person. */
-export async function saveOneSignalDeviceAction(input: unknown): Promise<{ ok: boolean }> {
+export async function saveOneSignalDeviceAction(input: unknown): Promise<{ ok: true; device: DeviceView } | { ok: false }> {
   const user = await requireUser();
   const parsed = oneSignalDeviceSchema.safeParse(input);
   if (!parsed.success || pushProvider() !== "onesignal" || !pushReady()) return { ok: false };
-  await saveOneSignalDevice(user.userId, parsed.data);
-  return { ok: true };
+  const device = await saveOneSignalDevice(user.userId, parsed.data);
+  revalidatePath("/settings");
+  return { ok: true, device };
 }
 
 export async function removePushDeviceAction(deviceId: string): Promise<{ ok: boolean }> {
   const user = await requireUser();
-  return { ok: await removeDevice(user.userId, typeof deviceId === "string" ? deviceId : "") };
+  const ok = await removeDevice(user.userId, typeof deviceId === "string" ? deviceId : "");
+  if (ok) revalidatePath("/settings");
+  return { ok };
 }
 
 export async function setPushPreferenceAction(type: string, enabled: boolean): Promise<{ ok: boolean }> {
   const user = await requireUser();
   if (!(NOTIFICATION_TYPES as readonly string[]).includes(type)) return { ok: false };
-  return { ok: await setPushPreference(user.userId, type as NotificationType, enabled === true) };
+  const ok = await setPushPreference(user.userId, type as NotificationType, enabled === true);
+  if (ok) revalidatePath("/settings");
+  return { ok };
 }
 
 /** Admin only: sends a test push to the chosen person's devices, in that person's language. */

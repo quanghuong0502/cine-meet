@@ -40,18 +40,30 @@ export async function scheduleRemotely(rowId: string, now = new Date()): Promise
     const targets = inputs.filter((i) => wanted.has(i.recipientId));
     if (targets.length === 0) return 0;
 
-    const ttlSeconds = (await getSystemSettings()).pushTtlHours * 3600;
-    const users = await User.find({ _id: { $in: targets.map((t) => t.recipientId) } }, "locale").lean();
+    const targetIds = [...new Set(targets.map((t) => t.recipientId))];
+    const [settings, users, allDevices] = await Promise.all([
+      getSystemSettings(),
+      User.find({ _id: { $in: targetIds } }, "locale").lean(),
+      OneSignalDevice.find({ userId: { $in: targetIds } }, "userId subscriptionId").lean(),
+    ]);
+    const ttlSeconds = settings.pushTtlHours * 3600;
     const localeOf = new Map(users.map((u) => [u._id.toString(), u.locale ?? "vi"]));
+    const devicesByUser = new Map<string, string[]>();
+    for (const d of allDevices) {
+      const uid = d.userId.toString();
+      devicesByUser.set(uid, [...(devicesByUser.get(uid) ?? []), d.subscriptionId]);
+    }
     const held: { userId: string; id: string }[] = [];
+    const invalidIds: string[] = [];
     for (const target of targets) {
-      const devices = await OneSignalDevice.find({ userId: target.recipientId }).lean();
-      if (devices.length === 0) continue;
+      const subIds = devicesByUser.get(target.recipientId);
+      if (!subIds || subIds.length === 0) continue;
       const payload = await buildPushPayload(target.type, target.payload, localeOf.get(target.recipientId) ?? "vi");
-      const result = await sendOneSignal(devices.map((d) => d.subscriptionId), payload, { ttlSeconds, sendAfter: row.sendAt });
-      if (result.invalidIds.length > 0) await OneSignalDevice.deleteMany({ subscriptionId: { $in: result.invalidIds } });
+      const result = await sendOneSignal(subIds, payload, { ttlSeconds, sendAfter: row.sendAt });
+      if (result.invalidIds.length > 0) invalidIds.push(...result.invalidIds);
       if (result.status === "ok" && result.id) held.push({ userId: target.recipientId, id: result.id });
     }
+    if (invalidIds.length > 0) await OneSignalDevice.deleteMany({ subscriptionId: { $in: [...new Set(invalidIds)] } });
     if (held.length === 0) return 0;
 
     // The row may have been cancelled or replaced while the messages were being handed over: then take them straight back.

@@ -39,7 +39,7 @@ export interface AuditEntry {
 /** Latest changes first, optionally for one entity type. */
 export async function listAudit(options: { entity?: string; limit?: number } = {}): Promise<AuditEntry[]> {
   await connectToDatabase();
-  const docs = await AuditLog.find(options.entity ? { entity: options.entity } : {})
+  const docs = await AuditLog.find(options.entity ? { entity: options.entity } : {}, "action entity entityId actorId createdAt")
     .sort({ createdAt: -1 })
     .limit(options.limit ?? 50)
     .lean();
