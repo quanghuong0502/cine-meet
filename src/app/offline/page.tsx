@@ -14,7 +14,7 @@ export default async function OfflinePage() {
   const t = await getTranslations("offline");
   return (
     <ScopedIntlProvider namespaces={["offline"]}>
-      <main className="flex min-h-dvh items-center justify-center p-inset">
+      <main className="flex min-h-dvh items-center justify-center px-inset pt-(--inset-top) pb-(--inset-bottom)">
         <EmptyState mascot="bubu-sleepy" title={t("title")} description={t("description")} action={<OfflineRetry />} />
       </main>
     </ScopedIntlProvider>

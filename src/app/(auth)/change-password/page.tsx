@@ -23,7 +23,7 @@ export default async function ChangePasswordPage() {
   const t = await getTranslations("auth.changePassword");
 
   return (
-    <main className="flex min-h-dvh flex-col p-inset">
+    <main className="flex min-h-dvh flex-col px-inset pt-(--inset-top) pb-(--inset-bottom)">
       {/* Installed PWAs have no browser Back button. Not shown when the change is required: there is nowhere to go until it is done. */}
       {user.mustChangePassword ? null : (
         <div className="mx-auto w-full max-w-form">

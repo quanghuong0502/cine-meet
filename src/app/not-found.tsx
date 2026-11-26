@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 export default async function NotFound() {
   const t = await getTranslations("states.notFound");
   return (
-    <main className="flex min-h-dvh items-center justify-center">
+    <main className="flex min-h-dvh items-center justify-center px-inset pt-(--inset-top) pb-(--inset-bottom)">
       <EmptyState
         mascot="bubu-sleepy"
         title={t("title")}

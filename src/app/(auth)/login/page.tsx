@@ -25,7 +25,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
     // The screen is exactly one viewport tall and never scrolls: the illustration absorbs the spare
     // space (and shrinks on short phones). If the viewport is shorter than the form itself the page can
     // still scroll, but the scrollbar stays hidden.
-    <main className="mx-auto flex h-dvh w-full max-w-form flex-col gap-group overflow-y-auto [@media(max-height:600px)]:gap-stack px-inset-lg pt-(--inset-top) pb-(--inset-bottom) [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <main className="mx-auto flex h-dvh w-full max-w-form flex-col gap-group overflow-y-auto overscroll-contain [@media(max-height:600px)]:gap-stack px-inset-lg pt-(--inset-top) pb-(--inset-bottom) [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       <header className="flex min-h-0 flex-1 flex-col items-center justify-center gap-stack">
         <div className="flex min-h-0 w-full flex-1 items-center justify-center">
           <Mascot
