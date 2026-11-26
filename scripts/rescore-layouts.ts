@@ -13,6 +13,7 @@ import { layoutConfigSchema } from "@/lib/seat-layout/config";
 import type { LayoutConfig } from "@/lib/seat-layout/types";
 import { AuditoriumLayout } from "@/models/auditorium-layout";
 import { SeatType } from "@/models/seat-type";
+import { getCinemaDimensions } from "@/services/cinema-dimensions.service";
 import { buildLayout } from "@/services/seat-layout-build";
 
 const ENV_FILE = ".env.local";
@@ -24,6 +25,7 @@ async function rescore(): Promise<void> {
   }
   await connectToDatabase();
 
+  const defaults = await getCinemaDimensions();
   const types = (await SeatType.find({}).lean()).map((t) => ({ id: t._id.toString(), name: t.name, capacity: t.capacity }));
   let updated = 0;
   let skipped = 0;
@@ -34,7 +36,7 @@ async function rescore(): Promise<void> {
       console.warn(`Bỏ qua layout ${layout._id.toString()}: cấu hình không hợp lệ.`);
       continue;
     }
-    const built = buildLayout(parsed.data as LayoutConfig, types);
+    const built = buildLayout(parsed.data as LayoutConfig, types, defaults);
     await AuditoriumLayout.updateOne({ _id: layout._id }, { $set: { seats: built.seats, summary: built.summary } });
     updated += 1;
   }

@@ -1,4 +1,4 @@
-import { rowLabels } from "./config";
+import { maxColOfRow, rowLabels } from "./config.constants";
 import { NO_SEAT, type GridSeat, type LayoutConfig, type SeatFlag, type SeatOverride } from "./types";
 
 /** One cell of the grid, by row label and the column number printed on the seat. */
@@ -106,18 +106,28 @@ export function removedCells(overrides: SeatOverride[]): Cell[] {
   return [...toCells(overrides).values()].filter((c) => c.state.type === NO_SEAT).map(({ row, col }) => ({ row, col }));
 }
 
-/** Drops whatever no longer fits after rows or columns shrink (overrides, aisles, stadium row). */
+/** Drops whatever no longer fits after rows, columns or row letters change (overrides, aisles, fills, stadium row). */
 export function pruneConfig(config: LayoutConfig): LayoutConfig {
-  const labels = new Set(rowLabels(config.rows));
-  return {
+  const labels = new Set(rowLabels(config.rows, config.skipRowLetters));
+  const verticalAfterCols = config.aisles.verticalAfterCols.filter((n) => n < config.cols);
+  const aisleFills = config.aisleFills
+    ?.filter((f) => verticalAfterCols.includes(f.afterCol))
+    .map((f) => ({ ...f, rows: f.rows.filter((r) => r <= config.rows) }))
+    .filter((f) => f.rows.length > 0);
+  const next: LayoutConfig = {
     ...config,
     stadiumFromRow: config.stadiumFromRow !== null && config.stadiumFromRow > config.rows ? null : config.stadiumFromRow,
     aisles: {
-      verticalAfterCols: config.aisles.verticalAfterCols.filter((n) => n < config.cols),
+      verticalAfterCols,
       horizontalAfterRows: config.aisles.horizontalAfterRows.filter((n) => n < config.rows),
+      ...(config.aisles.sideAisles?.length ? { sideAisles: config.aisles.sideAisles } : {}),
     },
+    ...(aisleFills?.length ? { aisleFills } : { aisleFills: undefined }),
+  };
+  return {
+    ...next,
     overrides: fromCells(
-      [...toCells(config.overrides).values()].filter((c) => labels.has(c.row) && c.col <= config.cols),
+      [...toCells(config.overrides).values()].filter((c) => labels.has(c.row) && c.col <= maxColOfRow(next, c.row)),
     ),
   };
 }

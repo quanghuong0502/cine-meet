@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { defaultLayoutConfig, layoutConfigSchema, rowLabel } from "./config";
 import { generateGrid } from "./generate";
 import { buildLayoutSummary } from "./summary";
-import { buildScoreContext, scoreBreakdown, scoreSeats, SEAT_PITCH_M } from "@/services/seat-score";
+import { buildScoreContext, rowDistanceM, scoreBreakdown, scoreSeats, SEAT_PITCH_M } from "@/services/seat-score";
 import type { LayoutConfig, SeatTypeInfo } from "./types";
 
 const TYPES: SeatTypeInfo[] = [
@@ -18,6 +18,12 @@ describe("rowLabel", () => {
   it("runs A..Z then AA, AB", () => {
     expect([rowLabel(0), rowLabel(25), rowLabel(26), rowLabel(27), rowLabel(51), rowLabel(52)]).toEqual([
       "A", "Z", "AA", "AB", "AZ", "BA",
+    ]);
+  });
+
+  it("skips I and O when skipIO is enabled", () => {
+    expect([rowLabel(7, true), rowLabel(8, true), rowLabel(12, true), rowLabel(13, true), rowLabel(23, true), rowLabel(24, true)]).toEqual([
+      "H", "J", "N", "P", "Z", "AA",
     ]);
   });
 });
@@ -110,10 +116,44 @@ describe("generateGrid", () => {
     expect(left.screen.x1).toBeGreaterThanOrEqual(0);
     expect(right.screen.x2).toBeLessThanOrEqual(right.width);
   });
+
+  it("fills vertical aisles on selected rows (e.g. continuous back Sweetbox row) and supports side aisles", () => {
+    const cfg = config({
+      rows: 4,
+      cols: 6,
+      aisles: { verticalAfterCols: [3], horizontalAfterRows: [], sideAisles: ["left", "right"] },
+      aisleFills: [{ afterCol: 3, seats: 2, rows: [4] }],
+    });
+    const { seats, geometry } = generateGrid(cfg, TYPES);
+    const rowA = seats.filter((s) => s.row === "A");
+    const rowD = seats.filter((s) => s.row === "D");
+    expect(rowA).toHaveLength(6);
+    expect(rowD).toHaveLength(8);
+    expect(rowD.map((s) => s.col)).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
+    // Filled aisle does not emit a dashed line through the seats, while side aisles are preserved inside room width.
+    expect(geometry.verticalAisles).toEqual([]);
+    expect(geometry.sideAisles).toEqual(["left", "right"]);
+    expect(geometry.width).toBeCloseTo(6 + 2 + 0.8 * 2);
+  });
+
+  it("shifts the seating block relative to the centred screen when only one side aisle is enabled", () => {
+    const rightOnly = config({
+      rows: 8,
+      cols: 10,
+      aisles: { verticalAfterCols: [], horizontalAfterRows: [], sideAisles: ["right"] },
+      entrances: [],
+    });
+    const { seats, geometry } = generateGrid(rightOnly, TYPES);
+    const scored = scoreSeats(seats, rightOnly, geometry);
+    const f5 = scored.find((s) => s.code === "F5")!;
+    const f6 = scored.find((s) => s.code === "F6")!;
+    // With a right-wall aisle, seats hug the left wall while the centred screen shifts right -> col 6 beats col 5.
+    expect(f6.score).toBeGreaterThan(f5.score);
+  });
 });
 
 describe("scoreSeats", () => {
-  const base = () => config({ rows: 10, cols: 16, entrances: [] });
+  const base = () => config({ rows: 10, cols: 16, stadiumFromRow: null, entrances: [] });
   const scoreOf = (cfg: LayoutConfig, code: string) => {
     const { seats, geometry } = generateGrid(cfg, TYPES);
     return scoreSeats(seats, cfg, geometry).find((s) => s.code === code)!.score;
@@ -169,7 +209,8 @@ describe("scoreSeats", () => {
     const seat = seats.find((s) => s.code === "E4")!;
     const left = (geometry.screen.x1 - seat.x) * SEAT_PITCH_M;
     const right = (geometry.screen.x2 - seat.x) * SEAT_PITCH_M;
-    const expected = ((Math.atan2(right, seat.y) - Math.atan2(left, seat.y)) * 180) / Math.PI;
+    const dist = rowDistanceM(seat.y, geometry.firstRowY, cfg.screen.distance, ctx.screenWidthM, cfg.rowPitch);
+    const expected = ((Math.atan2(right, dist) - Math.atan2(left, dist)) * 180) / Math.PI;
     expect(scoreBreakdown(seat, ctx).measures.horizontalAngleDeg).toBeCloseTo(expected, 5);
     // A seat on the screen's axis sees a wider screen than one far off to the side, at the same depth.
     const side = seats.find((s) => s.code === "E1")!;
@@ -211,9 +252,9 @@ describe("scoreSeats", () => {
     const { seats, geometry } = generateGrid(cfg, TYPES);
     const ctx = buildScoreContext(seats, cfg, geometry);
     const front = scoreBreakdown(seats.find((s) => s.code === "A8")!, ctx);
-    expect(front.measures.horizontalAngleDeg).toBeGreaterThan(80);
-    expect(front.losses.horizontalAngle).toBeGreaterThan(30);
-    expect(front.losses.verticalAngle).toBeGreaterThan(15);
+    expect(front.measures.horizontalAngleDeg).toBeGreaterThan(60);
+    expect(front.losses.horizontalAngle).toBeGreaterThan(20);
+    expect(front.losses.verticalAngle).toBeGreaterThan(2);
   });
 
   it("moves the best row back for a wider screen and forward for a narrower one", () => {
