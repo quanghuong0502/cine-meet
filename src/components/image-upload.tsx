@@ -19,6 +19,10 @@ interface ImageUploadProps {
   /** Name of the hidden input that carries the picture's address into the form. */
   name: string;
   initialUrl?: string;
+  /** Optional controlled value (takes precedence over internal state when provided). */
+  value?: string;
+  /** Optional callback fired whenever an upload completes or the picture is removed. */
+  onChange?: (url: string) => void;
   /** A server action that returns a signed Cloudinary ticket for this kind of picture. */
   getTicket: () => Promise<TicketResult>;
   /** How the current picture (or its absence) looks. */
@@ -29,9 +33,10 @@ interface ImageUploadProps {
  * Picks a picture on the device and sends it straight to Cloudinary with a one-time signature from the server (the secret
  * never reaches the browser). It only fills a hidden input: the picture belongs to the record when the form is saved.
  */
-export function ImageUpload({ name, initialUrl, getTicket, preview }: ImageUploadProps) {
+export function ImageUpload({ name, initialUrl, value, onChange, getTicket, preview }: ImageUploadProps) {
   const t = useTranslations("imageUpload");
-  const [url, setUrl] = useState(initialUrl ?? "");
+  const [internalUrl, setInternalUrl] = useState(initialUrl ?? "");
+  const url = value ?? internalUrl;
   const [localPreview, setLocalPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -61,12 +66,13 @@ export function ImageUpload({ name, initialUrl, getTicket, preview }: ImageUploa
       if (!signed.ok) return toast.error(t(`errors.${signed.error}`));
 
       const body = new FormData();
-      for (const [key, value] of Object.entries(signed.ticket.fields)) body.append(key, value);
+      for (const [key, fieldValue] of Object.entries(signed.ticket.fields)) body.append(key, fieldValue);
       body.append("file", file);
       const response = await fetch(signed.ticket.uploadUrl, { method: "POST", body });
       const result = (await response.json().catch(() => null)) as { secure_url?: string } | null;
       if (!response.ok || !result?.secure_url) return toast.error(t("errors.failed"));
-      setUrl(result.secure_url);
+      setInternalUrl(result.secure_url);
+      onChange?.(result.secure_url);
     } catch {
       // No network: the form keeps everything typed, only the picture is not sent.
       toast.error(t("errors.network"));
@@ -113,7 +119,16 @@ export function ImageUpload({ name, initialUrl, getTicket, preview }: ImageUploa
           {uploading ? t("uploading") : t(url ? "change" : "choose")}
         </Button>
         {url && !uploading ? (
-          <Button type="button" variant="ghost" size="cta-sm" onClick={() => setUrl("")} className="w-auto px-inset text-muted-foreground">
+          <Button
+            type="button"
+            variant="ghost"
+            size="cta-sm"
+            onClick={() => {
+              setInternalUrl("");
+              onChange?.("");
+            }}
+            className="w-auto px-inset text-muted-foreground"
+          >
             <TrashBinMinimalisticIcon aria-hidden />
             {t("remove")}
           </Button>

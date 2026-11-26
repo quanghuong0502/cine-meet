@@ -90,6 +90,7 @@
       "uploading": "Uploading...",
       "copy": "Copy",
       "copied": "Copied",
+      "clearColor": "Clear color",
       "clearSearch": "Clear search",
       "cancel": "Cancel",
       "searchLabel": "Search",
@@ -346,6 +347,9 @@
         },
         "color": {
           "label": "Map color"
+        },
+        "color3d": {
+          "label": "3D view color"
         },
         "style": {
           "label": "Chair style (3D)",
@@ -650,6 +654,147 @@
         "seats": "3 seats left",
         "link": "See details",
         "button": "Lock in attendees"
+      }
+    },
+    "room3dAppearance": {
+      "title": "3D auditorium appearance",
+      "cardDescription": "Customize the visual style of the screen, chairs, doors, walls, ceiling, carpet, and lighting in 3D view.",
+      "open": "Configure 3D appearance",
+      "intro": "Purely visual styling and fixtures for the 3D auditorium — does not affect real room dimensions or seat scores. Applies across all auditoriums.",
+      "previewHint": "Left-drag to orbit 360° · Scroll to zoom · Click a seat to sit in POV.",
+      "previewHeatmap": "Show Heatmap",
+      "pickColor": "Pick custom color",
+      "reset": "Reset to defaults",
+      "resetNotice": "Default 3D appearance restored. Click Save to apply.",
+      "validationError": "One or more values are invalid. Check the settings.",
+      "sections": {
+        "screen": "Screen & stage",
+        "seats": "Chairs",
+        "doors": "Doors & EXIT signs",
+        "surfaces": "Walls, ceiling & carpet",
+        "lightingFixtures": "Lighting & fixtures"
+      },
+      "fields": {
+        "screenSource": "Screen media source",
+        "screenImageUpload": "Upload screen image",
+        "screenImageUrl": "Or paste image URL (HTTPS)",
+        "screenImageUrlPlaceholder": "https://res.cloudinary.com/...",
+        "screenImageInvalid": "Invalid image URL (must start with https:// or http://).",
+        "screenYoutubeUrl": "YouTube video link",
+        "screenYoutubePlaceholder": "https://www.youtube.com/watch?v=... or https://youtu.be/...",
+        "screenYoutubeHint": "Autoplays looped and muted by default; tap the speaker button on the 3D dock to unmute.",
+        "screenYoutubeInvalid": "Invalid YouTube link (supports watch, youtu.be, shorts, or 11-character video ID).",
+        "screenBorder": "Screen masking frame",
+        "screenCurtainsVisible": "Side screen velvet curtains",
+        "screenCurtainsColor": "Screen curtain color",
+        "screenContent": "Sample screen scene",
+        "screenStageApron": "Front stage apron",
+        "screenStageLed": "Stage apron LED strip",
+        "screenHalo": "Backlit wall halo",
+        "screenShowSubtitle": "Show sample subtitle",
+        "screenSubtitleText": "Custom sample subtitle",
+        "screenSubtitlePlaceholder": "Leave blank to use default localized subtitle",
+        "screenSubtitleColor": "Subtitle color",
+        "seatFinish": "Upholstery finish",
+        "seatFrameColor": "Chair frame & armrest color",
+        "doorStyle": "Door style",
+        "doorPanicBar": "Panic push bar",
+        "doorColor": "Door / curtain color",
+        "doorFrameColor": "Door frame color",
+        "exitSignVisible": "Show EXIT sign",
+        "exitSignColor": "EXIT sign color",
+        "exitSignText": "EXIT sign label",
+        "wallStyle": "Wall finish",
+        "wallColor": "Wall color",
+        "ceilingStyle": "Ceiling finish",
+        "ceilingColor": "Ceiling color",
+        "carpetStyle": "Carpet pattern",
+        "carpetColor": "Carpet color",
+        "downlightsVisible": "Ceiling downlights",
+        "sconcesVisible": "Wall pilasters & sconces",
+        "sconceColor": "Wall sconce light color",
+        "coveLedVisible": "Architectural cove LED strips",
+        "coveLedPlacement": "Cove LED placement",
+        "coveLedColor": "Cove LED color",
+        "aisleLedVisible": "Aisle step LED strips",
+        "aisleLedColor": "Aisle LED color",
+        "rowMarkersVisible": "Illuminated row markers (A, B, C…)",
+        "rowMarkersPlacement": "Row marker placement",
+        "rowMarkersColor": "Row marker light color",
+        "projectionPortVisible": "Projection booth window",
+        "projectorBeamVisible": "Projector light beam",
+        "surroundSpeakersVisible": "Wall surround speakers",
+        "ceilingSpeakersVisible": "Overhead ceiling speakers"
+      },
+      "options": {
+        "screenSource": {
+          "preset": "Default scene",
+          "image": "Uploaded image",
+          "youtube": "YouTube link"
+        },
+        "screenBorder": {
+          "velvet": "Classic velvet",
+          "slim": "Slim bezel",
+          "frameless": "Frameless"
+        },
+        "screenContent": {
+          "cosmos": "Twilight",
+          "noir": "Night city",
+          "grid": "Framing grid"
+        },
+        "subtitleColor": {
+          "white": "White",
+          "yellow": "Yellow"
+        },
+        "seatFinish": {
+          "fabric": "Plush fabric",
+          "leather": "Matte leather"
+        },
+        "doorStyle": {
+          "single": "Single leaf",
+          "double": "Double leaf",
+          "curtain": "Acoustic curtain"
+        },
+        "exitSignColor": {
+          "green": "Green",
+          "red": "Red"
+        },
+        "wallStyle": {
+          "slats": "Acoustic slats",
+          "panels": "Fabric panels",
+          "matte": "Flat matte"
+        },
+        "ceilingStyle": {
+          "coffered": "Coffered tiles",
+          "flat": "Flat dark",
+          "starlight": "Starlight"
+        },
+        "carpetStyle": {
+          "speckled": "Cinema fleck",
+          "striped": "Striped weave",
+          "solid": "Solid matte"
+        },
+        "lightAccent": {
+          "warm": "Warm gold",
+          "neutral": "Soft white",
+          "cool": "Cool blue",
+          "crimson": "Crimson"
+        },
+        "aisleLedColor": {
+          "amber": "Warm amber",
+          "white": "White",
+          "blue": "Blue",
+          "red": "Red"
+        },
+        "rowMarkerPlacement": {
+          "aisle": "Along aisles",
+          "wall": "Side walls"
+        },
+        "coveLedPlacement": {
+          "ceiling": "Ceiling cove",
+          "wall": "Wall rail",
+          "both": "Both"
+        }
       }
     },
     "cinemaDimensions": {
@@ -1122,6 +1267,10 @@
     "network": {
       "offline": "You're offline. Changes won't be saved.",
       "online": "You're back online"
+    },
+    "update": {
+      "available": "A new version is ready.",
+      "action": "Update"
     }
   },
   "profile": {
@@ -1412,6 +1561,9 @@
       "lightsOn": "Turn house lights on",
       "lightsOff": "Dim lights for movie",
       "lightsShort": "Lights",
+      "youtubeMute": "Mute screen video",
+      "youtubeUnmute": "Unmute screen video",
+      "youtubeAudioShort": "Audio",
       "expand3d": "Fullscreen cinema view",
       "collapse3d": "Exit fullscreen",
       "dragToLookHint": "Drag to look around · Double-tap to center",

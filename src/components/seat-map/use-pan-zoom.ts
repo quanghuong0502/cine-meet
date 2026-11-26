@@ -206,18 +206,30 @@ export function usePanZoom(containerRef: RefObject<HTMLElement | null>, svgRef: 
   const reset = useCallback(() => apply({ s: 1, x: 0, y: 0 }, measure(), true), [apply, measure]);
 
   // Ctrl/Cmd + wheel zooms (plain wheel keeps scrolling the page). Needs a non-passive listener.
+  // Cache container rect briefly during continuous wheel bursts to avoid forcing layout reflow per tick.
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
+    let wheelMeasuredAt = 0;
     const onWheel = (e: WheelEvent) => {
       if (!e.ctrlKey && !e.metaKey) return;
       e.preventDefault();
-      const box = measure();
+      const now = performance.now();
+      const box = rectRef.current && now - wheelMeasuredAt < 250 ? rectRef.current : ((wheelMeasuredAt = now), measure());
       if (!box) return;
       apply(zoomAround(view.current, view.current.s * Math.exp(-e.deltaY * 0.01), e.clientX - box.left, e.clientY - box.top, box.width, box.height), box);
     };
+    const resetWheelCache = () => {
+      wheelMeasuredAt = 0;
+    };
     el.addEventListener("wheel", onWheel, { passive: false });
-    return () => el.removeEventListener("wheel", onWheel);
+    window.addEventListener("resize", resetWheelCache, { passive: true });
+    window.addEventListener("scroll", resetWheelCache, { passive: true });
+    return () => {
+      el.removeEventListener("wheel", onWheel);
+      window.removeEventListener("resize", resetWheelCache);
+      window.removeEventListener("scroll", resetWheelCache);
+    };
   }, [apply, containerRef, measure]);
 
   const localFromRect = (e: React.PointerEvent, box: { left: number; top: number } | null) => ({

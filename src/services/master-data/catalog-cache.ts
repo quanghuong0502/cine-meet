@@ -39,6 +39,7 @@ export interface CachedSeatTypeOption {
   name: string;
   nameEn: string | null;
   color: string | null;
+  color3d: string | null;
   capacity: number;
   style: SeatStyle;
 }
@@ -105,16 +106,17 @@ export const getCachedAgeRatings = safeCache(
 export const getCachedSeatTypes = safeCache(
   async (): Promise<CachedSeatTypeOption[]> => {
     await connectToDatabase();
-    const rows = await SeatType.find({}, "name nameEn color capacity style").sort({ name: 1 }).lean();
+    const rows = await SeatType.find({}, "name nameEn color color3d capacity style").sort({ name: 1 }).lean();
     return rows.map((t) => ({
       id: t._id.toString(),
       name: t.name,
       nameEn: t.nameEn ?? null,
       color: t.color ?? null,
+      color3d: t.color3d ?? null,
       capacity: t.capacity,
       style: (t.style as SeatStyle | undefined) ?? "standard",
     }));
   },
-  ["master-data-seat-types"],
+  ["master-data-seat-types-v2"],
   { tags: [MASTER_DATA_CATALOG_TAG], revalidate: 300 },
 );

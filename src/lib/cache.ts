@@ -3,6 +3,7 @@ import { unstable_cache } from "next/cache";
 /** Shared Next.js cache tags invalidated via `updateTag` in admin/mutation server actions. */
 export const SYSTEM_SETTINGS_TAG = "settings:system";
 export const CINEMA_DIMENSIONS_TAG = "settings:cinema-dimensions";
+export const ROOM_3D_APPEARANCE_TAG = "settings:room-3d-appearance";
 export const MASTER_DATA_CATALOG_TAG = "master-data:catalog";
 export const MASTER_DATA_PRICING_TAG = "master-data:pricing";
 export const CATALOG_MOVIES_TAG = "catalog:movies";

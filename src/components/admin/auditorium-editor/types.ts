@@ -5,6 +5,7 @@ export interface EditorSeatType {
   /** Already in the viewer's language. */
   name: string;
   color: string | null;
+  color3d?: string | null;
   capacity: number;
   style: SeatStyle;
 }

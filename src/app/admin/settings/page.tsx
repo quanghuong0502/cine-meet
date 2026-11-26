@@ -5,6 +5,7 @@ import { AppearanceSettingsCard } from "@/components/admin/appearance-settings-c
 import { CinemaDimensionsCard } from "@/components/admin/cinema-dimensions-card";
 import { PushSettingsCard } from "@/components/admin/push-settings-card";
 import { PronounsSettingsCard } from "@/components/admin/pronouns-settings-card";
+import { Room3DAppearanceCard } from "@/components/admin/room-3d-appearance-card";
 import { RoomReportsCard } from "@/components/admin/room-reports-card";
 import { SystemSettingsCard } from "@/components/admin/system-settings-card";
 import { PageHeader } from "@/components/page-header";
@@ -31,6 +32,7 @@ export default async function AdminSettingsPage() {
         <div className="flex flex-col gap-group">
           <LanguageSetting />
           <AppearanceSettingsCard />
+          <Room3DAppearanceCard />
           <PronounsSettingsCard />
         </div>
       </section>

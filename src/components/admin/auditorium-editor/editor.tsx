@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { saveAuditoriumAction, removeAuditoriumAction } from "@/app/admin/auditoriums/actions";
 import { DeleteRecordButton } from "@/components/admin/delete-record-button";
 import { LoadingState } from "@/components/loading-state";
+import { preloadRoom3D } from "@/components/seat-map/preload-room-3d";
 import { SeatMap, type SeatMapSeatType } from "@/components/seat-map/seat-map";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -16,6 +17,7 @@ import { Switch } from "@/components/ui/switch";
 import { DEFAULT_STEPS_PER_ROW, rowLabels } from "@/lib/seat-layout/config.constants";
 import { DEFAULT_CINEMA_DIMENSIONS, type CinemaDimensionDefaults } from "@/lib/seat-layout/dimensions.defaults";
 import { cellKey, cellsOfSeat, patchCells, removedCells, resetCells, type Cell } from "@/lib/seat-layout/overrides";
+import { DEFAULT_ROOM_3D_APPEARANCE, type Room3DAppearance } from "@/lib/seat-layout/room-3d-appearance.defaults";
 import type { Room3DConfig, SceneSeatType } from "@/lib/seat-layout/scene";
 import type { LayoutConfig, LayoutSeat, SeatFlag, SeatTypeInfo } from "@/lib/seat-layout/types";
 import { cn } from "@/lib/utils";
@@ -48,6 +50,7 @@ interface Props {
   seatTypes: EditorSeatType[];
   initialConfig: LayoutConfig;
   dimensionDefaults?: CinemaDimensionDefaults;
+  room3dAppearance?: Room3DAppearance;
   backHref: string;
 }
 
@@ -62,6 +65,7 @@ export function AuditoriumEditor({
   seatTypes,
   initialConfig,
   dimensionDefaults = DEFAULT_CINEMA_DIMENSIONS,
+  room3dAppearance = DEFAULT_ROOM_3D_APPEARANCE,
   backHref,
 }: Props) {
   const t = useTranslations("admin.auditoriums.editor");
@@ -92,7 +96,7 @@ export function AuditoriumEditor({
 
   const infos = useMemo<SeatTypeInfo[]>(() => seatTypes.map(({ id, name: n, capacity, style }) => ({ id, name: n, capacity, style })), [seatTypes]);
   const mapTypes = useMemo<SeatMapSeatType[]>(() => seatTypes.map(({ id, name: n, color }) => ({ id, name: n, color })), [seatTypes]);
-  const sceneTypes = useMemo<SceneSeatType[]>(() => seatTypes.map(({ id, color, style }) => ({ id, color, style })), [seatTypes]);
+  const sceneTypes = useMemo<SceneSeatType[]>(() => seatTypes.map(({ id, color, color3d, style }) => ({ id, color, color3d, style })), [seatTypes]);
   const built = useMemo(() => buildLayoutPreview(deferredConfig, infos, dimensionDefaults), [deferredConfig, infos, dimensionDefaults]);
   const built3d = useMemo(
     () => (view3d ? (config3d === deferredConfig ? built : buildLayoutPreview(config3d, infos, dimensionDefaults)) : null),
@@ -243,6 +247,7 @@ export function AuditoriumEditor({
                 seats={built3d.seats}
                 geometry={built3d.geometry}
                 roomConfig={room3dConfig}
+                appearance={room3dAppearance}
                 seatTypes={sceneTypes}
                 maxHeight={MAP_MAX_HEIGHT}
                 heat={heat}
@@ -279,7 +284,12 @@ export function AuditoriumEditor({
               </Label>
               <Switch id="aud-heat" checked={heat} onCheckedChange={setHeat} />
             </div>
-            <div className="flex items-center gap-stack">
+            <div
+              className="flex items-center gap-stack"
+              onPointerEnter={preloadRoom3D}
+              onTouchStart={preloadRoom3D}
+              onFocus={preloadRoom3D}
+            >
               <Label htmlFor="aud-3d" className={cn("text-muted-foreground", inSeatsTab && "opacity-50")}>
                 {t("view3d")}
               </Label>

@@ -2,7 +2,7 @@
 
 import { LikeIcon, RestartIcon, RoundedMagnifierZoomInIcon, RoundedMagnifierZoomOutIcon } from "@solar-icons/react/line-duotone";
 import { useTranslations } from "next-intl";
-import { memo, useCallback, useMemo, useRef } from "react";
+import { memo, useCallback, useId, useMemo, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { AISLE_SIZE } from "@/lib/seat-layout/generate";
 import type { LayoutGeometry, LayoutSeat } from "@/lib/seat-layout/types";
@@ -77,7 +77,113 @@ interface LayerProps extends Omit<SeatMapProps, "className" | "onSeatTap" | "onR
   seatAria: (seat: LayoutSeat, typeName: string, mark?: "favorite" | "avoid") => string;
   doorLabel: string;
   doorText: string;
+  defPrefix: string;
 }
+
+interface SeatNodeProps {
+  code: string;
+  x: number;
+  y: number;
+  span: number;
+  fill: string;
+  labelFill: string;
+  selected: boolean;
+  reserved: boolean;
+  broken: boolean;
+  obstructed: boolean;
+  recommended: boolean;
+  mark?: "favorite" | "avoid";
+  holder?: string;
+  labels: boolean;
+  interactive: boolean;
+  focusable: boolean;
+  ariaLabel?: string;
+  defPrefix: string;
+}
+
+/**
+ * Single SVG seat wrapped in `memo` with primitive props so selecting or marking 1 seat on a 250-seat
+ * layout only reconciles the 1-2 changed seats instead of the entire auditorium.
+ */
+const SeatNode = memo(function SeatNode({
+  code,
+  x,
+  y,
+  span,
+  fill,
+  labelFill,
+  selected,
+  reserved,
+  broken,
+  obstructed,
+  recommended,
+  mark,
+  holder,
+  labels,
+  interactive,
+  focusable,
+  ariaLabel,
+  defPrefix,
+}: SeatNodeProps) {
+  const w = span * 1 - (1 - SEAT);
+  return (
+    <g
+      data-seat={code}
+      role={interactive ? "button" : undefined}
+      tabIndex={interactive ? (focusable ? 0 : -1) : undefined}
+      aria-label={ariaLabel}
+      aria-pressed={interactive ? selected : undefined}
+      className={cn("outline-none focus-visible:outline-2 focus-visible:outline-ring", interactive && "cursor-pointer")}
+    >
+      {/* Full-pitch invisible hit zone so taps in the small inter-seat gap still register cleanly. */}
+      {interactive ? <rect x={x - span / 2} y={y - 0.5} width={span} height={1} fill="transparent" /> : null}
+      <rect
+        data-seat={code}
+        x={x - w / 2}
+        y={y - SEAT / 2}
+        width={w}
+        height={SEAT}
+        rx={0.2}
+        fill={fill}
+        stroke="var(--border)"
+        strokeWidth={0.04}
+        opacity={broken ? 0.45 : reserved ? 0.3 : 1}
+      />
+      {/* Seat back, on the side away from the screen */}
+      <rect x={x - w / 2 + 0.06} y={y + SEAT / 2 - 0.2} width={w - 0.12} height={0.14} rx={0.07} fill="#000" opacity={0.22} pointerEvents="none" />
+      {obstructed ? (
+        <rect x={x - w / 2} y={y - SEAT / 2} width={w} height={SEAT} rx={0.2} fill="none" stroke="var(--foreground)" strokeWidth={0.08} strokeDasharray="0.18 0.12" pointerEvents="none" />
+      ) : null}
+      {broken ? (
+        <path
+          d={`M ${x - 0.28} ${y - 0.28} L ${x + 0.28} ${y + 0.28} M ${x + 0.28} ${y - 0.28} L ${x - 0.28} ${y + 0.28}`}
+          stroke="var(--destructive)"
+          strokeWidth={0.12}
+          strokeLinecap="round"
+          pointerEvents="none"
+        />
+      ) : null}
+      {reserved ? (
+        <line x1={x - w / 2 + 0.1} y1={y} x2={x + w / 2 - 0.1} y2={y} stroke="var(--foreground)" strokeWidth={0.1} strokeLinecap="round" pointerEvents="none" />
+      ) : null}
+      {holder ? (
+        <text x={x} y={y + 0.14} textAnchor="middle" fontSize={0.4} fontWeight={700} fill="#fff" pointerEvents="none">
+          {holder}
+        </text>
+      ) : null}
+      {recommended ? <use href={`#${defPrefix}-rec`} x={x - w / 2 + 0.02} y={y - SEAT / 2 + 0.02} pointerEvents="none" /> : null}
+      {mark ? <use href={`#${defPrefix}-${mark === "favorite" ? "fav" : "avoid"}`} x={x + w / 2 - 0.02} y={y - SEAT / 2 + 0.02} pointerEvents="none" /> : null}
+      {selected ? (
+        <rect x={x - w / 2 - 0.03} y={y - SEAT / 2 - 0.03} width={w + 0.06} height={SEAT + 0.06} rx={0.23} fill="none" stroke="var(--foreground)" strokeWidth={SELECT_RING_PX} vectorEffect="non-scaling-stroke" pointerEvents="none" />
+      ) : null}
+      {labels && !broken && !holder ? (
+        <text x={x} y={y + 0.12} textAnchor="middle" fontSize={code.length > 3 ? 0.28 : 0.34} fontWeight={600} fill={labelFill} pointerEvents="none">
+          {code}
+        </text>
+      ) : null}
+    </g>
+  );
+});
 
 /** Everything that does not change while zooming, so a pinch never re-renders hundreds of seats. */
 const MapLayer = memo(function MapLayer({
@@ -100,18 +206,58 @@ const MapLayer = memo(function MapLayer({
   seatAria,
   doorLabel,
   doorText,
+  defPrefix,
 }: LayerProps) {
   const types = useMemo(() => new Map(seatTypes.map((t) => [t.id, t])), [seatTypes]);
-  const min = scoreMin;
-  const max = scoreMax;
+  // Precompute heatmap colors once per layout/bounds change rather than inside every seat render.
+  const heatStyles = useMemo(() => {
+    if (!showHeatmap) return null;
+    const map = new Map<string, { fill: string; text: string }>();
+    for (const seat of seats) {
+      map.set(seat.code, {
+        fill: heatColor(seat.score, scoreMin, scoreMax),
+        text: heatTextColor(seat.score, scoreMin, scoreMax),
+      });
+    }
+    return map;
+  }, [seats, scoreMin, scoreMax, showHeatmap]);
 
   const g = geometry;
   const sx1 = g.screen.x1;
   const sx2 = g.screen.x2;
   const sMid = (sx1 + sx2) / 2;
+  const hasAnySelected = Boolean(selectedCodes && selectedCodes.size > 0);
+  const recSize = 0.34;
+  const recScale = recSize / 24;
+  const favSize = 0.62;
+  const favScale = favSize / 24;
 
   return (
     <>
+      {/* Reusable badge symbols defined once in <defs> and instanced via <use> to cut SVG DOM node count. */}
+      <defs>
+        <g id={`${defPrefix}-rec`}>
+          <circle cx={0} cy={0} r={0.25} fill="var(--success)" stroke="#fff" strokeWidth={0.05} />
+          <g transform={`translate(${-recSize / 2} ${-recSize / 2}) scale(${recScale})`} fill="none" stroke="#fff" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round">
+            <path d="M7 10v12" />
+            <path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z" />
+          </g>
+        </g>
+        <g id={`${defPrefix}-fav`} transform={`translate(${-favSize / 2} ${-favSize / 2}) scale(${favScale})`}>
+          <path
+            d="M11.16 4.48 Q12 3 12.84 4.48 L14.25 6.96 Q15 8.27 16.48 8.58 L19.28 9.15 Q20.94 9.5 19.79 10.75 L17.87 12.86 Q16.85 13.98 17.02 15.48 L17.34 18.32 Q17.53 20 15.98 19.3 L13.38 18.13 Q12 17.5 10.62 18.13 L8.02 19.3 Q6.47 20 6.66 18.32 L6.98 15.48 Q7.15 13.98 6.13 12.86 L4.21 10.75 Q3.06 9.5 4.72 9.15 L7.52 8.58 Q9 8.27 9.75 6.96 Z"
+            fill="var(--seat-favorite)"
+            stroke="#fff"
+            strokeWidth={1.8}
+            strokeLinejoin="round"
+          />
+        </g>
+        <g id={`${defPrefix}-avoid`}>
+          <circle cx={0} cy={0} r={0.25} fill="var(--seat-avoid)" stroke="#fff" strokeWidth={0.05} />
+          <line x1={-0.14} y1={0} x2={0.14} y2={0} stroke="#fff" strokeWidth={0.07} strokeLinecap="round" />
+        </g>
+      </defs>
+
       {/* Screen */}
       <path d={`M ${sx1} 0.1 Q ${sMid} -0.45 ${sx2} 0.1`} fill="none" stroke="var(--primary)" strokeWidth={0.22} strokeLinecap="round" />
       <path d={`M ${sx1} 0.1 Q ${sMid} -0.45 ${sx2} 0.1 L ${sx2 - 0.3} 0.7 Q ${sMid} 0.2 ${sx1 + 0.3} 0.7 Z`} fill="var(--screen-glow)" />
@@ -195,106 +341,39 @@ const MapLayer = memo(function MapLayer({
         const type = types.get(seat.type);
         const holder = holderLabels?.get(seat.code);
         const reserved = reservedCodes?.has(seat.code) ?? false;
-        const fill = holder ? "var(--primary)" : showHeatmap ? heatColor(seat.score, min, max) : (type?.color ?? DEFAULT_COLOR);
-        const w = seat.span * 1 - (1 - SEAT);
-        const selected = selectedCodes?.has(seat.code);
-        const hasAnySelected = Boolean(selectedCodes && selectedCodes.size > 0);
+        const heat = heatStyles?.get(seat.code);
+        const fill = holder ? "var(--primary)" : heat ? heat.fill : (type?.color ?? DEFAULT_COLOR);
+        const labelFill = heat ? heat.text : "#fff";
+        const selected = selectedCodes?.has(seat.code) ?? false;
         const focusable = interactive && (selected || (!hasAnySelected && index === 0));
-        const broken = seat.flags.includes("broken");
-        const obstructed = seat.flags.includes("obstructed");
-        const recommended = seat.flags.includes("recommended");
         const mark = marks?.get(seat.code);
         return (
-          <g
+          <SeatNode
             key={seat.code}
-            data-seat={seat.code}
-            role={interactive ? "button" : undefined}
-            tabIndex={interactive ? (focusable ? 0 : -1) : undefined}
-            aria-label={interactive ? seatAria(seat, type?.name ?? "", mark) : undefined}
-            aria-pressed={interactive ? !!selected : undefined}
-            className={cn("outline-none focus-visible:outline-2 focus-visible:outline-ring", interactive && "cursor-pointer")}
-          >
-            {/* Full-pitch invisible hit zone so taps in the small inter-seat gap still register cleanly. */}
-            {interactive ? <rect x={seat.x - seat.span / 2} y={seat.y - 0.5} width={seat.span} height={1} fill="transparent" /> : null}
-            <rect data-seat={seat.code} x={seat.x - w / 2} y={seat.y - SEAT / 2} width={w} height={SEAT} rx={0.2} fill={fill} stroke="var(--border)" strokeWidth={0.04} opacity={broken ? 0.45 : reserved ? 0.3 : 1} />
-            {/* Seat back, on the side away from the screen */}
-            <rect x={seat.x - w / 2 + 0.06} y={seat.y + SEAT / 2 - 0.2} width={w - 0.12} height={0.14} rx={0.07} fill="#000" opacity={0.22} pointerEvents="none" />
-            {obstructed ? (
-              <rect x={seat.x - w / 2} y={seat.y - SEAT / 2} width={w} height={SEAT} rx={0.2} fill="none" stroke="var(--foreground)" strokeWidth={0.08} strokeDasharray="0.18 0.12" pointerEvents="none" />
-            ) : null}
-            {broken ? (
-              <path
-                d={`M ${seat.x - 0.28} ${seat.y - 0.28} L ${seat.x + 0.28} ${seat.y + 0.28} M ${seat.x + 0.28} ${seat.y - 0.28} L ${seat.x - 0.28} ${seat.y + 0.28}`}
-                stroke="var(--destructive)"
-                strokeWidth={0.12}
-                strokeLinecap="round"
-                pointerEvents="none"
-              />
-            ) : null}
-            {reserved ? (
-              <line x1={seat.x - w / 2 + 0.1} y1={seat.y} x2={seat.x + w / 2 - 0.1} y2={seat.y} stroke="var(--foreground)" strokeWidth={0.1} strokeLinecap="round" pointerEvents="none" />
-            ) : null}
-            {holder ? (
-              <text x={seat.x} y={seat.y + 0.14} textAnchor="middle" fontSize={0.4} fontWeight={700} fill="#fff" pointerEvents="none">
-                {holder}
-              </text>
-            ) : null}
-            {recommended ? <RecommendedBadge x={seat.x - w / 2 + 0.02} y={seat.y - SEAT / 2 + 0.02} /> : null}
-            {mark ? <MarkBadge kind={mark} x={seat.x + w / 2 - 0.02} y={seat.y - SEAT / 2 + 0.02} /> : null}
-            {selected ? (
-              <rect x={seat.x - w / 2 - 0.03} y={seat.y - SEAT / 2 - 0.03} width={w + 0.06} height={SEAT + 0.06} rx={0.23} fill="none" stroke="var(--foreground)" strokeWidth={SELECT_RING_PX} vectorEffect="non-scaling-stroke" pointerEvents="none" />
-            ) : null}
-            {labels && !broken && !holder ? (
-              <text x={seat.x} y={seat.y + 0.12} textAnchor="middle" fontSize={seat.code.length > 3 ? 0.28 : 0.34} fontWeight={600} fill={showHeatmap ? heatTextColor(seat.score, min, max) : "#fff"} pointerEvents="none">
-                {seat.code}
-              </text>
-            ) : null}
-          </g>
+            code={seat.code}
+            x={seat.x}
+            y={seat.y}
+            span={seat.span}
+            fill={fill}
+            labelFill={labelFill}
+            selected={selected}
+            reserved={reserved}
+            broken={seat.flags.includes("broken")}
+            obstructed={seat.flags.includes("obstructed")}
+            recommended={seat.flags.includes("recommended")}
+            mark={mark}
+            holder={holder}
+            labels={labels}
+            interactive={interactive}
+            focusable={focusable}
+            ariaLabel={interactive ? seatAria(seat, type?.name ?? "", mark) : undefined}
+            defPrefix={defPrefix}
+          />
         );
       })}
     </>
   );
 });
-
-/** Top-left badge of a seat the admin recommends: a green circle with a thumbs-up (lucide "thumbs-up" paths, drawn in a 24-unit box). */
-function RecommendedBadge({ x, y }: { x: number; y: number }) {
-  const size = 0.34;
-  const k = size / 24;
-  return (
-    <g pointerEvents="none">
-      <circle cx={x} cy={y} r={0.25} fill="var(--success)" stroke="#fff" strokeWidth={0.05} />
-      <g transform={`translate(${x - size / 2} ${y - size / 2}) scale(${k})`} fill="none" stroke="#fff" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round">
-        <path d="M7 10v12" />
-        <path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z" />
-      </g>
-    </g>
-  );
-}
-
-/** Corner badge of a marked seat: a soft rounded gold star, or a red circle with a bar. Shape differs, so colour is not the only signal. */
-function MarkBadge({ kind, x, y }: { kind: "favorite" | "avoid"; x: number; y: number }) {
-  if (kind === "favorite") {
-    const size = 0.62;
-    const k = size / 24;
-    return (
-      <g pointerEvents="none" transform={`translate(${x - size / 2} ${y - size / 2}) scale(${k})`}>
-        <path
-          d="M11.16 4.48 Q12 3 12.84 4.48 L14.25 6.96 Q15 8.27 16.48 8.58 L19.28 9.15 Q20.94 9.5 19.79 10.75 L17.87 12.86 Q16.85 13.98 17.02 15.48 L17.34 18.32 Q17.53 20 15.98 19.3 L13.38 18.13 Q12 17.5 10.62 18.13 L8.02 19.3 Q6.47 20 6.66 18.32 L6.98 15.48 Q7.15 13.98 6.13 12.86 L4.21 10.75 Q3.06 9.5 4.72 9.15 L7.52 8.58 Q9 8.27 9.75 6.96 Z"
-          fill="var(--seat-favorite)"
-          stroke="#fff"
-          strokeWidth={1.8}
-          strokeLinejoin="round"
-        />
-      </g>
-    );
-  }
-  return (
-    <g pointerEvents="none">
-      <circle cx={x} cy={y} r={0.25} fill="var(--seat-avoid)" stroke="#fff" strokeWidth={0.05} />
-      <line x1={x - 0.14} y1={y} x2={x + 0.14} y2={y} stroke="#fff" strokeWidth={0.07} strokeLinecap="round" />
-    </g>
-  );
-}
 
 /**
  * Seat map drawn as SVG from a generated layout: pinch to zoom, drag to pan, tap a seat.
@@ -318,6 +397,7 @@ export function SeatMap({
   className,
 }: SeatMapProps) {
   const t = useTranslations("seatMap");
+  const defPrefix = useId().replace(/:/g, "");
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const seatsByCode = useMemo(() => new Map(seats.map((s) => [s.code, s])), [seats]);
@@ -422,6 +502,7 @@ export function SeatMap({
             seatAria={seatAria}
             doorLabel={t("doorLabel")}
             doorText={t("door")}
+            defPrefix={defPrefix}
           />
         </svg>
       </div>

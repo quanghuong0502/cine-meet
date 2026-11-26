@@ -1,8 +1,64 @@
-import * as THREE from "three";
+import {
+  ACESFilmicToneMapping,
+  AdditiveBlending,
+  AmbientLight,
+  BoxGeometry,
+  BufferAttribute,
+  BufferGeometry,
+  CanvasTexture,
+  CircleGeometry,
+  Color,
+  CubicBezierCurve3,
+  CylinderGeometry,
+  DirectionalLight,
+  DoubleSide,
+  Euler,
+  Fog,
+  FrontSide,
+  Group,
+  HemisphereLight,
+  InstancedMesh,
+  LinearFilter,
+  Matrix4,
+  Mesh,
+  MeshBasicMaterial,
+  MeshStandardMaterial,
+  NoBlending,
+  PerspectiveCamera,
+  PlaneGeometry,
+  PointLight,
+  Quaternion,
+  Raycaster,
+  RepeatWrapping,
+  RingGeometry,
+  SRGBColorSpace,
+  Scene,
+  ShaderMaterial,
+  SphereGeometry,
+  TOUCH,
+  Vector2,
+  Vector3,
+  WebGLRenderer,
+} from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
+import type { CSS3DObject, CSS3DRenderer } from "three/addons/renderers/CSS3DRenderer.js";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
+import { parseYoutubeId, youtubeEmbedUrl } from "@/lib/movie/youtube";
 import type { RoomScene, SceneSeat } from "@/lib/seat-layout/scene";
+import {
+  normalizeRoom3DAppearance,
+  type AisleLedColor,
+  type CarpetStyle,
+  type CeilingStyle,
+  type ExitSignColor,
+  type ExitSignText,
+  type LightAccentColor,
+  type Room3DAppearance,
+  type ScreenContentPreset,
+  type SubtitleColor,
+  type WallStyle,
+} from "@/lib/seat-layout/room-3d-appearance.defaults";
 import type { SeatStyle } from "@/lib/seat-layout/types";
 import { EYE_HEIGHT_M, HEAD_ABOVE_EYE_M, sittingEyeHeightM } from "@/services/seat-score";
 import { heatColor, heatLevel } from "./heat-color";
@@ -30,6 +86,10 @@ export interface Room3D {
   setLightsUp: (on: boolean) => void;
   setHeights: (viewerHeightCm: number, frontHeightCm: number) => void;
   setMarks: (marks: Map<string, SeatMarkKind3D> | undefined) => void;
+  /** Updates auditorium visual UI/fixtures in-place inside the same WebGL context (preserves camera pose). */
+  setAppearance: (appearance: Room3DAppearance) => void;
+  /** Mutes or unmutes the active YouTube cinema screen iframe (no-op when not in YouTube mode). */
+  setYoutubeMuted: (muted: boolean) => void;
   /** Reparents the live WebGL canvas without losing GPU context (used for inline ↔ fullscreen transitions). */
   mountTo: (target: HTMLElement) => void;
   refit: () => void;
@@ -47,6 +107,8 @@ export interface Room3DOptions {
   frontHeightCm: number;
   marks?: Map<string, SeatMarkKind3D>;
   subtitleText?: string;
+  appearance?: Room3DAppearance;
+  youtubeMuted?: boolean;
   onPick: (code: string) => void;
   onHover?: (code: string | null) => void;
   /** Called when WebGL cannot start or is permanently lost. */
@@ -59,8 +121,8 @@ const EDGE_GUARD_PX = 20;
 const RESIZE_DEBOUNCE_MS = 100;
 const TAP_MAX_MOVE_PX = 6;
 const LOOK_SPEED = 0.0042;
-const LOOK_LIMIT_YAW = (58 * Math.PI) / 180;
-const LOOK_LIMIT_PITCH = (26 * Math.PI) / 180;
+const LOOK_LIMIT_YAW = (75 * Math.PI) / 180;
+const LOOK_LIMIT_PITCH = (38 * Math.PI) / 180;
 const HEAT_STEPS = 16;
 const ORBIT_FOV = 54;
 const SEAT_FOV = 60;
@@ -199,13 +261,13 @@ function prefersReducedMotion(): boolean {
   return typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 }
 
-function normalizePart(geom: THREE.BufferGeometry): THREE.BufferGeometry {
+function normalizePart(geom: BufferGeometry): BufferGeometry {
   const out = geom.index ? geom.toNonIndexed() : geom;
   if (out !== geom) geom.dispose();
   if (!out.getAttribute("normal")) out.computeVertexNormals();
   if (!out.getAttribute("uv")) {
     const count = out.getAttribute("position").count;
-    out.setAttribute("uv", new THREE.BufferAttribute(new Float32Array(count * 2), 2));
+    out.setAttribute("uv", new BufferAttribute(new Float32Array(count * 2), 2));
   }
   return out;
 }
@@ -219,7 +281,7 @@ function roundedPart(
   z: number,
   radius: number,
   rotX = 0,
-): THREE.BufferGeometry {
+): BufferGeometry {
   const r = Math.min(radius, w * 0.45, h * 0.45, d * 0.45);
   const g = new RoundedBoxGeometry(w, h, d, 1, r);
   if (rotX !== 0) g.rotateX(rotX);
@@ -235,8 +297,8 @@ function boxPart(
   y: number,
   z: number,
   rotX = 0,
-): THREE.BufferGeometry {
-  const g = new THREE.BoxGeometry(w, h, d);
+): BufferGeometry {
+  const g = new BoxGeometry(w, h, d);
   if (rotX !== 0) g.rotateX(rotX);
   g.translate(x, y, z);
   return normalizePart(g);
@@ -246,7 +308,7 @@ function boxPart(
  * Bakes subtle vertical & crease ambient occlusion into vertex colours so chairs read with plush
  * cinema depth and sculpted edges under any lighting or heatmap tint — at zero runtime shader cost.
  */
-function bakeVerticalAO(geometry: THREE.BufferGeometry, minY: number, maxY: number, minAO = 0.46): THREE.BufferGeometry {
+function bakeVerticalAO(geometry: BufferGeometry, minY: number, maxY: number, minAO = 0.46): BufferGeometry {
   const pos = geometry.getAttribute("position");
   const norm = geometry.getAttribute("normal");
   const colors = new Float32Array(pos.count * 3);
@@ -266,11 +328,11 @@ function bakeVerticalAO(geometry: THREE.BufferGeometry, minY: number, maxY: numb
     colors[i * 3 + 1] = ao;
     colors[i * 3 + 2] = ao;
   }
-  geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+  geometry.setAttribute("color", new BufferAttribute(colors, 3));
   return geometry;
 }
 
-function mergeParts(parts: THREE.BufferGeometry[], fallback: THREE.BufferGeometry): THREE.BufferGeometry {
+function mergeParts(parts: BufferGeometry[], fallback: BufferGeometry): BufferGeometry {
   if (parts.length === 0) return fallback;
   const merged = mergeGeometries(parts, false);
   for (const p of parts) p.dispose();
@@ -280,8 +342,8 @@ function mergeParts(parts: THREE.BufferGeometry[], fallback: THREE.BufferGeometr
 }
 
 interface ChairGeometries {
-  fabric: THREE.BufferGeometry;
-  frame: THREE.BufferGeometry;
+  fabric: BufferGeometry;
+  frame: BufferGeometry;
 }
 
 /**
@@ -297,8 +359,8 @@ function buildChairGeometries(
 ): ChairGeometries {
   const w = seatPitchM * 0.98;
   const tilt = (reclineDeg * Math.PI) / 180;
-  const fabricParts: THREE.BufferGeometry[] = [];
-  const frameParts: THREE.BufferGeometry[] = [];
+  const fabricParts: BufferGeometry[] = [];
+  const frameParts: BufferGeometry[] = [];
 
   if (style === "bed") {
     const bedW = seatPitchM * 0.96;
@@ -422,12 +484,12 @@ function buildChairGeometries(
   }
 
   const fabric = bakeVerticalAO(
-    mergeParts(fabricParts, normalizePart(new THREE.BoxGeometry(w, 0.9, 0.5))),
+    mergeParts(fabricParts, normalizePart(new BoxGeometry(w, 0.9, 0.5))),
     0.2,
     1.1,
     0.46,
   );
-  const frame = mergeParts(frameParts, normalizePart(new THREE.BoxGeometry(w * 0.5, 0.25, 0.25)));
+  const frame = mergeParts(frameParts, normalizePart(new BoxGeometry(w * 0.5, 0.25, 0.25)));
   return { fabric, frame };
 }
 
@@ -443,8 +505,8 @@ function buildCoupleChairGeometries(
 ): ChairGeometries {
   const totalW = seatPitchM * 2 * 0.98;
   const tilt = (reclineDeg * Math.PI) / 180;
-  const fabricParts: THREE.BufferGeometry[] = [];
-  const frameParts: THREE.BufferGeometry[] = [];
+  const fabricParts: BufferGeometry[] = [];
+  const frameParts: BufferGeometry[] = [];
 
   if (style === "bed") {
     const bedD = Math.min(rowPitchM * 0.86, 1.45);
@@ -496,12 +558,12 @@ function buildCoupleChairGeometries(
   }
 
   const fabric = bakeVerticalAO(
-    mergeParts(fabricParts, normalizePart(new THREE.BoxGeometry(totalW, 1.0, 0.55))),
+    mergeParts(fabricParts, normalizePart(new BoxGeometry(totalW, 1.0, 0.55))),
     0.2,
     1.12,
     0.46,
   );
-  const frame = mergeParts(frameParts, normalizePart(new THREE.BoxGeometry(totalW, 1.12, 0.6)));
+  const frame = mergeParts(frameParts, normalizePart(new BoxGeometry(totalW, 1.12, 0.6)));
   return { fabric, frame };
 }
 
@@ -512,7 +574,7 @@ function buildCoupleChairGeometries(
  * - Head crown matches exact `EYE_HEIGHT_M + HEAD_ABOVE_EYE_M - eyeDropM` (`1.22 m` upright, `1.19 m` slight, `1.14 m` deep)
  *   so the back of the skull cradles naturally against the high-back / recliner headrest in sync with seat scoring.
  */
-function buildAudienceGeometry(reclineDeg: number, eyeDropM: number): THREE.BufferGeometry {
+function buildAudienceGeometry(reclineDeg: number, eyeDropM: number): BufferGeometry {
   const tilt = (reclineDeg * Math.PI) / 180;
   const sinT = Math.sin(tilt);
   const cosT = Math.cos(tilt);
@@ -545,7 +607,7 @@ function buildAudienceGeometry(reclineDeg: number, eyeDropM: number): THREE.Buff
   const shoulderTopZ = hipZ + torsoLen * sinT;
 
   // Realistic human head (15.4 × 21.4 × 18.6 cm) resting directly against the chair headrest
-  const head = new THREE.SphereGeometry(1, 10, 8);
+  const head = new SphereGeometry(1, 10, 8);
   head.scale(0.077, headRY, 0.093);
   head.rotateX(tilt * 0.35);
   head.translate(0, headY, headZ);
@@ -556,18 +618,18 @@ function buildAudienceGeometry(reclineDeg: number, eyeDropM: number): THREE.Buff
   const neckEndY = headY - headRY + 0.028;
   const neckEndZ = headZ - (headRY - 0.028) * sinT;
   const neckH = Math.max(0.06, Math.hypot(neckEndY - neckStartY, neckEndZ - neckStartZ));
-  const neck = new THREE.CylinderGeometry(0.048, 0.06, neckH, 8);
+  const neck = new CylinderGeometry(0.048, 0.06, neckH, 8);
   neck.rotateX(tilt * 0.75);
   neck.translate(0, (neckStartY + neckEndY) / 2, (neckStartZ + neckEndZ) / 2);
 
   const parts = [lap, torso, neck, head].map(normalizePart);
-  return mergeParts(parts, normalizePart(new THREE.BoxGeometry(0.36, 0.55, 0.22)));
+  return mergeParts(parts, normalizePart(new BoxGeometry(0.36, 0.55, 0.22)));
 }
 
 /** Builds a curved or flat plane whose centre sits at z = 0 and outer edges curve toward +z by `curveDepth`. */
-function buildScreenGeometry(width: number, height: number, curveDepth: number): THREE.PlaneGeometry {
+function buildScreenGeometry(width: number, height: number, curveDepth: number): PlaneGeometry {
   const segX = curveDepth > 0 ? 32 : 1;
-  const g = new THREE.PlaneGeometry(width, height, segX, 1);
+  const g = new PlaneGeometry(width, height, segX, 1);
   if (curveDepth > 0 && width > 0) {
     const pos = g.attributes.position;
     const halfW = width / 2;
@@ -593,7 +655,7 @@ function buildScreenHousingGeometry(
   tiltRad: number,
   curveDepth: number,
   frontWallZ: number,
-): THREE.BufferGeometry {
+): BufferGeometry {
   const halfW = frameW / 2;
   const halfH = frameH / 2;
   const cosT = Math.cos(tiltRad);
@@ -621,132 +683,246 @@ function buildScreenHousingGeometry(
     -halfW, by, wz,  halfW, by, wz,   halfW, by, bz,
     -halfW, by, wz,  halfW, by, bz,   -halfW, by, bz,
   ]);
-  const g = new THREE.BufferGeometry();
-  g.setAttribute("position", new THREE.BufferAttribute(verts, 3));
+  const g = new BufferGeometry();
+  g.setAttribute("position", new BufferAttribute(verts, 3));
   g.computeVertexNormals();
   return g;
 }
 
-// Module-level caches for 2D procedural canvas images so repeat mounts/rebuilds skip all 2D canvas painting.
-// Each WebGLRenderer still creates & disposes its own `THREE.CanvasTexture` wrapper to keep context lifecycles isolated.
-let cachedCarpetCanvas: HTMLCanvasElement | null | undefined;
-let cachedAcousticWallCanvas: HTMLCanvasElement | null | undefined;
-let cachedCeilingCanvas: HTMLCanvasElement | null | undefined;
-let cachedSconceGlowCanvas: HTMLCanvasElement | null | undefined;
+// Module-level bounded caches for 2D procedural canvas images so repeat mounts/rebuilds skip all 2D canvas painting.
+// Each WebGLRenderer still creates & disposes its own `CanvasTexture` wrapper to keep context lifecycles isolated.
+const MAX_CANVAS_CACHE = 6;
+const cachedCarpetCanvases = new Map<string, HTMLCanvasElement>();
+const cachedAcousticWallCanvases = new Map<string, HTMLCanvasElement>();
+const cachedCeilingCanvases = new Map<string, HTMLCanvasElement>();
+const cachedSconceGlowCanvases = new Map<LightAccentColor, HTMLCanvasElement>();
 let cachedScreenHaloCanvas: HTMLCanvasElement | null | undefined;
-let cachedExitSignCanvas: HTMLCanvasElement | null | undefined;
+const cachedExitSignCanvases = new Map<string, HTMLCanvasElement>();
 const cachedScreenCanvases = new Map<string, HTMLCanvasElement>();
 
-function getCarpetCanvas(): HTMLCanvasElement | null {
-  if (cachedCarpetCanvas !== undefined) return cachedCarpetCanvas;
+function putCanvasCache<K>(cache: Map<K, HTMLCanvasElement>, key: K, canvas: HTMLCanvasElement): HTMLCanvasElement {
+  if (cache.size >= MAX_CANVAS_CACHE) cache.clear();
+  cache.set(key, canvas);
+  return canvas;
+}
+
+/** Scales an RGB hex color (e.g. "#14131D") smoothly for procedural texture highlights and shadows. */
+function shadeHex(hex: string, factor: number, fallback = "#14131D"): string {
+  const num = parseHexOrRgb(hex) ?? parseHexOrRgb(fallback) ?? 0x14131d;
+  const r = Math.max(0, Math.min(255, Math.round(((num >> 16) & 0xff) * factor)));
+  const g = Math.max(0, Math.min(255, Math.round(((num >> 8) & 0xff) * factor)));
+  const b = Math.max(0, Math.min(255, Math.round((num & 0xff) * factor)));
+  return `rgb(${r}, ${g}, ${b})`;
+}
+
+const SCONCE_ACCENT_STOPS: Record<LightAccentColor, { dim: number; lit: number; stops: [string, string, string, string] }> = {
+  warm: {
+    dim: 0x784a22,
+    lit: 0xffcd85,
+    stops: [
+      "rgba(255, 206, 138, 0.72)",
+      "rgba(232, 148, 72, 0.3)",
+      "rgba(180, 96, 40, 0.08)",
+      "rgba(180, 96, 40, 0)",
+    ],
+  },
+  neutral: {
+    dim: 0x5c6375,
+    lit: 0xf1f5ff,
+    stops: [
+      "rgba(242, 246, 255, 0.66)",
+      "rgba(196, 206, 228, 0.26)",
+      "rgba(130, 142, 168, 0.08)",
+      "rgba(130, 142, 168, 0)",
+    ],
+  },
+  cool: {
+    dim: 0x265480,
+    lit: 0x7dd3fc,
+    stops: [
+      "rgba(148, 214, 255, 0.72)",
+      "rgba(72, 156, 236, 0.3)",
+      "rgba(32, 92, 178, 0.08)",
+      "rgba(32, 92, 178, 0)",
+    ],
+  },
+  crimson: {
+    dim: 0x6e1e33,
+    lit: 0xfb7185,
+    stops: [
+      "rgba(255, 138, 162, 0.68)",
+      "rgba(220, 62, 102, 0.28)",
+      "rgba(142, 24, 58, 0.08)",
+      "rgba(142, 24, 58, 0)",
+    ],
+  },
+};
+
+const AISLE_LED_HEX: Record<AisleLedColor, number> = {
+  amber: 0xffb347,
+  white: 0xf1f5f9,
+  blue: 0x38bdf8,
+  red: 0xf87171,
+};
+
+function getCarpetCanvas(style: CarpetStyle, baseHex: string): HTMLCanvasElement | null {
+  const key = `${style}:${baseHex}`;
+  const existing = cachedCarpetCanvases.get(key);
+  if (existing) return existing;
   const canvas = document.createElement("canvas");
   canvas.width = 256;
   canvas.height = 256;
   const ctx = canvas.getContext("2d");
-  if (!ctx) {
-    cachedCarpetCanvas = null;
-    return null;
-  }
+  if (!ctx) return null;
 
-  ctx.fillStyle = "#161320";
+  ctx.fillStyle = shadeHex(baseHex, 1, "#161320");
   ctx.fillRect(0, 0, 256, 256);
 
-  // Subtle woven ribs
-  ctx.fillStyle = "rgba(255, 255, 255, 0.022)";
-  for (let y = 0; y < 256; y += 4) ctx.fillRect(0, y, 256, 1);
-  ctx.fillStyle = "rgba(0, 0, 0, 0.16)";
-  for (let x = 0; x < 256; x += 8) ctx.fillRect(x, 0, 1, 256);
+  if (style === "striped") {
+    for (let x = 0; x < 256; x += 32) {
+      ctx.fillStyle = "rgba(255, 255, 255, 0.045)";
+      ctx.fillRect(x, 0, 12, 256);
+      ctx.fillStyle = "rgba(0, 0, 0, 0.2)";
+      ctx.fillRect(x + 12, 0, 4, 256);
+    }
+    ctx.fillStyle = "rgba(255, 255, 255, 0.018)";
+    for (let y = 0; y < 256; y += 4) ctx.fillRect(0, y, 256, 1);
+  } else if (style === "solid") {
+    ctx.fillStyle = "rgba(255, 255, 255, 0.014)";
+    for (let y = 0; y < 256; y += 4) ctx.fillRect(0, y, 256, 1);
+    ctx.fillStyle = "rgba(0, 0, 0, 0.09)";
+    for (let x = 0; x < 256; x += 8) ctx.fillRect(x, 0, 1, 256);
+  } else {
+    // Subtle woven ribs + deterministic cinema carpet fleck pattern
+    ctx.fillStyle = "rgba(255, 255, 255, 0.022)";
+    for (let y = 0; y < 256; y += 4) ctx.fillRect(0, y, 256, 1);
+    ctx.fillStyle = "rgba(0, 0, 0, 0.16)";
+    for (let x = 0; x < 256; x += 8) ctx.fillRect(x, 0, 1, 256);
 
-  // Deterministic cinema carpet fleck pattern (muted burgundy + deep indigo dots)
-  let seed = 1337;
-  const rand = () => {
-    seed = (seed * 16807) % 2147483647;
-    return (seed - 1) / 2147483646;
-  };
-  for (let i = 0; i < 420; i++) {
-    const x = rand() * 256;
-    const y = rand() * 256;
-    const r = 1 + rand() * 2.2;
-    ctx.fillStyle = i % 3 === 0 ? "rgba(148, 42, 74, 0.12)" : "rgba(58, 66, 104, 0.12)";
-    ctx.fillRect(x, y, r, r);
+    let seed = 1337;
+    const rand = () => {
+      seed = (seed * 16807) % 2147483647;
+      return (seed - 1) / 2147483646;
+    };
+    for (let i = 0; i < 420; i++) {
+      const x = rand() * 256;
+      const y = rand() * 256;
+      const r = 1 + rand() * 2.2;
+      ctx.fillStyle = i % 3 === 0 ? "rgba(148, 42, 74, 0.12)" : "rgba(58, 66, 104, 0.12)";
+      ctx.fillRect(x, y, r, r);
+    }
   }
 
-  cachedCarpetCanvas = canvas;
-  return canvas;
+  return putCanvasCache(cachedCarpetCanvases, key, canvas);
 }
 
-/** Procedural plush dark cinema carpet texture (256×256) with subtle woven texture & theater speckle. */
-function createCarpetTexture(repeatX: number, repeatZ: number): THREE.CanvasTexture | null {
-  const canvas = getCarpetCanvas();
+/** Procedural plush dark cinema carpet texture (256×256). */
+function createCarpetTexture(
+  repeatX: number,
+  repeatZ: number,
+  style: CarpetStyle,
+  baseHex: string,
+): CanvasTexture | null {
+  const canvas = getCarpetCanvas(style, baseHex);
   if (!canvas) return null;
-  const tex = new THREE.CanvasTexture(canvas);
-  tex.wrapS = THREE.RepeatWrapping;
-  tex.wrapT = THREE.RepeatWrapping;
+  const tex = new CanvasTexture(canvas);
+  tex.wrapS = RepeatWrapping;
+  tex.wrapT = RepeatWrapping;
   tex.repeat.set(Math.max(1, repeatX), Math.max(1, repeatZ));
-  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.colorSpace = SRGBColorSpace;
   return tex;
 }
 
-function getAcousticWallCanvas(): HTMLCanvasElement | null {
-  if (cachedAcousticWallCanvas !== undefined) return cachedAcousticWallCanvas;
+function getAcousticWallCanvas(style: WallStyle, baseHex: string): HTMLCanvasElement | null {
+  const key = `${style}:${baseHex}`;
+  const existing = cachedAcousticWallCanvases.get(key);
+  if (existing) return existing;
   const canvas = document.createElement("canvas");
   canvas.width = 256;
   canvas.height = 256;
   const ctx = canvas.getContext("2d");
-  if (!ctx) {
-    cachedAcousticWallCanvas = null;
-    return null;
-  }
+  if (!ctx) return null;
 
-  ctx.fillStyle = "#14131d";
+  ctx.fillStyle = shadeHex(baseHex, 1, "#14131D");
   ctx.fillRect(0, 0, 256, 256);
 
-  // Vertical acoustic wood/fabric slats
-  const slatW = 16;
-  for (let x = 0; x < 256; x += slatW) {
-    const grad = ctx.createLinearGradient(x, 0, x + slatW, 0);
-    grad.addColorStop(0, "#09080e");
-    grad.addColorStop(0.18, "#1c1a28");
-    grad.addColorStop(0.55, "#171522");
-    grad.addColorStop(0.88, "#100f18");
-    grad.addColorStop(1, "#08070c");
-    ctx.fillStyle = grad;
-    ctx.fillRect(x, 0, slatW, 256);
+  if (style === "slats") {
+    const slatW = 16;
+    for (let x = 0; x < 256; x += slatW) {
+      const grad = ctx.createLinearGradient(x, 0, x + slatW, 0);
+      grad.addColorStop(0, shadeHex(baseHex, 0.45));
+      grad.addColorStop(0.18, shadeHex(baseHex, 1.32));
+      grad.addColorStop(0.55, shadeHex(baseHex, 1.08));
+      grad.addColorStop(0.88, shadeHex(baseHex, 0.78));
+      grad.addColorStop(1, shadeHex(baseHex, 0.4));
+      ctx.fillStyle = grad;
+      ctx.fillRect(x, 0, slatW, 256);
+    }
+    ctx.fillStyle = "rgba(0, 0, 0, 0.42)";
+    ctx.fillRect(0, 126, 256, 3);
+    ctx.fillRect(0, 253, 256, 3);
+  } else if (style === "panels") {
+    // Padded fabric acoustic wall panels (2×2 grid with soft bevelled sheen and dark shadow reveals)
+    const tile = 128;
+    for (let gy = 0; gy < 256; gy += tile) {
+      for (let gx = 0; gx < 256; gx += tile) {
+        const g = ctx.createLinearGradient(gx, gy, gx + tile, gy + tile);
+        g.addColorStop(0, shadeHex(baseHex, 1.24));
+        g.addColorStop(0.5, shadeHex(baseHex, 1.02));
+        g.addColorStop(1, shadeHex(baseHex, 0.8));
+        ctx.fillStyle = g;
+        ctx.fillRect(gx + 3, gy + 3, tile - 6, tile - 6);
+        ctx.strokeStyle = "rgba(0, 0, 0, 0.52)";
+        ctx.lineWidth = 4;
+        ctx.strokeRect(gx + 2, gy + 2, tile - 4, tile - 4);
+      }
+    }
+  } else {
+    // Matte acoustic plaster with gentle micro-grain
+    let seed = 7331;
+    const rand = () => {
+      seed = (seed * 16807) % 2147483647;
+      return (seed - 1) / 2147483646;
+    };
+    for (let i = 0; i < 320; i++) {
+      const x = rand() * 256;
+      const y = rand() * 256;
+      ctx.fillStyle = i % 2 === 0 ? "rgba(255, 255, 255, 0.018)" : "rgba(0, 0, 0, 0.08)";
+      ctx.fillRect(x, y, 2, 2);
+    }
   }
 
-  // Subtle horizontal acoustic fabric panel seams
-  ctx.fillStyle = "rgba(0, 0, 0, 0.42)";
-  ctx.fillRect(0, 126, 256, 3);
-  ctx.fillRect(0, 253, 256, 3);
-
-  cachedAcousticWallCanvas = canvas;
-  return canvas;
+  return putCanvasCache(cachedAcousticWallCanvases, key, canvas);
 }
 
-/** Procedural vertical ribbed acoustic baffle wall texture (256×256). */
-function createAcousticWallTexture(repeatX: number, repeatY: number): THREE.CanvasTexture | null {
-  const canvas = getAcousticWallCanvas();
+/** Procedural acoustic baffle wall texture (256×256). */
+function createAcousticWallTexture(
+  repeatX: number,
+  repeatY: number,
+  style: WallStyle,
+  baseHex: string,
+): CanvasTexture | null {
+  const canvas = getAcousticWallCanvas(style, baseHex);
   if (!canvas) return null;
-  const tex = new THREE.CanvasTexture(canvas);
-  tex.wrapS = THREE.RepeatWrapping;
-  tex.wrapT = THREE.RepeatWrapping;
+  const tex = new CanvasTexture(canvas);
+  tex.wrapS = RepeatWrapping;
+  tex.wrapT = RepeatWrapping;
   tex.repeat.set(Math.max(1, repeatX), Math.max(1, repeatY));
-  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.colorSpace = SRGBColorSpace;
   return tex;
 }
 
-function getCeilingCanvas(): HTMLCanvasElement | null {
-  if (cachedCeilingCanvas !== undefined) return cachedCeilingCanvas;
+function getCeilingCanvas(style: CeilingStyle, baseHex: string): HTMLCanvasElement | null {
+  const key = `${style}:${baseHex}`;
+  const existing = cachedCeilingCanvases.get(key);
+  if (existing) return existing;
   const canvas = document.createElement("canvas");
   canvas.width = 256;
   canvas.height = 256;
   const ctx = canvas.getContext("2d");
-  if (!ctx) {
-    cachedCeilingCanvas = null;
-    return null;
-  }
+  if (!ctx) return null;
 
-  ctx.fillStyle = "#0b0d14";
+  ctx.fillStyle = shadeHex(baseHex, 1, "#0B0D14");
   ctx.fillRect(0, 0, 256, 256);
 
   let seed = 4242;
@@ -754,7 +930,7 @@ function getCeilingCanvas(): HTMLCanvasElement | null {
     seed = (seed * 16807) % 2147483647;
     return (seed - 1) / 2147483646;
   };
-  for (let i = 0; i < 65; i++) {
+  for (let i = 0; i < 55; i++) {
     const x = rand() * 256;
     const y = rand() * 256;
     const rad = 16 + rand() * 44;
@@ -767,80 +943,207 @@ function getCeilingCanvas(): HTMLCanvasElement | null {
     ctx.fill();
   }
 
-  // Acoustic tile grid seams
-  ctx.strokeStyle = "rgba(0, 0, 0, 0.6)";
-  ctx.lineWidth = 3;
-  const step = 64;
-  for (let k = 0; k <= 256; k += step) {
-    ctx.beginPath();
-    ctx.moveTo(k, 0);
-    ctx.lineTo(k, 256);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(0, k);
-    ctx.lineTo(256, k);
-    ctx.stroke();
+  if (style === "coffered") {
+    ctx.strokeStyle = "rgba(0, 0, 0, 0.6)";
+    ctx.lineWidth = 3;
+    const step = 64;
+    for (let k = 0; k <= 256; k += step) {
+      ctx.beginPath();
+      ctx.moveTo(k, 0);
+      ctx.lineTo(k, 256);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(0, k);
+      ctx.lineTo(256, k);
+      ctx.stroke();
+    }
+  } else if (style === "starlight") {
+    // Delicate VIP theater fiber-optic starfield ceiling
+    for (let i = 0; i < 42; i++) {
+      const sx = rand() * 256;
+      const sy = rand() * 256;
+      const r = rand() > 0.8 ? 2.2 : 1.25;
+      const alpha = 0.38 + rand() * 0.55;
+      const warm = i % 3 === 0;
+      const halo = ctx.createRadialGradient(sx, sy, 0, sx, sy, r * 3.2);
+      halo.addColorStop(0, warm ? `rgba(255, 236, 198, ${alpha.toFixed(2)})` : `rgba(210, 230, 255, ${alpha.toFixed(2)})`);
+      halo.addColorStop(1, "rgba(255, 255, 255, 0)");
+      ctx.fillStyle = halo;
+      ctx.beginPath();
+      ctx.arc(sx, sy, r * 3.2, 0, Math.PI * 2);
+      ctx.fill();
+    }
   }
 
-  cachedCeilingCanvas = canvas;
-  return canvas;
+  return putCanvasCache(cachedCeilingCanvases, key, canvas);
 }
 
-/** Procedural dark coffered acoustic ceiling tile texture (256×256). */
-function createCeilingTexture(repeatX: number, repeatZ: number): THREE.CanvasTexture | null {
-  const canvas = getCeilingCanvas();
+/** Procedural dark acoustic ceiling texture (256×256). */
+function createCeilingTexture(
+  repeatX: number,
+  repeatZ: number,
+  style: CeilingStyle,
+  baseHex: string,
+): CanvasTexture | null {
+  const canvas = getCeilingCanvas(style, baseHex);
   if (!canvas) return null;
-  const tex = new THREE.CanvasTexture(canvas);
-  tex.wrapS = THREE.RepeatWrapping;
-  tex.wrapT = THREE.RepeatWrapping;
+  const tex = new CanvasTexture(canvas);
+  tex.wrapS = RepeatWrapping;
+  tex.wrapT = RepeatWrapping;
   tex.repeat.set(Math.max(1, repeatX), Math.max(1, repeatZ));
-  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.colorSpace = SRGBColorSpace;
   return tex;
 }
 
-function getSconceGlowCanvas(): HTMLCanvasElement | null {
-  if (cachedSconceGlowCanvas !== undefined) return cachedSconceGlowCanvas;
+function getSconceGlowCanvas(accent: LightAccentColor): HTMLCanvasElement | null {
+  const existing = cachedSconceGlowCanvases.get(accent);
+  if (existing) return existing;
   const canvas = document.createElement("canvas");
   canvas.width = 128;
   canvas.height = 256;
   const ctx = canvas.getContext("2d");
-  if (!ctx) {
-    cachedSconceGlowCanvas = null;
-    return null;
-  }
+  if (!ctx) return null;
 
+  const [c0, c1, c2, c3] = (SCONCE_ACCENT_STOPS[accent] ?? SCONCE_ACCENT_STOPS.warm).stops;
   ctx.clearRect(0, 0, 128, 256);
 
-  // Upper warm wash
   const upper = ctx.createRadialGradient(64, 118, 4, 64, 86, 92);
-  upper.addColorStop(0, "rgba(255, 206, 138, 0.72)");
-  upper.addColorStop(0.35, "rgba(232, 148, 72, 0.3)");
-  upper.addColorStop(0.75, "rgba(180, 96, 40, 0.08)");
-  upper.addColorStop(1, "rgba(180, 96, 40, 0)");
+  upper.addColorStop(0, c0);
+  upper.addColorStop(0.35, c1);
+  upper.addColorStop(0.75, c2);
+  upper.addColorStop(1, c3);
   ctx.fillStyle = upper;
   ctx.fillRect(0, 0, 128, 132);
 
-  // Lower warm wash
   const lower = ctx.createRadialGradient(64, 138, 4, 64, 170, 92);
-  lower.addColorStop(0, "rgba(255, 206, 138, 0.72)");
-  lower.addColorStop(0.35, "rgba(232, 148, 72, 0.3)");
-  lower.addColorStop(0.75, "rgba(180, 96, 40, 0.08)");
-  lower.addColorStop(1, "rgba(180, 96, 40, 0)");
+  lower.addColorStop(0, c0);
+  lower.addColorStop(0.35, c1);
+  lower.addColorStop(0.75, c2);
+  lower.addColorStop(1, c3);
   ctx.fillStyle = lower;
   ctx.fillRect(0, 124, 128, 132);
 
-  cachedSconceGlowCanvas = canvas;
+  cachedSconceGlowCanvases.set(accent, canvas);
   return canvas;
 }
 
-/** Soft warm up/down sconce wall-wash light cone texture (zero extra point lights needed). */
-function createSconceGlowTexture(): THREE.CanvasTexture | null {
-  const canvas = getSconceGlowCanvas();
+const cachedCoveWashCanvases = new Map<LightAccentColor, HTMLCanvasElement>();
+
+function getCoveWashCanvas(accent: LightAccentColor): HTMLCanvasElement | null {
+  const existing = cachedCoveWashCanvases.get(accent);
+  if (existing) return existing;
+  const canvas = document.createElement("canvas");
+  canvas.width = 32;
+  canvas.height = 64;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+  const { stops } = SCONCE_ACCENT_STOPS[accent] ?? SCONCE_ACCENT_STOPS.warm;
+  const g = ctx.createLinearGradient(0, 0, 0, 64);
+  g.addColorStop(0, stops[0]);
+  g.addColorStop(0.28, stops[1]);
+  g.addColorStop(0.65, stops[2]);
+  g.addColorStop(1, stops[3]);
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, 32, 64);
+  cachedCoveWashCanvases.set(accent, canvas);
+  return canvas;
+}
+
+/** Soft directional wall-wash gradient texture for ceiling & wall architectural LED coves. */
+function createCoveWashTexture(accent: LightAccentColor): CanvasTexture | null {
+  const canvas = getCoveWashCanvas(accent);
   if (!canvas) return null;
-  const tex = new THREE.CanvasTexture(canvas);
-  tex.colorSpace = THREE.SRGBColorSpace;
-  tex.minFilter = THREE.LinearFilter;
-  tex.magFilter = THREE.LinearFilter;
+  const tex = new CanvasTexture(canvas);
+  tex.colorSpace = SRGBColorSpace;
+  tex.minFilter = LinearFilter;
+  tex.magFilter = LinearFilter;
+  tex.generateMipmaps = false;
+  return tex;
+}
+
+const ROW_MARKER_PALETTE: Record<AisleLedColor, { text: string; border: string; glow: string }> = {
+  amber: { text: "#ffd180", border: "rgba(255, 179, 71, 0.72)", glow: "rgba(255, 165, 48, 0.9)" },
+  white: { text: "#f8fafc", border: "rgba(226, 232, 240, 0.7)", glow: "rgba(241, 245, 249, 0.85)" },
+  blue: { text: "#7dd3fc", border: "rgba(56, 189, 248, 0.72)", glow: "rgba(56, 189, 248, 0.9)" },
+  red: { text: "#fca5a5", border: "rgba(248, 113, 113, 0.72)", glow: "rgba(248, 113, 113, 0.9)" },
+};
+
+/** Single compact atlas texture holding all illuminated row labels (`A, B, C...`) so every row marker draws in 1 draw call. */
+function createRowMarkerAtlas(
+  labels: string[],
+  color: AisleLedColor,
+): { texture: CanvasTexture; cols: number; gridRows: number } | null {
+  if (labels.length === 0) return null;
+  const cols = Math.min(8, Math.max(1, labels.length));
+  const gridRows = Math.ceil(labels.length / cols);
+  const cell = 64;
+  const canvas = document.createElement("canvas");
+  canvas.width = cols * cell;
+  canvas.height = gridRows * cell;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+
+  const style = ROW_MARKER_PALETTE[color] ?? ROW_MARKER_PALETTE.amber;
+  ctx.fillStyle = "#08080e";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  labels.forEach((label, idx) => {
+    const gx = idx % cols;
+    const gy = Math.floor(idx / cols);
+    const ox = gx * cell;
+    const oy = gy * cell;
+
+    ctx.fillStyle = "#0c0c14";
+    ctx.fillRect(ox + 2, oy + 2, cell - 4, cell - 4);
+    ctx.strokeStyle = style.border;
+    ctx.lineWidth = 3;
+    ctx.strokeRect(ox + 5, oy + 5, cell - 10, cell - 10);
+
+    ctx.save();
+    ctx.font = `700 ${label.length > 2 ? 22 : label.length > 1 ? 28 : 36}px -apple-system, BlinkMacSystemFont, 'Be Vietnam Pro', sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.shadowColor = style.glow;
+    ctx.shadowBlur = 9;
+    ctx.fillStyle = style.text;
+    ctx.fillText(label, ox + cell / 2, oy + cell / 2 + 1, cell - 14);
+    ctx.restore();
+  });
+
+  const texture = new CanvasTexture(canvas);
+  texture.colorSpace = SRGBColorSpace;
+  texture.minFilter = LinearFilter;
+  texture.magFilter = LinearFilter;
+  texture.generateMipmaps = false;
+  return { texture, cols, gridRows };
+}
+
+/** Splits `[min, max]` around doorway cutout intervals `[start, end]` so wall cove rails never cut across exit doors. */
+function splitIntervalsAroundHoles(min: number, max: number, holes: [number, number][]): [number, number][] {
+  let segments: [number, number][] = [[min, max]];
+  for (const [hStart, hEnd] of holes) {
+    const next: [number, number][] = [];
+    for (const [s, e] of segments) {
+      if (hEnd <= s || hStart >= e) {
+        next.push([s, e]);
+      } else {
+        if (hStart - s > 0.35) next.push([s, hStart]);
+        if (e - hEnd > 0.35) next.push([hEnd, e]);
+      }
+    }
+    segments = next;
+  }
+  return segments;
+}
+
+/** Soft up/down sconce wall-wash light cone texture (zero extra point lights needed). */
+function createSconceGlowTexture(accent: LightAccentColor): CanvasTexture | null {
+  const canvas = getSconceGlowCanvas(accent);
+  if (!canvas) return null;
+  const tex = new CanvasTexture(canvas);
+  tex.colorSpace = SRGBColorSpace;
+  tex.minFilter = LinearFilter;
+  tex.magFilter = LinearFilter;
   tex.generateMipmaps = false;
   return tex;
 }
@@ -870,60 +1173,197 @@ function getScreenHaloCanvas(): HTMLCanvasElement | null {
 }
 
 /** Soft additive radial glow behind the cinema screen framing to simulate wall light spill. */
-function createScreenHaloTexture(): THREE.CanvasTexture | null {
+function createScreenHaloTexture(): CanvasTexture | null {
   const canvas = getScreenHaloCanvas();
   if (!canvas) return null;
-  const tex = new THREE.CanvasTexture(canvas);
-  tex.colorSpace = THREE.SRGBColorSpace;
-  tex.minFilter = THREE.LinearFilter;
-  tex.magFilter = THREE.LinearFilter;
+  const tex = new CanvasTexture(canvas);
+  tex.colorSpace = SRGBColorSpace;
+  tex.minFilter = LinearFilter;
+  tex.magFilter = LinearFilter;
   tex.generateMipmaps = false;
   return tex;
 }
 
-function getExitSignCanvas(): HTMLCanvasElement | null {
-  if (cachedExitSignCanvas !== undefined) return cachedExitSignCanvas;
+function getExitSignCanvas(color: ExitSignColor, text: ExitSignText): HTMLCanvasElement | null {
+  const key = `${color}:${text}`;
+  const existing = cachedExitSignCanvases.get(key);
+  if (existing) return existing;
   const canvas = document.createElement("canvas");
   canvas.width = 256;
   canvas.height = 96;
   const ctx = canvas.getContext("2d");
-  if (!ctx) {
-    cachedExitSignCanvas = null;
-    return null;
-  }
+  if (!ctx) return null;
 
-  ctx.fillStyle = "#064e24";
+  const isRed = color === "red";
+  ctx.fillStyle = isRed ? "#4c0812" : "#064e24";
   ctx.fillRect(0, 0, 256, 96);
   const glow = ctx.createRadialGradient(128, 48, 12, 128, 48, 130);
-  glow.addColorStop(0, "#16a34a");
-  glow.addColorStop(1, "#0b6e32");
+  glow.addColorStop(0, isRed ? "#dc2626" : "#16a34a");
+  glow.addColorStop(1, isRed ? "#881322" : "#0b6e32");
   ctx.fillStyle = glow;
   ctx.fillRect(8, 8, 240, 80);
 
-  ctx.fillStyle = "#ecfdf5";
-  ctx.font = "700 54px -apple-system, BlinkMacSystemFont, sans-serif";
+  ctx.fillStyle = isRed ? "#fff1f2" : "#ecfdf5";
+  const fontSize = text.length > 4 ? 42 : 54;
+  ctx.font = `700 ${fontSize}px -apple-system, BlinkMacSystemFont, 'Be Vietnam Pro', sans-serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillText("EXIT", 128, 51);
+  ctx.fillText(text, 128, 51, 224);
 
-  cachedExitSignCanvas = canvas;
-  return canvas;
+  return putCanvasCache(cachedExitSignCanvases, key, canvas);
 }
 
-/** Backlit emerald EXIT sign texture. */
-function createExitSignTexture(): THREE.CanvasTexture | null {
-  const canvas = getExitSignCanvas();
+/** Backlit emerald or crimson EXIT / LỐI RA sign texture. */
+function createExitSignTexture(color: ExitSignColor, text: ExitSignText): CanvasTexture | null {
+  const canvas = getExitSignCanvas(color, text);
   if (!canvas) return null;
-  const tex = new THREE.CanvasTexture(canvas);
-  tex.colorSpace = THREE.SRGBColorSpace;
-  tex.minFilter = THREE.LinearFilter;
-  tex.magFilter = THREE.LinearFilter;
+  const tex = new CanvasTexture(canvas);
+  tex.colorSpace = SRGBColorSpace;
+  tex.minFilter = LinearFilter;
+  tex.magFilter = LinearFilter;
   tex.generateMipmaps = false;
   return tex;
 }
 
-function getScreenCanvas(subtitleText: string): HTMLCanvasElement | null {
-  const existing = cachedScreenCanvases.get(subtitleText);
+function paintNoirScreen(ctx: CanvasRenderingContext2D) {
+  // Moody neon-noir rain-slicked metropolis at night
+  const sky = ctx.createLinearGradient(0, 0, 0, 512);
+  sky.addColorStop(0, "#050712");
+  sky.addColorStop(0.38, "#12172e");
+  sky.addColorStop(0.65, "#2b2038");
+  sky.addColorStop(0.8, "#582c3a");
+  sky.addColorStop(1, "#0b0912");
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, 1024, 512);
+
+  // Warm atmospheric city horizon bloom
+  const bloom = ctx.createRadialGradient(512, 336, 20, 512, 336, 420);
+  bloom.addColorStop(0, "rgba(255, 168, 92, 0.42)");
+  bloom.addColorStop(0.42, "rgba(218, 72, 114, 0.2)");
+  bloom.addColorStop(0.75, "rgba(44, 104, 178, 0.1)");
+  bloom.addColorStop(1, "rgba(0, 0, 0, 0)");
+  ctx.fillStyle = bloom;
+  ctx.fillRect(0, 0, 1024, 512);
+
+  // Layered city skyline silhouettes + lit office windows
+  let seed = 8080;
+  const rand = () => {
+    seed = (seed * 16807) % 2147483647;
+    return (seed - 1) / 2147483646;
+  };
+  for (let x = 0; x < 1024; ) {
+    const bw = 34 + Math.floor(rand() * 58);
+    const bh = 90 + Math.floor(rand() * 210);
+    const top = 365 - bh;
+    ctx.fillStyle = "#10101c";
+    ctx.fillRect(x, top, bw - 3, bh + 15);
+    for (let wy = top + 12; wy < 350; wy += 14) {
+      for (let wx = x + 6; wx < x + bw - 10; wx += 11) {
+        if (rand() > 0.62) {
+          ctx.fillStyle = rand() > 0.25 ? "rgba(255, 214, 146, 0.48)" : "rgba(125, 206, 255, 0.42)";
+          ctx.fillRect(wx, wy, 5, 7);
+        }
+      }
+    }
+    x += bw;
+  }
+
+  // Wet street reflection deck
+  const street = ctx.createLinearGradient(0, 365, 0, 512);
+  street.addColorStop(0, "#151224");
+  street.addColorStop(1, "#07060d");
+  ctx.fillStyle = street;
+  ctx.fillRect(0, 365, 1024, 147);
+
+  for (let i = 0; i < 24; i++) {
+    const rx = 40 + rand() * 944;
+    const ry = 374 + rand() * 95;
+    const rw = 18 + rand() * 56;
+    const warm = i % 3 !== 0;
+    const g = ctx.createRadialGradient(rx, ry, 2, rx, ry, rw);
+    g.addColorStop(0, warm ? "rgba(255, 184, 112, 0.34)" : "rgba(96, 186, 255, 0.32)");
+    g.addColorStop(1, "rgba(0, 0, 0, 0)");
+    ctx.fillStyle = g;
+    ctx.fillRect(rx - rw, ry - 8, rw * 2, 16);
+  }
+}
+
+function paintGridScreen(ctx: CanvasRenderingContext2D) {
+  // Precision cinema optical framing & sightline calibration chart
+  const bg = ctx.createRadialGradient(512, 256, 40, 512, 256, 620);
+  bg.addColorStop(0, "#1d2638");
+  bg.addColorStop(0.65, "#111724");
+  bg.addColorStop(1, "#090c14");
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, 1024, 512);
+
+  // Subtle calibration grid
+  ctx.strokeStyle = "rgba(148, 178, 224, 0.14)";
+  ctx.lineWidth = 1;
+  for (let x = 64; x < 1024; x += 64) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, 512);
+    ctx.stroke();
+  }
+  for (let y = 64; y < 512; y += 64) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(1024, y);
+    ctx.stroke();
+  }
+
+  // Safe-action & safe-title borders
+  ctx.strokeStyle = "rgba(148, 198, 255, 0.35)";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(36, 24, 952, 464);
+  ctx.setLineDash([10, 8]);
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.24)";
+  ctx.strokeRect(86, 52, 852, 408);
+  ctx.setLineDash([]);
+
+  // Center optical crosshair & target circles
+  ctx.strokeStyle = "rgba(186, 224, 255, 0.45)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(512, 256, 128, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(512, 256, 42, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(512 - 170, 256);
+  ctx.lineTo(512 + 170, 256);
+  ctx.moveTo(512, 256 - 160);
+  ctx.lineTo(512, 256 + 160);
+  ctx.stroke();
+
+  // Corner framing L-brackets
+  ctx.strokeStyle = "rgba(248, 250, 252, 0.72)";
+  ctx.lineWidth = 4;
+  const corners: [number, number, number, number][] = [
+    [22, 16, 1, 1],
+    [1002, 16, -1, 1],
+    [22, 496, 1, -1],
+    [1002, 496, -1, -1],
+  ];
+  for (const [cx, cy, sx, sy] of corners) {
+    ctx.beginPath();
+    ctx.moveTo(cx + sx * 36, cy);
+    ctx.lineTo(cx, cy);
+    ctx.lineTo(cx, cy + sy * 28);
+    ctx.stroke();
+  }
+}
+
+function getScreenCanvas(
+  preset: ScreenContentPreset,
+  showSubtitle: boolean,
+  subtitleText: string,
+  subtitleColor: SubtitleColor,
+): HTMLCanvasElement | null {
+  const key = `${preset}|${showSubtitle ? 1 : 0}|${subtitleText}|${subtitleColor}`;
+  const existing = cachedScreenCanvases.get(key);
   if (existing) return existing;
   const canvas = document.createElement("canvas");
   canvas.width = 1024;
@@ -931,138 +1371,140 @@ function getScreenCanvas(subtitleText: string): HTMLCanvasElement | null {
   const ctx = canvas.getContext("2d");
   if (!ctx) return null;
 
-  // Deep anamorphic twilight sky gradient
-  const sky = ctx.createLinearGradient(0, 0, 0, 512);
-  sky.addColorStop(0, "#050915");
-  sky.addColorStop(0.24, "#0d1b38");
-  sky.addColorStop(0.48, "#1f3e68");
-  sky.addColorStop(0.64, "#c46c44");
-  sky.addColorStop(0.74, "#f4b777");
-  sky.addColorStop(0.8, "#312036");
-  sky.addColorStop(1, "#090811");
-  ctx.fillStyle = sky;
-  ctx.fillRect(0, 0, 1024, 512);
+  if (preset === "noir") {
+    paintNoirScreen(ctx);
+  } else if (preset === "grid") {
+    paintGridScreen(ctx);
+  } else {
+    // Deep anamorphic twilight sky gradient
+    const sky = ctx.createLinearGradient(0, 0, 0, 512);
+    sky.addColorStop(0, "#050915");
+    sky.addColorStop(0.24, "#0d1b38");
+    sky.addColorStop(0.48, "#1f3e68");
+    sky.addColorStop(0.64, "#c46c44");
+    sky.addColorStop(0.74, "#f4b777");
+    sky.addColorStop(0.8, "#312036");
+    sky.addColorStop(1, "#090811");
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, 1024, 512);
 
-  // Subtle starfield in upper night sky
-  let seed = 2026;
-  const rand = () => {
-    seed = (seed * 16807) % 2147483647;
-    return (seed - 1) / 2147483646;
-  };
-  for (let i = 0; i < 160; i++) {
-    const sx = rand() * 1024;
-    const sy = rand() * 210;
-    const alpha = (1 - sy / 210) * (0.2 + rand() * 0.65);
-    const size = rand() > 0.85 ? 2 : 1.2;
-    ctx.fillStyle = `rgba(225, 238, 255, ${alpha.toFixed(2)})`;
-    ctx.fillRect(sx, sy, size, size);
+    // Subtle starfield in upper night sky
+    let seed = 2026;
+    const rand = () => {
+      seed = (seed * 16807) % 2147483647;
+      return (seed - 1) / 2147483646;
+    };
+    for (let i = 0; i < 160; i++) {
+      const sx = rand() * 1024;
+      const sy = rand() * 210;
+      const alpha = (1 - sy / 210) * (0.2 + rand() * 0.65);
+      const size = rand() > 0.85 ? 2 : 1.2;
+      ctx.fillStyle = `rgba(225, 238, 255, ${alpha.toFixed(2)})`;
+      ctx.fillRect(sx, sy, size, size);
+    }
+
+    // Dramatic celestial horizon glow (full-frame fillRect avoids any clipped arc edge)
+    const planetX = 512;
+    const planetY = 315;
+    const planetR = 140;
+    const atmos = ctx.createRadialGradient(planetX, planetY, planetR * 0.4, planetX, planetY, planetR * 1.9);
+    atmos.addColorStop(0, "rgba(255, 232, 188, 0.75)");
+    atmos.addColorStop(0.32, "rgba(244, 152, 86, 0.34)");
+    atmos.addColorStop(0.66, "rgba(86, 138, 218, 0.12)");
+    atmos.addColorStop(1, "rgba(0, 0, 0, 0)");
+    ctx.fillStyle = atmos;
+    ctx.fillRect(0, 0, 1024, 512);
+
+    // Solar core & anamorphic horizontal cinema flare
+    const sun = ctx.createRadialGradient(512, 346, 4, 512, 346, 185);
+    sun.addColorStop(0, "rgba(255, 252, 236, 0.98)");
+    sun.addColorStop(0.2, "rgba(255, 214, 152, 0.72)");
+    sun.addColorStop(0.55, "rgba(226, 118, 66, 0.24)");
+    sun.addColorStop(1, "rgba(226, 118, 66, 0)");
+    ctx.fillStyle = sun;
+    ctx.fillRect(0, 0, 1024, 512);
+
+    const flare = ctx.createLinearGradient(96, 344, 928, 344);
+    flare.addColorStop(0, "rgba(120, 190, 255, 0)");
+    flare.addColorStop(0.28, "rgba(130, 198, 255, 0.14)");
+    flare.addColorStop(0.5, "rgba(255, 236, 200, 0.42)");
+    flare.addColorStop(0.72, "rgba(130, 198, 255, 0.14)");
+    flare.addColorStop(1, "rgba(120, 190, 255, 0)");
+    ctx.fillStyle = flare;
+    ctx.fillRect(96, 341, 832, 6);
+
+    // Soft lit horizon clouds
+    for (let i = 0; i < 8; i++) {
+      const cx = 110 + i * 116 + (rand() - 0.5) * 40;
+      const cy = 235 + (rand() - 0.5) * 58;
+      const rw = 110 + rand() * 110;
+      const rh = 16 + rand() * 14;
+      const cg = ctx.createRadialGradient(cx, cy, 4, cx, cy, rw);
+      cg.addColorStop(0, "rgba(255, 200, 148, 0.2)");
+      cg.addColorStop(1, "rgba(255, 200, 148, 0)");
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.scale(1, rh / rw);
+      ctx.fillStyle = cg;
+      ctx.beginPath();
+      ctx.arc(0, 0, rw, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    const drawRidge = (pts: [number, number][], fill: string | CanvasGradient) => {
+      ctx.fillStyle = fill;
+      ctx.beginPath();
+      ctx.moveTo(0, 512);
+      for (const [x, y] of pts) ctx.lineTo(x, y);
+      ctx.lineTo(1024, 512);
+      ctx.closePath();
+      ctx.fill();
+    };
+
+    drawRidge(
+      [
+        [0, 342], [90, 304], [190, 326], [305, 276], [420, 318],
+        [512, 336], [620, 294], [740, 266], [860, 310], [955, 286], [1024, 316],
+      ],
+      "rgba(34, 38, 66, 0.72)",
+    );
+
+    drawRidge(
+      [
+        [0, 376], [120, 328], [240, 358], [350, 312], [448, 354],
+        [512, 366], [595, 346], [715, 304], [835, 342], [945, 318], [1024, 354],
+      ],
+      "#181628",
+    );
+
+    const lake = ctx.createLinearGradient(0, 372, 0, 512);
+    lake.addColorStop(0, "#1c192b");
+    lake.addColorStop(0.35, "#111220");
+    lake.addColorStop(1, "#07070e");
+    ctx.fillStyle = lake;
+    ctx.fillRect(0, 372, 1024, 140);
+
+    for (let y = 376; y < 486; y += 5) {
+      const spread = 24 + (y - 376) * 0.95;
+      const alpha = Math.max(0.03, 0.36 - (y - 376) * 0.0028);
+      const rg = ctx.createLinearGradient(512 - spread, y, 512 + spread, y);
+      rg.addColorStop(0, "rgba(255, 185, 118, 0)");
+      rg.addColorStop(0.5, `rgba(255, 206, 144, ${alpha.toFixed(2)})`);
+      rg.addColorStop(1, "rgba(255, 185, 118, 0)");
+      ctx.fillStyle = rg;
+      ctx.fillRect(512 - spread, y, spread * 2, 2.2);
+    }
+
+    drawRidge(
+      [[0, 396], [115, 382], [235, 424], [340, 444], [0, 470]],
+      "#0a0912",
+    );
+    drawRidge(
+      [[1024, 386], [895, 376], [775, 422], [685, 448], [1024, 466]],
+      "#0a0912",
+    );
   }
-
-  // Dramatic celestial horizon glow (full-frame fillRect avoids any clipped arc edge)
-  const planetX = 512;
-  const planetY = 315;
-  const planetR = 140;
-  const atmos = ctx.createRadialGradient(planetX, planetY, planetR * 0.4, planetX, planetY, planetR * 1.9);
-  atmos.addColorStop(0, "rgba(255, 232, 188, 0.75)");
-  atmos.addColorStop(0.32, "rgba(244, 152, 86, 0.34)");
-  atmos.addColorStop(0.66, "rgba(86, 138, 218, 0.12)");
-  atmos.addColorStop(1, "rgba(0, 0, 0, 0)");
-  ctx.fillStyle = atmos;
-  ctx.fillRect(0, 0, 1024, 512);
-
-  // Solar core & anamorphic horizontal cinema flare
-  const sun = ctx.createRadialGradient(512, 346, 4, 512, 346, 185);
-  sun.addColorStop(0, "rgba(255, 252, 236, 0.98)");
-  sun.addColorStop(0.2, "rgba(255, 214, 152, 0.72)");
-  sun.addColorStop(0.55, "rgba(226, 118, 66, 0.24)");
-  sun.addColorStop(1, "rgba(226, 118, 66, 0)");
-  ctx.fillStyle = sun;
-  ctx.fillRect(0, 0, 1024, 512);
-
-  const flare = ctx.createLinearGradient(96, 344, 928, 344);
-  flare.addColorStop(0, "rgba(120, 190, 255, 0)");
-  flare.addColorStop(0.28, "rgba(130, 198, 255, 0.14)");
-  flare.addColorStop(0.5, "rgba(255, 236, 200, 0.42)");
-  flare.addColorStop(0.72, "rgba(130, 198, 255, 0.14)");
-  flare.addColorStop(1, "rgba(120, 190, 255, 0)");
-  ctx.fillStyle = flare;
-  ctx.fillRect(96, 341, 832, 6);
-
-  // Soft lit horizon clouds
-  for (let i = 0; i < 8; i++) {
-    const cx = 110 + i * 116 + (rand() - 0.5) * 40;
-    const cy = 235 + (rand() - 0.5) * 58;
-    const rw = 110 + rand() * 110;
-    const rh = 16 + rand() * 14;
-    const cg = ctx.createRadialGradient(cx, cy, 4, cx, cy, rw);
-    cg.addColorStop(0, "rgba(255, 200, 148, 0.2)");
-    cg.addColorStop(1, "rgba(255, 200, 148, 0)");
-    ctx.save();
-    ctx.translate(cx, cy);
-    ctx.scale(1, rh / rw);
-    ctx.fillStyle = cg;
-    ctx.beginPath();
-    ctx.arc(0, 0, rw, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-  }
-
-  // Far misty alpine ridge
-  const drawRidge = (pts: [number, number][], fill: string | CanvasGradient) => {
-    ctx.fillStyle = fill;
-    ctx.beginPath();
-    ctx.moveTo(0, 512);
-    for (const [x, y] of pts) ctx.lineTo(x, y);
-    ctx.lineTo(1024, 512);
-    ctx.closePath();
-    ctx.fill();
-  };
-
-  drawRidge(
-    [
-      [0, 342], [90, 304], [190, 326], [305, 276], [420, 318],
-      [512, 336], [620, 294], [740, 266], [860, 310], [955, 286], [1024, 316],
-    ],
-    "rgba(34, 38, 66, 0.72)",
-  );
-
-  // Mid sharp dramatic silhouette range
-  drawRidge(
-    [
-      [0, 376], [120, 328], [240, 358], [350, 312], [448, 354],
-      [512, 366], [595, 346], [715, 304], [835, 342], [945, 318], [1024, 354],
-    ],
-    "#181628",
-  );
-
-  // Reflective water plane at the bottom third with shimmering golden sun reflection
-  const lake = ctx.createLinearGradient(0, 372, 0, 512);
-  lake.addColorStop(0, "#1c192b");
-  lake.addColorStop(0.35, "#111220");
-  lake.addColorStop(1, "#07070e");
-  ctx.fillStyle = lake;
-  ctx.fillRect(0, 372, 1024, 140);
-
-  for (let y = 376; y < 486; y += 5) {
-    const spread = 24 + (y - 376) * 0.95;
-    const alpha = Math.max(0.03, 0.36 - (y - 376) * 0.0028);
-    const rg = ctx.createLinearGradient(512 - spread, y, 512 + spread, y);
-    rg.addColorStop(0, "rgba(255, 185, 118, 0)");
-    rg.addColorStop(0.5, `rgba(255, 206, 144, ${alpha.toFixed(2)})`);
-    rg.addColorStop(1, "rgba(255, 185, 118, 0)");
-    ctx.fillStyle = rg;
-    ctx.fillRect(512 - spread, y, spread * 2, 2.2);
-  }
-
-  // Foreground rocky promontories framing the composition (depth parallax cues)
-  drawRidge(
-    [[0, 396], [115, 382], [235, 424], [340, 444], [0, 470]],
-    "#0a0912",
-  );
-  drawRidge(
-    [[1024, 386], [895, 376], [775, 422], [685, 448], [1024, 466]],
-    "#0a0912",
-  );
 
   // Subtle cinematic edge vignette
   const vig = ctx.createRadialGradient(512, 256, 220, 512, 256, 610);
@@ -1072,17 +1514,45 @@ function getScreenCanvas(subtitleText: string): HTMLCanvasElement | null {
   ctx.fillStyle = vig;
   ctx.fillRect(0, 0, 1024, 512);
 
-  // Subtle rule-of-thirds optical framing lines (very faint, useful for judging screen skew)
-  ctx.strokeStyle = "rgba(255, 255, 255, 0.045)";
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(341, 18);
-  ctx.lineTo(341, 494);
-  ctx.moveTo(683, 18);
-  ctx.lineTo(683, 494);
-  ctx.stroke();
+  if (preset !== "grid") {
+    // Subtle rule-of-thirds optical framing lines
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.045)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(341, 18);
+    ctx.lineTo(341, 494);
+    ctx.moveTo(683, 18);
+    ctx.lineTo(683, 494);
+    ctx.stroke();
+  }
 
   // Crisp cinema-grade subtitle in the bottom safe-title region
+  if (showSubtitle) {
+    paintScreenSubtitle(ctx, subtitleText, subtitleColor);
+  }
+
+  return putCanvasCache(cachedScreenCanvases, key, canvas);
+}
+
+const MAX_LOADED_IMAGE_CACHE = 4;
+const cachedLoadedImages = new Map<string, HTMLImageElement>();
+
+function putLoadedImageCache(url: string, img: HTMLImageElement): HTMLImageElement {
+  if (cachedLoadedImages.size >= MAX_LOADED_IMAGE_CACHE && !cachedLoadedImages.has(url)) {
+    const oldest = cachedLoadedImages.keys().next().value;
+    if (oldest !== undefined) cachedLoadedImages.delete(oldest);
+  }
+  cachedLoadedImages.set(url, img);
+  return img;
+}
+
+function paintScreenSubtitle(
+  ctx: CanvasRenderingContext2D,
+  subtitleText: string,
+  subtitleColor: SubtitleColor,
+): void {
+  if (subtitleText.trim().length === 0) return;
+  ctx.save();
   ctx.font = "600 28px -apple-system, BlinkMacSystemFont, 'Be Vietnam Pro', sans-serif";
   ctx.textAlign = "center";
   ctx.textBaseline = "bottom";
@@ -1093,34 +1563,102 @@ function getScreenCanvas(subtitleText: string): HTMLCanvasElement | null {
   ctx.lineWidth = 6;
   ctx.strokeStyle = "rgba(0, 0, 0, 0.85)";
   ctx.strokeText(subtitleText, 512, subY, 920);
-  ctx.fillStyle = "#f8fafc";
+  ctx.fillStyle = subtitleColor === "yellow" ? "#fde047" : "#f8fafc";
   ctx.fillText(subtitleText, 512, subY, 920);
-
-  if (cachedScreenCanvases.size >= 4) cachedScreenCanvases.clear();
-  cachedScreenCanvases.set(subtitleText, canvas);
-  return canvas;
+  ctx.restore();
 }
 
 /**
- * High-contrast atmospheric widescreen movie still (1024×512) with layered cinematic depth,
- * warm/cool blockbuster colour grading, subtle anamorphic flare, and crisp sample subtitles
- * at the bottom safe-title zone so viewing angle, skew, neck tilt, and head clearance read instantly.
+ * High-contrast atmospheric widescreen movie still (1024×512) with configurable scene preset
+ * and sample subtitles at the bottom safe-title zone.
  */
-function createScreenTexture(subtitleText: string): THREE.CanvasTexture | null {
-  const canvas = getScreenCanvas(subtitleText);
+function createScreenTexture(
+  preset: ScreenContentPreset,
+  showSubtitle: boolean,
+  subtitleText: string,
+  subtitleColor: SubtitleColor,
+): CanvasTexture | null {
+  const canvas = getScreenCanvas(preset, showSubtitle, subtitleText, subtitleColor);
   if (!canvas) return null;
-  const tex = new THREE.CanvasTexture(canvas);
-  tex.colorSpace = THREE.SRGBColorSpace;
-  tex.minFilter = THREE.LinearFilter;
-  tex.magFilter = THREE.LinearFilter;
+  const tex = new CanvasTexture(canvas);
+  tex.colorSpace = SRGBColorSpace;
+  tex.minFilter = LinearFilter;
+  tex.magFilter = LinearFilter;
   tex.generateMipmaps = false;
   return tex;
 }
 
+/** Composites an uploaded/external image onto a 1024×512 cinema screen canvas with cover-crop, subtle vignette & optional subtitle. */
+function createCustomImageScreenTexture(
+  img: HTMLImageElement,
+  showSubtitle: boolean,
+  subtitleText: string,
+  subtitleColor: SubtitleColor,
+): CanvasTexture | null {
+  const nw = img.naturalWidth;
+  const nh = img.naturalHeight;
+  if (nw <= 0 || nh <= 0) return null;
+  const canvas = document.createElement("canvas");
+  canvas.width = 1024;
+  canvas.height = 512;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+
+  ctx.fillStyle = "#050508";
+  ctx.fillRect(0, 0, 1024, 512);
+
+  // Center-crop ("cover") to fill the widescreen projection surface cleanly without distortion
+  const targetRatio = 1024 / 512;
+  const srcRatio = nw / nh;
+  let sx = 0;
+  let sy = 0;
+  let sw = nw;
+  let sh = nh;
+  if (srcRatio > targetRatio) {
+    sw = nh * targetRatio;
+    sx = (nw - sw) / 2;
+  } else {
+    sh = nw / targetRatio;
+    sy = (nh - sh) / 2;
+  }
+  ctx.drawImage(img, sx, sy, sw, sh, 0, 0, 1024, 512);
+
+  // Subtle cinema lens edge vignette so bright photos still integrate naturally with the dark auditorium
+  const vig = ctx.createRadialGradient(512, 256, 260, 512, 256, 620);
+  vig.addColorStop(0, "rgba(0, 0, 0, 0)");
+  vig.addColorStop(0.8, "rgba(0, 0, 0, 0.08)");
+  vig.addColorStop(1, "rgba(0, 0, 0, 0.34)");
+  ctx.fillStyle = vig;
+  ctx.fillRect(0, 0, 1024, 512);
+
+  if (showSubtitle) {
+    paintScreenSubtitle(ctx, subtitleText, subtitleColor);
+  }
+
+  const tex = new CanvasTexture(canvas);
+  tex.colorSpace = SRGBColorSpace;
+  tex.minFilter = LinearFilter;
+  tex.magFilter = LinearFilter;
+  tex.generateMipmaps = false;
+  return tex;
+}
+
+function buildScreenYoutubeUrl(videoId: string, muted: boolean): string {
+  const origin =
+    typeof window !== "undefined" && /^https?:$/i.test(window.location.protocol)
+      ? window.location.origin
+      : undefined;
+  return (
+    `${youtubeEmbedUrl(videoId, { controls: false, origin })}` +
+    `&mute=${muted ? 1 : 0}&loop=1&playlist=${videoId}`
+  );
+}
+
 export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3DOptions): Room3D {
-  let renderer: THREE.WebGLRenderer;
+  let renderer: WebGLRenderer;
   try {
-    renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "default", alpha: false });
+    // `alpha: true` allows the screen mesh to punch a depth-tested cutout over the optional CSS3D YouTube layer.
+    renderer = new WebGLRenderer({ antialias: false, powerPreference: "default", alpha: true });
   } catch {
     options.onFailed();
     return {
@@ -1132,29 +1670,41 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
       setLightsUp() {},
       setHeights() {},
       setMarks() {},
+      setAppearance() {},
+      setYoutubeMuted() {},
       mountTo() {},
       refit() {},
       dispose() {},
     };
   }
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, MAX_PIXEL_RATIO));
-  renderer.outputColorSpace = THREE.SRGBColorSpace;
-  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.outputColorSpace = SRGBColorSpace;
+  renderer.toneMapping = ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.18;
 
-  const canvas = renderer.domElement;
-  canvas.style.cssText = "width:100%;height:100%;display:block;touch-action:none";
-  host.appendChild(canvas);
+  const stageEl = document.createElement("div");
+  stageEl.style.cssText =
+    "position:relative;width:100%;height:100%;overflow:hidden;touch-action:none;background:#050508";
 
-  const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x050508);
-  scene.fog = new THREE.Fog(0x050508, Math.max(18, room.backWallZ * 1.1), Math.max(40, room.backWallZ * 2.65));
+  const canvas = renderer.domElement;
+  canvas.style.cssText = "position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;z-index:1";
+  stageEl.appendChild(canvas);
+  host.appendChild(stageEl);
+
+  const bgColor = new Color(0x050508);
+  renderer.setClearColor(0x050508, 1);
+
+  const scene = new Scene();
+  scene.background = bgColor;
+  scene.fog = new Fog(0x050508, Math.max(18, room.backWallZ * 1.1), Math.max(40, room.backWallZ * 2.65));
 
   const disposables: { dispose(): void }[] = [];
   const track = <T extends { dispose(): void }>(item: T): T => {
     disposables.push(item);
     return item;
   };
+
+  let currentAppearance: Room3DAppearance = normalizeRoom3DAppearance(options.appearance);
 
   const leftMargin = room.leftMarginM;
   const rightMargin = room.rightMarginM;
@@ -1164,13 +1714,13 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
   const shellCenterZ = (room.frontWallZ + room.backWallZ) / 2;
 
   // --- Dynamic Cinema Lighting (House Lights On ↔ Movie Dimmed) ---
-  const ambientLight = new THREE.AmbientLight(0xd4ddf5, 0.55);
+  const ambientLight = new AmbientLight(0xd4ddf5, 0.55);
   scene.add(ambientLight);
 
-  const hemiLight = new THREE.HemisphereLight(0xffe9cf, 0x0e0b16, 0.72);
+  const hemiLight = new HemisphereLight(0xffe9cf, 0x0e0b16, 0.72);
   scene.add(hemiLight);
 
-  const ceilingKey = new THREE.DirectionalLight(0xffe7c8, 0.95);
+  const ceilingKey = new DirectionalLight(0xffe7c8, 0.95);
   ceilingKey.position.set(shellCenterX, room.ceilingY + 2, shellCenterZ + 2);
   ceilingKey.target.position.set(shellCenterX, 0.8, room.depthM * 0.45);
   scene.add(ceilingKey);
@@ -1179,11 +1729,11 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
   const screenTiltRad = (room.screen.tiltDeg * Math.PI) / 180;
 
   // Screen bounce lights casting cinematic illumination onto front/mid seats & audience heads
-  const screenBounce = new THREE.PointLight(0xb8d4ff, 26, Math.max(18, room.backWallZ * 1.5), 1.55);
+  const screenBounce = new PointLight(0xb8d4ff, 26, Math.max(18, room.backWallZ * 1.5), 1.55);
   screenBounce.position.set(room.screen.centreX, room.screen.centerY, room.screen.centerZ + 1.35);
   scene.add(screenBounce);
 
-  const screenFill = new THREE.DirectionalLight(0x9ec2f7, 0.55);
+  const screenFill = new DirectionalLight(0x9ec2f7, 0.55);
   screenFill.position.set(
     room.screen.centreX,
     room.screen.centerY + room.screen.height * 0.2,
@@ -1193,281 +1743,56 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
   scene.add(screenFill);
   scene.add(screenFill.target);
 
-  // --- 1. Architectural Auditorium Enclosure (Separate Textured Planes) ---
-  const wallTexSide = createAcousticWallTexture(shellD / 2.2, room.ceilingY / 2.5);
-  if (wallTexSide) track(wallTexSide);
-  const wallTexBack = createAcousticWallTexture(shellW / 2.2, room.ceilingY / 2.5);
-  if (wallTexBack) track(wallTexBack);
-  const ceilTex = createCeilingTexture(shellW / 2.8, shellD / 2.8);
-  if (ceilTex) track(ceilTex);
-  const carpetTex = createCarpetTexture(shellW / 2.2, shellD / 2.2);
-  if (carpetTex) track(carpetTex);
+  const tmpMat = new Matrix4();
+  const tmpPos = new Vector3();
+  const tmpQuat = new Quaternion();
+  const tmpScale = new Vector3(1, 1, 1);
+  const yAxis = new Vector3(0, 1, 0);
 
-  const sideWallMat = track(
-    new THREE.MeshStandardMaterial({
-      color: 0xffffff,
-      map: wallTexSide,
-      roughness: 0.9,
-      metalness: 0.04,
-    }),
+  // --- 1. Persistent Stepped Stadium Floor, Contrast Risers & Aisle Stairs (Carpet texture swaps in-place) ---
+  let carpetTex: CanvasTexture | null = createCarpetTexture(
+    shellW / 2.2,
+    shellD / 2.2,
+    currentAppearance.carpetStyle,
+    currentAppearance.carpetColor,
   );
-  const backWallMat = track(
-    new THREE.MeshStandardMaterial({
-      color: 0xdad8e8,
-      map: wallTexBack,
-      roughness: 0.92,
-      metalness: 0.04,
-    }),
-  );
-  const frontWallMat = track(new THREE.MeshStandardMaterial({ color: 0x06060b, roughness: 0.96, metalness: 0.02 }));
-  const ceilMat = track(
-    new THREE.MeshStandardMaterial({
-      color: 0xffffff,
-      map: ceilTex,
-      roughness: 0.88,
-      metalness: 0.06,
-    }),
-  );
-
-  // Left wall (facing +x)
-  const sideWallGeom = track(new THREE.PlaneGeometry(shellD, room.ceilingY));
-  const leftWall = new THREE.Mesh(sideWallGeom, sideWallMat);
-  leftWall.position.set(-leftMargin, room.ceilingY / 2, shellCenterZ);
-  leftWall.rotation.y = Math.PI / 2;
-  scene.add(leftWall);
-
-  // Right wall (facing -x)
-  const rightWall = new THREE.Mesh(sideWallGeom, sideWallMat);
-  rightWall.position.set(room.widthM + rightMargin, room.ceilingY / 2, shellCenterZ);
-  rightWall.rotation.y = -Math.PI / 2;
-  scene.add(rightWall);
-
-  // Front baffle wall behind screen (facing +z)
-  const endWallGeom = track(new THREE.PlaneGeometry(shellW, room.ceilingY));
-  const frontWall = new THREE.Mesh(endWallGeom, frontWallMat);
-  frontWall.position.set(shellCenterX, room.ceilingY / 2, room.frontWallZ);
-  scene.add(frontWall);
-
-  // Back wall (facing -z)
-  const backWall = new THREE.Mesh(endWallGeom, backWallMat);
-  backWall.position.set(shellCenterX, room.ceilingY / 2, room.backWallZ);
-  backWall.rotation.y = Math.PI;
-  scene.add(backWall);
-
-  // Coffered acoustic ceiling (facing -y)
-  const ceilingGeom = track(new THREE.PlaneGeometry(shellW, shellD));
-  const ceilingMesh = new THREE.Mesh(ceilingGeom, ceilMat);
-  ceilingMesh.position.set(shellCenterX, room.ceilingY, shellCenterZ);
-  ceilingMesh.rotation.x = Math.PI / 2;
-  scene.add(ceilingMesh);
-
-  // Recessed ceiling downlights (2 crisp longitudinal rows matching CinemaView / Codrops)
-  const downlightRows = Math.max(3, Math.min(7, Math.round(shellD / 3.4)));
-  const downlightCount = downlightRows * 2;
-  const canGeom = track(new THREE.CylinderGeometry(0.18, 0.18, 0.03, 10));
-  const canMat = track(new THREE.MeshStandardMaterial({ color: 0x050508, roughness: 0.9 }));
-  const canMesh = track(new THREE.InstancedMesh(canGeom, canMat, downlightCount));
-
-  const bulbGeom = track(new THREE.CircleGeometry(0.115, 10));
-  bulbGeom.rotateX(Math.PI / 2);
-  const bulbMat = track(new THREE.MeshBasicMaterial({ color: 0xffe0b2, toneMapped: false }));
-  const bulbMesh = track(new THREE.InstancedMesh(bulbGeom, bulbMat, downlightCount));
-
-  const tmpMat = new THREE.Matrix4();
-  const tmpPos = new THREE.Vector3();
-  const tmpQuat = new THREE.Quaternion();
-  const tmpScale = new THREE.Vector3(1, 1, 1);
-  const yAxis = new THREE.Vector3(0, 1, 0);
-
-  const downlightOffsetX = Math.min(shellW * 0.34, Math.max(1.6, shellW * 0.28));
-  let dlIdx = 0;
-  for (let i = 0; i < downlightRows; i++) {
-    const t = (i + 0.55) / (downlightRows + 0.15);
-    const z = room.frontWallZ + 1.8 + t * Math.max(1, shellD - 2.8);
-    for (const sign of [-1, 1]) {
-      const x = shellCenterX + sign * downlightOffsetX;
-      tmpMat.makeTranslation(x, room.ceilingY - 0.015, z);
-      canMesh.setMatrixAt(dlIdx, tmpMat);
-      tmpMat.makeTranslation(x, room.ceilingY - 0.032, z);
-      bulbMesh.setMatrixAt(dlIdx, tmpMat);
-      dlIdx++;
-    }
-  }
-  canMesh.instanceMatrix.needsUpdate = true;
-  bulbMesh.instanceMatrix.needsUpdate = true;
-  scene.add(canMesh);
-  scene.add(bulbMesh);
-
-  // Architectural side wall pilasters + sleek bronze sconces + soft additive wall-wash glow halos
-  const sconceCount = Math.max(2, Math.min(6, Math.round(shellD / 3.5)));
-  const pilasterGeom = track(new THREE.BoxGeometry(0.09, room.ceilingY * 0.88, 0.26));
-  const pilasterMat = track(new THREE.MeshStandardMaterial({ color: 0x1a1826, roughness: 0.85, metalness: 0.08 }));
-  const pilasterMesh = track(new THREE.InstancedMesh(pilasterGeom, pilasterMat, sconceCount * 2));
-
-  const sconceBodyGeom = track(new THREE.BoxGeometry(0.06, 0.56, 0.11));
-  const sconceBodyMat = track(new THREE.MeshStandardMaterial({ color: 0x2a2420, roughness: 0.45, metalness: 0.55 }));
-  const sconceBodyMesh = track(new THREE.InstancedMesh(sconceBodyGeom, sconceBodyMat, sconceCount * 2));
-
-  const sconceSlitGeom = track(new THREE.BoxGeometry(0.068, 0.46, 0.045));
-  const sconceSlitMat = track(new THREE.MeshBasicMaterial({ color: 0xffc67d, toneMapped: false }));
-  const sconceSlitMesh = track(new THREE.InstancedMesh(sconceSlitGeom, sconceSlitMat, sconceCount * 2));
-
-  const sconceGlowTex = createSconceGlowTexture();
-  if (sconceGlowTex) track(sconceGlowTex);
-  const sconceGlowGeom = track(new THREE.PlaneGeometry(1.15, 2.3));
-  const sconceGlowMat = track(
-    new THREE.MeshBasicMaterial({
-      map: sconceGlowTex,
-      transparent: true,
-      opacity: 0.58,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-      toneMapped: false,
-    }),
-  );
-  const sconceGlowMesh = track(new THREE.InstancedMesh(sconceGlowGeom, sconceGlowMat, sconceCount * 2));
-  const leftWallQuat = new THREE.Quaternion().setFromAxisAngle(yAxis, Math.PI / 2);
-  const rightWallQuat = new THREE.Quaternion().setFromAxisAngle(yAxis, -Math.PI / 2);
-
-  for (let i = 0; i < sconceCount; i++) {
-    const t = (i + 0.65) / (sconceCount + 0.35);
-    const z = Math.max(1.4, room.frontWallZ + 1.8) + t * Math.max(1, room.depthM - 1.6);
-    const sconceY = Math.min(room.ceilingY - 1.0, 2.0 + t * room.maxFloorY);
-
-    tmpMat.makeTranslation(-leftMargin + 0.045, room.ceilingY * 0.46, z);
-    pilasterMesh.setMatrixAt(i * 2, tmpMat);
-    tmpMat.makeTranslation(room.widthM + rightMargin - 0.045, room.ceilingY * 0.46, z);
-    pilasterMesh.setMatrixAt(i * 2 + 1, tmpMat);
-
-    tmpMat.makeTranslation(-leftMargin + 0.1, sconceY, z);
-    sconceBodyMesh.setMatrixAt(i * 2, tmpMat);
-    sconceSlitMesh.setMatrixAt(i * 2, tmpMat);
-    tmpMat.makeTranslation(room.widthM + rightMargin - 0.1, sconceY, z);
-    sconceBodyMesh.setMatrixAt(i * 2 + 1, tmpMat);
-    sconceSlitMesh.setMatrixAt(i * 2 + 1, tmpMat);
-
-    tmpMat.compose(tmpPos.set(-leftMargin + 0.018, sconceY, z), leftWallQuat, tmpScale.set(1, 1, 1));
-    sconceGlowMesh.setMatrixAt(i * 2, tmpMat);
-    tmpMat.compose(tmpPos.set(room.widthM + rightMargin - 0.018, sconceY, z), rightWallQuat, tmpScale.set(1, 1, 1));
-    sconceGlowMesh.setMatrixAt(i * 2 + 1, tmpMat);
-  }
-  pilasterMesh.instanceMatrix.needsUpdate = true;
-  sconceBodyMesh.instanceMatrix.needsUpdate = true;
-  sconceSlitMesh.instanceMatrix.needsUpdate = true;
-  sconceGlowMesh.instanceMatrix.needsUpdate = true;
-  scene.add(pilasterMesh);
-  scene.add(sconceBodyMesh);
-  scene.add(sconceSlitMesh);
-  scene.add(sconceGlowMesh);
-
-  // Rear projection booth window + delicate volumetric light beam toward screen
-  const portFrameGeom = track(new THREE.BoxGeometry(1.65, 0.56, 0.07));
-  const portFrameMat = track(new THREE.MeshStandardMaterial({ color: 0x09080f, roughness: 0.6, metalness: 0.35 }));
-  const portFrame = new THREE.Mesh(portFrameGeom, portFrameMat);
-  portFrame.position.set(room.projectionPort.x, room.projectionPort.y, room.projectionPort.z - 0.035);
-  scene.add(portFrame);
-
-  const portGlassGeom = track(new THREE.PlaneGeometry(1.44, 0.38));
-  const portGlassMat = track(new THREE.MeshBasicMaterial({ color: 0x8db4f8, toneMapped: false }));
-  const portGlass = new THREE.Mesh(portGlassGeom, portGlassMat);
-  portGlass.position.set(room.projectionPort.x, room.projectionPort.y, room.projectionPort.z - 0.074);
-  portGlass.rotation.y = Math.PI;
-  scene.add(portGlass);
-
-  // Soft Fresnel-faded volumetric projector light cone (smooth grazing edge falloff — zero hard diagonal edges!)
-  const lensVec = new THREE.Vector3(room.projectionPort.x, room.projectionPort.y, room.projectionPort.z - 0.1);
-  const screenCenterVec = new THREE.Vector3(room.screen.centreX, room.screen.centerY, room.screen.centerZ + 0.05);
-  const beamLength = lensVec.distanceTo(screenCenterVec);
-  const beamGeom = track(new THREE.CylinderGeometry(1, 0.06, beamLength, 32, 1, true));
-  const beamOpacityUniform = { value: 0.08 };
-  const beamMat = track(
-    new THREE.ShaderMaterial({
-      transparent: true,
-      depthWrite: false,
-      side: THREE.DoubleSide,
-      blending: THREE.AdditiveBlending,
-      uniforms: {
-        uOpacity: beamOpacityUniform,
-        uColor: { value: new THREE.Color(0x9fc2ff) },
-      },
-      vertexShader: `
-        varying vec2 vUv;
-        varying vec3 vWorldPos;
-        varying vec3 vWorldNormal;
-        void main() {
-          vUv = uv;
-          vec4 wp = modelMatrix * vec4(position, 1.0);
-          vWorldPos = wp.xyz;
-          vWorldNormal = normalize(mat3(modelMatrix) * normal);
-          gl_Position = projectionMatrix * viewMatrix * wp;
-        }
-      `,
-      fragmentShader: `
-        uniform float uOpacity;
-        uniform vec3 uColor;
-        varying vec2 vUv;
-        varying vec3 vWorldPos;
-        varying vec3 vWorldNormal;
-        void main() {
-          vec3 viewDir = normalize(cameraPosition - vWorldPos);
-          float facing = pow(abs(dot(normalize(vWorldNormal), viewDir)), 2.8);
-          float ends = smoothstep(0.0, 0.18, vUv.y) * smoothstep(1.0, 0.72, vUv.y);
-          float alpha = facing * ends * uOpacity;
-          gl_FragColor = vec4(uColor * alpha, alpha);
-        }
-      `,
-    }),
-  );
-  const beamMesh = new THREE.Mesh(beamGeom, beamMat);
-  const beamAxis = new THREE.Vector3().subVectors(screenCenterVec, lensVec).normalize();
-  const upRef = new THREE.Vector3(0, 1, 0);
-  const beamX = new THREE.Vector3().crossVectors(beamAxis, upRef).normalize();
-  const beamZ = new THREE.Vector3().crossVectors(beamX, beamAxis).normalize();
-  beamMesh.matrixAutoUpdate = false;
-  beamMesh.matrix
-    .makeBasis(beamX, beamAxis, beamZ)
-    .scale(new THREE.Vector3(room.screen.width * 0.44, 1, room.screen.height * 0.44))
-    .setPosition(lensVec.clone().add(screenCenterVec).multiplyScalar(0.5));
-  beamMesh.renderOrder = 8;
-  scene.add(beamMesh);
-
-  // --- 2. Continuous Stepped Stadium Floor, Contrast Risers, Aisle Stairs & Glowing LED Nosing ---
-  const baseFloorGeom = track(new THREE.PlaneGeometry(shellW, shellD));
+  const baseFloorGeom = track(new PlaneGeometry(shellW, shellD));
   const baseFloorMat = track(
-    new THREE.MeshStandardMaterial({
+    new MeshStandardMaterial({
       color: 0xffffff,
       map: carpetTex,
       roughness: 0.94,
       metalness: 0.02,
     }),
   );
-  const baseFloor = new THREE.Mesh(baseFloorGeom, baseFloorMat);
+  const baseFloor = new Mesh(baseFloorGeom, baseFloorMat);
   baseFloor.rotation.x = -Math.PI / 2;
   baseFloor.position.set(shellCenterX, 0.004, shellCenterZ);
   scene.add(baseFloor);
 
+  let slabMaterial: MeshStandardMaterial | null = null;
   if (room.floorSlabs.length > 0) {
-    const slabGeometry = track(new THREE.BoxGeometry(1, 1, 1));
-    const slabMaterial = track(
-      new THREE.MeshStandardMaterial({
+    const slabGeometry = track(new BoxGeometry(1, 1, 1));
+    slabMaterial = track(
+      new MeshStandardMaterial({
         color: 0xded9eb,
         map: carpetTex,
         roughness: 0.92,
         metalness: 0.02,
       }),
     );
-    const slabMesh = track(new THREE.InstancedMesh(slabGeometry, slabMaterial, room.floorSlabs.length));
+    const slabMesh = track(new InstancedMesh(slabGeometry, slabMaterial, room.floorSlabs.length));
 
     // Crisp recessed dark riser facings + subtle top lip trim so every stadium row reads sharply from both front and rear
     const raisedSlabs = room.floorSlabs.filter((s) => s.height > 0.03);
-    const riserGeom = track(new THREE.PlaneGeometry(1, 1));
-    const riserMat = track(new THREE.MeshStandardMaterial({ color: 0x09070f, roughness: 0.96, metalness: 0.02 }));
+    const riserGeom = track(new PlaneGeometry(1, 1));
+    const riserMat = track(new MeshStandardMaterial({ color: 0x09070f, roughness: 0.96, metalness: 0.02 }));
     const riserMesh =
-      raisedSlabs.length > 0 ? track(new THREE.InstancedMesh(riserGeom, riserMat, raisedSlabs.length)) : null;
-    const lipGeom = track(new THREE.BoxGeometry(1, 0.018, 0.045));
-    const lipMat = track(new THREE.MeshStandardMaterial({ color: 0x262134, roughness: 0.68, metalness: 0.16 }));
+      raisedSlabs.length > 0 ? track(new InstancedMesh(riserGeom, riserMat, raisedSlabs.length)) : null;
+    const lipGeom = track(new BoxGeometry(1, 0.018, 0.045));
+    const lipMat = track(new MeshStandardMaterial({ color: 0x262134, roughness: 0.68, metalness: 0.16 }));
     const lipMesh =
-      raisedSlabs.length > 0 ? track(new THREE.InstancedMesh(lipGeom, lipMat, raisedSlabs.length)) : null;
+      raisedSlabs.length > 0 ? track(new InstancedMesh(lipGeom, lipMat, raisedSlabs.length)) : null;
 
     let riserIdx = 0;
     room.floorSlabs.forEach((slab, i) => {
@@ -1511,17 +1836,18 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
   }
 
   // Real intermediate stair treads along open vertical/side walkways (QCVN 06 / IBC stepped aisles)
+  let stairMat: MeshStandardMaterial | null = null;
   if (room.aisleSteps.length > 0) {
-    const stairGeom = track(new THREE.BoxGeometry(1, 1, 1));
-    const stairMat = track(
-      new THREE.MeshStandardMaterial({
+    const stairGeom = track(new BoxGeometry(1, 1, 1));
+    stairMat = track(
+      new MeshStandardMaterial({
         color: 0xd0c9e0,
         map: carpetTex,
         roughness: 0.9,
         metalness: 0.03,
       }),
     );
-    const stairMesh = track(new THREE.InstancedMesh(stairGeom, stairMat, room.aisleSteps.length));
+    const stairMesh = track(new InstancedMesh(stairGeom, stairMat, room.aisleSteps.length));
     room.aisleSteps.forEach((step, i) => {
       tmpMat.compose(
         tmpPos.set(step.x, step.y, step.z),
@@ -1534,159 +1860,1052 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
     scene.add(stairMesh);
   }
 
-  // Luminous warm-amber LED step-nosing strips along open vertical & side aisles (omitted on aisle-fill rows)
-  const aisleLedMat = track(new THREE.MeshBasicMaterial({ color: 0xffb347, toneMapped: false }));
-  if (room.aisleLights.length > 0) {
-    const stripGeom = track(new THREE.BoxGeometry(1, 0.02, 0.028));
-    const stripMesh = track(new THREE.InstancedMesh(stripGeom, aisleLedMat, room.aisleLights.length));
-    room.aisleLights.forEach((light, i) => {
-      tmpMat.compose(
-        tmpPos.set(light.x, light.y + 0.011, light.z),
-        tmpQuat.identity(),
-        tmpScale.set(light.widthM, 1, 1),
-      );
-      stripMesh.setMatrixAt(i, tmpMat);
-    });
-    stripMesh.instanceMatrix.needsUpdate = true;
-    scene.add(stripMesh);
-  }
+  // --- 2. Configurable Interior Enclosure, Screen, Doors, Lighting & Cinema Fixtures (Rebuilt in-place on `setAppearance`) ---
+  const interiorGroup = new Group();
+  scene.add(interiorGroup);
+  const interiorDisposables: { dispose(): void }[] = [];
+  const trackInterior = <T extends { dispose(): void }>(item: T): T => {
+    interiorDisposables.push(item);
+    return item;
+  };
 
-  // --- 3. Hero Cinema Screen + Velvet Masking + Angled Housing + Screen Wall Halo + Front Stage Apron ---
-  const apronH = Math.min(0.22, Math.max(0.1, room.screen.bottom * 0.22));
-  const apronD = Math.max(0.68, -room.frontWallZ + 0.48);
-  const apronGeom = track(new THREE.BoxGeometry(shellW - 0.04, apronH, apronD));
-  const apronMat = track(new THREE.MeshStandardMaterial({ color: 0x0c0b12, roughness: 0.92, metalness: 0.04 }));
-  const apronMesh = new THREE.Mesh(apronGeom, apronMat);
-  apronMesh.position.set(shellCenterX, apronH / 2, room.frontWallZ + apronD / 2);
-  scene.add(apronMesh);
+  let bulbMat: MeshBasicMaterial | null = null;
+  let sconceSlitMat: MeshBasicMaterial | null = null;
+  let sconceGlowMat: MeshBasicMaterial | null = null;
+  let coveStripMat: MeshBasicMaterial | null = null;
+  let coveWashMat: MeshBasicMaterial | null = null;
+  let portGlassMat: MeshBasicMaterial | null = null;
+  let beamOpacityUniform: { value: number } | null = null;
+  let stageLedMat: MeshBasicMaterial | null = null;
+  let haloMat: MeshBasicMaterial | null = null;
 
-  // Subtle recessed warm stage-lip LED line beneath the screen
-  const stageLedGeom = track(new THREE.BoxGeometry(Math.min(shellW - 0.6, room.screen.width * 1.02), 0.018, 0.02));
-  const stageLedMat = track(new THREE.MeshBasicMaterial({ color: 0x7c5838, toneMapped: false }));
-  const stageLed = new THREE.Mesh(stageLedGeom, stageLedMat);
-  stageLed.position.set(room.screen.centreX, apronH - 0.012, room.frontWallZ + apronD + 0.008);
-  scene.add(stageLed);
+  const bulbDimColor = new Color(0x1f1914);
+  const bulbLitColor = new Color(0xffe1b5);
+  const initSconceStops = SCONCE_ACCENT_STOPS[currentAppearance.sconceColor] ?? SCONCE_ACCENT_STOPS.warm;
+  const initCoveStops = SCONCE_ACCENT_STOPS[currentAppearance.coveLedColor] ?? SCONCE_ACCENT_STOPS.warm;
+  const slitDimColor = new Color(initSconceStops.dim);
+  const slitLitColor = new Color(initSconceStops.lit);
+  const coveDimColor = new Color(initCoveStops.dim);
+  const coveLitColor = new Color(initCoveStops.lit);
+  const portDimColor = new Color(0xa6ccff);
+  const portLitColor = new Color(0x526585);
 
-  // Soft additive ambient wall glow behind the screen masking
-  const haloTex = createScreenHaloTexture();
-  if (haloTex) track(haloTex);
-  const haloGeom = track(new THREE.PlaneGeometry(room.screen.width * 1.48, room.screen.height * 1.62));
-  const haloMat = track(
-    new THREE.MeshBasicMaterial({
-      map: haloTex,
-      transparent: true,
-      opacity: 0.42,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-      toneMapped: false,
-    }),
-  );
-  const haloMesh = new THREE.Mesh(haloGeom, haloMat);
-  haloMesh.position.set(room.screen.centreX, room.screen.centerY, room.frontWallZ + 0.03);
-  scene.add(haloMesh);
+  // Lazy-allocated CSS3DRenderer backing live YouTube video playback behind the WebGL depth cutout.
+  let sizeW = 0;
+  let sizeH = 0;
+  let cssRenderer: CSS3DRenderer | null = null;
+  let cssScene: Scene | null = null;
+  let cssScreenObj: CSS3DObject | null = null;
+  let youtubeWrapper: HTMLDivElement | null = null;
+  let youtubeIframe: HTMLIFrameElement | null = null;
+  let activeYoutubeId: string | null = null;
+  let youtubeMuted = options.youtubeMuted ?? true;
+  let youtubeSyncToken = 0;
+  const screenWorldCenter = new Vector3(room.screen.centreX, room.screen.centerY, room.screen.centerZ);
+  const screenCamPos = new Vector3();
 
-  // Solid architectural mounting shroud connecting the masking frame flush to the front baffle wall
-  const frameW = room.screen.width + 0.48;
-  const frameH = room.screen.height + 0.48;
-  const housingGeom = track(
-    buildScreenHousingGeometry(
-      frameW,
-      frameH,
-      room.screen.centerY,
-      room.screen.centerZ,
-      screenTiltRad,
-      room.screen.curveDepth,
-      room.frontWallZ,
-    ),
-  );
-  const housingMat = track(new THREE.MeshStandardMaterial({ color: 0x11101a, roughness: 0.78, metalness: 0.22 }));
-  const housingMesh = new THREE.Mesh(housingGeom, housingMat);
-  housingMesh.position.set(room.screen.centreX, 0, 0);
-  scene.add(housingMesh);
-
-  // Tilted screen assembly pivoted at the optical centre (positive X rotation tilts top forward toward seats)
-  const screenGroup = new THREE.Group();
-  screenGroup.position.set(room.screen.centreX, room.screen.centerY, room.screen.centerZ);
-  screenGroup.rotation.x = screenTiltRad;
-
-  // Pitch-black velvet proscenium masking frame
-  const frameGeom = track(buildScreenGeometry(frameW, frameH, room.screen.curveDepth));
-  const frameMat = track(new THREE.MeshBasicMaterial({ color: 0x030306 }));
-  const frameMesh = new THREE.Mesh(frameGeom, frameMat);
-  frameMesh.position.set(0, 0, -0.045);
-  screenGroup.add(frameMesh);
-
-  // Active illuminated cinema screen
-  const screenGeom = track(buildScreenGeometry(room.screen.width, room.screen.height, room.screen.curveDepth));
-  const screenTexture = createScreenTexture(options.subtitleText ?? "Sample subtitle · Phụ đề mẫu");
-  if (screenTexture) track(screenTexture);
-  const screenMat = track(
-    screenTexture
-      ? new THREE.MeshBasicMaterial({ map: screenTexture, toneMapped: false })
-      : new THREE.MeshBasicMaterial({ color: 0xe8e0ff, toneMapped: false }),
-  );
-  const screenMesh = new THREE.Mesh(screenGeom, screenMat);
-  screenGroup.add(screenMesh);
-  scene.add(screenGroup);
-
-  // --- 4. Exit Doors (QCVN 06:2022/BXD: 1.30 m × 2.10 m) & Crisp Backlit EXIT Signs ---
-  if (room.entrances.length > 0) {
-    const doorH = 2.1;
-    const doorW = 1.3;
-    const doorFrameGeom = track(new THREE.BoxGeometry(0.11, doorH + 0.12, doorW + 0.16));
-    const doorFrameMat = track(new THREE.MeshStandardMaterial({ color: 0x1e1c28, roughness: 0.72, metalness: 0.25 }));
-    const doorGeom = track(new THREE.BoxGeometry(0.08, doorH, doorW));
-    const doorMat = track(new THREE.MeshStandardMaterial({ color: 0x0a0a10, roughness: 0.85, metalness: 0.15 }));
-    const barGeom = track(new THREE.BoxGeometry(0.11, 0.055, doorW * 0.68));
-    const barMat = track(new THREE.MeshStandardMaterial({ color: 0x6b7280, roughness: 0.35, metalness: 0.8 }));
-
-    const exitTex = createExitSignTexture();
-    if (exitTex) track(exitTex);
-    const signBoxGeom = track(new THREE.BoxGeometry(0.08, 0.2, 0.48));
-    const signBoxMat = track(new THREE.MeshStandardMaterial({ color: 0x0b0f10, roughness: 0.6 }));
-    const signFaceGeom = track(new THREE.PlaneGeometry(0.44, 0.17));
-    const signFaceMat = track(
-      exitTex
-        ? new THREE.MeshBasicMaterial({ map: exitTex, toneMapped: false })
-        : new THREE.MeshBasicMaterial({ color: 0x22c55e, toneMapped: false }),
-    );
-
-    for (const e of room.entrances) {
-      const group = new THREE.Group();
-      const doorFrame = new THREE.Mesh(doorFrameGeom, doorFrameMat);
-      const door = new THREE.Mesh(doorGeom, doorMat);
-      const bar = new THREE.Mesh(barGeom, barMat);
-      const signBox = new THREE.Mesh(signBoxGeom, signBoxMat);
-      const signFace = new THREE.Mesh(signFaceGeom, signFaceMat);
-
-      doorFrame.position.set(0, (doorH + 0.12) / 2, 0);
-      door.position.set(0, doorH / 2, 0);
-      bar.position.set(0.02, 1.02, 0);
-      const signY = Math.min(room.ceilingY - e.floorY - 0.18, doorH + 0.24);
-      signBox.position.set(0.02, signY, 0);
-      signFace.position.set(0.065, signY, 0);
-      signFace.rotation.y = Math.PI / 2;
-
-      group.add(doorFrame, door, bar, signBox, signFace);
-
-      const wallX =
-        e.side === "left" ? -leftMargin + 0.05 : e.side === "right" ? room.widthM + rightMargin - 0.05 : e.x;
-      const wallZ =
-        e.side === "center"
-          ? e.position === "back"
-            ? room.backWallZ - 0.05
-            : room.frontWallZ + 0.05
-          : Math.min(room.backWallZ - doorW / 2 - 0.12, Math.max(room.frontWallZ + doorW / 2 + 0.12, e.z));
-
-      if (e.side === "right") group.rotation.y = Math.PI;
-      else if (e.side === "center") group.rotation.y = e.position === "back" ? Math.PI / 2 : -Math.PI / 2;
-
-      group.position.set(wallX, e.floorY, wallZ);
-      scene.add(group);
+  function sendYoutubeCommand(func: string) {
+    if (!youtubeIframe?.contentWindow) return;
+    try {
+      youtubeIframe.contentWindow.postMessage(JSON.stringify({ event: "command", func, args: "" }), "*");
+    } catch {
+      // Ignore cross-origin frame messaging errors before the YouTube player finishes mounting.
     }
   }
 
-  // --- 5. Sculpted Multi-Material Chairs Grouped by (style, span) ---
+  function syncYoutubeLayer(videoId: string | null) {
+    const syncToken = ++youtubeSyncToken;
+    if (!videoId) {
+      scene.background = bgColor;
+      renderer.setClearColor(0x050508, 1);
+      if (activeYoutubeId !== null || cssScreenObj !== null) {
+        activeYoutubeId = null;
+        if (cssScreenObj && cssScene) cssScene.remove(cssScreenObj);
+        cssScreenObj = null;
+        youtubeIframe?.remove();
+        youtubeIframe = null;
+        youtubeWrapper?.remove();
+        youtubeWrapper = null;
+        if (cssRenderer) cssRenderer.domElement.style.display = "none";
+      }
+      return;
+    }
+
+    scene.background = null;
+    renderer.setClearColor(0x050508, 0);
+
+    // Preserve the live player when switching quick themes / walls / lights while keeping the same YouTube video.
+    if (activeYoutubeId === videoId && youtubeIframe && cssScreenObj && cssRenderer) {
+      cssRenderer.domElement.style.display = "block";
+      return;
+    }
+
+    // Dynamically import CSS3DRenderer only when YouTube screen mode is actually active.
+    void import("three/addons/renderers/CSS3DRenderer.js")
+      .then(({ CSS3DRenderer: CSS3DRendererCtor, CSS3DObject: CSS3DObjectCtor }) => {
+        if (disposed || syncToken !== youtubeSyncToken) return;
+
+        if (!cssRenderer) {
+          cssRenderer = new CSS3DRendererCtor();
+          cssRenderer.domElement.style.cssText =
+            "position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:hidden;z-index:0";
+          stageEl.insertBefore(cssRenderer.domElement, canvas);
+          cssScene = new Scene();
+          if (sizeW > 0 && sizeH > 0) cssRenderer.setSize(sizeW, sizeH);
+        }
+        cssRenderer.domElement.style.display = "block";
+
+        if (cssScreenObj && cssScene) cssScene.remove(cssScreenObj);
+        youtubeIframe?.remove();
+        youtubeWrapper?.remove();
+
+        activeYoutubeId = videoId;
+        const cssW = 1280;
+        const cssH = Math.max(360, Math.round(cssW * (room.screen.height / Math.max(0.1, room.screen.width))));
+
+        youtubeWrapper = document.createElement("div");
+        youtubeWrapper.style.cssText = `width:${cssW}px;height:${cssH}px;background:#000;overflow:hidden;pointer-events:none;backface-visibility:hidden`;
+
+        youtubeIframe = document.createElement("iframe");
+        youtubeIframe.src = buildScreenYoutubeUrl(videoId, youtubeMuted);
+        youtubeIframe.title = "YouTube cinema screen";
+        youtubeIframe.allow = "autoplay; encrypted-media; picture-in-picture";
+        youtubeIframe.referrerPolicy = "strict-origin-when-cross-origin";
+        youtubeIframe.style.cssText = "width:100%;height:100%;border:0;display:block;pointer-events:none";
+        youtubeWrapper.appendChild(youtubeIframe);
+
+        cssScreenObj = new CSS3DObjectCtor(youtubeWrapper);
+        // `CSS3DObject` sets `pointerEvents = "auto"` in its constructor; override so WebGL owns 100% of orbit/click input.
+        youtubeWrapper.style.pointerEvents = "none";
+        cssScreenObj.position.set(room.screen.centreX, room.screen.centerY, room.screen.centerZ);
+        cssScreenObj.rotation.x = screenTiltRad;
+        cssScreenObj.scale.set(room.screen.width / cssW, room.screen.height / cssH, 1);
+        cssScene!.add(cssScreenObj);
+        requestRender();
+      })
+      .catch(() => undefined);
+  }
+
+  let interiorBuildToken = 0;
+  function buildInterior(ui: Room3DAppearance) {
+    const buildToken = ++interiorBuildToken;
+    interiorGroup.clear();
+    for (const item of interiorDisposables) item.dispose();
+    interiorDisposables.length = 0;
+
+    bulbMat = null;
+    sconceSlitMat = null;
+    sconceGlowMat = null;
+    coveStripMat = null;
+    coveWashMat = null;
+    portGlassMat = null;
+    beamOpacityUniform = null;
+    stageLedMat = null;
+    haloMat = null;
+
+    const sconceAccent = SCONCE_ACCENT_STOPS[ui.sconceColor] ?? SCONCE_ACCENT_STOPS.warm;
+    slitDimColor.setHex(sconceAccent.dim);
+    slitLitColor.setHex(sconceAccent.lit);
+    const coveAccent = SCONCE_ACCENT_STOPS[ui.coveLedColor] ?? SCONCE_ACCENT_STOPS.warm;
+    coveDimColor.setHex(coveAccent.dim);
+    coveLitColor.setHex(coveAccent.lit);
+
+    // Architectural walls & ceiling
+    const wallTexSide = createAcousticWallTexture(shellD / 2.2, room.ceilingY / 2.5, ui.wallStyle, ui.wallColor);
+    if (wallTexSide) trackInterior(wallTexSide);
+    const wallTexBack = createAcousticWallTexture(shellW / 2.2, room.ceilingY / 2.5, ui.wallStyle, ui.wallColor);
+    if (wallTexBack) trackInterior(wallTexBack);
+    const ceilTex = createCeilingTexture(shellW / 2.8, shellD / 2.8, ui.ceilingStyle, ui.ceilingColor);
+    if (ceilTex) trackInterior(ceilTex);
+
+    const sideWallMat = trackInterior(
+      new MeshStandardMaterial({
+        color: 0xffffff,
+        map: wallTexSide,
+        roughness: 0.9,
+        metalness: 0.04,
+      }),
+    );
+    const backWallMat = trackInterior(
+      new MeshStandardMaterial({
+        color: 0xdad8e8,
+        map: wallTexBack,
+        roughness: 0.92,
+        metalness: 0.04,
+      }),
+    );
+    const frontWallMat = trackInterior(new MeshStandardMaterial({ color: 0x06060b, roughness: 0.96, metalness: 0.02 }));
+    const ceilMat = trackInterior(
+      new MeshStandardMaterial({
+        color: 0xffffff,
+        map: ceilTex,
+        roughness: 0.88,
+        metalness: 0.06,
+      }),
+    );
+
+    const sideWallGeom = trackInterior(new PlaneGeometry(shellD, room.ceilingY));
+    const leftWall = new Mesh(sideWallGeom, sideWallMat);
+    leftWall.position.set(-leftMargin, room.ceilingY / 2, shellCenterZ);
+    leftWall.rotation.y = Math.PI / 2;
+    interiorGroup.add(leftWall);
+
+    const rightWall = new Mesh(sideWallGeom, sideWallMat);
+    rightWall.position.set(room.widthM + rightMargin, room.ceilingY / 2, shellCenterZ);
+    rightWall.rotation.y = -Math.PI / 2;
+    interiorGroup.add(rightWall);
+
+    const endWallGeom = trackInterior(new PlaneGeometry(shellW, room.ceilingY));
+    const frontWall = new Mesh(endWallGeom, frontWallMat);
+    frontWall.position.set(shellCenterX, room.ceilingY / 2, room.frontWallZ);
+    interiorGroup.add(frontWall);
+
+    const backWall = new Mesh(endWallGeom, backWallMat);
+    backWall.position.set(shellCenterX, room.ceilingY / 2, room.backWallZ);
+    backWall.rotation.y = Math.PI;
+    interiorGroup.add(backWall);
+
+    const ceilingGeom = trackInterior(new PlaneGeometry(shellW, shellD));
+    const ceilingMesh = new Mesh(ceilingGeom, ceilMat);
+    ceilingMesh.position.set(shellCenterX, room.ceilingY, shellCenterZ);
+    ceilingMesh.rotation.x = Math.PI / 2;
+    interiorGroup.add(ceilingMesh);
+
+    // Recessed ceiling downlights
+    if (ui.downlightsVisible) {
+      const downlightRows = Math.max(3, Math.min(7, Math.round(shellD / 3.4)));
+      const downlightCount = downlightRows * 2;
+      const canGeom = trackInterior(new CylinderGeometry(0.18, 0.18, 0.03, 10));
+      const canMat = trackInterior(new MeshStandardMaterial({ color: 0x050508, roughness: 0.9 }));
+      const canMesh = trackInterior(new InstancedMesh(canGeom, canMat, downlightCount));
+
+      const bulbGeom = trackInterior(new CircleGeometry(0.115, 10));
+      bulbGeom.rotateX(Math.PI / 2);
+      bulbMat = trackInterior(new MeshBasicMaterial({ color: 0xffe0b2, toneMapped: false }));
+      const bulbMesh = trackInterior(new InstancedMesh(bulbGeom, bulbMat, downlightCount));
+
+      const downlightOffsetX = Math.min(shellW * 0.34, Math.max(1.6, shellW * 0.28));
+      let dlIdx = 0;
+      for (let i = 0; i < downlightRows; i++) {
+        const t = (i + 0.55) / (downlightRows + 0.15);
+        const z = room.frontWallZ + 1.8 + t * Math.max(1, shellD - 2.8);
+        for (const sign of [-1, 1]) {
+          const x = shellCenterX + sign * downlightOffsetX;
+          tmpMat.makeTranslation(x, room.ceilingY - 0.015, z);
+          canMesh.setMatrixAt(dlIdx, tmpMat);
+          tmpMat.makeTranslation(x, room.ceilingY - 0.032, z);
+          bulbMesh.setMatrixAt(dlIdx, tmpMat);
+          dlIdx++;
+        }
+      }
+      canMesh.instanceMatrix.needsUpdate = true;
+      bulbMesh.instanceMatrix.needsUpdate = true;
+      interiorGroup.add(canMesh, bulbMesh);
+    }
+
+    // Side wall pilasters + sconces + wall-wash glow halos
+    if (ui.sconcesVisible) {
+      const sconceCount = Math.max(2, Math.min(6, Math.round(shellD / 3.5)));
+      const pilasterGeom = trackInterior(new BoxGeometry(0.09, room.ceilingY * 0.88, 0.26));
+      const pilasterMat = trackInterior(new MeshStandardMaterial({ color: 0x1a1826, roughness: 0.85, metalness: 0.08 }));
+      const pilasterMesh = trackInterior(new InstancedMesh(pilasterGeom, pilasterMat, sconceCount * 2));
+
+      const sconceBodyGeom = trackInterior(new BoxGeometry(0.06, 0.56, 0.11));
+      const sconceBodyMat = trackInterior(new MeshStandardMaterial({ color: 0x2a2420, roughness: 0.45, metalness: 0.55 }));
+      const sconceBodyMesh = trackInterior(new InstancedMesh(sconceBodyGeom, sconceBodyMat, sconceCount * 2));
+
+      const sconceSlitGeom = trackInterior(new BoxGeometry(0.068, 0.46, 0.045));
+      sconceSlitMat = trackInterior(new MeshBasicMaterial({ color: sconceAccent.lit, toneMapped: false }));
+      const sconceSlitMesh = trackInterior(new InstancedMesh(sconceSlitGeom, sconceSlitMat, sconceCount * 2));
+
+      const sconceGlowTex = createSconceGlowTexture(ui.sconceColor);
+      if (sconceGlowTex) trackInterior(sconceGlowTex);
+      const sconceGlowGeom = trackInterior(new PlaneGeometry(1.15, 2.3));
+      sconceGlowMat = trackInterior(
+        new MeshBasicMaterial({
+          map: sconceGlowTex,
+          transparent: true,
+          opacity: 0.58,
+          blending: AdditiveBlending,
+          depthWrite: false,
+          toneMapped: false,
+        }),
+      );
+      const sconceGlowMesh = trackInterior(new InstancedMesh(sconceGlowGeom, sconceGlowMat, sconceCount * 2));
+      const leftWallQuat = new Quaternion().setFromAxisAngle(yAxis, Math.PI / 2);
+      const rightWallQuat = new Quaternion().setFromAxisAngle(yAxis, -Math.PI / 2);
+
+      for (let i = 0; i < sconceCount; i++) {
+        const t = (i + 0.65) / (sconceCount + 0.35);
+        const z = Math.max(1.4, room.frontWallZ + 1.8) + t * Math.max(1, room.depthM - 1.6);
+        const sconceY = Math.min(room.ceilingY - 1.0, 2.0 + t * room.maxFloorY);
+
+        tmpMat.makeTranslation(-leftMargin + 0.045, room.ceilingY * 0.46, z);
+        pilasterMesh.setMatrixAt(i * 2, tmpMat);
+        tmpMat.makeTranslation(room.widthM + rightMargin - 0.045, room.ceilingY * 0.46, z);
+        pilasterMesh.setMatrixAt(i * 2 + 1, tmpMat);
+
+        tmpMat.makeTranslation(-leftMargin + 0.1, sconceY, z);
+        sconceBodyMesh.setMatrixAt(i * 2, tmpMat);
+        sconceSlitMesh.setMatrixAt(i * 2, tmpMat);
+        tmpMat.makeTranslation(room.widthM + rightMargin - 0.1, sconceY, z);
+        sconceBodyMesh.setMatrixAt(i * 2 + 1, tmpMat);
+        sconceSlitMesh.setMatrixAt(i * 2 + 1, tmpMat);
+
+        tmpMat.compose(tmpPos.set(-leftMargin + 0.018, sconceY, z), leftWallQuat, tmpScale.set(1, 1, 1));
+        sconceGlowMesh.setMatrixAt(i * 2, tmpMat);
+        tmpMat.compose(tmpPos.set(room.widthM + rightMargin - 0.018, sconceY, z), rightWallQuat, tmpScale.set(1, 1, 1));
+        sconceGlowMesh.setMatrixAt(i * 2 + 1, tmpMat);
+      }
+      pilasterMesh.instanceMatrix.needsUpdate = true;
+      sconceBodyMesh.instanceMatrix.needsUpdate = true;
+      sconceSlitMesh.instanceMatrix.needsUpdate = true;
+      sconceGlowMesh.instanceMatrix.needsUpdate = true;
+      interiorGroup.add(pilasterMesh, sconceBodyMesh, sconceSlitMesh, sconceGlowMesh);
+    }
+
+    // Side-wall angled surround speakers (2 InstancedMeshes total across both walls)
+    if (ui.surroundSpeakersVisible) {
+      const spkCount = Math.max(2, Math.min(5, Math.round(shellD / 4.2)));
+      const spkCabinetGeom = trackInterior(new BoxGeometry(0.18, 0.36, 0.26));
+      const spkCabinetMat = trackInterior(new MeshStandardMaterial({ color: 0x111118, roughness: 0.72, metalness: 0.22 }));
+      const spkCabinetMesh = trackInterior(new InstancedMesh(spkCabinetGeom, spkCabinetMat, spkCount * 2));
+
+      const spkGrilleGeom = trackInterior(new BoxGeometry(0.025, 0.3, 0.21));
+      spkGrilleGeom.translate(0.088, 0, 0);
+      const spkGrilleMat = trackInterior(new MeshStandardMaterial({ color: 0x262634, roughness: 0.55, metalness: 0.35 }));
+      const spkGrilleMesh = trackInterior(new InstancedMesh(spkGrilleGeom, spkGrilleMat, spkCount * 2));
+
+      const leftSpkQuat = new Quaternion().setFromEuler(new Euler(0, 0, -0.24));
+      const rightSpkQuat = new Quaternion().setFromEuler(new Euler(0, Math.PI, -0.24));
+
+      for (let i = 0; i < spkCount; i++) {
+        const t = (i + 0.32) / (spkCount + 0.15);
+        const z = Math.max(2.1, room.frontWallZ + 2.4) + t * Math.max(1, room.depthM - 2.4);
+        const spkY = Math.min(room.ceilingY - 0.72, Math.max(2.45, 2.35 + t * room.maxFloorY));
+
+        tmpMat.compose(tmpPos.set(-leftMargin + 0.11, spkY, z), leftSpkQuat, tmpScale.set(1, 1, 1));
+        spkCabinetMesh.setMatrixAt(i * 2, tmpMat);
+        spkGrilleMesh.setMatrixAt(i * 2, tmpMat);
+
+        tmpMat.compose(tmpPos.set(room.widthM + rightMargin - 0.11, spkY, z), rightSpkQuat, tmpScale.set(1, 1, 1));
+        spkCabinetMesh.setMatrixAt(i * 2 + 1, tmpMat);
+        spkGrilleMesh.setMatrixAt(i * 2 + 1, tmpMat);
+      }
+      spkCabinetMesh.instanceMatrix.needsUpdate = true;
+      spkGrilleMesh.instanceMatrix.needsUpdate = true;
+      interiorGroup.add(spkCabinetMesh, spkGrilleMesh);
+    }
+
+    // Overhead ceiling speaker arrays (2 symmetrical rows angled gently toward the audience)
+    if (ui.ceilingSpeakersVisible) {
+      const overheadRows = Math.max(2, Math.min(5, Math.round(shellD / 3.6)));
+      const overheadCount = overheadRows * 2;
+      const mountGeom = trackInterior(new BoxGeometry(0.08, 0.1, 0.08));
+      const mountMat = trackInterior(new MeshStandardMaterial({ color: 0x0b0b12, roughness: 0.7, metalness: 0.35 }));
+      const mountMesh = trackInterior(new InstancedMesh(mountGeom, mountMat, overheadCount));
+
+      const ovCabGeom = trackInterior(new BoxGeometry(0.3, 0.15, 0.34));
+      const ovCabMat = trackInterior(new MeshStandardMaterial({ color: 0x111119, roughness: 0.72, metalness: 0.24 }));
+      const ovCabMesh = trackInterior(new InstancedMesh(ovCabGeom, ovCabMat, overheadCount));
+
+      const ovGrilleGeom = trackInterior(new BoxGeometry(0.25, 0.025, 0.28));
+      ovGrilleGeom.translate(0, -0.075, 0);
+      const ovGrilleMat = trackInterior(new MeshStandardMaterial({ color: 0x262634, roughness: 0.55, metalness: 0.36 }));
+      const ovGrilleMesh = trackInterior(new InstancedMesh(ovGrilleGeom, ovGrilleMat, overheadCount));
+
+      const offsetX = Math.min(shellW * 0.22, Math.max(1.2, shellW * 0.18));
+      const startZ = Math.max(1.8, room.frontWallZ + 2.2);
+      const endZ = Math.max(startZ + 1.2, room.backWallZ - 1.5);
+      const leftOvQuat = new Quaternion().setFromEuler(new Euler(0.14, 0, 0.22));
+      const rightOvQuat = new Quaternion().setFromEuler(new Euler(0.14, 0, -0.22));
+
+      let ovIdx = 0;
+      for (let i = 0; i < overheadRows; i++) {
+        const t = overheadRows === 1 ? 0.5 : i / (overheadRows - 1);
+        const z = startZ + t * (endZ - startZ);
+        for (const side of [-1, 1] as const) {
+          const x = shellCenterX + side * offsetX;
+          const q = side < 0 ? leftOvQuat : rightOvQuat;
+          tmpMat.makeTranslation(x, room.ceilingY - 0.05, z);
+          mountMesh.setMatrixAt(ovIdx, tmpMat);
+          tmpMat.compose(tmpPos.set(x, room.ceilingY - 0.15, z), q, tmpScale.set(1, 1, 1));
+          ovCabMesh.setMatrixAt(ovIdx, tmpMat);
+          ovGrilleMesh.setMatrixAt(ovIdx, tmpMat);
+          ovIdx++;
+        }
+      }
+      mountMesh.instanceMatrix.needsUpdate = true;
+      ovCabMesh.instanceMatrix.needsUpdate = true;
+      ovGrilleMesh.instanceMatrix.needsUpdate = true;
+      interiorGroup.add(mountMesh, ovCabMesh, ovGrilleMesh);
+    }
+
+    // Architectural Cove LED strips (ceiling perimeter and/or raked lower-wall rail, dimming cleanly with house lights)
+    if (ui.coveLedVisible) {
+      const coveChannelMat = trackInterior(
+        new MeshStandardMaterial({ color: 0x0c0b14, roughness: 0.82, metalness: 0.18 }),
+      );
+      coveStripMat = trackInterior(new MeshBasicMaterial({ color: coveAccent.lit, toneMapped: false }));
+      const coveWashTex = createCoveWashTexture(ui.coveLedColor);
+      if (coveWashTex) trackInterior(coveWashTex);
+      coveWashMat = trackInterior(
+        new MeshBasicMaterial({
+          map: coveWashTex,
+          transparent: true,
+          opacity: 0.45,
+          blending: AdditiveBlending,
+          depthWrite: false,
+          toneMapped: false,
+        }),
+      );
+
+      const coveZMin = room.frontWallZ + 0.25;
+      const coveZMax = room.backWallZ - 0.25;
+      const coveLen = Math.max(0.8, coveZMax - coveZMin);
+      const coveMidZ = (coveZMin + coveZMax) / 2;
+
+      if (ui.coveLedPlacement === "ceiling" || ui.coveLedPlacement === "both") {
+        const troughGeom = trackInterior(new BoxGeometry(0.14, 0.075, coveLen));
+        const stripGeom = trackInterior(new BoxGeometry(0.032, 0.022, coveLen - 0.08));
+        const washGeom = trackInterior(new PlaneGeometry(coveLen, 0.72));
+
+        for (const isLeft of [true, false]) {
+          const wallX = isLeft ? -leftMargin : room.widthM + rightMargin;
+          const inward = isLeft ? 1 : -1;
+
+          const trough = new Mesh(troughGeom, coveChannelMat);
+          trough.position.set(wallX + inward * 0.075, room.ceilingY - 0.045, coveMidZ);
+          interiorGroup.add(trough);
+
+          const strip = new Mesh(stripGeom, coveStripMat);
+          strip.position.set(wallX + inward * 0.155, room.ceilingY - 0.03, coveMidZ);
+          interiorGroup.add(strip);
+
+          const wash = new Mesh(washGeom, coveWashMat);
+          wash.position.set(wallX + inward * 0.014, room.ceilingY - 0.41, coveMidZ);
+          wash.rotation.y = isLeft ? Math.PI / 2 : -Math.PI / 2;
+          interiorGroup.add(wash);
+        }
+      }
+
+      if (ui.coveLedPlacement === "wall" || ui.coveLedPlacement === "both") {
+        const firstRowZ = room.rowFloors.length > 0 ? room.rowFloors[0].z : Math.max(1.5, room.frontWallZ + 1.5);
+        const lastRowZ =
+          room.rowFloors.length > 0 ? room.rowFloors[room.rowFloors.length - 1].z : Math.max(firstRowZ + 1, room.backWallZ - 1);
+        const floorYAtZ = (z: number) => {
+          if (z <= firstRowZ || lastRowZ <= firstRowZ) return 0;
+          const t = Math.min(1, Math.max(0, (z - firstRowZ) / (lastRowZ - firstRowZ)));
+          return t * room.maxFloorY;
+        };
+
+        // Split wall rail into true architectural zones (flat front floor -> raked stadium slope -> rear landing)
+        const baseZones: [number, number][] = [];
+        const frontEnd = Math.min(coveZMax, Math.max(coveZMin, firstRowZ));
+        const slopeEnd = Math.min(coveZMax, Math.max(frontEnd, lastRowZ));
+        if (frontEnd - coveZMin > 0.3) baseZones.push([coveZMin, frontEnd]);
+        if (slopeEnd - frontEnd > 0.3) baseZones.push([frontEnd, slopeEnd]);
+        if (coveZMax - slopeEnd > 0.3) baseZones.push([slopeEnd, coveZMax]);
+
+        for (const isLeft of [true, false]) {
+          const sideName = isLeft ? "left" : "right";
+          const holes: [number, number][] = room.entrances
+            .filter((e) => e.side === sideName)
+            .map((e) => [e.z - 0.85, e.z + 0.85]);
+          const segments = baseZones.flatMap(([z0, z1]) => splitIntervalsAroundHoles(z0, z1, holes));
+          const wallX = isLeft ? -leftMargin : room.widthM + rightMargin;
+          const inward = isLeft ? 1 : -1;
+
+          for (const [za, zb] of segments) {
+            const ya = floorYAtZ(za) + 0.24;
+            const yb = floorYAtZ(zb) + 0.24;
+            const segLen = Math.hypot(zb - za, yb - ya);
+            if (segLen < 0.3) continue;
+            const slope = Math.atan2(yb - ya, zb - za);
+            const midZ = (za + zb) / 2;
+            const midY = (ya + yb) / 2;
+
+            const segGroup = new Group();
+            segGroup.position.set(wallX, midY, midZ);
+            segGroup.rotation.x = -slope;
+
+            const rail = new Mesh(trackInterior(new BoxGeometry(0.045, 0.045, segLen)), coveChannelMat);
+            rail.position.set(inward * 0.025, 0, 0);
+            segGroup.add(rail);
+
+            const led = new Mesh(trackInterior(new BoxGeometry(0.022, 0.02, segLen - 0.04)), coveStripMat);
+            led.position.set(inward * 0.052, 0.008, 0);
+            segGroup.add(led);
+
+            const wash = new Mesh(trackInterior(new PlaneGeometry(segLen, 0.42)), coveWashMat);
+            wash.position.set(inward * 0.015, 0.23, 0);
+            wash.rotation.y = isLeft ? Math.PI / 2 : -Math.PI / 2;
+            // Flip upward so bright edge hugs the bottom rail and fades cleanly upward along the wall
+            wash.rotation.z = Math.PI;
+            segGroup.add(wash);
+
+            interiorGroup.add(segGroup);
+          }
+        }
+      }
+    }
+
+    // Rear projection booth window
+    if (ui.projectionPortVisible) {
+      const portFrameGeom = trackInterior(new BoxGeometry(1.65, 0.56, 0.07));
+      const portFrameMat = trackInterior(new MeshStandardMaterial({ color: 0x09080f, roughness: 0.6, metalness: 0.35 }));
+      const portFrame = new Mesh(portFrameGeom, portFrameMat);
+      portFrame.position.set(room.projectionPort.x, room.projectionPort.y, room.projectionPort.z - 0.035);
+      interiorGroup.add(portFrame);
+
+      const portGlassGeom = trackInterior(new PlaneGeometry(1.44, 0.38));
+      portGlassMat = trackInterior(new MeshBasicMaterial({ color: 0x8db4f8, toneMapped: false }));
+      const portGlass = new Mesh(portGlassGeom, portGlassMat);
+      portGlass.position.set(room.projectionPort.x, room.projectionPort.y, room.projectionPort.z - 0.074);
+      portGlass.rotation.y = Math.PI;
+      interiorGroup.add(portGlass);
+    }
+
+    // Volumetric projector beam
+    if (ui.projectorBeamVisible) {
+      const lensVec = new Vector3(room.projectionPort.x, room.projectionPort.y, room.projectionPort.z - 0.1);
+      const screenCenterVec = new Vector3(room.screen.centreX, room.screen.centerY, room.screen.centerZ + 0.05);
+      const beamLength = lensVec.distanceTo(screenCenterVec);
+      const beamGeom = trackInterior(new CylinderGeometry(1, 0.06, beamLength, 32, 1, true));
+      beamOpacityUniform = { value: 0.08 };
+      const beamMat = trackInterior(
+        new ShaderMaterial({
+          transparent: true,
+          depthWrite: false,
+          side: DoubleSide,
+          blending: AdditiveBlending,
+          uniforms: {
+            uOpacity: beamOpacityUniform,
+            uColor: { value: new Color(0x9fc2ff) },
+          },
+          vertexShader: `
+        varying vec2 vUv;
+        varying vec3 vWorldPos;
+        varying vec3 vWorldNormal;
+        void main() {
+          vUv = uv;
+          vec4 wp = modelMatrix * vec4(position, 1.0);
+          vWorldPos = wp.xyz;
+          vWorldNormal = normalize(mat3(modelMatrix) * normal);
+          gl_Position = projectionMatrix * viewMatrix * wp;
+        }
+      `,
+          fragmentShader: `
+        uniform float uOpacity;
+        uniform vec3 uColor;
+        varying vec2 vUv;
+        varying vec3 vWorldPos;
+        varying vec3 vWorldNormal;
+        void main() {
+          vec3 viewDir = normalize(cameraPosition - vWorldPos);
+          float facing = pow(abs(dot(normalize(vWorldNormal), viewDir)), 2.8);
+          float ends = smoothstep(0.0, 0.18, vUv.y) * smoothstep(1.0, 0.72, vUv.y);
+          float alpha = facing * ends * uOpacity;
+          gl_FragColor = vec4(uColor * alpha, alpha);
+        }
+      `,
+        }),
+      );
+      const beamMesh = new Mesh(beamGeom, beamMat);
+      const beamAxis = new Vector3().subVectors(screenCenterVec, lensVec).normalize();
+      const upRef = new Vector3(0, 1, 0);
+      const beamX = new Vector3().crossVectors(beamAxis, upRef).normalize();
+      const beamZ = new Vector3().crossVectors(beamX, beamAxis).normalize();
+      beamMesh.matrixAutoUpdate = false;
+      beamMesh.matrix
+        .makeBasis(beamX, beamAxis, beamZ)
+        .scale(new Vector3(room.screen.width * 0.44, 1, room.screen.height * 0.44))
+        .setPosition(lensVec.clone().add(screenCenterVec).multiplyScalar(0.5));
+      beamMesh.renderOrder = 8;
+      interiorGroup.add(beamMesh);
+    }
+
+    // Luminous LED step-nosing strips along open vertical & side aisles (omitted on aisle-fill rows)
+    if (ui.aisleLedVisible && room.aisleLights.length > 0) {
+      const aisleLedMat = trackInterior(
+        new MeshBasicMaterial({ color: AISLE_LED_HEX[ui.aisleLedColor] ?? AISLE_LED_HEX.amber, toneMapped: false }),
+      );
+      const stripGeom = trackInterior(new BoxGeometry(1, 0.02, 0.028));
+      const stripMesh = trackInterior(new InstancedMesh(stripGeom, aisleLedMat, room.aisleLights.length));
+      room.aisleLights.forEach((light, i) => {
+        tmpMat.compose(
+          tmpPos.set(light.x, light.y + 0.011, light.z),
+          tmpQuat.identity(),
+          tmpScale.set(light.widthM, 1, 1),
+        );
+        stripMesh.setMatrixAt(i, tmpMat);
+      });
+      stripMesh.instanceMatrix.needsUpdate = true;
+      interiorGroup.add(stripMesh);
+    }
+
+    // Illuminated Row Letter Markers (`A, B, C...`) along vertical aisles or side walls (2 draw calls total)
+    if (ui.rowMarkersVisible && room.seats.length > 0) {
+      const rowMap = new Map<
+        number,
+        { row: string; rowIndex: number; z: number; floorY: number; seats: SceneSeat[] }
+      >();
+      for (const s of room.seats) {
+        const entry = rowMap.get(s.rowIndex);
+        if (entry) {
+          entry.seats.push(s);
+        } else {
+          rowMap.set(s.rowIndex, { row: s.row, rowIndex: s.rowIndex, z: s.z, floorY: s.floorY, seats: [s] });
+        }
+      }
+      const rows = [...rowMap.values()].sort((a, b) => a.rowIndex - b.rowIndex);
+      const atlas = createRowMarkerAtlas(
+        rows.map((r) => r.row),
+        ui.rowMarkersColor,
+      );
+
+      if (atlas) {
+        trackInterior(atlas.texture);
+        const faceGeoms: BufferGeometry[] = [];
+        const plaqueMats: Matrix4[] = [];
+        const isWall = ui.rowMarkersPlacement === "wall";
+        const markerSize = isWall ? 0.26 : 0.22;
+        const leftWallQuat = new Quaternion().setFromAxisAngle(yAxis, Math.PI / 2);
+        const rightWallQuat = new Quaternion().setFromAxisAngle(yAxis, -Math.PI / 2);
+        const aisleTiltQuat = new Quaternion().setFromAxisAngle(new Vector3(1, 0, 0), -0.38);
+        const faceOffset = new Vector3();
+        const postPositions: Vector3[] = [];
+
+        const pushMarker = (rowSlot: number, pos: Vector3, quat: Quaternion) => {
+          const gx = rowSlot % atlas.cols;
+          const gy = Math.floor(rowSlot / atlas.cols);
+          const u0 = gx / atlas.cols;
+          const u1 = (gx + 1) / atlas.cols;
+          const v1 = 1 - gy / atlas.gridRows;
+          const v0 = 1 - (gy + 1) / atlas.gridRows;
+
+          const plane = new PlaneGeometry(markerSize, markerSize);
+          const uv = plane.attributes.uv;
+          for (let i = 0; i < uv.count; i++) {
+            uv.setXY(i, u0 + uv.getX(i) * (u1 - u0), v0 + uv.getY(i) * (v1 - v0));
+          }
+          faceOffset.set(0, 0, 0.013).applyQuaternion(quat);
+          tmpMat.compose(tmpPos.copy(pos).add(faceOffset), quat, tmpScale.set(1, 1, 1));
+          plane.applyMatrix4(tmpMat);
+          faceGeoms.push(plane);
+
+          const m = new Matrix4().compose(pos, quat, new Vector3(1, 1, 1));
+          plaqueMats.push(m);
+        };
+
+        const roomMidX = room.widthM / 2;
+        rows.forEach((r, slot) => {
+          if (isWall) {
+            const leftBlocked = room.entrances.some((e) => e.side === "left" && Math.abs(e.z - r.z) < 0.95);
+            const rightBlocked = room.entrances.some((e) => e.side === "right" && Math.abs(e.z - r.z) < 0.95);
+            const markerY = Math.min(room.ceilingY - 0.5, r.floorY + 1.24);
+            if (!leftBlocked) {
+              pushMarker(slot, new Vector3(-leftMargin + 0.022, markerY, r.z), leftWallQuat);
+            }
+            if (!rightBlocked) {
+              pushMarker(slot, new Vector3(room.widthM + rightMargin - 0.022, markerY, r.z), rightWallQuat);
+            }
+            return;
+          }
+
+          // Aisle mode: mount sleek grounded armrest-side row standards flanking open vertical aisles (never blocking walkway center)
+          const xs: number[] = [];
+          if (room.verticalAislesM.length > 0) {
+            for (const aisleX of room.verticalAislesM) {
+              const filled = r.seats.some((s) => Math.abs(s.x - aisleX) < room.seatPitchM * (s.span * 0.5 + 0.3));
+              if (filled) continue;
+              const preferRight = aisleX < roomMidX;
+              let anchorX = aisleX;
+              if (preferRight) {
+                const rightSeats = r.seats.filter((s) => s.x > aisleX).sort((a, b) => a.x - b.x);
+                if (rightSeats.length > 0) {
+                  const s = rightSeats[0];
+                  anchorX = s.x - s.span * room.seatPitchM * 0.5 - 0.14;
+                }
+              } else {
+                const leftSeats = r.seats.filter((s) => s.x < aisleX).sort((a, b) => b.x - a.x);
+                if (leftSeats.length > 0) {
+                  const s = leftSeats[0];
+                  anchorX = s.x + s.span * room.seatPitchM * 0.5 + 0.14;
+                }
+              }
+              xs.push(anchorX);
+            }
+          }
+          if (xs.length === 0) {
+            let minEdge = Infinity;
+            let maxEdge = -Infinity;
+            for (const s of r.seats) {
+              const half = s.span * room.seatPitchM * 0.5;
+              if (s.x - half < minEdge) minEdge = s.x - half;
+              if (s.x + half > maxEdge) maxEdge = s.x + half;
+            }
+            if (Number.isFinite(minEdge)) {
+              xs.push(Math.max(-leftMargin + 0.18, minEdge - 0.16));
+              xs.push(Math.min(room.widthM + rightMargin - 0.18, maxEdge + 0.16));
+            }
+          }
+          for (const mx of xs) {
+            pushMarker(slot, new Vector3(mx, r.floorY + 0.54, r.z + 0.14), aisleTiltQuat);
+            postPositions.push(new Vector3(mx, r.floorY + 0.25, r.z + 0.12));
+          }
+        });
+
+        if (faceGeoms.length > 0) {
+          const mergedFaces = mergeGeometries(faceGeoms, false);
+          for (const g of faceGeoms) g.dispose();
+          if (mergedFaces) {
+            trackInterior(mergedFaces);
+            const faceMat = trackInterior(new MeshBasicMaterial({ map: atlas.texture, toneMapped: false }));
+            interiorGroup.add(new Mesh(mergedFaces, faceMat));
+          }
+          const plaqueGeom = trackInterior(new BoxGeometry(markerSize + 0.025, markerSize + 0.025, 0.022));
+          const plaqueMat = trackInterior(
+            new MeshStandardMaterial({ color: 0x0a0a12, roughness: 0.72, metalness: 0.25 }),
+          );
+          const plaqueMesh = trackInterior(new InstancedMesh(plaqueGeom, plaqueMat, plaqueMats.length));
+          plaqueMats.forEach((m, i) => plaqueMesh.setMatrixAt(i, m));
+          plaqueMesh.instanceMatrix.needsUpdate = true;
+          interiorGroup.add(plaqueMesh);
+
+          if (postPositions.length > 0) {
+            const postGeom = trackInterior(new BoxGeometry(0.04, 0.5, 0.04));
+            const postMesh = trackInterior(new InstancedMesh(postGeom, plaqueMat, postPositions.length));
+            postPositions.forEach((p, i) => {
+              tmpMat.makeTranslation(p.x, p.y, p.z);
+              postMesh.setMatrixAt(i, tmpMat);
+            });
+            postMesh.instanceMatrix.needsUpdate = true;
+            interiorGroup.add(postMesh);
+          }
+        }
+      }
+    }
+
+    // Front stage apron & optional recessed stage-lip LED
+    if (ui.screenStageApron) {
+      const apronH = Math.min(0.22, Math.max(0.1, room.screen.bottom * 0.22));
+      const apronD = Math.max(0.68, -room.frontWallZ + 0.48);
+      const apronGeom = trackInterior(new BoxGeometry(shellW - 0.04, apronH, apronD));
+      const apronMat = trackInterior(new MeshStandardMaterial({ color: 0x0c0b12, roughness: 0.92, metalness: 0.04 }));
+      const apronMesh = new Mesh(apronGeom, apronMat);
+      apronMesh.position.set(shellCenterX, apronH / 2, room.frontWallZ + apronD / 2);
+      interiorGroup.add(apronMesh);
+
+      if (ui.screenStageLed) {
+        const stageLedGeom = trackInterior(new BoxGeometry(Math.min(shellW - 0.6, room.screen.width * 1.02), 0.018, 0.02));
+        stageLedMat = trackInterior(new MeshBasicMaterial({ color: 0x7c5838, toneMapped: false }));
+        const stageLed = new Mesh(stageLedGeom, stageLedMat);
+        stageLed.position.set(room.screen.centreX, apronH - 0.012, room.frontWallZ + apronD + 0.008);
+        interiorGroup.add(stageLed);
+      }
+    }
+
+    // Soft additive ambient wall glow behind the screen masking
+    if (ui.screenHalo) {
+      const haloTex = createScreenHaloTexture();
+      if (haloTex) trackInterior(haloTex);
+      const haloGeom = trackInterior(new PlaneGeometry(room.screen.width * 1.48, room.screen.height * 1.62));
+      haloMat = trackInterior(
+        new MeshBasicMaterial({
+          map: haloTex,
+          transparent: true,
+          opacity: 0.42,
+          blending: AdditiveBlending,
+          depthWrite: false,
+          toneMapped: false,
+        }),
+      );
+      const haloMesh = new Mesh(haloGeom, haloMat);
+      haloMesh.position.set(room.screen.centreX, room.screen.centerY, room.frontWallZ + 0.03);
+      interiorGroup.add(haloMesh);
+    }
+
+    // Solid architectural mounting shroud + tilted screen assembly
+    const borderPad = ui.screenBorder === "velvet" ? 0.48 : ui.screenBorder === "slim" ? 0.16 : 0.04;
+    const frameW = room.screen.width + borderPad;
+    const frameH = room.screen.height + borderPad;
+
+    // Proscenium pleated velvet curtains flanking both sides of the cinema screen
+    if (ui.screenCurtainsVisible) {
+      const apronH = ui.screenStageApron ? Math.min(0.22, Math.max(0.1, room.screen.bottom * 0.22)) : 0;
+      const curtainBottomY = apronH;
+      const curtainH = Math.max(0.6, room.ceilingY - curtainBottomY);
+      const curtainCenterY = curtainBottomY + curtainH / 2;
+      const curtainZ = room.frontWallZ + 0.13;
+      const curtainHex = parseHexOrRgb(ui.screenCurtainsColor) ?? 0x2b0c14;
+      const curtainMat = trackInterior(
+        new MeshStandardMaterial({ color: curtainHex, roughness: 0.94, metalness: 0.02 }),
+      );
+      const curtainBackMat = trackInterior(
+        new MeshStandardMaterial({
+          color: new Color(curtainHex).multiplyScalar(0.55),
+          roughness: 0.96,
+          metalness: 0.01,
+        }),
+      );
+
+      const leftStart = -leftMargin + 0.03;
+      const leftEnd = room.screen.centreX - frameW / 2 + 0.06;
+      const rightStart = room.screen.centreX + frameW / 2 - 0.06;
+      const rightEnd = room.widthM + rightMargin - 0.03;
+      const sides: [number, number][] = [];
+      if (leftEnd - leftStart > 0.16) sides.push([leftStart, leftEnd]);
+      if (rightEnd - rightStart > 0.16) sides.push([rightStart, rightEnd]);
+
+      const pleatPositions: { x: number; z: number }[] = [];
+      for (const [x0, x1] of sides) {
+        const span = x1 - x0;
+        const backPlane = new Mesh(trackInterior(new PlaneGeometry(span, curtainH)), curtainBackMat);
+        backPlane.position.set((x0 + x1) / 2, curtainCenterY, curtainZ - 0.075);
+        interiorGroup.add(backPlane);
+
+        const count = Math.max(3, Math.min(18, Math.round(span / 0.18)));
+        for (let p = 0; p < count; p++) {
+          const px = x0 + ((p + 0.5) / count) * span;
+          const pz = curtainZ + (p % 2 === 0 ? 0.024 : -0.024);
+          pleatPositions.push({ x: px, z: pz });
+        }
+      }
+
+      if (pleatPositions.length > 0) {
+        const pleatGeom = trackInterior(new CylinderGeometry(0.105, 0.115, curtainH, 10));
+        const pleatMesh = trackInterior(new InstancedMesh(pleatGeom, curtainMat, pleatPositions.length));
+        pleatPositions.forEach((p, i) => {
+          tmpMat.compose(tmpPos.set(p.x, curtainCenterY, p.z), tmpQuat.identity(), tmpScale.set(1, 1, 1.18));
+          pleatMesh.setMatrixAt(i, tmpMat);
+        });
+        pleatMesh.instanceMatrix.needsUpdate = true;
+        interiorGroup.add(pleatMesh);
+      }
+
+      // Optional upper proscenium pelmet valance when clear space exists above the screen frame
+      const topGap = room.ceilingY - (room.screen.centerY + frameH / 2);
+      if (topGap >= 0.28) {
+        const pelmetH = Math.min(0.32, topGap * 0.72);
+        const pelmet = new Mesh(
+          trackInterior(new BoxGeometry(shellW - 0.06, pelmetH, 0.22)),
+          curtainMat,
+        );
+        pelmet.position.set(shellCenterX, room.ceilingY - pelmetH / 2, curtainZ + 0.04);
+        interiorGroup.add(pelmet);
+      }
+    }
+    const housingGeom = trackInterior(
+      buildScreenHousingGeometry(
+        frameW,
+        frameH,
+        room.screen.centerY,
+        room.screen.centerZ,
+        screenTiltRad,
+        room.screen.curveDepth,
+        room.frontWallZ,
+      ),
+    );
+    const housingMat = trackInterior(new MeshStandardMaterial({ color: 0x11101a, roughness: 0.78, metalness: 0.22 }));
+    const housingMesh = new Mesh(housingGeom, housingMat);
+    housingMesh.position.set(room.screen.centreX, 0, 0);
+    interiorGroup.add(housingMesh);
+
+    const screenGroup = new Group();
+    screenGroup.position.set(room.screen.centreX, room.screen.centerY, room.screen.centerZ);
+    screenGroup.rotation.x = screenTiltRad;
+
+    if (ui.screenBorder !== "frameless") {
+      const frameGeom = trackInterior(buildScreenGeometry(frameW, frameH, room.screen.curveDepth));
+      const frameMat = trackInterior(new MeshBasicMaterial({ color: 0x030306 }));
+      const frameMesh = new Mesh(frameGeom, frameMat);
+      frameMesh.position.set(0, 0, -0.045);
+      screenGroup.add(frameMesh);
+    }
+
+    const screenGeom = trackInterior(buildScreenGeometry(room.screen.width, room.screen.height, room.screen.curveDepth));
+    const effectiveSubtitle = ui.screenSubtitleText.trim() || options.subtitleText || "Sample subtitle · Phụ đề mẫu";
+    const youtubeId = ui.screenSource === "youtube" ? parseYoutubeId(ui.screenYoutubeUrl) : null;
+    let screenMat: MeshBasicMaterial;
+
+    if (youtubeId) {
+      syncYoutubeLayer(youtubeId);
+      // Depth-tested alpha cutout: punches a transparent window through frontWall/frame while chairs & audience still occlude the video.
+      screenMat = trackInterior(
+        new MeshBasicMaterial({
+          color: 0x000000,
+          opacity: 0,
+          blending: NoBlending,
+          side: FrontSide,
+          toneMapped: false,
+          fog: false,
+        }),
+      );
+    } else {
+      syncYoutubeLayer(null);
+      const customImageUrl = ui.screenSource === "image" ? ui.screenImageUrl.trim() : "";
+      const cachedImg = customImageUrl ? cachedLoadedImages.get(customImageUrl) : undefined;
+      const initialTexture =
+        (cachedImg
+          ? createCustomImageScreenTexture(cachedImg, ui.screenShowSubtitle, effectiveSubtitle, ui.screenSubtitleColor)
+          : null) ??
+        createScreenTexture(
+          ui.screenContent,
+          ui.screenShowSubtitle,
+          effectiveSubtitle,
+          ui.screenSubtitleColor,
+        );
+      if (initialTexture) trackInterior(initialTexture);
+      screenMat = trackInterior(
+        initialTexture
+          ? new MeshBasicMaterial({ map: initialTexture, toneMapped: false })
+          : new MeshBasicMaterial({ color: 0xe8e0ff, toneMapped: false }),
+      );
+
+      if (customImageUrl && !cachedImg) {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.decoding = "async";
+        img.onload = () => {
+          if (img.naturalWidth <= 0 || img.naturalHeight <= 0) return;
+          putLoadedImageCache(customImageUrl, img);
+          if (disposed || buildToken !== interiorBuildToken) return;
+          const customTex = createCustomImageScreenTexture(
+            img,
+            ui.screenShowSubtitle,
+            effectiveSubtitle,
+            ui.screenSubtitleColor,
+          );
+          if (!customTex) return;
+          const prevMap = screenMat.map;
+          screenMat.map = customTex;
+          screenMat.needsUpdate = true;
+          trackInterior(customTex);
+          prevMap?.dispose();
+          requestRender();
+        };
+        img.src = customImageUrl;
+      }
+    }
+    const screenMesh = new Mesh(screenGeom, screenMat);
+    screenGroup.add(screenMesh);
+    interiorGroup.add(screenGroup);
+
+    // Exit Doors (QCVN 06:2022/BXD: 1.30 m × 2.10 m) & Backlit EXIT Signs
+    if (room.entrances.length > 0) {
+      const doorH = 2.1;
+      const doorW = 1.3;
+      const doorFrameHex = parseHexOrRgb(ui.doorFrameColor) ?? 0x1e1c28;
+      const doorHex = parseHexOrRgb(ui.doorColor) ?? 0x0a0a10;
+      const doorFrameGeom = trackInterior(new BoxGeometry(0.11, doorH + 0.12, doorW + 0.16));
+      const doorFrameMat = trackInterior(new MeshStandardMaterial({ color: doorFrameHex, roughness: 0.72, metalness: 0.25 }));
+      const doorGeom = trackInterior(new BoxGeometry(0.08, doorH, doorW));
+      const doorMat = trackInterior(
+        new MeshStandardMaterial({
+          color: doorHex,
+          roughness: ui.doorStyle === "curtain" ? 0.96 : 0.85,
+          metalness: ui.doorStyle === "curtain" ? 0.02 : 0.15,
+        }),
+      );
+
+      const seamGeom = ui.doorStyle === "double" ? trackInterior(new BoxGeometry(0.095, doorH - 0.04, 0.025)) : null;
+      const seamMat = ui.doorStyle === "double" ? trackInterior(new MeshStandardMaterial({ color: 0x050508, roughness: 0.95 })) : null;
+      const pleatGeom = ui.doorStyle === "curtain" ? trackInterior(new CylinderGeometry(0.06, 0.06, doorH - 0.04, 8)) : null;
+      const barGeom =
+        ui.doorStyle !== "curtain" && ui.doorPanicBar
+          ? trackInterior(new BoxGeometry(0.11, 0.055, ui.doorStyle === "double" ? doorW * 0.36 : doorW * 0.68))
+          : null;
+      const barMat = barGeom
+        ? trackInterior(new MeshStandardMaterial({ color: 0x6b7280, roughness: 0.35, metalness: 0.8 }))
+        : null;
+
+      let signBoxGeom: BoxGeometry | null = null;
+      let signBoxMat: MeshStandardMaterial | null = null;
+      let signFaceGeom: PlaneGeometry | null = null;
+      let signFaceMat: MeshBasicMaterial | null = null;
+      if (ui.exitSignVisible) {
+        const exitTex = createExitSignTexture(ui.exitSignColor, ui.exitSignText);
+        if (exitTex) trackInterior(exitTex);
+        signBoxGeom = trackInterior(new BoxGeometry(0.08, 0.2, 0.48));
+        signBoxMat = trackInterior(new MeshStandardMaterial({ color: 0x0b0f10, roughness: 0.6 }));
+        signFaceGeom = trackInterior(new PlaneGeometry(0.44, 0.17));
+        signFaceMat = trackInterior(
+          exitTex
+            ? new MeshBasicMaterial({ map: exitTex, toneMapped: false })
+            : new MeshBasicMaterial({ color: ui.exitSignColor === "red" ? 0xdc2626 : 0x22c55e, toneMapped: false }),
+        );
+      }
+
+      for (const e of room.entrances) {
+        const group = new Group();
+        const doorFrame = new Mesh(doorFrameGeom, doorFrameMat);
+        const door = new Mesh(doorGeom, doorMat);
+
+        doorFrame.position.set(0, (doorH + 0.12) / 2, 0);
+        door.position.set(0, doorH / 2, 0);
+        group.add(doorFrame, door);
+
+        if (ui.doorStyle === "curtain" && pleatGeom) {
+          const pleatCount = 6;
+          for (let p = 0; p < pleatCount; p++) {
+            const zOff = -doorW / 2 + ((p + 0.5) / pleatCount) * doorW;
+            const pleat = new Mesh(pleatGeom, doorMat);
+            pleat.position.set(0.032, doorH / 2, zOff);
+            group.add(pleat);
+          }
+        } else {
+          if (seamGeom && seamMat) {
+            const seam = new Mesh(seamGeom, seamMat);
+            seam.position.set(0.005, doorH / 2, 0);
+            group.add(seam);
+          }
+          if (barGeom && barMat) {
+            if (ui.doorStyle === "double") {
+              const leftBar = new Mesh(barGeom, barMat);
+              leftBar.position.set(0.02, 1.02, -doorW * 0.24);
+              const rightBar = new Mesh(barGeom, barMat);
+              rightBar.position.set(0.02, 1.02, doorW * 0.24);
+              group.add(leftBar, rightBar);
+            } else {
+              const bar = new Mesh(barGeom, barMat);
+              bar.position.set(0.02, 1.02, 0);
+              group.add(bar);
+            }
+          }
+        }
+
+        if (signBoxGeom && signBoxMat && signFaceGeom && signFaceMat) {
+          const signBox = new Mesh(signBoxGeom, signBoxMat);
+          const signFace = new Mesh(signFaceGeom, signFaceMat);
+          const signY = Math.min(room.ceilingY - e.floorY - 0.18, doorH + 0.24);
+          signBox.position.set(0.02, signY, 0);
+          signFace.position.set(0.065, signY, 0);
+          signFace.rotation.y = Math.PI / 2;
+          group.add(signBox, signFace);
+        }
+
+        const wallX =
+          e.side === "left" ? -leftMargin + 0.05 : e.side === "right" ? room.widthM + rightMargin - 0.05 : e.x;
+        const wallZ =
+          e.side === "center"
+            ? e.position === "back"
+              ? room.backWallZ - 0.05
+              : room.frontWallZ + 0.05
+            : Math.min(room.backWallZ - doorW / 2 - 0.12, Math.max(room.frontWallZ + doorW / 2 + 0.12, e.z));
+
+        if (e.side === "right") group.rotation.y = Math.PI;
+        else if (e.side === "center") group.rotation.y = e.position === "back" ? Math.PI / 2 : -Math.PI / 2;
+
+        group.position.set(wallX, e.floorY, wallZ);
+        interiorGroup.add(group);
+      }
+    }
+  }
+
+  buildInterior(currentAppearance);
+
+  // --- 3. Sculpted Multi-Material Chairs Grouped by (style, span) ---
   const palette = Array.from({ length: HEAT_STEPS }, (_, i) => cssToHex(heatColor(i, 0, HEAT_STEPS - 1)));
   const resolvedTypeColors = new Map<string, number>();
   for (const seat of room.seats) {
@@ -1696,7 +2915,7 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
   }
 
   interface StyleGroup {
-    fabricMesh: THREE.InstancedMesh;
+    fabricMesh: InstancedMesh;
     seats: SceneSeat[];
   }
   const byBucket = new Map<string, { style: SeatStyle; span: 1 | 2; seats: SceneSeat[] }>();
@@ -1709,16 +2928,16 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
 
   const styleGroups: StyleGroup[] = [];
   const fabricMaterial = track(
-    new THREE.MeshStandardMaterial({
+    new MeshStandardMaterial({
       color: 0xffffff,
-      roughness: 0.82,
-      metalness: 0.03,
+      roughness: currentAppearance.seatFinish === "leather" ? 0.42 : 0.82,
+      metalness: currentAppearance.seatFinish === "leather" ? 0.08 : 0.03,
       vertexColors: true,
     }),
   );
   const frameMaterial = track(
-    new THREE.MeshStandardMaterial({
-      color: 0x15131c,
+    new MeshStandardMaterial({
+      color: parseHexOrRgb(currentAppearance.seatFrameColor) ?? 0x15131c,
       roughness: 0.78,
       metalness: 0.08,
     }),
@@ -1732,8 +2951,8 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
     track(fabric);
     track(frame);
 
-    const fabricMesh = track(new THREE.InstancedMesh(fabric, fabricMaterial, list.length));
-    const frameMesh = track(new THREE.InstancedMesh(frame, frameMaterial, list.length));
+    const fabricMesh = track(new InstancedMesh(fabric, fabricMaterial, list.length));
+    const frameMesh = track(new InstancedMesh(frame, frameMaterial, list.length));
     list.forEach((seat, i) => {
       tmpQuat.setFromAxisAngle(yAxis, seat.yaw);
       tmpMat.compose(tmpPos.set(seat.x, seat.floorY, seat.z), tmpQuat, tmpScale.set(1, 1, 1));
@@ -1748,11 +2967,11 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
   }
 
   // Low-poly 12-triangle box proxy per seat for O(1)-cost raycasting (never added to `scene`, zero draw calls).
-  let pickMesh: THREE.InstancedMesh | null = null;
+  let pickMesh: InstancedMesh | null = null;
   if (room.seats.length > 0) {
-    const pickGeom = track(new THREE.BoxGeometry(1, 1, 1));
-    const pickMat = track(new THREE.MeshBasicMaterial());
-    pickMesh = track(new THREE.InstancedMesh(pickGeom, pickMat, room.seats.length));
+    const pickGeom = track(new BoxGeometry(1, 1, 1));
+    const pickMat = track(new MeshBasicMaterial());
+    pickMesh = track(new InstancedMesh(pickGeom, pickMat, room.seats.length));
     room.seats.forEach((seat, i) => {
       const w = seat.span * room.seatPitchM * 0.98;
       const h = seat.style === "bed" ? 0.85 : 1.1;
@@ -1767,23 +2986,23 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
   const seatByCode = new Map(room.seats.map((s) => [s.code, s]));
 
   // Sleek subtle selection halo ring & glowing top bar above selected seat in overview mode
-  const selectIndicator = new THREE.Group();
-  const ringGeom = track(new THREE.RingGeometry(0.2, 0.26, 20));
+  const selectIndicator = new Group();
+  const ringGeom = track(new RingGeometry(0.2, 0.26, 20));
   ringGeom.rotateX(-Math.PI / 2);
   const ringMat = track(
-    new THREE.MeshBasicMaterial({
+    new MeshBasicMaterial({
       color: SELECTED_ACCENT,
-      side: THREE.DoubleSide,
+      side: DoubleSide,
       transparent: true,
       opacity: 0.9,
       toneMapped: false,
     }),
   );
-  const selectRing = new THREE.Mesh(ringGeom, ringMat);
+  const selectRing = new Mesh(ringGeom, ringMat);
   selectRing.position.y = 0.024;
-  const barCapGeom = track(new THREE.BoxGeometry(0.28, 0.024, 0.036));
-  const barCapMat = track(new THREE.MeshBasicMaterial({ color: 0xffd0dc, toneMapped: false }));
-  const selectBar = new THREE.Mesh(barCapGeom, barCapMat);
+  const barCapGeom = track(new BoxGeometry(0.28, 0.024, 0.036));
+  const barCapMat = track(new MeshBasicMaterial({ color: 0xffd0dc, toneMapped: false }));
+  const selectBar = new Mesh(barCapGeom, barCapMat);
   selectBar.position.set(0, 1.15, 0.16);
   selectIndicator.add(selectRing, selectBar);
   selectIndicator.visible = false;
@@ -1796,13 +3015,13 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
   );
   const audienceGeom = track(buildAudienceGeometry(room.reclineDeg, room.eyeDropM));
   const audienceMat = track(
-    new THREE.MeshStandardMaterial({
+    new MeshStandardMaterial({
       color: 0x161521,
       roughness: 0.9,
       metalness: 0.02,
     }),
   );
-  const audienceMesh = track(new THREE.InstancedMesh(audienceGeom, audienceMat, audienceCapacity));
+  const audienceMesh = track(new InstancedMesh(audienceGeom, audienceMat, audienceCapacity));
   audienceMesh.count = 0;
   audienceMesh.visible = false;
   scene.add(audienceMesh);
@@ -1843,17 +3062,17 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
   }
 
   // --- 7. Floating User-Mark Badges (gold = favorite, red = avoid) ---
-  const markGeom = track(new THREE.SphereGeometry(0.082, 10, 8));
-  const markMat = track(new THREE.MeshBasicMaterial({ color: 0xffffff, toneMapped: false }));
-  const markMesh = track(new THREE.InstancedMesh(markGeom, markMat, Math.max(1, room.seats.length)));
+  const markGeom = track(new SphereGeometry(0.082, 10, 8));
+  const markMat = track(new MeshBasicMaterial({ color: 0xffffff, toneMapped: false }));
+  const markMesh = track(new InstancedMesh(markGeom, markMat, Math.max(1, room.seats.length)));
   markMesh.count = 0;
   markMesh.visible = false;
   scene.add(markMesh);
 
   let marks = options.marks;
-  const color = new THREE.Color();
-  const whiteColor = new THREE.Color(0xffffff);
-  const hoverColor = new THREE.Color(HOVER_ACCENT);
+  const color = new Color();
+  const whiteColor = new Color(0xffffff);
+  const hoverColor = new Color(HOVER_ACCENT);
   function updateMarks() {
     if (!marks || marks.size === 0 || room.seats.length === 0) {
       markMesh.count = 0;
@@ -1928,12 +3147,6 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
   let lightsTarget = options.lightsUp ? 1 : 0;
   let lightsLevel = lightsTarget;
   let lightTween: { start: number; from: number; to: number } | null = null;
-  const bulbDimColor = new THREE.Color(0x1f1914);
-  const bulbLitColor = new THREE.Color(0xffe1b5);
-  const slitDimColor = new THREE.Color(0x784a22);
-  const slitLitColor = new THREE.Color(0xffcd85);
-  const portDimColor = new THREE.Color(0xa6ccff);
-  const portLitColor = new THREE.Color(0x526585);
 
   function applyLighting(lvl: number) {
     const heatBoost = heat ? 0.24 : 0;
@@ -1943,32 +3156,38 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
     screenBounce.intensity = 30 - 8 * lvl;
     screenFill.intensity = 0.62 - 0.14 * lvl;
 
-    bulbMat.color.copy(bulbDimColor).lerp(bulbLitColor, lvl);
-    sconceSlitMat.color.copy(slitDimColor).lerp(slitLitColor, lvl);
-    portGlassMat.color.copy(portDimColor).lerp(portLitColor, lvl);
-    sconceGlowMat.opacity = 0.22 + 0.44 * lvl;
-    haloMat.opacity = 0.48 - 0.24 * lvl;
-    beamOpacityUniform.value = mode === "seat" ? (0.045 - 0.03 * lvl) : (0.11 - 0.075 * lvl);
-    stageLedMat.color.setHex(lvl > 0.5 ? 0x6e5136 : 0xb87638);
+    if (bulbMat) bulbMat.color.copy(bulbDimColor).lerp(bulbLitColor, lvl);
+    if (sconceSlitMat) sconceSlitMat.color.copy(slitDimColor).lerp(slitLitColor, lvl);
+    if (coveStripMat) coveStripMat.color.copy(coveDimColor).lerp(coveLitColor, lvl);
+    if (portGlassMat) portGlassMat.color.copy(portDimColor).lerp(portLitColor, lvl);
+    if (sconceGlowMat) sconceGlowMat.opacity = 0.22 + 0.44 * lvl;
+    if (coveWashMat) coveWashMat.opacity = 0.15 + 0.42 * lvl;
+    if (haloMat) haloMat.opacity = 0.48 - 0.24 * lvl;
+    if (beamOpacityUniform) beamOpacityUniform.value = mode === "seat" ? (0.045 - 0.03 * lvl) : (0.11 - 0.075 * lvl);
+    if (stageLedMat) stageLedMat.color.setHex(lvl > 0.5 ? 0x6e5136 : 0xb87638);
   }
 
   // --- Camera Rig: Inside-Auditorium Overview + Clamped OrbitControls + Cubic Bézier Fly-To-Seat ---
-  const camera = new THREE.PerspectiveCamera(ORBIT_FOV, 4 / 3, 0.1, 220);
+  const camera = new PerspectiveCamera(ORBIT_FOV, 4 / 3, 0.1, 220);
   camera.rotation.order = "YXZ";
   const controls = new OrbitControls(camera, canvas);
   controls.enableDamping = false;
+  controls.enableRotate = true;
+  controls.enableZoom = true;
   controls.enablePan = true;
   controls.screenSpacePanning = true;
+  controls.rotateSpeed = 0.9;
   controls.panSpeed = 0.85;
   controls.zoomSpeed = 1.25;
-  controls.touches = { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN };
+  controls.touches = { ONE: TOUCH.ROTATE, TWO: TOUCH.DOLLY_PAN };
   controls.minDistance = 1.15;
   controls.maxDistance = Math.max(10, shellD * 1.05);
-  controls.minPolarAngle = 0.22;
-  controls.maxPolarAngle = Math.PI / 2 - 0.04;
+  controls.minPolarAngle = 0.18;
+  // Allow tilting below target height to inspect ceiling, downlights, starlight, screen & projection booth.
+  controls.maxPolarAngle = Math.PI * 0.72;
 
-  // Pivot right in the heart of the seating bowl so rotating 180° to inspect the seats leaves full room
-  // to pinch-zoom all the way into individual rows from any angle without getting pinned at the front wall.
+  // Pivot right in the heart of the seating bowl so rotating 360° around the room leaves balanced space
+  // to inspect screen, side walls, doors, ceiling, and rear projection booth from any angle.
   const firstZ = room.rowFloors[0]?.z ?? Math.max(2.5, room.depthM * 0.3);
   const lastZ = room.rowFloors[room.rowFloors.length - 1]?.z ?? Math.max(firstZ + 2, room.depthM - 0.6);
   const midSeatingZ = (firstZ + lastZ) / 2;
@@ -1985,15 +3204,18 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
     room.ceilingY - 0.5,
     Math.max(room.maxFloorY + 1.95, orbitTargetY + 1.3),
   );
-  const orbitPos = new THREE.Vector3(room.shellCenterX, overviewY, overviewZ);
-  const orbitTarget = new THREE.Vector3(room.screen.centreX, orbitTargetY, midSeatingZ);
-  const orbitQuat = new THREE.Quaternion().setFromRotationMatrix(
-    new THREE.Matrix4().lookAt(orbitPos, orbitTarget, yAxis),
+  const orbitPos = new Vector3(room.shellCenterX, overviewY, overviewZ);
+  const orbitTarget = new Vector3(room.screen.centreX, orbitTargetY, midSeatingZ);
+  const orbitQuat = new Quaternion().setFromRotationMatrix(
+    new Matrix4().lookAt(orbitPos, orbitTarget, yAxis),
   );
-  const flightPoint = new THREE.Vector3();
+  const flightPoint = new Vector3();
+  let desiredOrbitDist = orbitPos.distanceTo(orbitTarget);
+  let wheelZooming = false;
+  let middleDollying = false;
 
   // Clamp camera & orbit target strictly inside interior architectural walls/ceiling/floor along the camera ray
-  // so 2-finger pinch-zoom IN always moves smoothly closer to the seats from any direction.
+  // without permanently crushing orbit distance when sweeping past narrow side walls or ceiling.
   const minCamX = -leftMargin + 0.38;
   const maxCamX = room.widthM + rightMargin - 0.38;
   const minCamY = 0.65;
@@ -2007,7 +3229,8 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
   const maxTargetY = Math.max(1.2, Math.min(maxCamY - 0.3, room.maxFloorY + 2.2));
   const minTargetZ = Math.max(minCamZ + 0.6, firstZ * 0.45);
   const maxTargetZ = Math.min(maxCamZ - 0.4, lastZ + 0.4);
-  const clampOffset = new THREE.Vector3();
+  const clampOffset = new Vector3();
+  const clampDir = new Vector3();
 
   function clampCameraInsideRoom() {
     if (mode !== "orbit") return;
@@ -2016,25 +3239,31 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
     controls.target.z = Math.max(minTargetZ, Math.min(maxTargetZ, controls.target.z));
 
     clampOffset.subVectors(camera.position, controls.target);
-    let tMax = 1;
-    if (clampOffset.x > 0 && controls.target.x + clampOffset.x > maxCamX) {
-      tMax = Math.min(tMax, (maxCamX - controls.target.x) / clampOffset.x);
-    } else if (clampOffset.x < 0 && controls.target.x + clampOffset.x < minCamX) {
-      tMax = Math.min(tMax, (minCamX - controls.target.x) / clampOffset.x);
+    const curDist = clampOffset.length();
+    if (curDist < 0.001) return;
+    clampDir.copy(clampOffset).divideScalar(curDist);
+
+    let maxRayDist = controls.maxDistance;
+    if (clampDir.x > 1e-5) maxRayDist = Math.min(maxRayDist, (maxCamX - controls.target.x) / clampDir.x);
+    else if (clampDir.x < -1e-5) maxRayDist = Math.min(maxRayDist, (minCamX - controls.target.x) / clampDir.x);
+    if (clampDir.y > 1e-5) maxRayDist = Math.min(maxRayDist, (maxCamY - controls.target.y) / clampDir.y);
+    else if (clampDir.y < -1e-5) maxRayDist = Math.min(maxRayDist, (minCamY - controls.target.y) / clampDir.y);
+    if (clampDir.z > 1e-5) maxRayDist = Math.min(maxRayDist, (maxCamZ - controls.target.z) / clampDir.z);
+    else if (clampDir.z < -1e-5) maxRayDist = Math.min(maxRayDist, (minCamZ - controls.target.z) / clampDir.z);
+    maxRayDist = Math.max(0.25, maxRayDist);
+
+    const isZoomGesture = wheelZooming || middleDollying || activeTouches.size >= 2;
+    wheelZooming = false;
+
+    if (isZoomGesture) {
+      const clampedDist = Math.max(0.25, Math.min(curDist, maxRayDist));
+      desiredOrbitDist = Math.max(controls.minDistance, Math.min(controls.maxDistance, clampedDist));
+      camera.position.copy(controls.target).addScaledVector(clampDir, clampedDist);
+    } else {
+      const targetDist = Math.max(0.25, Math.min(desiredOrbitDist, maxRayDist));
+      camera.position.copy(controls.target).addScaledVector(clampDir, targetDist);
     }
-    if (clampOffset.y > 0 && controls.target.y + clampOffset.y > maxCamY) {
-      tMax = Math.min(tMax, (maxCamY - controls.target.y) / clampOffset.y);
-    } else if (clampOffset.y < 0 && controls.target.y + clampOffset.y < minCamY) {
-      tMax = Math.min(tMax, (minCamY - controls.target.y) / clampOffset.y);
-    }
-    if (clampOffset.z > 0 && controls.target.z + clampOffset.z > maxCamZ) {
-      tMax = Math.min(tMax, (maxCamZ - controls.target.z) / clampOffset.z);
-    } else if (clampOffset.z < 0 && controls.target.z + clampOffset.z < minCamZ) {
-      tMax = Math.min(tMax, (minCamZ - controls.target.z) / clampOffset.z);
-    }
-    if (tMax < 1) {
-      camera.position.copy(controls.target).addScaledVector(clampOffset, Math.max(0.05, tMax));
-    }
+    camera.lookAt(controls.target);
   }
 
   let mode: Room3DMode = "orbit";
@@ -2045,21 +3274,21 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
 
   interface FlightTween {
     start: number;
-    curve: THREE.CubicBezierCurve3;
-    fromQuat: THREE.Quaternion;
-    toQuat: THREE.Quaternion;
+    curve: CubicBezierCurve3;
+    fromQuat: Quaternion;
+    toQuat: Quaternion;
     fromFov: number;
     toFov: number;
     onDone?: () => void;
   }
   let tween: FlightTween | null = null;
 
-  function seatPose(code: string): { pos: THREE.Vector3; yaw: number; pitch: number; quat: THREE.Quaternion } | null {
+  function seatPose(code: string): { pos: Vector3; yaw: number; pitch: number; quat: Quaternion } | null {
     const eye = room.eyeOf(code, viewerHeightCm);
     if (!eye) return null;
-    const pos = new THREE.Vector3(eye.x, eye.y, eye.z);
+    const pos = new Vector3(eye.x, eye.y, eye.z);
     // Look gently toward the optical centre of the screen (accounting for downward screen tilt)
-    const screenAim = new THREE.Vector3(
+    const screenAim = new Vector3(
       room.screen.centreX,
       room.screen.bottom + room.screen.height * 0.46 * Math.cos(screenTiltRad),
       room.screen.bottomZ + room.screen.height * 0.46 * Math.sin(screenTiltRad),
@@ -2067,11 +3296,11 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
     const aim = screenAim.sub(pos);
     const yaw = Math.atan2(-aim.x, -aim.z);
     const pitch = Math.atan2(aim.y, Math.hypot(aim.x, aim.z));
-    const quat = new THREE.Quaternion().setFromEuler(new THREE.Euler(pitch, yaw, 0, "YXZ"));
+    const quat = new Quaternion().setFromEuler(new Euler(pitch, yaw, 0, "YXZ"));
     return { pos, yaw, pitch, quat };
   }
 
-  function buildFlightCurve(fromPos: THREE.Vector3, toPos: THREE.Vector3): THREE.CubicBezierCurve3 {
+  function buildFlightCurve(fromPos: Vector3, toPos: Vector3): CubicBezierCurve3 {
     const dist = fromPos.distanceTo(toPos);
     // Lift smoothly over seat backs along a parabolic cubic Bézier arc, capped cleanly below ceiling
     const lift = Math.min(1.25, Math.max(0.28, dist * 0.14));
@@ -2079,12 +3308,12 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
     const c2 = fromPos.clone().lerp(toPos, 0.78);
     c1.y = Math.min(maxCamY, Math.max(fromPos.y, toPos.y) + lift);
     c2.y = Math.min(maxCamY, Math.max(fromPos.y, toPos.y) + lift * 0.72);
-    return new THREE.CubicBezierCurve3(fromPos.clone(), c1, c2, toPos.clone());
+    return new CubicBezierCurve3(fromPos.clone(), c1, c2, toPos.clone());
   }
 
   function startFlight(
-    toPos: THREE.Vector3,
-    toQuat: THREE.Quaternion,
+    toPos: Vector3,
+    toQuat: Quaternion,
     toFov: number,
     animate: boolean,
     onDone?: () => void,
@@ -2117,7 +3346,7 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
     controls.enabled = false;
     hoveredCode = null;
     options.onHover?.(null);
-    canvas.style.cursor = mode === "seat" ? "grab" : "default";
+    canvas.style.cursor = "grab";
     updateAudience();
     updateMarks();
     applyLighting(lightsLevel);
@@ -2144,6 +3373,7 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
     } else {
       startFlight(orbitPos, orbitQuat, targetFov, animate, () => {
         controls.target.copy(orbitTarget);
+        desiredOrbitDist = orbitPos.distanceTo(orbitTarget);
         controls.enabled = true;
         controls.update();
       });
@@ -2151,8 +3381,8 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
   }
 
   // --- Pointer Interaction: Tap/Hover chairs in overview; Drag to look around & 2-finger pinch zoom in seat mode ---
-  const raycaster = new THREE.Raycaster();
-  const pointer = new THREE.Vector2();
+  const raycaster = new Raycaster();
+  const pointer = new Vector2();
   const activeTouches = new Map<number, { x: number; y: number }>();
   let down: { id: number; x: number; y: number; moved: number; pinched: boolean } | null = null;
   let last = { x: 0, y: 0 };
@@ -2196,11 +3426,32 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
   const onEdgeGuard = (e: PointerEvent) => {
     if (e.pointerType === "touch" && e.clientX < EDGE_GUARD_PX) {
       e.stopImmediatePropagation();
+      return;
+    }
+    // If the user starts dragging while flying back to overview, interrupt the flight immediately so OrbitControls accepts the drag.
+    if (mode === "orbit" && tween) {
+      tween = null;
+      controls.target.copy(orbitTarget);
+      desiredOrbitDist = Math.max(controls.minDistance, Math.min(controls.maxDistance, camera.position.distanceTo(controls.target)));
+      controls.enabled = true;
+      controls.update();
+    }
+  };
+
+  const onWheelCapture = () => {
+    if (mode === "orbit") {
+      if (tween) {
+        tween = null;
+        controls.target.copy(orbitTarget);
+        controls.enabled = true;
+        controls.update();
+      }
+      wheelZooming = true;
     }
   };
 
   const onPointerDown = (e: PointerEvent) => {
-    if (e.clientX < EDGE_GUARD_PX) return;
+    if (e.pointerType === "touch" && e.clientX < EDGE_GUARD_PX) return;
     cancelHover();
     if (e.pointerType === "touch") {
       activeTouches.set(e.pointerId, { x: e.clientX, y: e.clientY });
@@ -2221,9 +3472,12 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
     if (down !== null && mode === "seat") return;
     down = { id: e.pointerId, x: e.clientX, y: e.clientY, moved: 0, pinched: false };
     last = { x: e.clientX, y: e.clientY };
+    if (e.pointerType !== "touch" && e.button === 1) middleDollying = true;
     if (mode === "seat") {
       canvas.style.cursor = "grabbing";
       canvas.setPointerCapture(e.pointerId);
+    } else if (e.pointerType !== "touch") {
+      canvas.style.cursor = "grabbing";
     }
   };
 
@@ -2290,8 +3544,9 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
     if (!down || down.id !== e.pointerId) return;
     const tap = !down.pinched && down.moved < TAP_MAX_MOVE_PX && e.type === "pointerup";
     down = null;
+    middleDollying = false;
+    canvas.style.cursor = mode === "orbit" && hoveredCode ? "pointer" : "grab";
     if (mode === "seat") {
-      canvas.style.cursor = "grab";
       // Double-tap in seat mode smoothly recentres gaze & resets zoom onto the cinema screen
       if (tap) {
         const now = performance.now();
@@ -2315,6 +3570,14 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
     if (picked) options.onPick(picked.code);
   };
 
+  const onWindowBlur = () => {
+    down = null;
+    middleDollying = false;
+    activeTouches.clear();
+    pinchStartDist = 0;
+    canvas.style.cursor = "grab";
+  };
+
   const onPointerLeave = () => {
     cancelHover();
     if (hoveredCode !== null) {
@@ -2326,11 +3589,15 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
   };
 
   canvas.addEventListener("pointerdown", onEdgeGuard, { capture: true });
+  canvas.addEventListener("wheel", onWheelCapture, { capture: true, passive: true });
   canvas.addEventListener("pointerdown", onPointerDown);
   canvas.addEventListener("pointermove", onPointerMove);
   canvas.addEventListener("pointerup", onPointerUp);
   canvas.addEventListener("pointercancel", onPointerUp);
   canvas.addEventListener("pointerleave", onPointerLeave);
+  window.addEventListener("pointerup", onPointerUp);
+  window.addEventListener("pointercancel", onPointerUp);
+  window.addEventListener("blur", onWindowBlur);
   window.addEventListener("scroll", invalidateRect, { passive: true });
   window.addEventListener("resize", invalidateRect, { passive: true });
 
@@ -2375,6 +3642,14 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
 
     if (keepGoing) raf = requestAnimationFrame(frame);
     renderer.render(scene, camera);
+    if (cssRenderer && cssScene && activeYoutubeId && youtubeWrapper) {
+      camera.updateMatrixWorld();
+      screenCamPos.copy(screenWorldCenter).applyMatrix4(camera.matrixWorldInverse);
+      // Hide via visibility (not display:none) when behind the camera so the YouTube player never resets.
+      const inFront = screenCamPos.z < room.screen.width * 0.45;
+      youtubeWrapper.style.visibility = inFront ? "visible" : "hidden";
+      if (inFront) cssRenderer.render(cssScene, camera);
+    }
   }
 
   function requestRender() {
@@ -2405,18 +3680,39 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
   };
   canvas.addEventListener("webglcontextlost", onLost);
   canvas.addEventListener("webglcontextrestored", onRestored);
+  const pauseRendering = () => {
+    cancelHover();
+    if (raf) {
+      cancelAnimationFrame(raf);
+      raf = 0;
+    }
+    if (activeYoutubeId && youtubeIframe) sendYoutubeCommand("pauseVideo");
+  };
   const onVisibility = () => {
-    if (!document.hidden) {
-      if (lost) options.onFailed();
-      else requestRender();
+    if (document.hidden) {
+      pauseRendering();
+      return;
+    }
+    if (lost) {
+      // Give WebKit a short grace window to fire `webglcontextrestored` after resuming from background.
+      window.clearTimeout(lostTimer);
+      lostTimer = window.setTimeout(() => {
+        if (lost && !disposed && !document.hidden) options.onFailed();
+      }, 2500);
+    } else {
+      requestRender();
     }
   };
+  const onPageHide = () => {
+    tween = null;
+    lightTween = null;
+    pauseRendering();
+  };
   document.addEventListener("visibilitychange", onVisibility);
+  window.addEventListener("pagehide", onPageHide);
 
   let currentHost: HTMLElement = host;
   let resizeTimer = 0;
-  let sizeW = 0;
-  let sizeH = 0;
   function fit() {
     cachedRect = null;
     const w = currentHost.clientWidth;
@@ -2425,6 +3721,7 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
     sizeW = w;
     sizeH = h;
     renderer.setSize(w, h, false);
+    cssRenderer?.setSize(w, h);
     camera.aspect = w / h;
     if (!tween) {
       camera.fov =
@@ -2519,11 +3816,53 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
       updateMarks();
       requestRender();
     },
+    setAppearance: (rawNext) => {
+      if (disposed) return;
+      const next = normalizeRoom3DAppearance(rawNext);
+      const carpetChanged =
+        next.carpetStyle !== currentAppearance.carpetStyle || next.carpetColor !== currentAppearance.carpetColor;
+      currentAppearance = next;
+
+      if (carpetChanged) {
+        const prevCarpet = carpetTex;
+        carpetTex = createCarpetTexture(shellW / 2.2, shellD / 2.2, next.carpetStyle, next.carpetColor);
+        baseFloorMat.map = carpetTex;
+        baseFloorMat.needsUpdate = true;
+        if (slabMaterial) {
+          slabMaterial.map = carpetTex;
+          slabMaterial.needsUpdate = true;
+        }
+        if (stairMat) {
+          stairMat.map = carpetTex;
+          stairMat.needsUpdate = true;
+        }
+        prevCarpet?.dispose();
+      }
+
+      fabricMaterial.roughness = next.seatFinish === "leather" ? 0.42 : 0.82;
+      fabricMaterial.metalness = next.seatFinish === "leather" ? 0.08 : 0.03;
+      fabricMaterial.needsUpdate = true;
+      frameMaterial.color.setHex(parseHexOrRgb(next.seatFrameColor) ?? 0x15131c);
+
+      buildInterior(next);
+      applyLighting(lightsLevel);
+      requestRender();
+    },
+    setYoutubeMuted: (muted) => {
+      youtubeMuted = muted;
+      if (!activeYoutubeId || !youtubeIframe) return;
+      if (muted) {
+        sendYoutubeCommand("mute");
+      } else {
+        sendYoutubeCommand("unMute");
+        sendYoutubeCommand("playVideo");
+      }
+    },
     mountTo: (target) => {
       if (disposed || target === currentHost) return;
       observer.unobserve(currentHost);
       currentHost = target;
-      currentHost.appendChild(canvas);
+      currentHost.appendChild(stageEl);
       observer.observe(currentHost);
       sizeW = 0;
       sizeH = 0;
@@ -2544,22 +3883,36 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
       window.clearTimeout(lostTimer);
       observer.disconnect();
       document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("pagehide", onPageHide);
+      window.removeEventListener("pointerup", onPointerUp);
+      window.removeEventListener("pointercancel", onPointerUp);
+      window.removeEventListener("blur", onWindowBlur);
       window.removeEventListener("scroll", invalidateRect);
       window.removeEventListener("resize", invalidateRect);
       canvas.removeEventListener("webglcontextlost", onLost);
       canvas.removeEventListener("webglcontextrestored", onRestored);
       canvas.removeEventListener("pointerdown", onEdgeGuard, { capture: true });
+      canvas.removeEventListener("wheel", onWheelCapture, { capture: true });
       canvas.removeEventListener("pointerdown", onPointerDown);
       canvas.removeEventListener("pointermove", onPointerMove);
       canvas.removeEventListener("pointerup", onPointerUp);
       canvas.removeEventListener("pointercancel", onPointerUp);
       canvas.removeEventListener("pointerleave", onPointerLeave);
       controls.dispose();
+      syncYoutubeLayer(null);
+      cssRenderer?.domElement.remove();
+      cssRenderer = null;
+      cssScene = null;
+      interiorGroup.clear();
+      for (const item of interiorDisposables) item.dispose();
+      interiorDisposables.length = 0;
+      carpetTex?.dispose();
+      carpetTex = null;
       for (const item of disposables) item.dispose();
       renderer.dispose();
       // Immediately return GPU memory: iOS Safari counts every live context/canvas against the page limit.
       renderer.forceContextLoss();
-      canvas.remove();
+      stageEl.remove();
     },
   };
 }

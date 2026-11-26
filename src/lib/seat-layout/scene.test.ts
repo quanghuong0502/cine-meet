@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { defaultLayoutConfig } from "./config";
 import { cinemaDimensionDefaultsSchema, DEFAULT_CINEMA_DIMENSIONS } from "./dimensions";
 import { generateGrid } from "./generate";
-import { buildRoomScene, REAL_AISLE_WIDTH_M, REAL_HORIZONTAL_AISLE_WIDTH_M } from "./scene";
+import { buildRoomScene, DEFAULT_SEAT_3D_COLOR, REAL_AISLE_WIDTH_M, REAL_HORIZONTAL_AISLE_WIDTH_M } from "./scene";
 import {
   buildScoreContext,
   EYE_HEIGHT_M,
@@ -60,6 +60,28 @@ describe("buildRoomScene", () => {
     expect(sA1.z).toBeCloseTo(rowDistanceM(a1.y, geometry.firstRowY, cfg.screen.distance, screenW, cfg.rowPitch));
     expect(scene.screen.width).toBeCloseTo(screenW);
     expect(scene.screen.height).toBeCloseTo(scene.screen.width / SCREEN_ASPECT);
+  });
+
+  it("uses dedicated 3D seat color (`color3d`) and defaults to cinema red (`#8E1E36`) when unset", () => {
+    const cfg: LayoutConfig = {
+      ...defaultLayoutConfig("std"),
+      rows: 2,
+      cols: 4,
+      overrides: [{ row: "B", cols: [1, 2, 3, 4], type: "vip" }],
+    };
+    const { seats, geometry } = generateGrid(cfg, TYPES);
+    const scored = scoreSeats(seats, cfg, geometry);
+    const scene = buildRoomScene(
+      scored,
+      geometry,
+      { stadiumFromRow: 1, stepsPerRow: 1 },
+      [
+        { id: "std", color: "#5B6B8C", color3d: null, style: "standard" },
+        { id: "vip", color: "#5B6B8C", color3d: "#B45309", style: "vip" },
+      ],
+    );
+    expect(scene.seats.find((s) => s.row === "A")?.typeColor).toBe(DEFAULT_SEAT_3D_COLOR);
+    expect(scene.seats.find((s) => s.row === "B")?.typeColor).toBe("#B45309");
   });
 
   it("raises row floors according to stadiumFromRow and stepsPerRow (15 cm per step)", () => {

@@ -53,9 +53,15 @@ export interface Room3DConfig {
   defaults?: CinemaDimensionDefaults;
 }
 
+/** Default cinema velvet red upholstery color used in 3D when a seat type has no custom `color3d`. */
+export const DEFAULT_SEAT_3D_COLOR = "#8E1E36";
+
 export interface SceneSeatType {
   id: string;
+  /** 2D seat map color. */
   color: string | null;
+  /** Dedicated upholstery color rendered on 3D chairs (defaults to `DEFAULT_SEAT_3D_COLOR` when unset). */
+  color3d?: string | null;
   style?: SeatStyle;
 }
 
@@ -262,7 +268,7 @@ export function buildRoomScene(
       span: seat.span,
       type: seat.type,
       style: typeInfo?.style ?? "standard",
-      typeColor: typeInfo?.color ?? null,
+      typeColor: typeInfo?.color3d || DEFAULT_SEAT_3D_COLOR,
       score: seat.score,
       x,
       floorY: floorHeight(seat.rowIndex, config, stepHeightM),

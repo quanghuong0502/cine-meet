@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { DEFAULT_SEAT_3D_COLOR } from "@/lib/seat-layout/scene";
 import { SEAT_STYLES, type SeatStyle } from "@/lib/seat-layout/types";
 import { optionalColor, optionalText, requiredText } from "@/lib/validation/fields";
 import { AuditoriumLayout } from "@/models/auditorium-layout";
@@ -17,6 +18,7 @@ export const seatTypeInputSchema = z.object({
     .preprocess((v) => (v === "" || v === undefined || v === null ? "standard" : v), z.enum(SEAT_STYLES, { error: "invalid" }))
     .transform((v) => v as SeatStyle),
   color: optionalColor,
+  color3d: optionalColor.default(DEFAULT_SEAT_3D_COLOR),
 });
 
 export const seatTypeService = createMasterDataService({
@@ -24,7 +26,7 @@ export const seatTypeService = createMasterDataService({
   model: SeatType,
   searchFields: ["name", "nameEn"],
   sort: { capacity: 1, name: 1 },
-  editableFields: ["name", "nameEn", "capacity", "style", "color"],
+  editableFields: ["name", "nameEn", "capacity", "style", "color", "color3d"],
   // Layouts store seat type ids as strings (in each seat and as the room's default type).
   dependents: () => [
     { model: PriceRule, field: "seatTypeId" },

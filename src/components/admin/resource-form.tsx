@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckIcon, CopyIcon, GalleryIcon, LoaderIcon } from "@solar-icons/react/line-duotone";
+import { CheckIcon, CloseIcon, CopyIcon, GalleryIcon, LoaderIcon } from "@solar-icons/react/line-duotone";
 import { useTranslations } from "next-intl";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
@@ -58,9 +58,25 @@ function MultiSelectField({ name, label, options, initial, onEdit }: { name: str
 }
 
 /** Color swatch paired with a hex text input so admins can pick visually or paste an exact brand color. */
-function ColorField({ id, name, initial, invalid, onEdit }: { id: string; name: string; initial: string; invalid: boolean; onEdit: () => void }) {
-  const [hex, setHex] = useState((initial || "#c61583").toUpperCase());
-  const validHex = /^#[0-9A-F]{6}$/i.test(hex) ? hex.toLowerCase() : "#c61583";
+function ColorField({
+  id,
+  name,
+  initial,
+  placeholder,
+  invalid,
+  onEdit,
+}: {
+  id: string;
+  name: string;
+  initial: string;
+  placeholder?: string;
+  invalid: boolean;
+  onEdit: () => void;
+}) {
+  const t = useTranslations("admin.common");
+  const allowEmpty = Boolean(placeholder);
+  const [hex, setHex] = useState(initial ? initial.toUpperCase() : allowEmpty ? "" : "#C61583");
+  const validHex = /^#[0-9A-F]{6}$/i.test(hex) ? hex.toLowerCase() : allowEmpty ? "#8e1e36" : "#c61583";
   return (
     <div className="flex items-center gap-item">
       <input type="hidden" name={name} value={hex} />
@@ -72,23 +88,44 @@ function ColorField({ id, name, initial, invalid, onEdit }: { id: string; name: 
           onEdit();
           setHex(event.target.value.toUpperCase());
         }}
-        className="h-control w-swatch shrink-0 cursor-pointer rounded-xl border bg-card p-tight"
+        className={cn(
+          "h-control w-swatch shrink-0 cursor-pointer rounded-xl border bg-card p-tight",
+          allowEmpty && !hex && "opacity-60",
+        )}
       />
-      <Input
-        id={id}
-        value={hex}
-        onChange={(event) => {
-          onEdit();
-          setHex(event.target.value.toUpperCase());
-        }}
-        maxLength={7}
-        autoCapitalize="characters"
-        autoCorrect="off"
-        spellCheck={false}
-        autoComplete="off"
-        aria-invalid={invalid || undefined}
-        className={`${CONTROL_CLASS} tabular-nums`}
-      />
+      <div className="relative flex-1">
+        <Input
+          id={id}
+          value={hex}
+          onChange={(event) => {
+            onEdit();
+            setHex(event.target.value.toUpperCase());
+          }}
+          maxLength={7}
+          placeholder={placeholder}
+          autoCapitalize="characters"
+          autoCorrect="off"
+          spellCheck={false}
+          autoComplete="off"
+          aria-invalid={invalid || undefined}
+          className={cn(CONTROL_CLASS, "tabular-nums", allowEmpty && hex && "pr-control")}
+        />
+        {allowEmpty && hex ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={() => {
+              onEdit();
+              setHex("");
+            }}
+            aria-label={t("clearColor")}
+            className="absolute top-1/2 right-hair size-target -translate-y-1/2 text-muted-foreground"
+          >
+            <CloseIcon className="size-icon-sm" aria-hidden />
+          </Button>
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -211,7 +248,16 @@ function FieldControl({ field, value, invalid, last, onSelect, onEdit, selected,
         />
       );
     case "color":
-      return <ColorField id={field.name} name={field.name} initial={value} invalid={invalid} onEdit={onEdit} />;
+      return (
+        <ColorField
+          id={field.name}
+          name={field.name}
+          initial={value}
+          placeholder={field.placeholder}
+          invalid={invalid}
+          onEdit={onEdit}
+        />
+      );
     case "comboItems":
       return field.combo ? (
         <ComboItemsField

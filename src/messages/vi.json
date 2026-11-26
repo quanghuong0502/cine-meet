@@ -90,6 +90,7 @@
       "uploading": "Đang tải ảnh...",
       "copy": "Sao chép",
       "copied": "Đã sao chép",
+      "clearColor": "Xóa màu",
       "clearSearch": "Xóa tìm kiếm",
       "cancel": "Hủy",
       "searchLabel": "Tìm kiếm",
@@ -346,6 +347,9 @@
         },
         "color": {
           "label": "Màu trên sơ đồ"
+        },
+        "color3d": {
+          "label": "Màu trên giao diện 3D"
         },
         "style": {
           "label": "Kiểu dáng ghế (3D)",
@@ -650,6 +654,147 @@
         "seats": "Còn 3 ghế",
         "link": "Xem chi tiết",
         "button": "Chốt người tham gia"
+      }
+    },
+    "room3dAppearance": {
+      "title": "Giao diện phòng chiếu 3D",
+      "cardDescription": "Tùy chỉnh hiển thị màn chiếu, ghế, cửa, tường, trần, thảm và ánh sáng trong phòng 3D.",
+      "open": "Cấu hình giao diện 3D",
+      "intro": "Chỉ cấu hình phần hiển thị và trang thiết bị trong phòng 3D — không ảnh hưởng kích thước thực hay chấm điểm ghế. Thay đổi áp dụng đồng bộ cho toàn bộ phòng chiếu.",
+      "previewHint": "Giữ chuột trái kéo để xoay 360° · Cuộn để thu phóng · Chạm ghế để ngồi thử.",
+      "previewHeatmap": "Xem Heatmap",
+      "pickColor": "Chọn màu tùy ý",
+      "reset": "Khôi phục mặc định",
+      "resetNotice": "Đã điền lại cấu hình giao diện 3D mặc định. Bấm Lưu để áp dụng.",
+      "validationError": "Có giá trị không hợp lệ. Vui lòng kiểm tra lại cấu hình.",
+      "sections": {
+        "screen": "Màn chiếu & Sân khấu",
+        "seats": "Ghế ngồi",
+        "doors": "Cửa ra vào & Biển EXIT",
+        "surfaces": "Tường, Trần & Thảm sàn",
+        "lightingFixtures": "Ánh sáng & Thiết bị phụ"
+      },
+      "fields": {
+        "screenSource": "Nguồn hiển thị màn chiếu",
+        "screenImageUpload": "Tải ảnh lên màn chiếu",
+        "screenImageUrl": "Hoặc dán link ảnh (HTTPS)",
+        "screenImageUrlPlaceholder": "https://res.cloudinary.com/...",
+        "screenImageInvalid": "Link ảnh không hợp lệ (cần bắt đầu bằng https:// hoặc http://).",
+        "screenYoutubeUrl": "Link video YouTube",
+        "screenYoutubePlaceholder": "https://www.youtube.com/watch?v=... hoặc https://youtu.be/...",
+        "screenYoutubeHint": "Video tự phát lặp lại và mặc định tắt tiếng; bấm nút loa trên thanh điều khiển 3D để bật tiếng.",
+        "screenYoutubeInvalid": "Link YouTube không hợp lệ (hỗ trợ watch, youtu.be, shorts hoặc mã 11 ký tự).",
+        "screenBorder": "Kiểu viền màn chiếu",
+        "screenCurtainsVisible": "Rèm nhung 2 bên màn chiếu",
+        "screenCurtainsColor": "Màu rèm màn chiếu",
+        "screenContent": "Hình ảnh chiếu mẫu",
+        "screenStageApron": "Bục sân khấu dưới màn",
+        "screenStageLed": "Đèn LED viền bục sân khấu",
+        "screenHalo": "Hào quang hắt sáng sau màn",
+        "screenShowSubtitle": "Hiện dòng phụ đề mẫu",
+        "screenSubtitleText": "Nội dung phụ đề mẫu",
+        "screenSubtitlePlaceholder": "Để trống sẽ dùng phụ đề mặc định theo ngôn ngữ",
+        "screenSubtitleColor": "Màu chữ phụ đề",
+        "seatFinish": "Chất liệu bọc ghế",
+        "seatFrameColor": "Màu khung & tay vịn ghế",
+        "doorStyle": "Kiểu cửa",
+        "doorPanicBar": "Thanh đẩy thoát hiểm",
+        "doorColor": "Màu cánh cửa / rèm",
+        "doorFrameColor": "Màu khung cửa",
+        "exitSignVisible": "Hiện biển EXIT",
+        "exitSignColor": "Màu đèn biển EXIT",
+        "exitSignText": "Chữ trên biển EXIT",
+        "wallStyle": "Kiểu bề mặt tường",
+        "wallColor": "Màu tường",
+        "ceilingStyle": "Kiểu bề mặt trần",
+        "ceilingColor": "Màu trần",
+        "carpetStyle": "Kiểu hoa văn thảm",
+        "carpetColor": "Màu thảm sàn",
+        "downlightsVisible": "Đèn trần (Downlight)",
+        "sconcesVisible": "Trụ tường & Đèn hắt tường",
+        "sconceColor": "Màu đèn hắt tường",
+        "coveLedVisible": "Đèn LED hắt viền trần / tường",
+        "coveLedPlacement": "Vị trí đèn LED hắt",
+        "coveLedColor": "Màu đèn LED hắt",
+        "aisleLedVisible": "Đèn LED bậc thang lối đi",
+        "aisleLedColor": "Màu LED bậc thang",
+        "rowMarkersVisible": "Biển chữ cái tên hàng (A, B, C…)",
+        "rowMarkersPlacement": "Vị trí biển tên hàng",
+        "rowMarkersColor": "Màu đèn biển tên hàng",
+        "projectionPortVisible": "Ô kính phòng máy chiếu",
+        "projectorBeamVisible": "Tia sáng máy chiếu",
+        "surroundSpeakersVisible": "Loa vòm gắn tường",
+        "ceilingSpeakersVisible": "Loa treo trần"
+      },
+      "options": {
+        "screenSource": {
+          "preset": "Ảnh mặc định",
+          "image": "Ảnh upload",
+          "youtube": "Link YouTube"
+        },
+        "screenBorder": {
+          "velvet": "Viền nhung chuẩn",
+          "slim": "Viền mảnh",
+          "frameless": "Tràn viền"
+        },
+        "screenContent": {
+          "cosmos": "Hoàng hôn",
+          "noir": "Đô thị đêm",
+          "grid": "Lưới căn góc"
+        },
+        "subtitleColor": {
+          "white": "Trắng",
+          "yellow": "Vàng"
+        },
+        "seatFinish": {
+          "fabric": "Nỉ / Nhung",
+          "leather": "Da bóng nhẹ"
+        },
+        "doorStyle": {
+          "single": "1 cánh",
+          "double": "2 cánh",
+          "curtain": "Rèm đen"
+        },
+        "exitSignColor": {
+          "green": "Xanh lá",
+          "red": "Đỏ"
+        },
+        "wallStyle": {
+          "slats": "Nan tiêu âm",
+          "panels": "Ô vải tiêu âm",
+          "matte": "Phẳng mờ"
+        },
+        "ceilingStyle": {
+          "coffered": "Ô cờ",
+          "flat": "Phẳng tối",
+          "starlight": "Trần sao"
+        },
+        "carpetStyle": {
+          "speckled": "Hoa văn rạp",
+          "striped": "Dệt sọc",
+          "solid": "Trơn mờ"
+        },
+        "lightAccent": {
+          "warm": "Vàng ấm",
+          "neutral": "Trắng dịu",
+          "cool": "Xanh lạnh",
+          "crimson": "Đỏ đô"
+        },
+        "aisleLedColor": {
+          "amber": "Vàng ấm",
+          "white": "Trắng",
+          "blue": "Xanh dương",
+          "red": "Đỏ"
+        },
+        "rowMarkerPlacement": {
+          "aisle": "Mép lối đi",
+          "wall": "Tường 2 bên"
+        },
+        "coveLedPlacement": {
+          "ceiling": "Viền trần",
+          "wall": "Chân tường",
+          "both": "Cả hai"
+        }
       }
     },
     "cinemaDimensions": {
@@ -1122,6 +1267,10 @@
     "network": {
       "offline": "Mất kết nối mạng. Thao tác sẽ chưa được lưu.",
       "online": "Đã có mạng trở lại"
+    },
+    "update": {
+      "available": "Đã có phiên bản mới.",
+      "action": "Cập nhật"
     }
   },
   "profile": {
@@ -1412,6 +1561,9 @@
       "lightsOn": "Bật đèn rạp",
       "lightsOff": "Tắt đèn chiếu phim",
       "lightsShort": "Đèn rạp",
+      "youtubeMute": "Tắt tiếng video màn chiếu",
+      "youtubeUnmute": "Bật tiếng video màn chiếu",
+      "youtubeAudioShort": "Âm thanh",
       "expand3d": "Xem toàn màn hình",
       "collapse3d": "Thu gọn",
       "dragToLookHint": "Kéo để nhìn quanh · Chạm đúp về màn hình",

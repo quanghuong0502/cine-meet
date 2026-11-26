@@ -91,6 +91,12 @@ export function createMoviePosterUploadTicket(config: CloudinaryConfig, nowMs: n
   return createUploadTicket({ publicId: `movies/${unique}`, folder: "movies", transformation: "c_limit,w_1000,h_1500", overwrite: false }, config, nowMs);
 }
 
+/** A ticket for a 3D auditorium screen still image: kept whole (no crop) and up to Full HD 1920×1080. */
+export function createScreenImageUploadTicket(config: CloudinaryConfig, nowMs: number = Date.now()): UploadTicket {
+  const unique = `${nowMs.toString(36)}${randomBytes(4).toString("hex")}`;
+  return createUploadTicket({ publicId: `room-3d-screens/${unique}`, folder: "room-3d-screens", transformation: "c_limit,w_1920,h_1080", overwrite: false }, config, nowMs);
+}
+
 /** Only this person's own avatar on our Cloudinary account is accepted as a profile picture (the form cannot point it elsewhere). */
 export function isOwnAvatarUrl(url: string, userId: string, config: CloudinaryConfig): boolean {
   let parsed: URL;

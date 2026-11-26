@@ -1,6 +1,6 @@
 "use client";
 
-import { Armchair2Icon, ArrowDownIcon, ArrowLeftIcon, ArrowRightIcon, ArrowUpIcon, CloseIcon, CompassIcon, EyeIcon, FullScreenIcon, LightbulbIcon, LightbulbOffIcon, QuitFullScreenIcon, StarsMinimalisticIcon, UsersGroupRoundedIcon } from "@solar-icons/react/line-duotone";
+import { Armchair2Icon, ArrowDownIcon, ArrowLeftIcon, ArrowRightIcon, ArrowUpIcon, CloseIcon, CompassIcon, EyeIcon, FullScreenIcon, LightbulbIcon, LightbulbOffIcon, QuitFullScreenIcon, StarsMinimalisticIcon, UsersGroupRoundedIcon, VolumeCrossIcon, VolumeLoudIcon } from "@solar-icons/react/line-duotone";
 import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
@@ -10,7 +10,13 @@ import { LoadingState } from "@/components/loading-state";
 import { heatLevel, heatRange } from "@/components/seat-map/heat-color";
 import type { Room3D, Room3DMode, SeatMarkKind3D } from "@/components/seat-map/room-3d-scene";
 import { Button } from "@/components/ui/button";
+import { parseYoutubeId } from "@/lib/movie/youtube";
 import { buildRoomScene, type Room3DConfig, type RoomScene, type SceneSeatType, type SeatNeighbourDir } from "@/lib/seat-layout/scene";
+import {
+  DEFAULT_ROOM_3D_APPEARANCE,
+  normalizeRoom3DAppearance,
+  type Room3DAppearance,
+} from "@/lib/seat-layout/room-3d-appearance.defaults";
 import type { LayoutGeometry, LayoutSeat } from "@/lib/seat-layout/types";
 import { cn } from "@/lib/utils";
 
@@ -27,6 +33,7 @@ interface Props {
   seats: LayoutSeat[];
   geometry: LayoutGeometry;
   roomConfig: Room3DConfig;
+  appearance?: Room3DAppearance;
   seatTypes?: SceneSeatType[];
   marks?: Map<string, SeatMarkKind3D>;
   maxHeight?: string;
@@ -86,6 +93,7 @@ export function Room3DView({
   seats,
   geometry,
   roomConfig,
+  appearance = DEFAULT_ROOM_3D_APPEARANCE,
   seatTypes = [],
   marks,
   maxHeight = "52dvh",
@@ -108,11 +116,14 @@ export function Room3DView({
     viewerHeightCm: number;
     frontHeightCm: number;
     marks: Map<string, SeatMarkKind3D> | undefined;
+    appearanceKey: string;
+    ytMuted: boolean;
   } | null>(null);
 
   const [mode, setMode] = useState<Room3DMode>("orbit");
   const [lightsUp, setLightsUp] = useState(true);
   const [audience, setAudience] = useState(true);
+  const [ytMuted, setYtMuted] = useState(true);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [hudExpanded, setHudExpanded] = useState(true);
@@ -184,6 +195,11 @@ export function Room3DView({
     [selected, scene, onSelect],
   );
 
+  const safeAppearance = useMemo(() => normalizeRoom3DAppearance(appearance), [appearance]);
+  const appearanceKey = useMemo(() => JSON.stringify(safeAppearance), [safeAppearance]);
+  const hasYoutube =
+    safeAppearance.screenSource === "youtube" && Boolean(parseYoutubeId(safeAppearance.screenYoutubeUrl));
+
   const latest = useRef({
     heat,
     selected,
@@ -194,6 +210,8 @@ export function Room3DView({
     frontHeightCm,
     marks,
     subtitleText,
+    appearance: safeAppearance,
+    ytMuted,
     enterSeat,
   });
   useEffect(() => {
@@ -207,6 +225,8 @@ export function Room3DView({
       frontHeightCm,
       marks,
       subtitleText,
+      appearance: safeAppearance,
+      ytMuted,
       enterSeat,
     };
   });
@@ -230,6 +250,8 @@ export function Room3DView({
           viewerHeightCm: latest.current.viewerHeightCm,
           frontHeightCm: latest.current.frontHeightCm,
           marks: latest.current.marks,
+          appearanceKey: JSON.stringify(latest.current.appearance),
+          ytMuted: latest.current.ytMuted,
         };
         roomRef.current = createRoom3D(mountTarget, scene, {
           range,
@@ -242,6 +264,8 @@ export function Room3DView({
           frontHeightCm: initState.frontHeightCm,
           marks: initState.marks,
           subtitleText: latest.current.subtitleText,
+          appearance: latest.current.appearance,
+          youtubeMuted: initState.ytMuted,
           onPick: (code) => latest.current.enterSeat(code),
           onHover: (code) => setHoveredCode(code),
           onFailed: () => setStatus("failed"),
@@ -249,7 +273,8 @@ export function Room3DView({
         syncedRef.current = initState;
         setStatus((s) => (s === "failed" ? s : "ready"));
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error("[Room3D] initialization error:", err);
         if (!cancelled) setStatus("failed");
       });
     return () => {
@@ -258,7 +283,7 @@ export function Room3DView({
       roomRef.current?.dispose();
       roomRef.current = null;
     };
-    // `expanded` intentionally omitted: reparenting uses `mountTo` without recreating GPU resources.
+    // `expanded` and `appearance` intentionally omitted: fullscreen uses `mountTo` and UI appearance uses in-place `setAppearance`.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [layoutKey, scene, range]);
 
@@ -318,7 +343,15 @@ export function Room3DView({
       prev.marks = marks;
       room.setMarks(marks);
     }
-  }, [heat, selected, activeMode, audience, lightsUp, viewerHeightCm, frontHeightCm, marks, status]);
+    if (prev.appearanceKey !== appearanceKey) {
+      prev.appearanceKey = appearanceKey;
+      room.setAppearance(safeAppearance);
+    }
+    if (prev.ytMuted !== ytMuted) {
+      prev.ytMuted = ytMuted;
+      room.setYoutubeMuted(ytMuted);
+    }
+  }, [heat, selected, activeMode, audience, lightsUp, viewerHeightCm, frontHeightCm, marks, safeAppearance, appearanceKey, ytMuted, status]);
 
   // Keyboard navigation: arrow keys step adjacent seats in POV; Escape closes picker → fullscreen → seat view.
   useEffect(() => {
@@ -517,7 +550,7 @@ export function Room3DView({
             <div
               role="toolbar"
               aria-label={t("viewLabel")}
-              className="pointer-events-auto flex max-w-full items-center gap-tight overflow-x-auto rounded-2xl border border-white/15 bg-black/85 p-tight text-white shadow-menu"
+              className="pointer-events-auto flex max-w-full items-center gap-tight overflow-x-auto overscroll-x-contain rounded-2xl border border-white/15 bg-black/85 p-tight text-white shadow-menu"
             >
               <DockButton
                 active={pickerOpen}
@@ -569,6 +602,22 @@ export function Room3DView({
                   <LightbulbOffIcon className="size-icon-sm" aria-hidden />
                 )}
               </DockButton>
+
+              {hasYoutube ? (
+                <DockButton
+                  active={!ytMuted}
+                  label={ytMuted ? t("youtubeUnmute") : t("youtubeMute")}
+                  shortLabel={t("youtubeAudioShort")}
+                  showText={isFullscreen}
+                  onClick={() => setYtMuted((v) => !v)}
+                >
+                  {ytMuted ? (
+                    <VolumeCrossIcon className="size-icon-sm" aria-hidden />
+                  ) : (
+                    <VolumeLoudIcon className="size-icon-sm" aria-hidden />
+                  )}
+                </DockButton>
+              ) : null}
 
               {activeMode === "seat" ? (
                 <DockButton
