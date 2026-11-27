@@ -42,9 +42,9 @@ export interface SeatMapProps {
   className?: string;
 }
 
-// Space around the seats, in layout units (1 unit = one seat pitch).
-const BASE_PAD = { left: 1.6, right: 0.8, top: 1.1, bottom: 2.4 };
-/** Width of the strip left of the seats that holds row labels (and their tap area). */
+// Space around the seats, in layout units (1 unit = one seat pitch). Both left and right reserve a row-label strip.
+const BASE_PAD = { left: 1.6, right: 1.6, top: 1.1, bottom: 2.4 };
+/** Width of the strip beside the seats that holds row labels (and their tap area). */
 const ROW_LABEL_STRIP = 1.5;
 
 /** Room around the seats; grows only on the side that has an entrance, which needs space for its bar and its "Door" label. */
@@ -53,7 +53,7 @@ function mapPadding(geometry: LayoutGeometry) {
   const side = (name: string) => geometry.entrances.some((e) => e.side === name);
   return {
     left: side("left") ? 2.3 : BASE_PAD.left,
-    right: side("right") ? 1.9 : BASE_PAD.right,
+    right: side("right") ? 2.3 : BASE_PAD.right,
     // A front-centre door sits above the screen; a back-centre door sits below the column numbers.
     top: has("center", "front") ? 2.2 : BASE_PAD.top,
     bottom: has("center", "back") ? 3.5 : BASE_PAD.bottom,
@@ -284,7 +284,7 @@ const MapLayer = memo(function MapLayer({
         const vertical = e.side !== "center";
         const w = vertical ? 0.28 : 1.2;
         const h = vertical ? 1.2 : 0.28;
-        const cx = e.side === "left" ? -1.5 : e.side === "right" ? g.width + 0.6 : e.x;
+        const cx = e.side === "left" ? -1.5 : e.side === "right" ? g.width + 1.5 : e.x;
         const cy = vertical ? e.y : e.position === "front" ? -0.95 : g.lastRowY + 1.9;
         // Front doors are labelled above the bar, back doors below it, so the label never lands on a seat row or label.
         const labelY = e.position === "front" ? cy - h / 2 - 0.2 : cy + h / 2 + 0.5;
@@ -300,13 +300,21 @@ const MapLayer = memo(function MapLayer({
         );
       })}
 
-      {/* Row labels */}
+      {/* Row labels (left and right edges so wide rooms are effortless to scan without zooming) */}
       {g.rowLabels.map((label, i) => {
         const y = g.rowY[i];
         return (
           <g key={`r${label}`} data-row={label} className={rowLabelsTappable ? "cursor-pointer" : undefined}>
-            {rowLabelsTappable ? <rect data-row={label} x={-ROW_LABEL_STRIP} y={y - 0.5} width={ROW_LABEL_STRIP - 0.1} height={1} fill="transparent" /> : null}
+            {rowLabelsTappable ? (
+              <>
+                <rect data-row={label} x={-ROW_LABEL_STRIP} y={y - 0.5} width={ROW_LABEL_STRIP - 0.1} height={1} fill="transparent" />
+                <rect data-row={label} x={g.width + 0.1} y={y - 0.5} width={ROW_LABEL_STRIP - 0.1} height={1} fill="transparent" />
+              </>
+            ) : null}
             <text x={-0.85} y={y + 0.17} textAnchor="middle" fontSize={0.5} fill="var(--muted-foreground)" pointerEvents="none">
+              {label}
+            </text>
+            <text x={g.width + 0.85} y={y + 0.17} textAnchor="middle" fontSize={0.5} fill="var(--muted-foreground)" pointerEvents="none">
               {label}
             </text>
           </g>
@@ -412,6 +420,8 @@ export function SeatMap({
     return seatTypes.filter((type) => ids.has(type.id));
   }, [seats, seatTypes]);
   const hasRecommended = useMemo(() => seats.some((seat) => seat.flags.includes("recommended")), [seats]);
+  const hasBroken = useMemo(() => seats.some((seat) => seat.flags.includes("broken")), [seats]);
+  const hasObstructed = useMemo(() => seats.some((seat) => seat.flags.includes("obstructed")), [seats]);
 
   const activateTarget = useCallback(
     (target: EventTarget | null) => {
@@ -524,6 +534,20 @@ export function SeatMap({
                 <LikeIcon className="size-icon-xs" />
               </span>
               {t("recommendedLegend")}
+            </span>
+          ) : null}
+          {hasObstructed ? (
+            <span className="inline-flex items-center gap-tight">
+              <span aria-hidden className="size-icon-xs shrink-0 rounded-sm border border-dashed border-warning" />
+              {t("obstructedLegend")}
+            </span>
+          ) : null}
+          {hasBroken ? (
+            <span className="inline-flex items-center gap-tight">
+              <span aria-hidden className="flex size-icon-xs shrink-0 items-center justify-center rounded-sm border border-destructive/60 bg-destructive/15 type-micro leading-none text-destructive">
+                ×
+              </span>
+              {t("brokenLegend")}
             </span>
           ) : null}
         </div>

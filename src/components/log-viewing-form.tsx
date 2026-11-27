@@ -154,7 +154,6 @@ export function LogViewingForm({ movies, rooms }: Props) {
         <Input id="log-note" maxLength={200} value={note} onChange={(e) => setNote(e.target.value)} placeholder={t("notePlaceholder")} enterKeyHint="done" disabled={pending} className={CONTROL} />
       </div>
 
-      <div aria-hidden className="h-save-clear shrink-0" />
       <div data-save-bar className="pointer-events-none fixed inset-x-0 bottom-0 z-30 bg-gradient-to-t from-background via-background/90 to-transparent px-inset pt-inset pb-(--inset-bottom)">
         <div className="mx-auto flex max-w-form items-center">
           <Button type="submit" size="cta" disabled={pending} className="pointer-events-auto min-w-0 flex-1">

@@ -6,10 +6,15 @@ import { FnbCombo } from "@/models/fnb-combo";
 import { FnbItem } from "@/models/fnb-item";
 import { createMasterDataService } from "./crud";
 
+const optionalCategoryId = z.preprocess(
+  (value) => (typeof value === "string" && (value.trim() === "" || value === "none") ? undefined : value),
+  objectIdField.optional(),
+);
+
 export const fnbItemInputSchema = z
   .object({
     brandId: objectIdField,
-    categoryId: objectIdField.optional(),
+    categoryId: optionalCategoryId,
     name: requiredText(80),
     nameEn: optionalText(80),
     size: optionalText(30),

@@ -126,7 +126,7 @@ export function FriendsScreen({ overview, inviteCode }: Props) {
   }, [overview.friends, deferredSearch]);
 
   return (
-    <div className="flex flex-col gap-section">
+    <div className="flex flex-1 flex-col gap-section">
       <form onSubmit={submitPhone} noValidate className="flex flex-col gap-item">
         <Label htmlFor="friend-phone" className="type-label text-muted-foreground">
           {t("phoneLabel")}
@@ -219,7 +219,7 @@ export function FriendsScreen({ overview, inviteCode }: Props) {
         </section>
       ) : null}
 
-      <section aria-labelledby="friends-list" className="flex flex-col gap-item">
+      <section aria-labelledby="friends-list" className={empty ? "flex flex-1 flex-col gap-item" : "flex flex-col gap-item"}>
         <div className="flex items-center justify-between gap-item">
           <div className="flex items-center gap-stack">
             <h2 id="friends-list" className="type-heading">
@@ -275,12 +275,12 @@ export function FriendsScreen({ overview, inviteCode }: Props) {
               ))}
             </ul>
           ) : (
-            <p className="type-secondary text-muted-foreground">{t("noSearchMatch")}</p>
+            <p className="py-inset-lg text-center type-secondary text-muted-foreground">{t("noSearchMatch")}</p>
           )
         ) : empty ? (
           <EmptyState mascot="dudu-happy" title={t("emptyTitle")} description={t("emptyDescription")} />
         ) : (
-          <p className="type-secondary text-muted-foreground">{t("noFriendsYet")}</p>
+          <p className="py-inset-lg text-center type-secondary text-muted-foreground">{t("noFriendsYet")}</p>
         )}
       </section>
 

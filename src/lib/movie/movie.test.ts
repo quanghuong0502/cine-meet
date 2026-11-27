@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { addDays, isOfferedInFilter, movieStatus, vietnamToday } from "./status";
-import { parseYoutubeId } from "./youtube";
+import { computeYoutubeCoverLayout, parseYoutubeId, YOUTUBE_EMBED_HOST, youtubeScreenEmbedUrl } from "./youtube";
 
 describe("parseYoutubeId", () => {
   const id = "dQw4w9WgXcQ";
@@ -19,6 +19,51 @@ describe("parseYoutubeId", () => {
     "rejects %s",
     (link) => expect(parseYoutubeId(link)).toBeNull(),
   );
+});
+
+describe("youtubeScreenEmbedUrl", () => {
+  const id = "dQw4w9WgXcQ";
+
+  it("builds a looping chromeless nocookie embed URL with JS API and mute flag", () => {
+    const mutedUrl = new URL(youtubeScreenEmbedUrl(id, { muted: true, origin: "https://seatmate.app" }));
+    expect(mutedUrl.origin).toBe(YOUTUBE_EMBED_HOST);
+    expect(mutedUrl.pathname).toBe(`/embed/${id}`);
+    expect(mutedUrl.searchParams.get("autoplay")).toBe("1");
+    expect(mutedUrl.searchParams.get("playsinline")).toBe("1");
+    expect(mutedUrl.searchParams.get("controls")).toBe("0");
+    expect(mutedUrl.searchParams.get("enablejsapi")).toBe("1");
+    expect(mutedUrl.searchParams.get("origin")).toBe("https://seatmate.app");
+    expect(mutedUrl.searchParams.get("mute")).toBe("1");
+    expect(mutedUrl.searchParams.get("loop")).toBe("1");
+    expect(mutedUrl.searchParams.get("playlist")).toBe(id);
+    expect(mutedUrl.searchParams.get("start")).toBeNull();
+  });
+
+  it("supports unmuted playback and integer start offset when resuming across fullscreen", () => {
+    const resumedUrl = new URL(youtubeScreenEmbedUrl(id, { muted: false, startSeconds: 42.9 }));
+    expect(resumedUrl.searchParams.get("mute")).toBe("0");
+    expect(resumedUrl.searchParams.get("start")).toBe("42");
+
+    const zeroStart = new URL(youtubeScreenEmbedUrl(id, { muted: false, startSeconds: 0.4 }));
+    expect(zeroStart.searchParams.get("start")).toBeNull();
+  });
+});
+
+describe("computeYoutubeCoverLayout", () => {
+  it.each([
+    ["scope 2.39:1", 1280, 536],
+    ["standard 1.85:1", 1280, 692],
+    ["square 1.43:1", 1024, 716],
+  ])("covers the full %s cinema wrapper with centered 16:9 framing", (_label, w, h) => {
+    const frame = computeYoutubeCoverLayout(w, h);
+    expect(frame.width).toBeGreaterThanOrEqual(w);
+    expect(frame.height).toBeGreaterThanOrEqual(h);
+    expect(frame.width / frame.height).toBeCloseTo(16 / 9, 1);
+    expect(frame.left).toBeLessThanOrEqual(0);
+    expect(frame.top).toBeLessThanOrEqual(0);
+    expect(Math.abs(frame.left * 2 + frame.width - w)).toBeLessThanOrEqual(1);
+    expect(Math.abs(frame.top * 2 + frame.height - h)).toBeLessThanOrEqual(1);
+  });
 });
 
 describe("movieStatus", () => {

@@ -3,7 +3,7 @@
 import { LoaderIcon } from "@solar-icons/react/line-duotone";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { useActionState, useCallback, useEffect, useState, type ReactNode } from "react";
+import { useCallback, useState, useTransition, type ReactNode } from "react";
 import { toast } from "sonner";
 import { saveProfileAction } from "@/actions/profile";
 import { ChoiceGroup } from "@/components/admin/auditorium-editor/chips";
@@ -42,54 +42,71 @@ export function ProfileEditForm({ initial, seatOptions, backHref, hasSidebar = f
   const t = useTranslations("admin.common");
   const tv = useTranslations("admin.validation");
   const router = useRouter();
-  const [state, action, isPending] = useActionState<SaveState, FormData>(saveProfileAction, IDLE_STATE);
-  const [edited, setEdited] = useState(false);
-  const [uploadingCount, setUploadingCount] = useState(0);
+  const [name, setName] = useState(initial.name);
+  const [phone, setPhone] = useState(initial.phone);
   const [seatPreference, setSeatPreference] = useState(initial.seatPreference);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [isPending, startTransition] = useTransition();
+  const [uploadingCount, setUploadingCount] = useState(0);
   const uploading = uploadingCount > 0;
   const onBusyChange = useCallback((busy: boolean) => setUploadingCount((n) => Math.max(0, n + (busy ? 1 : -1))), []);
 
-  useEffect(() => {
-    if (state.status === "success") {
-      toast.success(t("saved"));
-      router.replace(backHref);
-    } else if (state.status === "error" && state.error !== "validation") {
-      toast.error(t(`errors.${state.error}`));
-    }
-  }, [state, router, backHref, t]);
-
-  const fieldErrors = state.status === "error" && !edited ? (state.fieldErrors ?? {}) : {};
-  const echo = state.status === "error" ? state.values : undefined;
-  const nameValue = echo?.name ?? initial.name;
-  const phoneValue = echo?.phone ?? initial.phone;
   const errorText = (field: string) => {
     const code = fieldErrors[field];
     return code ? tv(isValidationCode(code) ? code : "invalid") : undefined;
   };
 
+  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const formData = new FormData();
+    formData.set("name", name);
+    formData.set("phone", phone);
+    formData.set("seatPreference", seatPreference);
+    startTransition(async () => {
+      const result: SaveState | null = await saveProfileAction(IDLE_STATE, formData).catch(() => null);
+      if (!result) {
+        toast.error(t("errors.network"));
+        return;
+      }
+      if (result.status === "success") {
+        toast.success(t("saved"));
+        router.replace(backHref);
+        return;
+      }
+      if (result.status === "error") {
+        setFieldErrors(result.fieldErrors ?? {});
+        if (result.error !== "validation") toast.error(t(`errors.${result.error}`));
+      }
+    });
+  }
+
   return (
     <UploadBusyContext.Provider value={onBusyChange}>
-      <form
-        action={action}
-        onSubmit={() => setEdited(false)}
-        noValidate
-        className="flex flex-1 flex-col gap-group pb-action-clear"
-      >
+      <form onSubmit={handleSubmit} noValidate className="flex flex-1 flex-col gap-field">
         {lead}
 
-        <div className="flex flex-col gap-stack">
-          <Label htmlFor="name">
-            {tp("fields.name.label")}
-            <RequiredMark />
+        <div className="flex flex-col gap-item">
+          <Label htmlFor="name" className="text-muted-foreground">
+            <span>
+              {tp("fields.name.label")}
+              <RequiredMark />
+            </span>
           </Label>
           <Input
             id="name"
             name="name"
             type="text"
+            autoComplete="name"
+            enterKeyHint="next"
             required
+            aria-required
             maxLength={80}
-            defaultValue={nameValue}
-            onChange={() => setEdited(true)}
+            value={name}
+            disabled={isPending}
+            onChange={(e) => {
+              setName(e.target.value);
+              if (fieldErrors.name) setFieldErrors((prev) => ({ ...prev, name: "" }));
+            }}
             aria-invalid={Boolean(errorText("name")) || undefined}
             className={CONTROL_CLASS}
           />
@@ -100,16 +117,25 @@ export function ProfileEditForm({ initial, seatOptions, backHref, hasSidebar = f
           ) : null}
         </div>
 
-        <div className="flex flex-col gap-stack">
-          <Label htmlFor="phone">{tp("fields.phone.label")}</Label>
+        <div className="flex flex-col gap-item">
+          <Label htmlFor="phone" className="text-muted-foreground">
+            {tp("fields.phone.label")}
+          </Label>
           <Input
             id="phone"
             name="phone"
             type="tel"
+            inputMode="tel"
+            autoComplete="tel"
+            enterKeyHint="done"
             maxLength={20}
             placeholder={tp("fields.phone.placeholder")}
-            defaultValue={phoneValue}
-            onChange={() => setEdited(true)}
+            value={phone}
+            disabled={isPending}
+            onChange={(e) => {
+              setPhone(e.target.value);
+              if (fieldErrors.phone) setFieldErrors((prev) => ({ ...prev, phone: "" }));
+            }}
             aria-invalid={Boolean(errorText("phone")) || undefined}
             className={CONTROL_CLASS}
           />
@@ -120,17 +146,14 @@ export function ProfileEditForm({ initial, seatOptions, backHref, hasSidebar = f
           ) : null}
         </div>
 
-        <div className="flex flex-col gap-stack">
-          <Label>{tp("fields.seatPreference.label")}</Label>
+        <div className="flex flex-col gap-item">
+          <Label className="text-muted-foreground">{tp("fields.seatPreference.label")}</Label>
           <input type="hidden" name="seatPreference" value={seatPreference} />
           <ChoiceGroup
             label={tp("fields.seatPreference.label")}
             value={seatPreference}
             options={seatOptions}
-            onChange={(next) => {
-              setSeatPreference(next);
-              setEdited(true);
-            }}
+            onChange={setSeatPreference}
           />
         </div>
 

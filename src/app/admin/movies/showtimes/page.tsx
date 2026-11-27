@@ -5,29 +5,39 @@ import { Suspense } from "react";
 import { CalendarAddIcon, UploadMinimalisticIcon } from "@solar-icons/react/line-duotone";
 import { AdminShowtimeList } from "@/components/admin/showtime-list";
 import { MoviesTabs } from "@/components/admin/movies-tabs";
-import { EmptyState } from "@/components/empty-state";
 import { LoadingState } from "@/components/loading-state";
 import { PageHeader } from "@/components/page-header";
 import { ADMIN_SHELL_NAMESPACES, ScopedIntlProvider } from "@/components/scoped-intl-provider";
 import { Button } from "@/components/ui/button";
+import { isCalendarDate } from "@/lib/validation/fields";
+import { getBrandOptions } from "@/services/master-data/brand-options";
+import { getCachedBranches } from "@/services/master-data/catalog-cache";
+import { listMovies } from "@/services/movie.service";
 import { searchShowtimes } from "@/services/showtime.service";
-import { removeShowtimeAction } from "../actions";
+import { removeShowtimeAction, removeShowtimesBulkAction } from "../actions";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("admin.movies");
   return { title: t("title") };
 }
 
-export default async function AdminShowtimesPage() {
-  const t = await getTranslations("admin.movies");
+type SearchParams = Record<string, string | string[] | undefined>;
+const first = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
+
+export default async function AdminShowtimesPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
+  const [t, params] = await Promise.all([getTranslations("admin.movies"), searchParams]);
+  const rawDate = first(params.date);
+  const date = rawDate && isCalendarDate(rawDate) ? rawDate : undefined;
+  const branchId = first(params.branch) || undefined;
+  const movieId = first(params.movie) || undefined;
 
   return (
     <ScopedIntlProvider namespaces={[...ADMIN_SHELL_NAMESPACES, "admin.movies.showtimes"]}>
       <div className="mx-auto flex w-full max-w-page flex-1 flex-col gap-section p-inset">
         <PageHeader title={t("title")} description={t("description")} />
         <MoviesTabs active="showtimes" />
-        <Suspense fallback={<LoadingState compact />}>
-          <AdminShowtimesBody />
+        <Suspense key={`${date ?? ""}|${branchId ?? ""}|${movieId ?? ""}`} fallback={<LoadingState compact />}>
+          <AdminShowtimesBody date={date} branchId={branchId} movieId={movieId} />
         </Suspense>
 
         <div aria-hidden className="h-action-clear shrink-0" />
@@ -52,10 +62,30 @@ export default async function AdminShowtimesPage() {
   );
 }
 
-async function AdminShowtimesBody() {
-  const [t, rows] = await Promise.all([getTranslations("admin.movies"), searchShowtimes({ admin: true, limit: 300 })]);
-  if (rows.length === 0) {
-    return <EmptyState mascot="bubu-sleepy" title={t("showtimes.emptyTitle")} description={t("showtimes.emptyDescription")} />;
-  }
-  return <AdminShowtimeList rows={rows} removeAction={removeShowtimeAction} />;
+async function AdminShowtimesBody({ date, branchId, movieId }: { date?: string; branchId?: string; movieId?: string }) {
+  const [rows, branches, brands, movies] = await Promise.all([
+    searchShowtimes({ admin: true, date, branchId, movieId, limit: 300 }),
+    getCachedBranches(),
+    getBrandOptions(),
+    listMovies({}),
+  ]);
+  const brandName = new Map(brands.map((b) => [b.id, b.name]));
+  const branchOptions = branches
+    .map((b) => ({ value: b.id, label: [brandName.get(b.brandId), b.name].filter(Boolean).join(" · ") }))
+    .sort((a, b) => a.label.localeCompare(b.label, "vi"));
+  const movieOptions = movies
+    .map((m) => ({ value: m._id.toString(), label: m.title }))
+    .sort((a, b) => a.label.localeCompare(b.label, "vi"));
+
+  return (
+    <AdminShowtimeList
+      rows={rows}
+      filters={{ date: date ?? "", branch: branchId ?? "", movie: movieId ?? "" }}
+      branchOptions={branchOptions}
+      movieOptions={movieOptions}
+      limit={300}
+      removeAction={removeShowtimeAction}
+      removeBulkAction={removeShowtimesBulkAction}
+    />
+  );
 }

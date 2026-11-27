@@ -1,7 +1,8 @@
 "use client";
 
-import { AltArrowDownIcon, AltArrowUpIcon, LoaderIcon } from "@solar-icons/react/line-duotone";
+import { AltArrowDownIcon, AltArrowUpIcon, CopyIcon, LoaderIcon } from "@solar-icons/react/line-duotone";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useDeferredValue, useEffect, useMemo, useState, useTransition } from "react";
@@ -46,11 +47,14 @@ const MAP_MAX_HEIGHT = "36dvh";
 interface Props {
   /** The room being edited, or null when adding one. */
   auditorium: { id: string; name: string; branchId: string } | null;
+  /** Default branch preselected when duplicating an existing room. */
+  initialBranchId?: string;
   branches: { value: string; label: string }[];
   seatTypes: EditorSeatType[];
   initialConfig: LayoutConfig;
   dimensionDefaults?: CinemaDimensionDefaults;
   room3dAppearance?: Room3DAppearance;
+  brandName?: string;
   backHref: string;
 }
 
@@ -61,11 +65,13 @@ interface Props {
  */
 export function AuditoriumEditor({
   auditorium,
+  initialBranchId,
   branches,
   seatTypes,
   initialConfig,
   dimensionDefaults = DEFAULT_CINEMA_DIMENSIONS,
   room3dAppearance = DEFAULT_ROOM_3D_APPEARANCE,
+  brandName,
   backHref,
 }: Props) {
   const t = useTranslations("admin.auditoriums.editor");
@@ -75,7 +81,7 @@ export function AuditoriumEditor({
 
   const [tab, setTab] = useState<Tab>("settings");
   const [name, setName] = useState(auditorium?.name ?? "");
-  const [branchId, setBranchId] = useState(auditorium?.branchId ?? "");
+  const [branchId, setBranchId] = useState(auditorium?.branchId ?? initialBranchId ?? "");
   const [config, setConfig] = useState(initialConfig);
   const deferredConfig = useDeferredValue(config);
   const [heat, setHeat] = useState(false);
@@ -234,6 +240,19 @@ export function AuditoriumEditor({
     { key: "seats", label: t("tabs.seats") },
   ];
 
+  const previewSeatObj = previewSeat ? built.seats.find((s) => s.code === previewSeat) : undefined;
+  const previewSeatInSelection = Boolean(previewSeat && selectedCodes.has(previewSeat));
+  const seatAction3D =
+    inSeatsTab && previewSeatObj
+      ? {
+          label: previewSeatInSelection
+            ? t("deselectSeat3d", { code: previewSeatObj.code })
+            : t("selectSeat3d", { code: previewSeatObj.code }),
+          active: previewSeatInSelection,
+          onAction: () => toggleCells(cellsOfSeat(previewSeatObj)),
+        }
+      : undefined;
+
   return (
     <div className="flex flex-1 flex-col gap-group">
       <div className="flex flex-col gap-group lg:grid lg:grid-cols-[minmax(0,1fr)_var(--container-form)] lg:items-start lg:gap-section">
@@ -242,17 +261,22 @@ export function AuditoriumEditor({
             whole map at every new position (a sticky block without one lags and jumps behind the scroll). */}
         <div data-scroll-probe className="sticky top-target z-10 -mx-inset flex transform-gpu flex-col gap-tight bg-background px-inset pb-inset-xs lg:mx-0 lg:px-0">
           {!mapCollapsed || inSeatsTab ? (
-            view3d && !inSeatsTab && built3d ? (
+            view3d && built3d ? (
               <Room3DView
+                layoutKey={auditorium?.id ?? "new-auditorium"}
                 seats={built3d.seats}
                 geometry={built3d.geometry}
                 roomConfig={room3dConfig}
                 appearance={room3dAppearance}
+                roomMeta={{ roomName: name || auditorium?.name, brandName }}
                 seatTypes={sceneTypes}
+                highlightedCodes={inSeatsTab ? selectedCodes : undefined}
+                seatAction={seatAction3D}
                 maxHeight={MAP_MAX_HEIGHT}
                 heat={heat}
                 selected={previewSeat}
                 onSelect={setPreviewSeat}
+                onSwitch2D={() => setView3d(false)}
               />
             ) : (
               <SeatMap
@@ -283,6 +307,9 @@ export function AuditoriumEditor({
                 {t("heatmap")}
               </Label>
               <Switch id="aud-heat" checked={heat} onCheckedChange={setHeat} />
+              <span className="rounded-full bg-muted px-inset-xs py-hair type-caption text-muted-foreground tabular-nums">
+                {t("seatCount", { count: built.seats.length })}
+              </span>
             </div>
             <div
               className="flex items-center gap-stack"
@@ -290,13 +317,12 @@ export function AuditoriumEditor({
               onTouchStart={preloadRoom3D}
               onFocus={preloadRoom3D}
             >
-              <Label htmlFor="aud-3d" className={cn("text-muted-foreground", inSeatsTab && "opacity-50")}>
+              <Label htmlFor="aud-3d" className="text-muted-foreground">
                 {t("view3d")}
               </Label>
               <Switch
                 id="aud-3d"
-                checked={view3d && !inSeatsTab}
-                disabled={inSeatsTab}
+                checked={view3d}
                 onCheckedChange={(next) => {
                   if (next) setConfig3d(config);
                   setView3d(next);
@@ -391,6 +417,22 @@ export function AuditoriumEditor({
       <div data-save-bar className="pointer-events-none fixed inset-x-0 bottom-0 z-30 bg-gradient-to-t from-background via-background/95 to-transparent px-inset pt-group pb-(--inset-bottom) md:left-sidebar">
         <div className="mx-auto flex max-w-form items-center gap-stack">
           {auditorium ? <DeleteRecordButton id={auditorium.id} name={auditorium.name} backHref={backHref} removeAction={removeAuditoriumAction} /> : null}
+          {auditorium ? (
+            <Button
+              asChild
+              variant="outline"
+              size="cta"
+              className="pointer-events-auto w-auto shrink-0 bg-background px-inset-sm"
+            >
+              <Link
+                href={`/admin/auditoriums/new?from=${auditorium.id}&back=${encodeURIComponent(backHref)}`}
+                aria-label={t("duplicate")}
+              >
+                <CopyIcon aria-hidden />
+                <span className="hidden sm:inline">{t("duplicate")}</span>
+              </Link>
+            </Button>
+          ) : null}
           <Button type="button" size="cta" disabled={pending} onClick={save} className="pointer-events-auto min-w-0 flex-1">
             {pending ? (
               <>

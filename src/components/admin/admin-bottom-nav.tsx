@@ -11,9 +11,9 @@ import { useShowsAdminBar } from "@/lib/use-shows-admin-bar";
 
 /**
  * The admin menu on phones: only the pages that are ready (see `src/lib/admin-nav.ts`), five at most.
- * "Back to the app", change password and sign out live in the avatar menu. On wide screens the sidebar is used instead.
+ * On wide screens the sidebar is used instead.
  */
-export function AdminBottomNav() {
+export function AdminBottomNav({ openReports = 0 }: { openReports?: number }) {
   const t = useTranslations("admin.bottomNav");
   const showsBar = useShowsAdminBar();
   const items = ENABLED_ADMIN_NAV_ITEMS.slice(0, MAX_BOTTOM_NAV_ITEMS);
@@ -23,7 +23,14 @@ export function AdminBottomNav() {
     <BottomNav
       className="md:hidden"
       label={t("label")}
-      items={items.map((item) => ({ href: item.href, label: t(item.key), icon: item.icon, activeIcon: item.activeIcon, exact: item.exact }))}
+      items={items.map((item) => ({
+        href: item.href,
+        label: t(item.key),
+        icon: item.icon,
+        activeIcon: item.activeIcon,
+        exact: item.exact,
+        badge: item.key === "settings" ? openReports : undefined,
+      }))}
     />
   );
 }

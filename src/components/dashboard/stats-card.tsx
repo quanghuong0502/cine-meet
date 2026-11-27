@@ -1,5 +1,6 @@
 import { TicketStarIcon } from "@solar-icons/react/line-duotone";
 import { useLocale, useTranslations } from "next-intl";
+import Link from "next/link";
 import { IconBadge } from "@/components/ui/icon-badge";
 import { formatVnd } from "@/lib/money";
 import type { NamedCount } from "@/services/dashboard.service";
@@ -41,22 +42,29 @@ export function StatsCard({ viewingCount, averageCostPerViewing, topGenres, topB
           </p>
         </div>
       </div>
-      <TopList label={t("genres")} items={topGenres} />
-      <TopList label={t("branches")} items={topBranches} />
+      <TopList label={t("genres")} items={topGenres} hrefOf={(id) => `/showtimes?genre=${id}`} />
+      <TopList label={t("branches")} items={topBranches} hrefOf={(id) => `/cinemas/${id}?back=/`} />
     </section>
   );
 }
 
-function TopList({ label, items }: { label: string; items: NamedCount[] }) {
+function TopList({ label, items, hrefOf }: { label: string; items: NamedCount[]; hrefOf: (id: string) => string }) {
   if (items.length === 0) return null;
   return (
     <div className="flex flex-col gap-stack border-t pt-group">
       <p className="type-secondary text-muted-foreground">{label}</p>
       <ul className="flex flex-wrap gap-stack">
         {items.map((i) => (
-          <li key={i.id} title={i.name} className="inline-flex max-w-full items-center gap-tight rounded-full bg-muted px-inset-sm py-tight type-badge">
-            <span className="truncate">{i.name}</span>
-            <span className="shrink-0 text-muted-foreground tabular-nums">· {i.count}</span>
+          <li key={i.id} className="max-w-full">
+            <Link
+              href={hrefOf(i.id)}
+              prefetch={false}
+              title={i.name}
+              className="inline-flex max-w-full items-center gap-tight rounded-full bg-muted px-inset-sm py-tight type-badge transition-colors outline-none hover:bg-accent hover:text-accent-foreground focus-visible:ring-3 focus-visible:ring-ring/50 active:opacity-80"
+            >
+              <span className="truncate">{i.name}</span>
+              <span className="shrink-0 text-muted-foreground tabular-nums">· {i.count}</span>
+            </Link>
           </li>
         ))}
       </ul>

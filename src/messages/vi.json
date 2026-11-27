@@ -28,7 +28,8 @@
         "notRegistered": "Tài khoản chưa được cấp quyền. Liên hệ quản trị viên.",
         "sessionExpired": "Phiên đăng nhập đã hết hiệu lực. Đăng nhập lại nha.",
         "accessDenied": "[You] không có quyền đăng nhập bằng tài khoản này.",
-        "fallback": "Không đăng nhập được. Thử lại nha."
+        "fallback": "Không đăng nhập được. Thử lại nha.",
+        "network": "Mạng đang chập chờn, thử đăng nhập lại nha."
       }
     },
     "changePassword": {
@@ -40,6 +41,7 @@
       "confirmLabel": "Nhập lại mật khẩu mới",
       "submit": "Đổi mật khẩu",
       "submitting": "Đang lưu...",
+      "saved": "Đã đổi mật khẩu",
       "errors": {
         "currentRequired": "Nhập mật khẩu hiện tại.",
         "tooShort": "Mật khẩu mới cần ít nhất {min} ký tự.",
@@ -47,7 +49,8 @@
         "wrongCurrent": "Mật khẩu hiện tại không đúng.",
         "samePassword": "Mật khẩu mới phải khác mật khẩu hiện tại.",
         "noPassword": "Tài khoản này đăng nhập bằng Google nên không có mật khẩu để đổi.",
-        "invalid": "Dữ liệu không hợp lệ."
+        "invalid": "Dữ liệu không hợp lệ.",
+        "network": "Mạng đang chập chờn, thử lại giúp [me] nha."
       },
       "back": "Quay lại"
     }
@@ -58,7 +61,8 @@
     "signOut": "Đăng xuất",
     "signOutTitle": "Đăng xuất?",
     "signOutDescription": "[You] sẽ cần đăng nhập lại để tiếp tục sử dụng SeatMate.",
-    "settings": "Cài đặt"
+    "settings": "Cài đặt",
+    "networkError": "Mạng đang chập chờn, thử lại giúp [me] nha."
   },
   "nav": {
     "label": "Điều hướng chính",
@@ -115,7 +119,8 @@
         "no_password": "Tài khoản này không dùng mật khẩu (chỉ đăng nhập bằng Google).",
         "invalid_config": "Cấu hình sơ đồ không hợp lệ. Kiểm tra lại số hàng, số cột và lối đi.",
         "branch_not_found": "Chi nhánh không còn tồn tại. Chọn lại nha.",
-        "seat_type_not_found": "Có loại ghế không còn tồn tại. Chọn lại nha."
+        "seat_type_not_found": "Có loại ghế không còn tồn tại. Chọn lại nha.",
+        "network": "Mạng đang chập chờn, thử lại nha."
       },
       "activeLabel": "Đang bật",
       "inactiveBadge": "Đang tắt"
@@ -213,6 +218,10 @@
         },
         "appUrl": {
           "label": "Liên kết app"
+        },
+        "room3dPreset": {
+          "label": "Phong cách phòng 3D",
+          "defaultOption": "Mặc định hệ thống"
         }
       }
     },
@@ -362,7 +371,8 @@
         "standard": "Ghế thường",
         "vip": "Ghế VIP lưng cao",
         "recliner": "Ghế ngả có gác chân",
-        "bed": "Giường nằm"
+        "bed": "Giường nằm",
+        "4dx": "Ghế 4DX hiệu ứng"
       }
     },
     "holidays": {
@@ -663,6 +673,22 @@
       "intro": "Chỉ cấu hình phần hiển thị và trang thiết bị trong phòng 3D — không ảnh hưởng kích thước thực hay chấm điểm ghế. Thay đổi áp dụng đồng bộ cho toàn bộ phòng chiếu.",
       "previewHint": "Giữ chuột trái kéo để xoay 360° · Cuộn để thu phóng · Chạm ghế để ngồi thử.",
       "previewHeatmap": "Xem Heatmap",
+      "sampleRoomLabel": "Phòng chiếu mẫu",
+      "sampleRooms": {
+        "standard": "Phòng chuẩn",
+        "large": "Phòng lớn",
+        "luxury": "VIP · 4DX · Giường",
+        "sideAisle": "1 lối sát tường"
+      },
+      "presetsTitle": "Bộ phong cách rạp nhanh",
+      "presetsHint": "Áp dụng nhanh bảng màu, tường, trần và ánh sáng theo phong cách rạp thực tế — [you] vẫn có thể tùy chỉnh lẻ bên dưới.",
+      "presets": {
+        "classic": "Multiplex Cổ điển",
+        "blackbox": "Black-Box IMAX",
+        "goldclass": "Gold Class VIP",
+        "neon": "Cyber Neon",
+        "retro": "Retro Cổ điển"
+      },
       "pickColor": "Chọn màu tùy ý",
       "reset": "Khôi phục mặc định",
       "resetNotice": "Đã điền lại cấu hình giao diện 3D mặc định. Bấm Lưu để áp dụng.",
@@ -682,21 +708,27 @@
         "screenImageInvalid": "Link ảnh không hợp lệ (cần bắt đầu bằng https:// hoặc http://).",
         "screenYoutubeUrl": "Link video YouTube",
         "screenYoutubePlaceholder": "https://www.youtube.com/watch?v=... hoặc https://youtu.be/...",
-        "screenYoutubeHint": "Video tự phát lặp lại và mặc định tắt tiếng; bấm nút loa trên thanh điều khiển 3D để bật tiếng.",
+        "screenYoutubeHint": "Video tự phát lặp lại và mặc định tắt tiếng; bấm nút \"Bật tiếng\" ở góc trên khung 3D để nghe âm thanh.",
         "screenYoutubeInvalid": "Link YouTube không hợp lệ (hỗ trợ watch, youtu.be, shorts hoặc mã 11 ký tự).",
         "screenBorder": "Kiểu viền màn chiếu",
+        "screenMasking": "Khung che tỉ lệ phim (Masking)",
         "screenCurtainsVisible": "Rèm nhung 2 bên màn chiếu",
+        "screenCurtainsAnimated": "Hiệu ứng kéo mở rèm khi ngồi vào ghế",
         "screenCurtainsColor": "Màu rèm màn chiếu",
         "screenContent": "Hình ảnh chiếu mẫu",
         "screenStageApron": "Bục sân khấu dưới màn",
         "screenStageLed": "Đèn LED viền bục sân khấu",
+        "stageSubwoofersVisible": "Loa siêu trầm (Subwoofer) dưới sân khấu",
         "screenHalo": "Hào quang hắt sáng sau màn",
+        "screenWallWash": "Ánh sáng màn hắt loang 2 tường trước",
         "screenShowSubtitle": "Hiện dòng phụ đề mẫu",
         "screenSubtitleText": "Nội dung phụ đề mẫu",
         "screenSubtitlePlaceholder": "Để trống sẽ dùng phụ đề mặc định theo ngôn ngữ",
         "screenSubtitleColor": "Màu chữ phụ đề",
         "seatFinish": "Chất liệu bọc ghế",
         "seatFrameColor": "Màu khung & tay vịn ghế",
+        "seatNumbersVisible": "Số ghế gắn trên lưng ghế",
+        "snackPropsVisible": "Bắp rang & ly nước tại ghế đang ngồi",
         "doorStyle": "Kiểu cửa",
         "doorPanicBar": "Thanh đẩy thoát hiểm",
         "doorColor": "Màu cánh cửa / rèm",
@@ -704,12 +736,23 @@
         "exitSignVisible": "Hiện biển EXIT",
         "exitSignColor": "Màu đèn biển EXIT",
         "exitSignText": "Chữ trên biển EXIT",
+        "roomSignVisible": "Biển tên phòng & thương hiệu cạnh cửa",
+        "emergencyLightsVisible": "Đèn sự cố mắt ếch trên cửa thoát hiểm",
         "wallStyle": "Kiểu bề mặt tường",
         "wallColor": "Màu tường",
+        "wallImageUrl": "Ảnh chất liệu tường (tùy chọn)",
         "ceilingStyle": "Kiểu bề mặt trần",
+        "starlightColor": "Tông màu trần sao",
         "ceilingColor": "Màu trần",
+        "ceilingImageUrl": "Ảnh chất liệu trần (tùy chọn)",
+        "ceilingDetailsVisible": "Cửa gió điều hòa trần & tiêu âm 4 góc",
         "carpetStyle": "Kiểu hoa văn thảm",
         "carpetColor": "Màu thảm sàn",
+        "carpetImageUrl": "Ảnh chất liệu thảm / sàn (tùy chọn)",
+        "surfaceImageRepeat": "Số lần lặp ảnh",
+        "surfaceImageRepeatHint": "Tính theo kích thước bề mặt, giữ trọn khung hình & nhân vật (1–12 lần).",
+        "surfaceImageHint": "Tải ảnh hoặc dán link HTTPS — hệ thống giữ nguyên tỷ lệ ảnh, tự tính cỡ hiển thị theo kích thước bề mặt và tạo độ nổi, độ nhám đúng chất liệu.",
+        "movieAmbientLevel": "Độ tối khi tắt đèn chiếu phim",
         "downlightsVisible": "Đèn trần (Downlight)",
         "sconcesVisible": "Trụ tường & Đèn hắt tường",
         "sconceColor": "Màu đèn hắt tường",
@@ -718,13 +761,16 @@
         "coveLedColor": "Màu đèn LED hắt",
         "aisleLedVisible": "Đèn LED bậc thang lối đi",
         "aisleLedColor": "Màu LED bậc thang",
+        "aisleHandrailsVisible": "Tay vịn cầu thang dọc lối đi",
         "rowMarkersVisible": "Biển chữ cái tên hàng (A, B, C…)",
         "rowMarkersPlacement": "Vị trí biển tên hàng",
         "rowMarkersColor": "Màu đèn biển tên hàng",
         "projectionPortVisible": "Ô kính phòng máy chiếu",
         "projectorBeamVisible": "Tia sáng máy chiếu",
+        "projectorBeamIntensity": "Độ rõ tia sáng máy chiếu",
         "surroundSpeakersVisible": "Loa vòm gắn tường",
-        "ceilingSpeakersVisible": "Loa treo trần"
+        "ceilingSpeakersVisible": "Loa treo trần",
+        "fourDxWallPropsVisible": "Quạt gió & đèn chớp tường (phòng 4DX)"
       },
       "options": {
         "screenSource": {
@@ -787,6 +833,8 @@
           "red": "Đỏ"
         },
         "rowMarkerPlacement": {
+          "step": "Mặt bậc đi",
+          "riser": "Cổ bậc đứng",
           "aisle": "Mép lối đi",
           "wall": "Tường 2 bên"
         },
@@ -794,8 +842,32 @@
           "ceiling": "Viền trần",
           "wall": "Chân tường",
           "both": "Cả hai"
+        },
+        "screenMasking": {
+          "none": "Vừa khung màn",
+          "scope": "Khung rộng 2.39:1",
+          "flat": "Khung chuẩn 1.85:1"
+        },
+        "starlightColor": {
+          "cool": "Xanh sao đêm",
+          "warm": "Vàng champagne",
+          "rainbow": "Đa sắc ngân hà"
+        },
+        "movieAmbientLevel": {
+          "deep": "Tối sâu Dolby",
+          "balanced": "Cân bằng",
+          "bright": "Dễ nhìn ghế"
+        },
+        "projectorBeamIntensity": {
+          "subtle": "Dịu nhẹ",
+          "medium": "Vừa phải",
+          "vivid": "Rõ nét"
         }
-      }
+      },
+      "showPreview": "Hiện xem trước 3D",
+      "hidePreview": "Ẩn xem trước 3D",
+      "resetConfirmTitle": "Khôi phục giao diện 3D mặc định?",
+      "resetConfirmDescription": "Toàn bộ tùy chỉnh màu sắc, màn hình và ánh sáng đang sửa sẽ quay về mặc định. Bấm Lưu sau đó để áp dụng."
     },
     "cinemaDimensions": {
       "title": "Kích thước phòng chiếu chuẩn",
@@ -837,7 +909,9 @@
         "distMedMin": "Vừa · tối thiểu",
         "distFarRatio": "Xa · hệ số × rộng màn",
         "distFarMin": "Xa · tối thiểu"
-      }
+      },
+      "resetConfirmTitle": "Khôi phục kích thước chuẩn mặc định?",
+      "resetConfirmDescription": "Toàn bộ thông số đang nhập sẽ quay về chuẩn mặc định. Bấm Lưu sau đó để áp dụng."
     },
     "systemSettings": {
       "title": "Cài đặt hệ thống",
@@ -898,6 +972,8 @@
         },
         "heatmap": "Heatmap",
         "view3d": "Xem 3D",
+        "selectSeat3d": "Chọn ghế {code} để sửa",
+        "deselectSeat3d": "Bỏ chọn ghế {code}",
         "showMap": "Hiện sơ đồ",
         "hideMap": "Ẩn sơ đồ",
         "decrease": "Giảm",
@@ -1059,8 +1135,12 @@
           "actionGroup": "Thao tác",
           "typeGroup": "Loại ghế",
           "flagGroup": "Tình trạng"
-        }
-      }
+        },
+        "duplicate": "Nhân bản",
+        "seatCount": "{count} ghế"
+      },
+      "branchFilterLabel": "Lọc theo chi nhánh",
+      "allBranches": "Tất cả rạp"
     },
     "movies": {
       "title": "Phim & suất chiếu",
@@ -1102,7 +1182,20 @@
         "bulkButton": "Tạo hàng loạt",
         "importButton": "Nhập CSV",
         "noPrice": "Chưa có giá",
-        "deleteTitle": "Xóa suất {time} của \"{movie}\"?"
+        "deleteTitle": "Xóa suất {time} của \"{movie}\"?",
+        "filterDate": "Lọc theo ngày",
+        "filterBranch": "Lọc theo rạp",
+        "allBranches": "Tất cả rạp",
+        "filterMovie": "Lọc theo phim",
+        "allMovies": "Tất cả phim",
+        "selectMany": "Chọn nhiều",
+        "selectedCount": "Đã chọn {count} suất",
+        "selectAll": "Chọn tất cả",
+        "deselectAll": "Bỏ chọn hết",
+        "limitNotice": "Đang hiển thị tối đa {limit} suất gần nhất. Lọc theo ngày, rạp hoặc phim để thu gọn.",
+        "bulkDeleteTitle": "Xóa {count} suất chiếu đã chọn?",
+        "bulkDeleted": "Đã xóa {deleted} suất chiếu",
+        "bulkDeletedSkipped": "Đã xóa {deleted} suất chiếu ({skipped} suất đang gắn với kèo nên giữ lại)"
       },
       "bulk": {
         "title": "Tạo suất hàng loạt",
@@ -1397,7 +1490,12 @@
         "reminders": "Nhắc nhở",
         "friends": "Bạn bè",
         "budget": "Ngân sách"
-      }
+      },
+      "checking": "Đang kiểm tra trạng thái thông báo đẩy...",
+      "sendTest": "Gửi thử thông báo",
+      "testSent": "Đã gửi thông báo thử tới thiết bị của [you]",
+      "testFailed": "Chưa gửi được thông báo thử, kiểm tra lại thiết bị nha",
+      "testCooldown": "Chờ khoảng 1 phút rồi gửi thử tiếp nha"
     }
   },
   "imageUpload": {
@@ -1430,7 +1528,9 @@
     "heatHigh": "Điểm cao",
     "doorLabel": "Cửa ra vào",
     "markFavorite": "đã đánh dấu thích",
-    "markAvoid": "đã đánh dấu tránh"
+    "markAvoid": "đã đánh dấu tránh",
+    "obstructedLegend": "Khuất tầm nhìn",
+    "brokenLegend": "Ghế hỏng"
   },
   "showtimes": {
     "title": "Lịch chiếu",
@@ -1563,9 +1663,32 @@
       "lightsShort": "Đèn rạp",
       "youtubeMute": "Tắt tiếng video màn chiếu",
       "youtubeUnmute": "Bật tiếng video màn chiếu",
+      "youtubeMuteShort": "Tắt tiếng",
+      "youtubeUnmuteShort": "Bật tiếng",
       "youtubeAudioShort": "Âm thanh",
       "expand3d": "Xem toàn màn hình",
       "collapse3d": "Thu gọn",
+      "cameraPresetsLabel": "Góc nhìn nhanh",
+      "cameraShort": "Góc quay",
+      "cameraPresets": {
+        "overview": "Toàn phòng",
+        "entrance": "Từ cửa vào",
+        "frontRow": "Hàng đầu",
+        "booth": "Phòng chiếu"
+      },
+      "sightline": "Tia tầm nhìn",
+      "sightlineBanner": "Tia tầm nhìn từ ghế {code} (xanh: thoáng · vàng: mỏi cổ · đỏ: bị che)",
+      "comparePin": "Ghim so sánh",
+      "comparePinned": "Đã ghim ghế {code} — chọn ghế thứ 2 để so sánh",
+      "compareSummary": "{a} ({aScore}đ) vs {b} ({bScore}đ) · {distDiff}",
+      "compareClear": "Bỏ so sánh",
+      "snapshot": "Chụp góc nhìn 3D",
+      "snapshotSaved": "Đã lưu ảnh góc nhìn 3D",
+      "snapshotFailed": "Không chụp được ảnh góc nhìn này",
+      "gyro": "Xoay máy nhìn quanh",
+      "gyroDenied": "Chưa được cấp quyền cảm biến xoay máy",
+      "movieTrailer": "Chiếu trailer phim trên màn 3D",
+      "movieTrailerShort": "Trailer phim",
       "dragToLookHint": "Kéo để nhìn quanh · Chạm đúp về màn hình",
       "hoverSeatHint": "Ghế {code} · {score}đ — chạm để ngồi thử",
       "seatScoreShort": "{score}đ",
@@ -1638,7 +1761,9 @@
         "format": "Định dạng",
         "frequent": "Thường tới"
       }
-    }
+    },
+    "viewShowtimes": "Xem lịch chiếu",
+    "searchPlaceholder": "Tìm rạp theo tên, cụm rạp hoặc địa chỉ..."
   },
   "friends": {
     "title": "Bạn bè",
@@ -1729,7 +1854,8 @@
         "required": "Đặt tên cho nhóm nha.",
         "too_many": "Nhiều nhóm quá rồi, xóa bớt một nhóm cũ trước nha.",
         "invalid": "Chỉ thêm được người đang là bạn bè.",
-        "not_found": "Không tìm thấy nhóm này."
+        "not_found": "Không tìm thấy nhóm này.",
+        "membersRequired": "Chọn ít nhất 1 thành viên cho nhóm nha."
       }
     }
   },
@@ -1878,7 +2004,8 @@
         "accepted": "Đồng ý",
         "declined": "Từ chối",
         "dropped": "Đã rút",
-        "excluded": "Không tham gia"
+        "excluded": "Không tham gia",
+        "allNo": "Không chọn giờ nào"
       },
       "deadlinePassed": "Đã hết hạn trả lời. Chờ người tạo chốt nha.",
       "deadlinePassedCreator": "Đã quá hạn trả lời. [You] có thể chốt một khung giờ bên dưới hoặc hủy lịch hẹn.",
@@ -1912,6 +2039,8 @@
         "whoIsSeated": "Chọn người để xếp ghế",
         "noSeat": "Chưa có ghế",
         "seatsSaved": "Đã lưu chỗ ngồi",
+        "assignSeat3d": "Xếp {name} vào ghế {code}",
+        "unassignSeat3d": "Gỡ {name} khỏi ghế {code}",
         "roomFailed": "Chưa tải được phòng chiếu này, thử chọn lại suất nha",
         "foodFilter": "Lọc theo loại",
         "foodAll": "Tất cả",
@@ -1968,7 +2097,15 @@
         "movie": "Phim",
         "seat": "Ghế {seatCode}",
         "error": "Chưa lưu được, thử lại nha"
-      }
+      },
+      "mySeat": "Ghế của [you]: {seat}",
+      "share": "Chia sẻ",
+      "shareCopied": "Đã chép thông tin kèo",
+      "venueTitle": "Địa điểm chiếu",
+      "directions": "Chỉ đường",
+      "openRoom": "Sơ đồ {room}",
+      "proposeShowtimeMode": "Chọn từ lịch chiếu",
+      "proposeCustomMode": "Tự nhập ngày giờ"
     },
     "invite": {
       "title": "Mời thêm",
@@ -2128,7 +2265,8 @@
     "test": {
       "title": "Thử thông báo",
       "body": "Thông báo đẩy chạy ngon lành rồi nè!"
-    }
+    },
+    "settingsAction": "Cài đặt thông báo"
   },
   "dashboard": {
     "title": "Tổng quan",
@@ -2152,7 +2290,14 @@
       "submitting": "Đang lưu...",
       "saved": "Đã lưu buổi xem",
       "futureDate": "Chưa ghi được buổi xem ở ngày chưa tới nha.",
-      "error": "Chưa lưu được, thử lại nha"
+      "error": "Chưa lưu được, thử lại nha",
+      "recentTitle": "Buổi xem đã ghi gần đây",
+      "removeAria": "Xóa buổi xem {title}",
+      "removeTitle": "Xóa buổi xem này?",
+      "removeDescription": "Khoản chi và thống kê từ buổi xem này sẽ được gỡ khỏi tổng quan.",
+      "removeConfirm": "Xóa",
+      "removed": "Đã xóa buổi xem",
+      "removeFailed": "Chưa xóa được, thử lại nha"
     },
     "spending": {
       "title": "Chi tiêu",
@@ -2186,6 +2331,11 @@
     "companions": {
       "title": "Hay đi xem cùng",
       "count": "{count, plural, other {# buổi}}"
+    },
+    "upcoming": {
+      "title": "Kèo sắp tới",
+      "viewAll": "Xem tất cả",
+      "needsReply": "Cần trả lời"
     }
   },
   "offline": {

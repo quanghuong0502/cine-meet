@@ -27,4 +27,10 @@ describe("showsAdminBar", () => {
     expect(isFocusedAdminRoute("/admin/master-data/branches/abc")).toBe(true);
     expect(showsAdminBar("/admin/master-data/branches/abc", true)).toBe(true);
   });
+
+  it("treats /admin/profile and its sub-routes as focused screens", () => {
+    expect(isFocusedAdminRoute("/admin/profile")).toBe(true);
+    expect(isFocusedAdminRoute("/admin/profile/edit")).toBe(true);
+    expect(showsAdminBar("/admin/profile", false)).toBe(false);
+  });
 });

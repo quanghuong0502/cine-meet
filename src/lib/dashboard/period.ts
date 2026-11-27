@@ -103,3 +103,19 @@ export function currentMonthRange(now: Date): { start: Date; end: Date } {
   const [bucket] = periodBuckets("month", now, 1);
   return { start: bucket.start, end: bucket.end };
 }
+
+/** Formats a period bucket key (`2026-09-07/week`, `2026-09`, `2026`) for display in the viewer's locale. */
+export function formatPeriodKey(period: Period, key: string, locale: string): string {
+  if (period === "year") return key;
+  if (period === "month") {
+    const [year, month] = key.split("-").map(Number);
+    if (!year || !month) return key;
+    if (locale !== "en") return `Th${month}`;
+    return new Intl.DateTimeFormat("en-US", { month: "short", timeZone: "UTC" }).format(new Date(Date.UTC(year, month - 1, 1)));
+  }
+  const isoDay = period === "week" ? key.replace(/\/week$/, "") : key;
+  const [year, month, day] = isoDay.split("-").map(Number);
+  if (!year || !month || !day) return key;
+  if (locale !== "en") return `${String(day).padStart(2, "0")}/${String(month).padStart(2, "0")}`;
+  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: "UTC" }).format(new Date(Date.UTC(year, month - 1, day)));
+}

@@ -4,7 +4,7 @@ import { CATALOG_CINEMAS_TAG, safeCache } from "@/lib/cache";
 import { connectToDatabase } from "@/lib/db";
 import { DEFAULT_STEPS_PER_ROW } from "@/lib/seat-layout/config.constants";
 import { generateGrid } from "@/lib/seat-layout/generate";
-import type { Room3DAppearance } from "@/lib/seat-layout/room-3d-appearance.defaults";
+import { resolveBrandRoom3DAppearance, type Room3DAppearance } from "@/lib/seat-layout/room-3d-appearance.defaults";
 import type { Room3DConfig } from "@/lib/seat-layout/scene";
 import type { LayoutConfig, LayoutGeometry, LayoutSeat, SeatStyle, SeatTypeInfo } from "@/lib/seat-layout/types";
 import { Auditorium } from "@/models/auditorium";
@@ -14,6 +14,7 @@ import { Brand } from "@/models/brand";
 import { SeatMark } from "@/models/seat-mark";
 import { Showtime } from "@/models/showtime";
 import { getCinemaDimensions } from "@/services/cinema-dimensions.service";
+import { getBrandOptions } from "@/services/master-data/brand-options";
 import { getCachedFormats, getCachedSeatTypes } from "@/services/master-data/catalog-cache";
 import { getRoom3DAppearance } from "@/services/room-3d-appearance.service";
 import { listViewingSessions, rankFrequentBranches } from "@/services/viewing-history.service";
@@ -256,14 +257,22 @@ export interface RoomOption {
   label: string;
 }
 
-/** Every room, labelled "Branch · Room", for pick-lists such as logging a viewing by hand. */
+/** Every active room, labelled "Brand · Branch · Room", for pick-lists such as logging a viewing by hand. */
 export const listRoomOptions = safeCache(
   async (): Promise<RoomOption[]> => {
     await connectToDatabase();
-    const [rooms, branches] = await Promise.all([Auditorium.find({}, "name branchId").lean(), Branch.find({}, "name").lean()]);
-    const branchById = new Map(branches.map((b) => [b._id.toString(), b.name]));
+    const [rooms, branches, brands] = await Promise.all([
+      Auditorium.find({}, "name branchId").lean(),
+      Branch.find({ active: { $ne: false } }, "name brandId").lean(),
+      getBrandOptions(),
+    ]);
+    const brandName = new Map(brands.map((b) => [b.id, b.name]));
+    const branchLabel = new Map(
+      branches.map((b) => [b._id.toString(), [brandName.get(b.brandId.toString()), b.name].filter(Boolean).join(" · ")]),
+    );
     return rooms
-      .map((r) => ({ id: r._id.toString(), label: `${branchById.get(r.branchId.toString()) ?? "?"} · ${r.name}` }))
+      .filter((r) => branchLabel.has(r.branchId.toString()))
+      .map((r) => ({ id: r._id.toString(), label: `${branchLabel.get(r.branchId.toString())} · ${r.name}` }))
       .sort((a, b) => a.label.localeCompare(b.label, "vi"));
   },
   ["catalog-room-options"],
@@ -273,6 +282,7 @@ export const listRoomOptions = safeCache(
 export interface RoomView {
   auditorium: { id: string; name: string };
   branch: { id: string; name: string; brandName: string };
+  brandName: string;
   layoutId: string;
   version: number;
   seats: LayoutSeat[];
@@ -289,7 +299,7 @@ export type RoomSeatClientView = Omit<RoomView, "branch" | "version">;
 export const getRoomView = cache(async (branchId: string, auditoriumId: string): Promise<RoomView | null> => {
   if (!isValidObjectId(branchId) || !isValidObjectId(auditoriumId)) return null;
   await connectToDatabase();
-  const [room, branch, types, dimensionDefaults, room3dAppearance] = await Promise.all([
+  const [room, branch, types, dimensionDefaults, systemAppearance] = await Promise.all([
     Auditorium.findOne({ _id: auditoriumId, branchId }, "name currentLayoutId").lean(),
     Branch.findOne({ _id: branchId, ...ACTIVE }, "name brandId").lean(),
     getCachedSeatTypes(),
@@ -299,9 +309,10 @@ export const getRoomView = cache(async (branchId: string, auditoriumId: string):
   if (!room?.currentLayoutId || !branch) return null;
   const [layout, brand] = await Promise.all([
     AuditoriumLayout.findById(room.currentLayoutId, "version config seats").lean(),
-    Brand.findOne({ _id: branch.brandId, ...ACTIVE }, "name").lean(),
+    Brand.findOne({ _id: branch.brandId, ...ACTIVE }, "name room3dPreset").lean(),
   ]);
   if (!layout || !brand) return null;
+  const room3dAppearance = resolveBrandRoom3DAppearance(systemAppearance, brand.room3dPreset);
   const infos: SeatTypeInfo[] = types.map((t) => ({
     id: t.id,
     name: t.name,
@@ -313,6 +324,7 @@ export const getRoomView = cache(async (branchId: string, auditoriumId: string):
   return {
     auditorium: { id: room._id.toString(), name: room.name },
     branch: { id: branch._id.toString(), name: branch.name, brandName: brand.name },
+    brandName: brand.name,
     layoutId: layout._id.toString(),
     version: layout.version,
     seats: JSON.parse(JSON.stringify(layout.seats)) as LayoutSeat[],

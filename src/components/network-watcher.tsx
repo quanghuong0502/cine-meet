@@ -5,6 +5,8 @@ import { useTranslations } from "next-intl";
 import { useEffect, useRef } from "react";
 import { toast } from "sonner";
 
+import { isFocusedAdminRoute, isFocusedUserRoute } from "@/lib/focused-routes";
+
 const NETWORK_TOAST_ID = "network";
 /** Away from the app for longer than this (screen off, another app): reload the data when coming back. */
 const STALE_AFTER_MS = 60_000;
@@ -15,9 +17,8 @@ function shouldSkipRefresh(pathname: string): boolean {
     pathname === "/login" ||
     pathname === "/change-password" ||
     pathname === "/offline" ||
-    pathname === "/appointments/new" ||
-    pathname === "/log-viewing" ||
-    pathname.startsWith("/admin/auditoriums/")
+    isFocusedUserRoute(pathname) ||
+    isFocusedAdminRoute(pathname)
   );
 }
 

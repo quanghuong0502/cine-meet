@@ -445,10 +445,65 @@ export async function searchShowtimes(filters: ShowtimeFilters = {}): Promise<Sh
  * as `searchShowtimes`. Used when someone types the time they want to watch and then picks a showtime from what is on from then.
  */
 export async function searchShowtimesFrom(movieId: string, after: Date): Promise<ShowtimeRow[]> {
-  if (Number.isNaN(after.getTime()) || after.getTime() <= Date.now()) return [];
+  if (Number.isNaN(after.getTime())) return [];
   const day = new Date(after.getTime() + 7 * 3600_000).toISOString().slice(0, 10);
   const rows = await searchShowtimes({ movieId, date: day, limit: 300 });
-  return rows.filter((row) => new Date(row.startAt).getTime() >= after.getTime());
+  const floorMs = Math.max(after.getTime(), Date.now());
+  return rows.filter((row) => new Date(row.startAt).getTime() >= floorMs);
+}
+
+/**
+ * Upcoming showtimes of one movie for pickers (`ShowtimeFinder`):
+ * - Without `date`: every upcoming showtime across all days (soonest first, up to 300).
+ * - With `date` (`YYYY-MM-DD`): upcoming showtimes on that Vietnam day, optionally starting at or after `after`.
+ */
+export async function searchMovieShowtimesForPicker(
+  movieId: string,
+  options?: { date?: string; after?: Date },
+): Promise<ShowtimeRow[]> {
+  const rows = await searchShowtimes({ movieId, date: options?.date, limit: 300 });
+  if (!options?.after || Number.isNaN(options.after.getTime())) return rows;
+  const floorMs = Math.max(options.after.getTime(), Date.now());
+  return rows.filter((row) => new Date(row.startAt).getTime() >= floorMs);
+}
+
+/** Distinct Vietnam calendar days (`YYYY-MM-DD`) that have at least one upcoming showtime in `[fromDay, toDay]`. */
+export async function listActiveShowtimeDays(fromDay: string, toDay: string): Promise<Set<string>> {
+  await connectToDatabase();
+  const start = new Date(Math.max(Date.now(), Date.parse(`${fromDay}T00:00:00+07:00`)));
+  const end = new Date(Date.parse(`${toDay}T23:59:59.999+07:00`));
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end <= start) return new Set();
+  const rows = await Showtime.aggregate<{ _id: string }>([
+    { $match: { startAt: { $gte: start, $lte: end } } },
+    { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$startAt", timezone: "Asia/Ho_Chi_Minh" } } } },
+  ]);
+  return new Set(rows.map((r) => r._id));
+}
+
+/** Deletes multiple showtimes in one batch, skipping any that are already tied to an appointment. */
+export async function removeShowtimesBulk(
+  ids: string[],
+  actorId: string,
+): Promise<{ ok: true; deleted: number; skipped: number }> {
+  const validIds = [...new Set(ids.filter((id) => isValidObjectId(id)))];
+  if (validIds.length === 0) return { ok: true, deleted: 0, skipped: 0 };
+  await connectToDatabase();
+  const { Appointment } = await import("@/models/appointment");
+  const usedDocs = await Appointment.find(
+    { $or: [{ showtimeId: { $in: validIds } }, { "timeOptions.showtimeId": { $in: validIds } }] },
+    "showtimeId timeOptions.showtimeId",
+  ).lean();
+  const inUse = new Set<string>();
+  for (const doc of usedDocs) {
+    if (doc.showtimeId) inUse.add(doc.showtimeId.toString());
+    for (const opt of doc.timeOptions ?? []) if (opt.showtimeId) inUse.add(opt.showtimeId.toString());
+  }
+  const deletable = validIds.filter((id) => !inUse.has(id));
+  const res = deletable.length > 0 ? await Showtime.deleteMany({ _id: { $in: deletable } }) : { deletedCount: 0 };
+  if (res.deletedCount > 0) {
+    await recordAudit({ actorId, action: "delete", entity: "showtime", entityId: deletable[0]!, before: { count: res.deletedCount, ids: deletable } });
+  }
+  return { ok: true, deleted: res.deletedCount, skipped: validIds.length - deletable.length };
 }
 
 /** Single targeted showtime lookup with pricing (avoids scanning & pricing up to 300 showtimes just to pick one by ID). */

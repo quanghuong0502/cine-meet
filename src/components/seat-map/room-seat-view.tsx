@@ -48,6 +48,20 @@ function applyChange(current: Marks, change: Change): Marks {
   return { active: [...without(current.active, change.mark.seatCode), change.mark], old: without(current.old, change.mark.seatCode) };
 }
 
+const HEIGHT_STORAGE_KEY = "seatmate:viewerHeightCm";
+const VIEWER_HEIGHTS = [155, 165, 175, 185] as const;
+
+function readSavedViewerHeight(): number {
+  if (typeof window === "undefined") return 165;
+  try {
+    const saved = Number(window.localStorage.getItem(HEIGHT_STORAGE_KEY));
+    if (VIEWER_HEIGHTS.includes(saved as (typeof VIEWER_HEIGHTS)[number])) return saved;
+  } catch {
+    // Ignore storage restrictions.
+  }
+  return 165;
+}
+
 /**
  * Read-only seat map of a room with two layers (the system's seat score, and my own marks) and an inline panel to mark a seat.
  * The panel is a section of the page, not a sheet: a note field inside a bottom sheet fights the keyboard on an installed iPhone app.
@@ -56,12 +70,19 @@ export function RoomSeatView({ view, marks: serverMarks, sitting = [], saveActio
   const t = useTranslations("cinemas.room");
   const tc = useTranslations("admin.common");
   const locale = useLocale();
-  const [heat, setHeat] = useState(true);
+  // 2D map starts with Heatmap on to scan best seats; 3D view starts with real cinema upholstery colors (`color3d`).
+  const [heat2d, setHeat2d] = useState(true);
+  const [heat3d, setHeat3d] = useState(false);
   const [showMine, setShowMine] = useState(true);
   const [view3d, setView3d] = useState(false);
+  const [open3dMode, setOpen3dMode] = useState<"orbit" | "seat">("orbit");
+  const [viewerHeightCm, setViewerHeightCm] = useState<number>(readSavedViewerHeight);
+  const heat = view3d ? heat3d : heat2d;
+  const toggleHeat = () => (view3d ? setHeat3d((v) => !v) : setHeat2d((v) => !v));
   const [selected, setSelected] = useState<string | null>(null);
   const [marks, change] = useOptimistic(serverMarks, applyChange);
   const [isPending, startTransition] = useTransition();
+  const stageRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
   const mapTypes = useMemo<SeatMapSeatType[]>(() => view.seatTypes.map(({ id, name, nameEn, color }) => ({ id, name: locale === "en" && nameEn ? nameEn : name, color })), [view.seatTypes, locale]);
@@ -76,13 +97,19 @@ export function RoomSeatView({ view, marks: serverMarks, sitting = [], saveActio
   const sittingByCode = useMemo(() => new Map(sitting.map((row) => [row.seatCode, row])), [sitting]);
   const mapMarks = useMemo(() => (showMine ? new Map(marks.active.map((m) => [m.seatCode, m.kind])) : undefined), [marks.active, showMine]);
   const seat = selected ? seatByCode.get(selected) : undefined;
-  const seatMetrics = seat && metricsScene ? metricsScene.viewMetricsOf(seat.code, 170) : null;
+  const seatMetrics = seat && metricsScene ? metricsScene.viewMetricsOf(seat.code, viewerHeightCm) : null;
   const selectedSet = useMemo(() => (selected ? new Set([selected]) : undefined), [selected]);
 
   // Bring the panel into view after a seat is tapped in 2D (skip in 3D so stepping seats never yanks the 3D viewport off screen).
   useEffect(() => {
     if (selected && !view3d) panelRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
   }, [selected, view3d]);
+
+  function open3DFromSeat() {
+    setOpen3dMode(selected ? "seat" : "orbit");
+    setView3d(true);
+    requestAnimationFrame(() => stageRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" }));
+  }
 
   function save(mark: SeatMarkView) {
     setShowMine(true);
@@ -94,12 +121,19 @@ export function RoomSeatView({ view, marks: serverMarks, sitting = [], saveActio
     });
   }
 
-  function remove(seatCode: string) {
-    startTransition(async () => {
-      change({ type: "remove", seatCode });
-      const result = await removeAction(view.auditorium.id, seatCode).catch(() => null);
-      if (result?.ok) toast.success(t("removed"));
-      else toast.error(t("saveFailed"));
+  function remove(seatCode: string): Promise<boolean> {
+    return new Promise((resolve) => {
+      startTransition(async () => {
+        change({ type: "remove", seatCode });
+        const result = await removeAction(view.auditorium.id, seatCode).catch(() => null);
+        if (result?.ok) {
+          toast.success(t("removed"));
+          resolve(true);
+        } else {
+          toast.error(t("saveFailed"));
+          resolve(false);
+        }
+      });
     });
   }
 
@@ -107,7 +141,26 @@ export function RoomSeatView({ view, marks: serverMarks, sitting = [], saveActio
     <div className="flex flex-col gap-group">
       <SittingHistorySummary rows={sitting} selected={selected} onSelect={(code) => setSelected(code)} />
 
-      <div className="flex flex-wrap items-center justify-between gap-stack">
+      {marks.active.length > 0 ? (
+        <div role="group" aria-label={t("layerMine")} className="scroll-strip flex items-center gap-stack pb-tight">
+          {marks.active.map((mark) => (
+            <Chip
+              key={mark.seatCode}
+              selected={selected === mark.seatCode}
+              onClick={() => setSelected((cur) => (cur === mark.seatCode ? null : mark.seatCode))}
+            >
+              {mark.kind === "favorite" ? (
+                <StarFilledIcon className="size-icon-xs shrink-0 text-seat-favorite" aria-hidden />
+              ) : (
+                <ForbiddenCircleIcon className="size-icon-xs shrink-0 text-destructive" aria-hidden />
+              )}
+              <span className="tabular-nums">{mark.seatCode}</span>
+            </Chip>
+          ))}
+        </div>
+      ) : null}
+
+      <div ref={stageRef} className="flex flex-wrap items-center justify-between gap-stack">
         <div role="radiogroup" aria-label={t("viewLabel")} className="inline-grid grid-cols-2 rounded-full bg-muted p-tight">
           <button
             type="button"
@@ -128,7 +181,10 @@ export function RoomSeatView({ view, marks: serverMarks, sitting = [], saveActio
             onPointerEnter={preloadRoom3D}
             onTouchStart={preloadRoom3D}
             onFocus={preloadRoom3D}
-            onClick={() => setView3d(true)}
+            onClick={() => {
+              setOpen3dMode(selected ? "seat" : "orbit");
+              setView3d(true);
+            }}
             className={cn(
               "flex min-h-target items-center justify-center rounded-full px-inset-sm type-label whitespace-nowrap transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
               view3d ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground",
@@ -141,7 +197,7 @@ export function RoomSeatView({ view, marks: serverMarks, sitting = [], saveActio
         <div role="group" aria-label={t("layers")} className="flex flex-wrap gap-stack">
           <Chip
             selected={heat}
-            onClick={() => setHeat((v) => !v)}
+            onClick={toggleHeat}
             className={heat ? "border-transparent bg-accent text-accent-foreground" : undefined}
           >
             {t("layerScore")}
@@ -169,9 +225,13 @@ export function RoomSeatView({ view, marks: serverMarks, sitting = [], saveActio
           geometry={view.geometry}
           roomConfig={view.room3d}
           appearance={view.room3dAppearance}
+          roomMeta={{ roomName: view.auditorium.name, brandName: view.brandName }}
           seatTypes={sceneTypes}
           marks={mapMarks}
           showHeightControls
+          initialMode={open3dMode}
+          viewerHeightCm={viewerHeightCm}
+          onViewerHeightChange={setViewerHeightCm}
           heat={heat}
           selected={selected}
           onSelect={setSelected}
@@ -201,7 +261,7 @@ export function RoomSeatView({ view, marks: serverMarks, sitting = [], saveActio
             existing={markByCode.get(seat.code)}
             pending={isPending}
             view3d={view3d}
-            onOpen3D={() => setView3d(true)}
+            onOpen3D={open3DFromSeat}
             onSave={save}
             onRemove={() => remove(seat.code)}
             onClose={() => setSelected(null)}
@@ -248,7 +308,7 @@ interface PanelProps {
   view3d: boolean;
   onOpen3D: () => void;
   onSave: (mark: SeatMarkView) => void;
-  onRemove: () => void;
+  onRemove: () => Promise<boolean>;
   onClose: () => void;
 }
 
@@ -275,12 +335,13 @@ function SeatPanel({ seat, typeName, metrics, pastVisit, existing, pending, view
     onSave({ seatCode: seat.code, kind, tags, note: note.trim() });
   }
 
-  function handleRemove() {
+  async function handleRemove() {
+    const ok = await onRemove();
+    if (!ok) return;
     setKind(null);
     setTags([]);
     setNote("");
     setKindMissing(false);
-    onRemove();
   }
 
   return (
@@ -298,6 +359,7 @@ function SeatPanel({ seat, typeName, metrics, pastVisit, existing, pending, view
                 horizontal: Math.round(metrics.horizontalDeg),
                 vertical: Math.max(0, Math.round(metrics.verticalTopDeg)),
               })}
+              {metrics.neckStrain ? <span className="text-warning"> · {t("neckStrainHint")}</span> : null}
             </p>
           ) : null}
           {pastVisit ? (

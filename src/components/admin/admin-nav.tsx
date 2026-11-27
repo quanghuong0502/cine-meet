@@ -11,7 +11,7 @@ function isActive(pathname: string, href: string, exact?: boolean): boolean {
 }
 
 /** Sidebar menu for wide screens. Phones use `AdminBottomNav`. */
-export function AdminNav() {
+export function AdminNav({ openReports = 0 }: { openReports?: number }) {
   const t = useTranslations("admin");
   const { current, markPending } = useOptimisticPath();
 
@@ -21,6 +21,7 @@ export function AdminNav() {
         {ENABLED_ADMIN_NAV_ITEMS.map(({ href, key, icon, activeIcon, exact }) => {
           const active = isActive(current, href, exact);
           const Icon = active ? activeIcon : icon;
+          const badge = key === "settings" && openReports > 0 ? openReports : 0;
           return (
             <li key={href}>
               <Link
@@ -35,7 +36,12 @@ export function AdminNav() {
                 )}
               >
                 <Icon className="size-icon shrink-0" aria-hidden />
-                {t(`nav.${key}`)}
+                <span className="min-w-0 flex-1 truncate">{t(`nav.${key}`)}</span>
+                {badge > 0 ? (
+                  <span className="flex h-icon min-w-icon shrink-0 items-center justify-center rounded-full bg-primary px-tight type-tag text-primary-foreground tabular-nums">
+                    {badge > 99 ? "99+" : badge}
+                  </span>
+                ) : null}
               </Link>
             </li>
           );

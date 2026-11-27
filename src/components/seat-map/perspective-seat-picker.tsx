@@ -46,7 +46,10 @@ export function PerspectiveSeatPicker({
 }: Props) {
   const t = useTranslations("cinemas.room");
   const { min, max } = useMemo(() => heatRange(seats), [seats]);
-  const typeColorById = useMemo(() => new Map(seatTypes.map((st) => [st.id, st.color])), [seatTypes]);
+  const typeColorById = useMemo(
+    () => new Map(seatTypes.map((st) => [st.id, st.color3d || st.color])),
+    [seatTypes],
+  );
 
   const bounds = useMemo(() => {
     const minY = geometry.rowY.length > 0 ? Math.min(...geometry.rowY) - 0.5 : 0;
@@ -152,6 +155,8 @@ export function PerspectiveSeatPicker({
             {/* Interactive seat tiles */}
             {seats.map((seat) => {
               const broken = seat.flags.includes("broken");
+              const obstructed = seat.flags.includes("obstructed");
+              const recommended = seat.flags.includes("recommended");
               const isSelected = seat.code === selected;
               const isBest = seat.code === bestSeatCode;
               const mark = marks?.get(seat.code);
@@ -177,7 +182,7 @@ export function PerspectiveSeatPicker({
                   onClick={() => onPick(seat.code)}
                   className={cn(
                     "absolute -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-transform duration-150 hover:z-20 hover:scale-125 focus-visible:z-20 focus-visible:scale-125 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white",
-                    broken && "opacity-40",
+                    broken && "opacity-55",
                   )}
                   style={{
                     left: `${leftPct}%`,
@@ -186,13 +191,31 @@ export function PerspectiveSeatPicker({
                     height: `${heightPct}%`,
                     backgroundColor: baseFill,
                     borderRadius: "34% 34% 18% 18%",
+                    outline: obstructed && !isSelected ? "1.5px dashed #f59e0b" : undefined,
                     boxShadow: isSelected
                       ? "0 0 0 2px #ffffff, 0 0 12px 2px rgba(244, 63, 94, 0.7)"
                       : isBest
                         ? "0 0 0 2px #fbbf24, 0 0 10px 1px rgba(251, 191, 36, 0.55)"
-                        : "inset 0 -2px 0 rgba(0, 0, 0, 0.35)",
+                        : recommended
+                          ? "0 0 0 1.5px #10b981, inset 0 -2px 0 rgba(0, 0, 0, 0.35)"
+                          : "inset 0 -2px 0 rgba(0, 0, 0, 0.35)",
                   }}
                 >
+                  {broken ? (
+                    <span
+                      aria-hidden
+                      className="pointer-events-none absolute inset-0 flex items-center justify-center type-micro font-bold text-red-400"
+                    >
+                      ×
+                    </span>
+                  ) : null}
+                  {recommended && !broken ? (
+                    <span
+                      aria-hidden
+                      className="pointer-events-none absolute top-0 left-0 rounded-full bg-emerald-400"
+                      style={{ width: "4px", height: "4px" }}
+                    />
+                  ) : null}
                   {mark ? (
                     <span
                       aria-hidden

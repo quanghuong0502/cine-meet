@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bucketIndexOf, currentMonthRange, periodBuckets } from "./period";
+import { bucketIndexOf, currentMonthRange, formatPeriodKey, periodBuckets } from "./period";
 
 describe("periodBuckets", () => {
   it("builds daily buckets ending today, in Vietnam time", () => {
@@ -59,5 +59,15 @@ describe("currentMonthRange", () => {
     const { start, end } = currentMonthRange(new Date("2026-11-20T10:00:00.000Z"));
     expect(start.toISOString()).toBe("2026-10-31T17:00:00.000Z");
     expect(end.toISOString()).toBe("2026-11-30T17:00:00.000Z");
+  });
+});
+
+describe("formatPeriodKey", () => {
+  it("formats day, week, month, and year bucket keys cleanly without raw ISO dates", () => {
+    expect(formatPeriodKey("day", "2026-11-05", "vi")).toBe("05/11");
+    expect(formatPeriodKey("week", "2026-11-02", "vi")).toBe("02/11");
+    expect(formatPeriodKey("month", "2026-11", "vi")).toBe("Th11");
+    expect(formatPeriodKey("month", "2026-11", "en")).toMatch(/Nov/i);
+    expect(formatPeriodKey("year", "2026", "vi")).toBe("2026");
   });
 });

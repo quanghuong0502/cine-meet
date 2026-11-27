@@ -60,13 +60,13 @@ export function ShowtimeFinder({ movieId, slots, chosen, onPick, onUnpick, onErr
   const SETTLE_MS = 600;
 
   const runFetch = useCallback(
-    (iso: string) => {
+    (query?: { date?: string; after?: string }) => {
       setFailed(false);
       setFilters({});
       onErrorRef.current("");
       const mine = ++latest.current;
       startSearch(async () => {
-        const result = await findShowtimesFromAction(movieId, iso).catch(() => null);
+        const result = await findShowtimesFromAction(movieId, query).catch(() => null);
         if (mine !== latest.current) return;
         if (!result?.ok) {
           setFailed(true);
@@ -84,7 +84,7 @@ export function ShowtimeFinder({ movieId, slots, chosen, onPick, onUnpick, onErr
     let cancelled = false;
     const mine = ++latest.current;
     async function loadInitial() {
-      const result = await findShowtimesFromAction(movieId, new Date().toISOString()).catch(() => null);
+      const result = await findShowtimesFromAction(movieId).catch(() => null);
       if (cancelled || mine !== latest.current) return;
       if (!result?.ok) {
         setFailed(true);
@@ -107,25 +107,29 @@ export function ShowtimeFinder({ movieId, slots, chosen, onPick, onUnpick, onErr
   function search(nextDate: string, nextTime: string) {
     timer.current = null;
     if (!nextDate && !nextTime) {
-      runFetch(new Date().toISOString());
+      setRows(null);
+      runFetch(undefined);
       return;
     }
     if (!nextDate) return;
-    const effectiveTime = nextTime || "00:00";
-    const iso = vietnamToIso(nextDate, effectiveTime);
+    if (!nextTime) {
+      setRows(null);
+      runFetch({ date: nextDate });
+      return;
+    }
+    const iso = vietnamToIso(nextDate, nextTime);
     if (!iso) return onError(t("errors.customInvalid"));
-    const now = Date.now();
-    const targetIso = !nextTime && new Date(iso).getTime() <= now ? new Date(now).toISOString() : iso;
-    if (nextTime && new Date(iso).getTime() <= now) return onError(t("errors.past"));
+    if (new Date(iso).getTime() <= Date.now()) return onError(t("errors.past"));
     setRows(null);
-    runFetch(targetIso);
+    runFetch({ date: nextDate, after: iso });
   }
 
   function schedule(nextDate: string, nextTime: string) {
     if (timer.current) clearTimeout(timer.current);
     latest.current += 1;
     if (!nextDate && !nextTime) {
-      runFetch(new Date().toISOString());
+      setRows(null);
+      runFetch(undefined);
       return;
     }
     if (nextDate) timer.current = setTimeout(() => search(nextDate, nextTime), SETTLE_MS);
@@ -225,7 +229,7 @@ export function ShowtimeFinder({ movieId, slots, chosen, onPick, onUnpick, onErr
         </Button>
       ) : null}
 
-      {!busy && !failed && rows !== null && rows.length === 0 ? <p role="status" className="type-secondary text-muted-foreground">{t("noneFromThen")}</p> : null}
+      {!busy && !failed && rows !== null && rows.length === 0 ? <p role="status" className="py-inset-sm text-center type-secondary text-muted-foreground">{t("noneFromThen")}</p> : null}
 
       {!busy && !failed && rows !== null && rows.length > 0 ? (
         <div className="flex flex-col gap-item">

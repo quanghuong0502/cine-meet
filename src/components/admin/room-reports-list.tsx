@@ -44,7 +44,7 @@ export function RoomReportsList({ reports }: { reports: RoomReportRow[] }) {
   const visible = filter === "all" ? reports : reports.filter((r) => r.status === filter);
 
   return (
-    <div className="flex flex-col gap-group">
+    <div className="flex flex-1 flex-col gap-group">
       <div role="group" aria-label={t("filterLabel")} className="flex flex-wrap gap-stack">
         <Chip selected={filter === "open"} onClick={() => setFilter("open")} className="tabular-nums">
           {t("status.open")} ({openCount})

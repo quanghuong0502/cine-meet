@@ -12,7 +12,7 @@ import { resolveLocale } from "./resolve-locale";
  * then the browser language, then Vietnamese.
  */
 export default getRequestConfig(async () => {
-  const [cookieStore, headerStore, user] = await Promise.all([cookies(), headers(), getActiveUser()]);
+  const [cookieStore, headerStore, user] = await Promise.all([cookies(), headers(), getActiveUser().catch(() => null)]);
   // Same read the layout's guard uses, so the user is loaded once per request (a locked or removed user falls back to the cookie).
   const savedLocale = user?.locale ?? null;
   const locale = resolveLocale(

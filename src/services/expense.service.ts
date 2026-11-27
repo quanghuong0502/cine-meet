@@ -5,8 +5,12 @@ import { EXPENSE_CATEGORIES } from "@/lib/appointment/cost";
 import { periodBuckets, type Period } from "@/lib/dashboard/period";
 import { vietnamToday } from "@/lib/movie/status";
 import { isCalendarDate, objectIdField, optionalText } from "@/lib/validation/fields";
+import { Auditorium } from "@/models/auditorium";
+import { Branch } from "@/models/branch";
+import { Brand } from "@/models/brand";
 import { Expense } from "@/models/expense";
 import { ManualViewing } from "@/models/manual-viewing";
+import { Movie } from "@/models/movie";
 import { checkBudgetWarnings } from "@/services/budget.service";
 
 export interface SpendingBucket {
@@ -118,4 +122,70 @@ export async function removeManualViewing(userId: string, id: string): Promise<{
   if (result.deletedCount === 0) return { ok: false, error: "not_found" };
   await Expense.deleteMany({ manualViewingId: id });
   return { ok: true };
+}
+
+export interface ManualViewingRow {
+  id: string;
+  date: string;
+  movieTitle?: string;
+  roomLabel?: string;
+  ticket: number;
+  fnb: number;
+  other: number;
+  total: number;
+  note?: string;
+}
+
+/** Recent manually logged viewings of the signed-in person, newest first, so they can review or remove mistakes. */
+export async function listRecentManualViewings(userId: string, limit = 15): Promise<ManualViewingRow[]> {
+  await connectToDatabase();
+  const docs = await ManualViewing.find({ userId }, "movieId auditoriumId date note")
+    .sort({ date: -1, createdAt: -1 })
+    .limit(limit)
+    .lean();
+  if (docs.length === 0) return [];
+  const ids = docs.map((d) => d._id);
+  const movieIds = [...new Set(docs.flatMap((d) => (d.movieId ? [d.movieId] : [])))];
+  const roomIds = [...new Set(docs.flatMap((d) => (d.auditoriumId ? [d.auditoriumId] : [])))];
+  const [expenses, movies, rooms] = await Promise.all([
+    Expense.find({ userId, manualViewingId: { $in: ids } }, "manualViewingId category amount").lean(),
+    movieIds.length ? Movie.find({ _id: { $in: movieIds } }, "title").lean() : Promise.resolve([]),
+    roomIds.length ? Auditorium.find({ _id: { $in: roomIds } }, "name branchId").lean() : Promise.resolve([]),
+  ]);
+  const branchIds = [...new Set(rooms.map((r) => r.branchId))];
+  const branches = branchIds.length ? await Branch.find({ _id: { $in: branchIds } }, "name brandId").lean() : [];
+  const brandIds = [...new Set(branches.map((b) => b.brandId))];
+  const brands = brandIds.length ? await Brand.find({ _id: { $in: brandIds } }, "name").lean() : [];
+
+  const brandName = new Map(brands.map((b) => [b._id.toString(), b.name]));
+  const branchLabel = new Map(
+    branches.map((b) => [b._id.toString(), [brandName.get(b.brandId.toString()), b.name].filter(Boolean).join(" · ")]),
+  );
+  const roomLabel = new Map(
+    rooms.map((r) => [r._id.toString(), [branchLabel.get(r.branchId.toString()), r.name].filter(Boolean).join(" · ")]),
+  );
+  const movieTitle = new Map(movies.map((m) => [m._id.toString(), m.title]));
+  const costByViewing = new Map<string, { ticket: number; fnb: number; other: number }>();
+  for (const e of expenses) {
+    const key = e.manualViewingId?.toString();
+    if (!key) continue;
+    const row = costByViewing.get(key) ?? { ticket: 0, fnb: 0, other: 0 };
+    row[e.category] += e.amount;
+    costByViewing.set(key, row);
+  }
+  return docs.map((d) => {
+    const id = d._id.toString();
+    const cost = costByViewing.get(id) ?? { ticket: 0, fnb: 0, other: 0 };
+    return {
+      id,
+      date: d.date,
+      movieTitle: d.movieId ? movieTitle.get(d.movieId.toString()) : undefined,
+      roomLabel: d.auditoriumId ? roomLabel.get(d.auditoriumId.toString()) : undefined,
+      ticket: cost.ticket,
+      fnb: cost.fnb,
+      other: cost.other,
+      total: cost.ticket + cost.fnb + cost.other,
+      note: d.note ?? undefined,
+    };
+  });
 }

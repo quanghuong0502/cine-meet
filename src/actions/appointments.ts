@@ -19,7 +19,7 @@ import {
   setPersonCost,
 } from "@/services/appointment-plan.service";
 import type { PlanData } from "@/services/appointment-plan.service";
-import { searchShowtimesFrom, type ShowtimeRow } from "@/services/showtime.service";
+import { searchMovieShowtimesForPicker, type ShowtimeRow } from "@/services/showtime.service";
 import {
   cancelAppointment,
   createAppointment,
@@ -90,7 +90,11 @@ export async function lockParticipantsAction(id: string, input: unknown): Promis
   const parsed = lockSchema.safeParse(input);
   if (!idSchema.safeParse(id).success || !parsed.success) return { ok: false, error: "validation" };
   const result = await lockParticipants(user.userId, id, parsed.data);
-  if (result.ok) refresh(id);
+  if (result.ok) {
+    // Advance straight into PLANNING so the creator never has to tap an extra intermediate "Begin planning" button.
+    await beginPlanning(user.userId, id).catch(() => undefined);
+    refresh(id);
+  }
   return result.ok ? { ok: true } : result;
 }
 
@@ -205,12 +209,25 @@ export async function setPersonCostAction(id: string, input: unknown): Promise<A
   return result.ok ? { ok: true } : result;
 }
 
-/** The showtimes of a movie on the day of the typed time, from that time on: what the person can pick when creating an appointment. */
-export async function findShowtimesFromAction(movieId: string, startAt: string): Promise<{ ok: true; showtimes: ShowtimeRow[] } | { ok: false; error: "validation" }> {
+/** Upcoming showtimes of a movie for `ShowtimeFinder` (all days when `date` is omitted, or one day optionally from `after`). */
+export async function findShowtimesFromAction(
+  movieId: string,
+  query?: { date?: string; after?: string } | string,
+): Promise<{ ok: true; showtimes: ShowtimeRow[] } | { ok: false; error: "validation" }> {
   await requireUser();
-  const when = new Date(startAt);
-  if (!idSchema.safeParse(movieId).success || Number.isNaN(when.getTime())) return { ok: false, error: "validation" };
-  return { ok: true, showtimes: await searchShowtimesFrom(movieId, when) };
+  if (!idSchema.safeParse(movieId).success) return { ok: false, error: "validation" };
+  if (!query) return { ok: true, showtimes: await searchMovieShowtimesForPicker(movieId) };
+  if (typeof query === "string") {
+    const when = new Date(query);
+    if (Number.isNaN(when.getTime())) return { ok: false, error: "validation" };
+    const day = new Date(when.getTime() + 7 * 3600_000).toISOString().slice(0, 10);
+    return { ok: true, showtimes: await searchMovieShowtimesForPicker(movieId, { date: day, after: when }) };
+  }
+  const date = query.date?.trim() || undefined;
+  if (date && !/^\d{4}-\d{2}-\d{2}$/.test(date)) return { ok: false, error: "validation" };
+  const after = query.after ? new Date(query.after) : undefined;
+  if (after && Number.isNaN(after.getTime())) return { ok: false, error: "validation" };
+  return { ok: true, showtimes: await searchMovieShowtimesForPicker(movieId, { date, after }) };
 }
 
 /** The room and food of a showtime the creator is trying (not saved yet): read only, nothing is written. */

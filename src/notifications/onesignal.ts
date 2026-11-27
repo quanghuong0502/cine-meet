@@ -43,6 +43,21 @@ function headers(apiKey: string): Record<string, string> {
   return { "Content-Type": "application/json", Authorization: `Basic ${apiKey}` };
 }
 
+/** OneSignal expects an absolute https URL when a site origin is configured; keep relative paths as-is when no origin env is set. */
+function resolveOneSignalUrl(path: string): string {
+  if (!path.startsWith("/")) return path;
+  const configured =
+    process.env.AUTH_URL?.trim() ||
+    process.env.NEXTAUTH_URL?.trim() ||
+    (process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim() ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL.trim()}` : "");
+  if (!configured) return path;
+  try {
+    return new URL(path, configured).href;
+  } catch {
+    return path;
+  }
+}
+
 /** Sends (or schedules, with `sendAfter`) one message to these devices through OneSignal. */
 export const sendOneSignal: OneSignalSender = async (subscriptionIds, payload, options) => {
   const config = oneSignalConfig();
@@ -59,7 +74,7 @@ export const sendOneSignal: OneSignalSender = async (subscriptionIds, payload, o
         // The words are already in the person's language (and pronouns): one language key, so OneSignal shows exactly this.
         headings: { en: payload.title },
         contents: { en: payload.body },
-        url: payload.url,
+        url: resolveOneSignalUrl(payload.url),
         // A newer push with the same topic replaces the older one on the phone (the same job as `tag` in the service worker).
         web_push_topic: payload.url.slice(0, 64),
         ttl: options.ttlSeconds,

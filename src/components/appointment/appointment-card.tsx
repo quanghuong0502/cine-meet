@@ -49,7 +49,9 @@ export function AppointmentCard({ item }: { item: AppointmentSummary }) {
         <ListThumb shape="poster" imageUrl={item.movie.posterUrl} />
         <div className="flex min-w-0 flex-1 flex-col gap-tight">
           <span className="break-words type-item-title">{item.movie.title}</span>
-          <span className="type-secondary text-muted-foreground tabular-nums">{when}</span>
+          <span className="type-secondary text-muted-foreground tabular-nums">
+            {item.isCreator || !item.creatorName ? when : `${when} · ${t("byName", { name: item.creatorName })}`}
+          </span>
           <span className="flex flex-wrap items-center gap-x-stack gap-y-tight">
             <AppointmentStatusBadge status={item.status} />
             {note ? <span className={cn("type-label", noteColor)}>{note}</span> : null}

@@ -33,16 +33,22 @@ export function GroupForm({ groupId, initialName, initialMemberIds, friends }: P
   const [name, setName] = useState(initialName);
   const [members, setMembers] = useState<string[]>(initialMemberIds);
   const [nameError, setNameError] = useState<string | null>(null);
+  const [membersError, setMembersError] = useState<string | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [saving, startSave] = useTransition();
   const [deleting, startDelete] = useTransition();
 
-  const toggle = (id: string) => setMembers((current) => (current.includes(id) ? current.filter((m) => m !== id) : [...current, id]));
+  const toggle = (id: string) => {
+    setMembersError(null);
+    setMembers((current) => (current.includes(id) ? current.filter((m) => m !== id) : [...current, id]));
+  };
 
   function save(event: React.FormEvent) {
     event.preventDefault();
     setNameError(null);
+    setMembersError(null);
     if (!name.trim()) { setNameError(t("errors.required")); return; }
+    if (friends.length > 0 && members.length === 0) { setMembersError(t("errors.membersRequired")); return; }
     startSave(async () => {
       const result = await saveGroupAction({ id: groupId, name, memberIds: members }).catch(() => null);
       if (!result) { toast.error(t("networkError")); return; }
@@ -151,6 +157,11 @@ export function GroupForm({ groupId, initialName, initialMemberIds, friends }: P
               })}
             </div>
           )}
+          {membersError ? (
+            <p role="alert" className="type-secondary text-destructive">
+              {membersError}
+            </p>
+          ) : null}
         </div>
 
         <div className="flex flex-col gap-stack">

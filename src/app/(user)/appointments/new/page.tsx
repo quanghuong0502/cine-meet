@@ -10,6 +10,7 @@ import { PageHeader } from "@/components/page-header";
 import { ScopedIntlProvider } from "@/components/scoped-intl-provider";
 import { Button } from "@/components/ui/button";
 import { requireUser } from "@/lib/auth/guards";
+import { resolveUserBackHref } from "@/lib/user-back-href";
 import { getSystemSettings } from "@/services/settings.service";
 import { getFriendOverview, listGroups } from "@/services/friend.service";
 import { listFilterMovies } from "@/services/movie.service";
@@ -28,11 +29,12 @@ export default async function NewAppointmentPage({ searchParams }: { searchParam
   const [user, t, params] = await Promise.all([requireUser(), getTranslations("appointments.new"), searchParams]);
   const initialMovieId = first(params.movieId);
   const showtimeId = first(params.showtimeId);
+  const backHref = resolveUserBackHref(params.back, "/appointments");
 
   return (
     <ScopedIntlProvider namespaces={["appointments.new", "appointments.networkError", "appointments.errors", "showtimes", "dateTimeField"]}>
       <div className="flex w-full flex-1 flex-col gap-section p-inset">
-        <PageHeader title={t("title")} backHref="/appointments" />
+        <PageHeader title={t("title")} backHref={backHref} />
         <Suspense fallback={<LoadingState compact />}>
           <NewAppointmentBody userId={user.userId} initialMovieId={initialMovieId} showtimeId={showtimeId} />
         </Suspense>

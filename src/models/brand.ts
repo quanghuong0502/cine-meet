@@ -1,5 +1,6 @@
 import { Schema, type InferSchemaType, type Model } from "mongoose";
 import { defineModel } from "@/lib/define-model";
+import { ROOM_3D_PRESET_IDS } from "@/lib/seat-layout/room-3d-appearance.defaults";
 
 /** A cinema chain (CGV, BHD, Beta, Lotte, Galaxy...). */
 const brandSchema = new Schema(
@@ -10,6 +11,8 @@ const brandSchema = new Schema(
     color: { type: String, trim: true },
     websiteUrl: { type: String, trim: true },
     appUrl: { type: String, trim: true },
+    /** Optional 3D auditorium visual theme preset for this brand; unset inherits system defaults. */
+    room3dPreset: { type: String, enum: ROOM_3D_PRESET_IDS },
     // Off = hidden from the user app and from new pick-lists; records that point at it stay as they are. A missing value counts as on.
     active: { type: Boolean, default: true },
   },

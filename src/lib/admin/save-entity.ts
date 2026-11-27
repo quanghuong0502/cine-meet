@@ -19,6 +19,8 @@ interface EntityService<Input> {
  */
 function refreshMasterData() {
   revalidatePath(PAGE, "layout");
+  revalidatePath("/admin/auditoriums", "layout");
+  revalidatePath("/admin/settings/room-3d");
   revalidatePath("/showtimes");
   revalidatePath("/cinemas", "layout");
   revalidatePath("/log-viewing");

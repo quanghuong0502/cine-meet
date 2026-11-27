@@ -4,7 +4,7 @@ import Link from "next/link";
 import { IconBadge } from "@/components/ui/icon-badge";
 import { cn } from "@/lib/utils";
 import { formatVnd } from "@/lib/money";
-import { SPENDING_PERIODS, type Period } from "@/lib/dashboard/period";
+import { formatPeriodKey, SPENDING_PERIODS, type Period } from "@/lib/dashboard/period";
 import type { SpendingBucket } from "@/services/expense.service";
 
 /** The money spent in the chosen period, split ticket/food/other, with a full-width bar chart of the last buckets (design 3.1). */
@@ -85,8 +85,8 @@ export function SpendingCard({ period, buckets }: { period: Period; buckets: Spe
         </div>
         {firstKey && lastKey ? (
           <div className="flex justify-between type-micro text-muted-foreground tabular-nums" aria-hidden="true">
-            <span>{firstKey}</span>
-            <span>{lastKey}</span>
+            <span>{formatPeriodKey(period, firstKey, locale)}</span>
+            <span>{formatPeriodKey(period, lastKey, locale)}</span>
           </div>
         ) : null}
       </div>

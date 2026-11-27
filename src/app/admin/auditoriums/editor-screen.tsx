@@ -8,6 +8,7 @@ import { ADMIN_SHELL_NAMESPACES, ScopedIntlProvider } from "@/components/scoped-
 import { Button } from "@/components/ui/button";
 import { resolveBackHref } from "@/lib/admin/back-href";
 import { defaultLayoutConfig } from "@/lib/seat-layout/config";
+import { resolveBrandRoom3DAppearance } from "@/lib/seat-layout/room-3d-appearance.defaults";
 import type { LayoutConfig, SeatStyle } from "@/lib/seat-layout/types";
 import { getAuditorium, getLayoutConfigById } from "@/services/auditorium.service";
 import { getCinemaDimensions } from "@/services/cinema-dimensions.service";
@@ -20,13 +21,15 @@ interface Props {
   /** Null when adding a room. */
   id: string | null;
   back?: string;
+  /** Optional existing auditorium id to duplicate layout config & branch from when creating a new room. */
+  copyFromId?: string;
 }
 
 /** The entry screen of a room (add or edit): loads what the editor needs. */
-export async function AuditoriumEditorScreen({ id, back }: Props) {
+export async function AuditoriumEditorScreen({ id, back, copyFromId }: Props) {
   const backHref = resolveBackHref(back, "/admin/auditoriums");
 
-  const [t, locale, branches, brands, types, dimensionDefaults, room3dAppearance, room] = await Promise.all([
+  const [t, locale, branches, brands, types, dimensionDefaults, room3dAppearance, room, copySource] = await Promise.all([
     getTranslations("admin.auditoriums"),
     getLocale(),
     getCachedBranches(),
@@ -35,6 +38,7 @@ export async function AuditoriumEditorScreen({ id, back }: Props) {
     getCinemaDimensions(),
     getRoom3DAppearance(),
     id ? getAuditorium(id) : Promise.resolve(null),
+    id === null && copyFromId ? getAuditorium(copyFromId) : Promise.resolve(null),
   ]);
   if (id !== null && !room) notFound();
   if (branches.length === 0 || types.length === 0) {
@@ -72,17 +76,26 @@ export async function AuditoriumEditorScreen({ id, back }: Props) {
 
   if (id === null) {
     const defaultType = seatTypes.find((s) => s.capacity === 1) ?? seatTypes[0];
+    const copiedConfig = copySource?.currentLayoutId
+      ? await getLayoutConfigById(copySource.currentLayoutId.toString())
+      : null;
+    const copyBranchId = copySource?.branchId.toString();
+    const copyBranchObj = copyBranchId ? branches.find((b) => b.id === copyBranchId) : undefined;
+    const copyBrandObj = copyBranchObj ? brands.find((b) => b.id === copyBranchObj.brandId) : undefined;
+    const copyAppearance = resolveBrandRoom3DAppearance(room3dAppearance, copyBrandObj?.room3dPreset);
     return (
       <ScopedIntlProvider namespaces={[...ADMIN_SHELL_NAMESPACES, "admin.auditoriums.editor", "seatMap", "cinemas.room"]}>
-        <div className="mx-auto flex w-full max-w-page flex-1 flex-col gap-section p-inset">
+        <div className="mx-auto flex w-full max-w-editor flex-1 flex-col gap-section p-inset">
           <PageHeader title={t("newTitle")} backHref={backHref} />
           <AuditoriumEditor
             auditorium={null}
+            initialBranchId={copyBranchObj?.active ? copyBranchId : undefined}
             branches={optionsFor()}
             seatTypes={seatTypes}
-            initialConfig={defaultLayoutConfig(defaultType.id)}
+            initialConfig={(copiedConfig as LayoutConfig | null) ?? defaultLayoutConfig(defaultType.id)}
             dimensionDefaults={dimensionDefaults}
-            room3dAppearance={room3dAppearance}
+            room3dAppearance={copyAppearance}
+            brandName={copyBrandObj?.name}
             backHref={backHref}
           />
         </div>
@@ -92,10 +105,13 @@ export async function AuditoriumEditorScreen({ id, back }: Props) {
 
   const currentConfig = room?.currentLayoutId ? await getLayoutConfigById(room.currentLayoutId.toString()) : null;
   if (!room || !currentConfig) notFound();
+  const branchObj = branches.find((b) => b.id === room.branchId.toString());
+  const brandObj = branchObj ? brands.find((b) => b.id === branchObj.brandId) : undefined;
+  const effectiveAppearance = resolveBrandRoom3DAppearance(room3dAppearance, brandObj?.room3dPreset);
 
   return (
     <ScopedIntlProvider namespaces={[...ADMIN_SHELL_NAMESPACES, "admin.auditoriums.editor", "seatMap", "cinemas.room"]}>
-      <div className="mx-auto flex w-full max-w-page flex-1 flex-col gap-section p-inset">
+      <div className="mx-auto flex w-full max-w-editor flex-1 flex-col gap-section p-inset">
         <PageHeader title={room.name} backHref={backHref} />
         <AuditoriumEditor
           // Another room: start the editor's state from scratch.
@@ -105,7 +121,8 @@ export async function AuditoriumEditorScreen({ id, back }: Props) {
           seatTypes={seatTypes}
           initialConfig={currentConfig as LayoutConfig}
           dimensionDefaults={dimensionDefaults}
-          room3dAppearance={room3dAppearance}
+          room3dAppearance={effectiveAppearance}
+          brandName={brandObj?.name}
           backHref={backHref}
         />
       </div>

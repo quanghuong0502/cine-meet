@@ -84,6 +84,7 @@ export interface SceneSeat {
   yaw: number;
   broken: boolean;
   obstructed: boolean;
+  recommended: boolean;
 }
 
 export interface SceneEntrance {
@@ -276,6 +277,7 @@ export function buildRoomScene(
       yaw,
       broken: seat.flags.includes("broken"),
       obstructed: seat.flags.includes("obstructed"),
+      recommended: seat.flags.includes("recommended"),
     };
   });
 

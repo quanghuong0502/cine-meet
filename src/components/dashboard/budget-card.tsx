@@ -22,7 +22,7 @@ export function BudgetCard({ progress }: { progress: BudgetProgress[] }) {
         </div>
         <p className="type-secondary text-muted-foreground">{t("notSet")}</p>
         <Button asChild variant="outline" size="cta-sm">
-          <Link href="/settings">
+          <Link href="/settings?back=/">
             <Tuning2Icon aria-hidden />
             {t("configure")}
           </Link>
@@ -40,7 +40,7 @@ export function BudgetCard({ progress }: { progress: BudgetProgress[] }) {
           <h2 className="type-heading">{t("title")}</h2>
         </div>
         <Button asChild variant="ghost" size="sm" className="-mr-inset-sm text-primary-text">
-          <Link href="/settings">{t("edit")}</Link>
+          <Link href="/settings?back=/">{t("edit")}</Link>
         </Button>
       </div>
       {progress.map((p) => {

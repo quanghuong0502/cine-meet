@@ -21,6 +21,16 @@ export function pairKey(a: string, b: string): string {
   return [a, b].sort().join(":");
 }
 
+/** Fast count of pending incoming friend requests for the Profile badge. */
+export async function countIncomingFriendRequests(userId: string): Promise<number> {
+  await connectToDatabase();
+  return Friendship.countDocuments({
+    status: "pending",
+    requesterId: { $ne: userId },
+    $or: [{ userA: userId }, { userB: userId }],
+  });
+}
+
 function toPerson(user: { _id: { toString(): string }; name: string; avatar?: string | null }): PersonView {
   return { id: user._id.toString(), name: user.name, avatar: user.avatar ?? undefined };
 }

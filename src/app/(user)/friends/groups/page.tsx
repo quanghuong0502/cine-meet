@@ -19,7 +19,7 @@ export default async function GroupsPage() {
   const t = await getTranslations("friends.groups");
   const groups = await listGroups(user.userId);
   return (
-    <div className="flex w-full flex-col gap-section p-inset">
+    <div className="flex w-full flex-1 flex-col gap-section p-inset">
       <PageHeader title={t("title")} backHref="/friends" />
       {groups.length === 0 ? (
         <EmptyState mascot="dudu-happy" title={t("emptyTitle")} description={t("emptyDescription")} />
@@ -36,7 +36,11 @@ export default async function GroupsPage() {
                 </IconBadge>
                 <span className="flex min-w-0 flex-1 flex-col gap-tight">
                   <span className="break-words type-item-title">{group.name}</span>
-                  <span className="type-secondary text-muted-foreground">{t("memberCount", { count: group.members.length })}</span>
+                  <span className="truncate type-secondary text-muted-foreground">
+                    {group.members.length > 0
+                      ? `${t("memberCount", { count: group.members.length })} · ${group.members.map((m) => m.name).join(", ")}`
+                      : t("memberCount", { count: 0 })}
+                  </span>
                 </span>
                 <AltArrowRightIcon className="size-icon-sm shrink-0 text-muted-foreground" aria-hidden />
               </Link>

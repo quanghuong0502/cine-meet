@@ -97,6 +97,12 @@ export function createScreenImageUploadTicket(config: CloudinaryConfig, nowMs: n
   return createUploadTicket({ publicId: `room-3d-screens/${unique}`, folder: "room-3d-screens", transformation: "c_limit,w_1920,h_1080", overwrite: false }, config, nowMs);
 }
 
+/** A ticket for a 3D auditorium surface texture (wall, ceiling, carpet/floor): kept whole up to 1024×1024 for smooth mobile WebGL. */
+export function createSurfaceTextureUploadTicket(config: CloudinaryConfig, nowMs: number = Date.now()): UploadTicket {
+  const unique = `${nowMs.toString(36)}${randomBytes(4).toString("hex")}`;
+  return createUploadTicket({ publicId: `room-3d-textures/${unique}`, folder: "room-3d-textures", transformation: "c_limit,w_1024,h_1024", overwrite: false }, config, nowMs);
+}
+
 /** Only this person's own avatar on our Cloudinary account is accepted as a profile picture (the form cannot point it elsewhere). */
 export function isOwnAvatarUrl(url: string, userId: string, config: CloudinaryConfig): boolean {
   let parsed: URL;

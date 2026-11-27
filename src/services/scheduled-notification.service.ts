@@ -36,12 +36,12 @@ export async function cancelScheduled(appointmentId: string, types?: ScheduledNo
 }
 
 /**
- * One person no longer needs the "about to expire" warning (they answered, declined or left): takes back only their held push.
- * Does nothing when no push is held for them (every non-OneSignal setup), so it is cheap to call on every answer.
+ * One person no longer needs a pending scheduled push (they answered/declined for deadline_warning, or withdrew for reminder):
+ * takes back only their held push. Cheap when no push is held (non-OneSignal setups).
  */
-export async function dropDeadlineWarningFor(appointmentId: string, userId: string): Promise<void> {
+async function dropScheduledPushFor(appointmentId: string, userId: string, type: ScheduledNotificationType): Promise<void> {
   await connectToDatabase();
-  const rows = await ScheduledNotification.find({ appointmentId, type: "deadline_warning", status: "pending", "pushIds.userId": userId }, "pushIds").lean();
+  const rows = await ScheduledNotification.find({ appointmentId, type, status: "pending", "pushIds.userId": userId }, "pushIds").lean();
   if (rows.length === 0) return;
   const { cancelRemote } = await import("@/notifications/remote-schedule");
   const pushIds = rows.flatMap((row) => row.pushIds.filter((p) => p.userId.toString() === userId).map((p) => p.id));
@@ -49,6 +49,16 @@ export async function dropDeadlineWarningFor(appointmentId: string, userId: stri
     cancelRemote(pushIds),
     ScheduledNotification.updateMany({ _id: { $in: rows.map((r) => r._id) } }, { $pull: { pushIds: { userId } } }),
   ]);
+}
+
+/** One person no longer needs the "about to expire" warning (they answered, declined or left). */
+export function dropDeadlineWarningFor(appointmentId: string, userId: string): Promise<void> {
+  return dropScheduledPushFor(appointmentId, userId, "deadline_warning");
+}
+
+/** One person withdrew from a confirmed appointment: cancel any pending OneSignal showtime reminders held for them. */
+export function dropReminderFor(appointmentId: string, userId: string): Promise<void> {
+  return dropScheduledPushFor(appointmentId, userId, "reminder");
 }
 
 /**

@@ -3,12 +3,13 @@
 import { AltArrowDownIcon, AltArrowUpIcon, CheckIcon, GalleryIcon, LoaderIcon, RestartIcon } from "@solar-icons/react/line-duotone";
 import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { getScreenImageUploadTicket } from "@/actions/uploads";
+import { getScreenImageUploadTicket, getSurfaceTextureUploadTicket } from "@/actions/uploads";
 import { saveRoom3DAppearanceAction } from "@/app/admin/settings/room-3d/actions";
 import { ChoiceGroup } from "@/components/admin/auditorium-editor/chips";
 import { ImageUpload, UploadBusyContext } from "@/components/image-upload";
+import { LazyConfirmDialog } from "@/components/lazy-dialogs";
 import { LoadingState } from "@/components/loading-state";
 import { RemoteImage } from "@/components/remote-image";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ import { parseYoutubeId, youtubeThumbnailUrl } from "@/lib/movie/youtube";
 import { DEFAULT_CINEMA_DIMENSIONS, type CinemaDimensionDefaults } from "@/lib/seat-layout/dimensions.defaults";
 import {
   AISLE_LED_COLORS,
+  applyRoom3DPreset,
   CARPET_STYLES,
   CEILING_STYLES,
   COVE_LED_PLACEMENTS,
@@ -29,16 +31,25 @@ import {
   LIGHT_ACCENT_COLORS,
   MAX_SCREEN_URL_LENGTH,
   MAX_SUBTITLE_LENGTH,
+  MAX_SURFACE_IMAGE_REPEAT,
+  MIN_SURFACE_IMAGE_REPEAT,
+  MOVIE_AMBIENT_LEVELS,
   normalizeRoom3DAppearance,
+  PROJECTOR_BEAM_INTENSITIES,
   ROOM_3D_COLOR_SWATCHES,
+  ROOM_3D_PRESETS,
   ROW_MARKER_PLACEMENTS,
   SCREEN_BORDER_STYLES,
   SCREEN_CONTENT_PRESETS,
+  SCREEN_MASKINGS,
   SCREEN_SOURCES,
   SEAT_FINISHES,
+  STARLIGHT_COLORS,
   SUBTITLE_COLORS,
+  SURFACE_IMAGE_REPEAT_PRESETS,
   WALL_STYLES,
   type Room3DAppearance,
+  type Room3DPresetId,
 } from "@/lib/seat-layout/room-3d-appearance.defaults";
 import type { Room3DConfig, SceneSeatType } from "@/lib/seat-layout/scene";
 import type { LayoutConfig, SeatTypeInfo } from "@/lib/seat-layout/types";
@@ -60,44 +71,195 @@ const Room3DView = dynamic(() => import("@/components/seat-map/room-3d-view").th
   ),
 });
 
-const SAMPLE_SEAT_TYPES: (SeatTypeInfo & { color: string })[] = [
-  { id: "std", name: "Standard", capacity: 1, style: "standard", color: "#8e1e36" },
-  { id: "vip", name: "VIP", capacity: 1, style: "vip", color: "#b45309" },
-  { id: "couple", name: "Sweetbox", capacity: 2, style: "vip", color: "#be185d" },
+interface PreviewSeatType extends SeatTypeInfo {
+  color: string | null;
+  color3d: string | null;
+}
+
+const SAMPLE_SEAT_TYPES: PreviewSeatType[] = [
+  { id: "std", name: "Standard", capacity: 1, style: "standard", color: "#8e1e36", color3d: "#8e1e36" },
+  { id: "vip", name: "VIP", capacity: 1, style: "vip", color: "#b45309", color3d: "#b45309" },
+  { id: "couple", name: "Sweetbox", capacity: 2, style: "vip", color: "#be185d", color3d: "#be185d" },
 ];
 
-const SAMPLE_CONFIG: LayoutConfig = {
-  rows: 7,
-  cols: 12,
-  rowLabelOrder: "front_to_back",
-  colNumbering: "left_to_right",
-  defaultSeatType: "std",
-  screen: {
-    positionPct: 50,
-    widthPct: 86,
-    distance: "medium",
-    shape: "scope",
-    mount: "mid",
-    tilt: "flat",
-  },
-  seatRecline: "slight",
-  rowPitch: "standard",
-  stadiumFromRow: 1,
-  stepsPerRow: 2,
-  aisles: {
-    verticalAfterCols: [3, 9],
-    horizontalAfterRows: [],
-  },
-  entrances: [
-    { side: "left", position: "front" },
-    { side: "right", position: "back" },
-  ],
-  overrides: [
-    { row: "D", cols: [4, 5, 6, 7, 8, 9], type: "vip" },
-    { row: "E", cols: [4, 5, 6, 7, 8, 9], type: "vip" },
-    { row: "G", cols: [4, 5, 6, 7, 8, 9], type: "couple" },
-  ],
-};
+const LUXURY_SEAT_TYPES: PreviewSeatType[] = [
+  { id: "lux-recliner", name: "Recliner", capacity: 1, style: "recliner", color: "#9a3412", color3d: "#7c2d12" },
+  { id: "lux-4dx", name: "4DX", capacity: 1, style: "4dx", color: "#1d4ed8", color3d: "#1e3a5f" },
+  { id: "lux-bed", name: "L'Amour", capacity: 2, style: "bed", color: "#9d174d", color3d: "#831843" },
+];
+
+type SampleRoomKind = "standard" | "large" | "luxury" | "sideAisle";
+const SAMPLE_ROOM_KINDS: readonly SampleRoomKind[] = ["standard", "large", "luxury", "sideAisle"];
+
+function buildSampleConfig(types: PreviewSeatType[], kind: SampleRoomKind): LayoutConfig {
+  if (kind === "luxury") {
+    return {
+      rows: 5,
+      cols: 8,
+      rowLabelOrder: "front_to_back",
+      colNumbering: "left_to_right",
+      defaultSeatType: "lux-recliner",
+      screen: {
+        positionPct: 50,
+        widthPct: 90,
+        distance: "medium",
+        shape: "scope",
+        mount: "high",
+        tilt: "slight",
+      },
+      seatRecline: "deep",
+      rowPitch: "vip",
+      stadiumFromRow: 1,
+      stepsPerRow: 2,
+      aisles: {
+        verticalAfterCols: [4],
+        horizontalAfterRows: [],
+      },
+      entrances: [
+        { side: "left", position: "front" },
+        { side: "right", position: "back" },
+      ],
+      overrides: [
+        { row: "A", cols: [1, 2, 3, 4, 5, 6, 7, 8], type: "lux-4dx" },
+        { row: "B", cols: [1, 2, 3, 4, 5, 6, 7, 8], type: "lux-4dx" },
+        { row: "E", cols: [1, 2, 3, 4, 5, 6, 7, 8], type: "lux-bed" },
+      ],
+    };
+  }
+
+  const singles = types.filter((t) => t.capacity === 1);
+  const couples = types.filter((t) => t.capacity === 2);
+  const std = singles.find((t) => t.style === "standard") ?? singles[0] ?? types[0];
+  const vip =
+    singles.find((t) => t.id !== std.id && (t.style === "vip" || t.style === "recliner")) ??
+    singles.find((t) => t.id !== std.id);
+  const extra =
+    singles.find((t) => t.id !== std.id && t.id !== vip?.id) ??
+    couples.find((t) => t.id !== std.id && t.id !== vip?.id);
+  const couple = couples[0];
+
+  if (kind === "large") {
+    const overrides: LayoutConfig["overrides"] = [];
+    if (vip) {
+      for (const row of ["E", "F", "G", "H"]) {
+        overrides.push({ row, cols: [4, 5, 6, 7, 8, 9, 10, 11, 12, 13], type: vip.id });
+      }
+    }
+    if (couple) {
+      overrides.push({ row: "K", cols: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16], type: couple.id });
+    }
+    return {
+      rows: 10,
+      cols: 16,
+      rowLabelOrder: "front_to_back",
+      colNumbering: "left_to_right",
+      defaultSeatType: std.id,
+      screen: {
+        positionPct: 50,
+        widthPct: 88,
+        distance: "medium",
+        shape: "standard",
+        mount: "mid",
+        tilt: "flat",
+      },
+      seatRecline: "slight",
+      rowPitch: "standard",
+      stadiumFromRow: 1,
+      stepsPerRow: 2,
+      aisles: {
+        verticalAfterCols: [3, 13],
+        horizontalAfterRows: [4],
+      },
+      entrances: [
+        { side: "left", position: "front" },
+        { side: "right", position: "front" },
+        { side: "left", position: "back" },
+      ],
+      overrides,
+    };
+  }
+
+  if (kind === "sideAisle") {
+    const overrides: LayoutConfig["overrides"] = [];
+    if (vip) {
+      overrides.push({ row: "D", cols: [3, 4, 5, 6, 7, 8], type: vip.id });
+      overrides.push({ row: "E", cols: [3, 4, 5, 6, 7, 8], type: vip.id });
+    }
+    if (couple) {
+      overrides.push({ row: "F", cols: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], type: couple.id });
+    }
+    return {
+      rows: 6,
+      cols: 10,
+      rowLabelOrder: "front_to_back",
+      colNumbering: "left_to_right",
+      defaultSeatType: std.id,
+      screen: {
+        positionPct: 50,
+        widthPct: 86,
+        distance: "near",
+        shape: "scope",
+        mount: "mid",
+        tilt: "flat",
+      },
+      seatRecline: "slight",
+      rowPitch: "standard",
+      stadiumFromRow: 1,
+      stepsPerRow: 2,
+      aisles: {
+        verticalAfterCols: [],
+        horizontalAfterRows: [],
+        sideAisles: ["right"],
+      },
+      entrances: [
+        { side: "right", position: "front" },
+        { side: "right", position: "back" },
+      ],
+      overrides,
+    };
+  }
+
+  const overrides: LayoutConfig["overrides"] = [];
+  if (vip) {
+    overrides.push({ row: "D", cols: [4, 5, 6, 7, 8, 9], type: vip.id });
+    overrides.push({ row: "E", cols: [4, 5, 6, 7, 8, 9], type: vip.id });
+  }
+  if (extra && extra.id !== couple?.id) {
+    overrides.push({ row: "F", cols: [4, 5, 6, 7, 8, 9], type: extra.id });
+  }
+  if (couple) {
+    overrides.push({ row: "G", cols: [4, 5, 6, 7, 8, 9], type: couple.id });
+  }
+
+  return {
+    rows: 7,
+    cols: 12,
+    rowLabelOrder: "front_to_back",
+    colNumbering: "left_to_right",
+    defaultSeatType: std.id,
+    screen: {
+      positionPct: 50,
+      widthPct: 86,
+      distance: "medium",
+      shape: "scope",
+      mount: "mid",
+      tilt: "flat",
+    },
+    seatRecline: "slight",
+    rowPitch: "standard",
+    stadiumFromRow: 1,
+    stepsPerRow: 2,
+    aisles: {
+      verticalAfterCols: [3, 9],
+      horizontalAfterRows: [],
+    },
+    entrances: [
+      { side: "left", position: "front" },
+      { side: "right", position: "back" },
+    ],
+    overrides,
+  };
+}
 
 const CONTROL_INPUT = "h-control rounded-xl bg-background px-inset type-body";
 
@@ -128,7 +290,7 @@ function CollapsibleSection({
         onClick={() => setOpen((v) => !v)}
         className="flex min-h-target items-center justify-between gap-item rounded-xl px-inset-sm py-inset-xs text-left transition-colors outline-none hover:bg-muted/40 focus-visible:ring-3 focus-visible:ring-ring/50"
       >
-        <h3 className="type-item-title">{title}</h3>
+        <span className="type-item-title">{title}</span>
         {open ? (
           <AltArrowUpIcon className="size-icon-sm shrink-0 text-muted-foreground" aria-hidden />
         ) : (
@@ -219,12 +381,137 @@ function ColorSwatchField({
   );
 }
 
+function SurfaceTextureField({
+  id,
+  name,
+  label,
+  urlLabel,
+  placeholder,
+  hint,
+  invalidText,
+  value,
+  invalid,
+  onChange,
+  repeatId,
+  repeatLabel,
+  repeatHint,
+  repeat,
+  onRepeatChange,
+}: {
+  id: string;
+  name: string;
+  label: string;
+  urlLabel: string;
+  placeholder: string;
+  hint: string;
+  invalidText: string;
+  value: string;
+  invalid: boolean;
+  onChange: (next: string) => void;
+  repeatId: string;
+  repeatLabel: string;
+  repeatHint: string;
+  repeat: number;
+  onRepeatChange: (next: number) => void;
+}) {
+  const hasImage = value.trim().length > 0;
+  return (
+    <div className="flex flex-col gap-item rounded-xl border bg-background/50 p-inset-sm">
+      <span className="type-label leading-none! text-muted-foreground">{label}</span>
+      <ImageUpload
+        name={name}
+        value={value}
+        onChange={onChange}
+        getTicket={getSurfaceTextureUploadTicket}
+        preview={(url) => {
+          const validPreview = url && (url.startsWith("blob:") || isValidHttpUrl(url)) ? url : "";
+          return (
+            <div className="relative flex aspect-square w-swatch items-center justify-center overflow-hidden rounded-xl border bg-muted">
+              {validPreview ? (
+                <RemoteImage src={validPreview} alt="" fill sizes={`${PX.swatch}px`} className="object-cover" />
+              ) : (
+                <GalleryIcon className="size-icon-lg text-muted-foreground" aria-hidden />
+              )}
+            </div>
+          );
+        }}
+      />
+      <div className="flex flex-col gap-tight">
+        <Label htmlFor={id} className="text-muted-foreground">
+          {urlLabel}
+        </Label>
+        <Input
+          id={id}
+          type="url"
+          value={value}
+          maxLength={MAX_SCREEN_URL_LENGTH}
+          autoComplete="off"
+          placeholder={placeholder}
+          onChange={(e) => onChange(e.target.value)}
+          aria-invalid={invalid}
+          className={CONTROL_INPUT}
+        />
+        {invalid ? (
+          <p className="type-caption text-destructive">{invalidText}</p>
+        ) : (
+          <p className="type-caption text-muted-foreground">{hint}</p>
+        )}
+      </div>
+      {hasImage ? (
+        <div className="flex flex-col gap-tight border-t pt-inset-xs">
+          <div className="flex items-baseline justify-between gap-tight">
+            <Label htmlFor={repeatId} className="text-muted-foreground">
+              {repeatLabel}
+            </Label>
+            <span className="type-caption tabular-nums text-muted-foreground">
+              {repeat}×
+            </span>
+          </div>
+          <div className="flex flex-wrap items-center gap-tight">
+            <ChoiceGroup
+              label={repeatLabel}
+              value={String(repeat)}
+              onChange={(next) => onRepeatChange(Number(next))}
+              options={SURFACE_IMAGE_REPEAT_PRESETS.map((n) => ({
+                value: String(n),
+                label: `${n}×`,
+              }))}
+            />
+            <Input
+              id={repeatId}
+              type="number"
+              inputMode="numeric"
+              min={MIN_SURFACE_IMAGE_REPEAT}
+              max={MAX_SURFACE_IMAGE_REPEAT}
+              step={1}
+              value={repeat}
+              onChange={(e) => {
+                const parsed = Number.parseInt(e.target.value, 10);
+                if (!Number.isNaN(parsed)) {
+                  onRepeatChange(Math.max(MIN_SURFACE_IMAGE_REPEAT, Math.min(MAX_SURFACE_IMAGE_REPEAT, parsed)));
+                }
+              }}
+              className="h-control w-swatch rounded-xl bg-card px-inset-xs text-center type-body tabular-nums"
+            />
+          </div>
+          <p className="type-caption text-muted-foreground">{repeatHint}</p>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 interface Props {
   initial: Room3DAppearance;
   dimensionDefaults?: CinemaDimensionDefaults;
+  seatTypes?: PreviewSeatType[];
 }
 
-export function Room3DAppearanceForm({ initial, dimensionDefaults = DEFAULT_CINEMA_DIMENSIONS }: Props) {
+export function Room3DAppearanceForm({
+  initial,
+  dimensionDefaults = DEFAULT_CINEMA_DIMENSIONS,
+  seatTypes,
+}: Props) {
   const t = useTranslations("admin.room3dAppearance");
   const tc = useTranslations("admin.common");
   const [draft, setDraft] = useState<Room3DAppearance>(() => normalizeRoom3DAppearance(initial));
@@ -232,8 +519,15 @@ export function Room3DAppearanceForm({ initial, dimensionDefaults = DEFAULT_CINE
     normalizeRoom3DAppearance(initial),
   );
   const [heat, setHeat] = useState(false);
+  const [previewCollapsed, setPreviewCollapsed] = useState(false);
+  const [confirmReset, setConfirmReset] = useState(false);
+  const [sampleRoomKind, setSampleRoomKind] = useState<SampleRoomKind>("standard");
+  const [appliedPreset, setAppliedPreset] = useState<Room3DPresetId | null>(null);
+  const [prePresetDraft, setPrePresetDraft] = useState<Room3DAppearance | null>(null);
   const [selectedSeat, setSelectedSeat] = useState<string | null>(null);
-  const [uploading, setUploading] = useState(false);
+  const [uploadCount, setUploadCount] = useState(0);
+  const reportUpload = useCallback((busy: boolean) => setUploadCount((n) => Math.max(0, n + (busy ? 1 : -1))), []);
+  const uploading = uploadCount > 0;
   const [pending, startSaving] = useTransition();
 
   // Lightly debounce live 3D UI updates while dragging color pickers or typing subtitles/links.
@@ -242,9 +536,32 @@ export function Room3DAppearanceForm({ initial, dimensionDefaults = DEFAULT_CINE
     return () => window.clearTimeout(id);
   }, [draft]);
 
-  const set = (patch: Partial<Room3DAppearance>) => setDraft((prev) => ({ ...prev, ...patch }));
+  const set = (patch: Partial<Room3DAppearance>) => {
+    setAppliedPreset(null);
+    setPrePresetDraft(null);
+    setDraft((prev) => ({ ...prev, ...patch }));
+  };
+  const togglePreset = (presetId: Room3DPresetId) => {
+    if (appliedPreset === presetId) {
+      // Clicking the active preset again turns it off and restores the pre-preset configuration.
+      setAppliedPreset(null);
+      setDraft(prePresetDraft ?? normalizeRoom3DAppearance(initial));
+      setPrePresetDraft(null);
+      return;
+    }
+    const base = prePresetDraft ?? draft;
+    if (!prePresetDraft) setPrePresetDraft(draft);
+    setAppliedPreset(presetId);
+    setDraft(applyRoom3DPreset(base, presetId, { keepScreenSource: base.screenSource !== "preset" }));
+  };
   const trimmedImageUrl = draft.screenImageUrl.trim();
   const imageUrlInvalid = trimmedImageUrl.length > 0 && !isValidHttpUrl(trimmedImageUrl);
+  const trimmedWallImageUrl = draft.wallImageUrl.trim();
+  const wallImageUrlInvalid = trimmedWallImageUrl.length > 0 && !isValidHttpUrl(trimmedWallImageUrl);
+  const trimmedCeilingImageUrl = draft.ceilingImageUrl.trim();
+  const ceilingImageUrlInvalid = trimmedCeilingImageUrl.length > 0 && !isValidHttpUrl(trimmedCeilingImageUrl);
+  const trimmedCarpetImageUrl = draft.carpetImageUrl.trim();
+  const carpetImageUrlInvalid = trimmedCarpetImageUrl.length > 0 && !isValidHttpUrl(trimmedCarpetImageUrl);
   const trimmedYoutubeUrl = draft.screenYoutubeUrl.trim();
   const parsedYoutubeId = useMemo(
     () => (trimmedYoutubeUrl ? parseYoutubeId(trimmedYoutubeUrl) : null),
@@ -252,37 +569,45 @@ export function Room3DAppearanceForm({ initial, dimensionDefaults = DEFAULT_CINE
   );
   const youtubeUrlInvalid = trimmedYoutubeUrl.length > 0 && parsedYoutubeId === null;
 
+  const activeSeatTypes = useMemo(() => {
+    if (sampleRoomKind === "luxury") return LUXURY_SEAT_TYPES;
+    return seatTypes && seatTypes.length > 0 ? seatTypes : SAMPLE_SEAT_TYPES;
+  }, [seatTypes, sampleRoomKind]);
+  const sampleConfig = useMemo(() => buildSampleConfig(activeSeatTypes, sampleRoomKind), [activeSeatTypes, sampleRoomKind]);
   const sampleBuilt = useMemo(
-    () => buildLayoutPreview(SAMPLE_CONFIG, SAMPLE_SEAT_TYPES, dimensionDefaults),
-    [dimensionDefaults],
+    () => buildLayoutPreview(sampleConfig, activeSeatTypes, dimensionDefaults),
+    [sampleConfig, activeSeatTypes, dimensionDefaults],
   );
   const sampleSceneTypes = useMemo<SceneSeatType[]>(
-    () => SAMPLE_SEAT_TYPES.map(({ id, color, style }) => ({ id, color, color3d: color, style })),
-    [],
+    () => activeSeatTypes.map(({ id, color, color3d, style }) => ({ id, color, color3d, style })),
+    [activeSeatTypes],
   );
   const sampleRoomConfig = useMemo<Room3DConfig>(
     () => ({
-      stadiumFromRow: SAMPLE_CONFIG.stadiumFromRow,
-      stepsPerRow: SAMPLE_CONFIG.stepsPerRow,
-      screenDistance: SAMPLE_CONFIG.screen.distance,
-      screenShape: SAMPLE_CONFIG.screen.shape,
-      screenMount: SAMPLE_CONFIG.screen.mount,
-      screenTilt: SAMPLE_CONFIG.screen.tilt,
-      seatRecline: SAMPLE_CONFIG.seatRecline,
-      rowPitch: SAMPLE_CONFIG.rowPitch,
+      stadiumFromRow: sampleConfig.stadiumFromRow,
+      stepsPerRow: sampleConfig.stepsPerRow,
+      screenDistance: sampleConfig.screen.distance,
+      screenShape: sampleConfig.screen.shape,
+      screenMount: sampleConfig.screen.mount,
+      screenTilt: sampleConfig.screen.tilt,
+      seatRecline: sampleConfig.seatRecline,
+      rowPitch: sampleConfig.rowPitch,
       defaults: dimensionDefaults,
     }),
-    [dimensionDefaults],
+    [sampleConfig, dimensionDefaults],
   );
 
   function resetToDefault() {
+    setConfirmReset(false);
+    setAppliedPreset(null);
+    setPrePresetDraft(null);
     setDraft({ ...DEFAULT_ROOM_3D_APPEARANCE });
     toast.info(t("resetNotice"));
   }
 
   function save() {
     if (uploading) return;
-    if (imageUrlInvalid) {
+    if (imageUrlInvalid || wallImageUrlInvalid || ceilingImageUrlInvalid || carpetImageUrlInvalid) {
       toast.error(t("fields.screenImageInvalid"));
       return;
     }
@@ -294,9 +619,16 @@ export function Room3DAppearanceForm({ initial, dimensionDefaults = DEFAULT_CINE
       ...draft,
       screenImageUrl: trimmedImageUrl,
       screenYoutubeUrl: trimmedYoutubeUrl,
+      wallImageUrl: trimmedWallImageUrl,
+      ceilingImageUrl: trimmedCeilingImageUrl,
+      carpetImageUrl: trimmedCarpetImageUrl,
     };
     startSaving(async () => {
-      const result = await saveRoom3DAppearanceAction(payload);
+      const result = await saveRoom3DAppearanceAction(payload).catch(() => null);
+      if (!result) {
+        toast.error(tc("errors.network"));
+        return;
+      }
       if (result.ok) {
         toast.success(tc("saved"));
       } else {
@@ -306,37 +638,102 @@ export function Room3DAppearanceForm({ initial, dimensionDefaults = DEFAULT_CINE
   }
 
   return (
+    <UploadBusyContext.Provider value={reportUpload}>
     <div className="flex flex-1 flex-col gap-group">
       <p className="type-secondary text-muted-foreground">{t("intro")}</p>
 
       <div className="flex flex-col gap-group lg:grid lg:grid-cols-[minmax(0,1fr)_var(--container-form)] lg:items-start lg:gap-section">
         {/* Sticky Live 3D Sample Auditorium Preview */}
         <div className="sticky top-target z-10 -mx-inset flex transform-gpu flex-col gap-tight bg-background px-inset pb-inset-xs lg:mx-0 lg:px-0">
-          <Room3DView
-            layoutKey="room-3d-appearance-sample"
-            seats={sampleBuilt.seats}
-            geometry={sampleBuilt.geometry}
-            roomConfig={sampleRoomConfig}
-            appearance={previewAppearance}
-            seatTypes={sampleSceneTypes}
-            maxHeight={PREVIEW_MAX_HEIGHT}
-            heat={heat}
-            selected={selectedSeat}
-            onSelect={setSelectedSeat}
-          />
-          <div className="flex min-h-target flex-wrap items-center justify-between gap-stack">
-            <span className="type-caption text-muted-foreground">{t("previewHint")}</span>
-            <div className="flex items-center gap-stack">
+          {!previewCollapsed ? (
+            <Room3DView
+              layoutKey={`room-3d-appearance-${sampleRoomKind}`}
+              seats={sampleBuilt.seats}
+              geometry={sampleBuilt.geometry}
+              roomConfig={sampleRoomConfig}
+              appearance={previewAppearance}
+              roomMeta={{ roomName: t(`sampleRooms.${sampleRoomKind}`), brandName: "SeatMate" }}
+              seatTypes={sampleSceneTypes}
+              maxHeight={PREVIEW_MAX_HEIGHT}
+              heat={heat}
+              selected={selectedSeat}
+              onSelect={setSelectedSeat}
+            />
+          ) : null}
+          <div className="flex flex-wrap items-center justify-between gap-stack">
+            <ChoiceGroup
+              label={t("sampleRoomLabel")}
+              value={sampleRoomKind}
+              onChange={(next) => {
+                setSelectedSeat(null);
+                setSampleRoomKind(next);
+              }}
+              options={SAMPLE_ROOM_KINDS.map((value) => ({
+                value,
+                label: t(`sampleRooms.${value}`),
+              }))}
+            />
+            <div className="flex min-h-target items-center gap-stack">
               <Label htmlFor="r3d-preview-heat" className="text-muted-foreground">
                 {t("previewHeatmap")}
               </Label>
               <Switch id="r3d-preview-heat" checked={heat} onCheckedChange={setHeat} />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => setPreviewCollapsed((v) => !v)}
+                aria-label={previewCollapsed ? t("showPreview") : t("hidePreview")}
+                aria-expanded={!previewCollapsed}
+                className="text-muted-foreground lg:hidden"
+              >
+                {previewCollapsed ? <AltArrowDownIcon aria-hidden /> : <AltArrowUpIcon aria-hidden />}
+              </Button>
             </div>
           </div>
+          {!previewCollapsed ? <span className="type-caption text-muted-foreground">{t("previewHint")}</span> : null}
         </div>
 
         {/* Visual UI Controls */}
         <div className="flex flex-col gap-field">
+          {/* Quick One-Tap Cinema Theme Presets */}
+          <section className="flex flex-col gap-item rounded-xl border bg-card/40 p-inset-sm">
+            <div className="flex flex-col gap-hair">
+              <h3 className="type-item-title">{t("presetsTitle")}</h3>
+              <p className="type-caption text-muted-foreground">{t("presetsHint")}</p>
+            </div>
+            <div className="flex flex-wrap gap-tight">
+              {ROOM_3D_PRESETS.map((preset) => {
+                const active = appliedPreset === preset.id;
+                return (
+                  <button
+                    key={preset.id}
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() => togglePreset(preset.id)}
+                    className={cn(
+                      "inline-flex min-h-target items-center gap-stack rounded-xl border px-inset-sm type-label transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
+                      active
+                        ? "border-primary bg-primary/10 text-foreground"
+                        : "border-border bg-background text-muted-foreground hover:bg-muted/50 hover:text-foreground",
+                    )}
+                  >
+                    <span className="flex items-center gap-hair" aria-hidden>
+                      {preset.swatches.map((hex) => (
+                        <span
+                          key={hex}
+                          style={{ backgroundColor: hex }}
+                          className="size-icon-xs rounded-full border border-white/25"
+                        />
+                      ))}
+                    </span>
+                    <span>{t(`presets.${preset.id}`)}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+
           {/* 1. Screen & Stage */}
           <CollapsibleSection title={t("sections.screen")} defaultOpen>
             <div className="flex flex-col gap-item">
@@ -370,26 +767,24 @@ export function Room3DAppearanceForm({ initial, dimensionDefaults = DEFAULT_CINE
             {draft.screenSource === "image" ? (
               <div className="flex flex-col gap-item">
                 <span className="type-label leading-none! text-muted-foreground">{t("fields.screenImageUpload")}</span>
-                <UploadBusyContext.Provider value={setUploading}>
-                  <ImageUpload
-                    name="screenImageUrl"
-                    value={draft.screenImageUrl}
-                    onChange={(screenImageUrl) => set({ screenImageUrl })}
-                    getTicket={getScreenImageUploadTicket}
-                    preview={(url) => {
-                      const validPreview = url && (url.startsWith("blob:") || isValidHttpUrl(url)) ? url : "";
-                      return (
-                        <div className="relative flex aspect-video w-poster items-center justify-center overflow-hidden rounded-xl border bg-muted">
-                          {validPreview ? (
-                            <RemoteImage src={validPreview} alt="" fill sizes={`${PX.poster}px`} className="object-cover" />
-                          ) : (
-                            <GalleryIcon className="size-icon-lg text-muted-foreground" aria-hidden />
-                          )}
-                        </div>
-                      );
-                    }}
-                  />
-                </UploadBusyContext.Provider>
+                <ImageUpload
+                  name="screenImageUrl"
+                  value={draft.screenImageUrl}
+                  onChange={(screenImageUrl) => set({ screenImageUrl })}
+                  getTicket={getScreenImageUploadTicket}
+                  preview={(url) => {
+                    const validPreview = url && (url.startsWith("blob:") || isValidHttpUrl(url)) ? url : "";
+                    return (
+                      <div className="relative flex aspect-video w-poster items-center justify-center overflow-hidden rounded-xl border bg-muted">
+                        {validPreview ? (
+                          <RemoteImage src={validPreview} alt="" fill sizes={`${PX.poster}px`} className="object-cover" />
+                        ) : (
+                          <GalleryIcon className="size-icon-lg text-muted-foreground" aria-hidden />
+                        )}
+                      </div>
+                    );
+                  }}
+                />
                 <div className="flex flex-col gap-tight">
                   <Label htmlFor="r3d-screen-image-url" className="text-muted-foreground">
                     {t("fields.screenImageUrl")}
@@ -465,6 +860,19 @@ export function Room3DAppearanceForm({ initial, dimensionDefaults = DEFAULT_CINE
               />
             </div>
 
+            <div className="flex flex-col gap-item">
+              <span className="type-label leading-none! text-muted-foreground">{t("fields.screenMasking")}</span>
+              <ChoiceGroup
+                label={t("fields.screenMasking")}
+                value={draft.screenMasking}
+                onChange={(screenMasking) => set({ screenMasking })}
+                options={SCREEN_MASKINGS.map((value) => ({
+                  value,
+                  label: t(`options.screenMasking.${value}`),
+                }))}
+              />
+            </div>
+
             <div className="flex flex-col gap-stack">
               <ToggleRow
                 id="r3d-screen-curtains"
@@ -473,14 +881,22 @@ export function Room3DAppearanceForm({ initial, dimensionDefaults = DEFAULT_CINE
                 onChange={(screenCurtainsVisible) => set({ screenCurtainsVisible })}
               />
               {draft.screenCurtainsVisible ? (
-                <ColorSwatchField
-                  id="r3d-screen-curtains-color"
-                  label={t("fields.screenCurtainsColor")}
-                  pickLabel={t("pickColor")}
-                  value={draft.screenCurtainsColor}
-                  swatches={ROOM_3D_COLOR_SWATCHES.curtain}
-                  onChange={(screenCurtainsColor) => set({ screenCurtainsColor })}
-                />
+                <>
+                  <ToggleRow
+                    id="r3d-screen-curtains-anim"
+                    label={t("fields.screenCurtainsAnimated")}
+                    checked={draft.screenCurtainsAnimated}
+                    onChange={(screenCurtainsAnimated) => set({ screenCurtainsAnimated })}
+                  />
+                  <ColorSwatchField
+                    id="r3d-screen-curtains-color"
+                    label={t("fields.screenCurtainsColor")}
+                    pickLabel={t("pickColor")}
+                    value={draft.screenCurtainsColor}
+                    swatches={ROOM_3D_COLOR_SWATCHES.curtain}
+                    onChange={(screenCurtainsColor) => set({ screenCurtainsColor })}
+                  />
+                </>
               ) : null}
               <ToggleRow
                 id="r3d-stage-apron"
@@ -489,18 +905,32 @@ export function Room3DAppearanceForm({ initial, dimensionDefaults = DEFAULT_CINE
                 onChange={(screenStageApron) => set({ screenStageApron })}
               />
               {draft.screenStageApron ? (
-                <ToggleRow
-                  id="r3d-stage-led"
-                  label={t("fields.screenStageLed")}
-                  checked={draft.screenStageLed}
-                  onChange={(screenStageLed) => set({ screenStageLed })}
-                />
+                <>
+                  <ToggleRow
+                    id="r3d-stage-led"
+                    label={t("fields.screenStageLed")}
+                    checked={draft.screenStageLed}
+                    onChange={(screenStageLed) => set({ screenStageLed })}
+                  />
+                  <ToggleRow
+                    id="r3d-stage-subs"
+                    label={t("fields.stageSubwoofersVisible")}
+                    checked={draft.stageSubwoofersVisible}
+                    onChange={(stageSubwoofersVisible) => set({ stageSubwoofersVisible })}
+                  />
+                </>
               ) : null}
               <ToggleRow
                 id="r3d-screen-halo"
                 label={t("fields.screenHalo")}
                 checked={draft.screenHalo}
                 onChange={(screenHalo) => set({ screenHalo })}
+              />
+              <ToggleRow
+                id="r3d-screen-wall-wash"
+                label={t("fields.screenWallWash")}
+                checked={draft.screenWallWash}
+                onChange={(screenWallWash) => set({ screenWallWash })}
               />
               {draft.screenSource !== "youtube" ? (
                 <ToggleRow
@@ -568,6 +998,20 @@ export function Room3DAppearanceForm({ initial, dimensionDefaults = DEFAULT_CINE
               swatches={ROOM_3D_COLOR_SWATCHES.seatFrame}
               onChange={(seatFrameColor) => set({ seatFrameColor })}
             />
+            <div className="flex flex-col gap-stack">
+              <ToggleRow
+                id="r3d-seat-numbers"
+                label={t("fields.seatNumbersVisible")}
+                checked={draft.seatNumbersVisible}
+                onChange={(seatNumbersVisible) => set({ seatNumbersVisible })}
+              />
+              <ToggleRow
+                id="r3d-snack-props"
+                label={t("fields.snackPropsVisible")}
+                checked={draft.snackPropsVisible}
+                onChange={(snackPropsVisible) => set({ snackPropsVisible })}
+              />
+            </div>
           </CollapsibleSection>
 
           {/* 3. Doors & EXIT */}
@@ -646,6 +1090,21 @@ export function Room3DAppearanceForm({ initial, dimensionDefaults = DEFAULT_CINE
                 </div>
               </>
             ) : null}
+
+            <div className="flex flex-col gap-stack">
+              <ToggleRow
+                id="r3d-room-sign"
+                label={t("fields.roomSignVisible")}
+                checked={draft.roomSignVisible}
+                onChange={(roomSignVisible) => set({ roomSignVisible })}
+              />
+              <ToggleRow
+                id="r3d-emergency-lights"
+                label={t("fields.emergencyLightsVisible")}
+                checked={draft.emergencyLightsVisible}
+                onChange={(emergencyLightsVisible) => set({ emergencyLightsVisible })}
+              />
+            </div>
           </CollapsibleSection>
 
           {/* 4. Walls, Ceiling & Carpet */}
@@ -670,6 +1129,23 @@ export function Room3DAppearanceForm({ initial, dimensionDefaults = DEFAULT_CINE
               swatches={ROOM_3D_COLOR_SWATCHES.wall}
               onChange={(wallColor) => set({ wallColor })}
             />
+            <SurfaceTextureField
+              id="r3d-wall-image"
+              name="wallImageUrl"
+              label={t("fields.wallImageUrl")}
+              urlLabel={t("fields.screenImageUrl")}
+              placeholder={t("fields.screenImageUrlPlaceholder")}
+              hint={t("fields.surfaceImageHint")}
+              invalidText={t("fields.screenImageInvalid")}
+              value={draft.wallImageUrl}
+              invalid={wallImageUrlInvalid}
+              onChange={(wallImageUrl) => set({ wallImageUrl })}
+              repeatId="r3d-wall-repeat"
+              repeatLabel={t("fields.surfaceImageRepeat")}
+              repeatHint={t("fields.surfaceImageRepeatHint")}
+              repeat={draft.wallImageRepeat}
+              onRepeatChange={(wallImageRepeat) => set({ wallImageRepeat })}
+            />
 
             <div className="flex flex-col gap-item">
               <span className="type-label leading-none! text-muted-foreground">{t("fields.ceilingStyle")}</span>
@@ -683,6 +1159,26 @@ export function Room3DAppearanceForm({ initial, dimensionDefaults = DEFAULT_CINE
                 }))}
               />
             </div>
+            {draft.ceilingStyle === "starlight" ? (
+              <div className="flex flex-col gap-item">
+                <span className="type-label leading-none! text-muted-foreground">{t("fields.starlightColor")}</span>
+                <ChoiceGroup
+                  label={t("fields.starlightColor")}
+                  value={draft.starlightColor}
+                  onChange={(starlightColor) => set({ starlightColor })}
+                  options={STARLIGHT_COLORS.map((value) => ({
+                    value,
+                    label: t(`options.starlightColor.${value}`),
+                  }))}
+                />
+              </div>
+            ) : null}
+            <ToggleRow
+              id="r3d-ceiling-details"
+              label={t("fields.ceilingDetailsVisible")}
+              checked={draft.ceilingDetailsVisible}
+              onChange={(ceilingDetailsVisible) => set({ ceilingDetailsVisible })}
+            />
             <ColorSwatchField
               id="r3d-ceiling-color"
               label={t("fields.ceilingColor")}
@@ -690,6 +1186,23 @@ export function Room3DAppearanceForm({ initial, dimensionDefaults = DEFAULT_CINE
               value={draft.ceilingColor}
               swatches={ROOM_3D_COLOR_SWATCHES.ceiling}
               onChange={(ceilingColor) => set({ ceilingColor })}
+            />
+            <SurfaceTextureField
+              id="r3d-ceiling-image"
+              name="ceilingImageUrl"
+              label={t("fields.ceilingImageUrl")}
+              urlLabel={t("fields.screenImageUrl")}
+              placeholder={t("fields.screenImageUrlPlaceholder")}
+              hint={t("fields.surfaceImageHint")}
+              invalidText={t("fields.screenImageInvalid")}
+              value={draft.ceilingImageUrl}
+              invalid={ceilingImageUrlInvalid}
+              onChange={(ceilingImageUrl) => set({ ceilingImageUrl })}
+              repeatId="r3d-ceiling-repeat"
+              repeatLabel={t("fields.surfaceImageRepeat")}
+              repeatHint={t("fields.surfaceImageRepeatHint")}
+              repeat={draft.ceilingImageRepeat}
+              onRepeatChange={(ceilingImageRepeat) => set({ ceilingImageRepeat })}
             />
 
             <div className="flex flex-col gap-item">
@@ -712,10 +1225,39 @@ export function Room3DAppearanceForm({ initial, dimensionDefaults = DEFAULT_CINE
               swatches={ROOM_3D_COLOR_SWATCHES.carpet}
               onChange={(carpetColor) => set({ carpetColor })}
             />
+            <SurfaceTextureField
+              id="r3d-carpet-image"
+              name="carpetImageUrl"
+              label={t("fields.carpetImageUrl")}
+              urlLabel={t("fields.screenImageUrl")}
+              placeholder={t("fields.screenImageUrlPlaceholder")}
+              hint={t("fields.surfaceImageHint")}
+              invalidText={t("fields.screenImageInvalid")}
+              value={draft.carpetImageUrl}
+              invalid={carpetImageUrlInvalid}
+              onChange={(carpetImageUrl) => set({ carpetImageUrl })}
+              repeatId="r3d-carpet-repeat"
+              repeatLabel={t("fields.surfaceImageRepeat")}
+              repeatHint={t("fields.surfaceImageRepeatHint")}
+              repeat={draft.carpetImageRepeat}
+              onRepeatChange={(carpetImageRepeat) => set({ carpetImageRepeat })}
+            />
           </CollapsibleSection>
 
           {/* 5. Lighting & Fixtures */}
           <CollapsibleSection title={t("sections.lightingFixtures")}>
+            <div className="flex flex-col gap-item">
+              <span className="type-label leading-none! text-muted-foreground">{t("fields.movieAmbientLevel")}</span>
+              <ChoiceGroup
+                label={t("fields.movieAmbientLevel")}
+                value={draft.movieAmbientLevel}
+                onChange={(movieAmbientLevel) => set({ movieAmbientLevel })}
+                options={MOVIE_AMBIENT_LEVELS.map((value) => ({
+                  value,
+                  label: t(`options.movieAmbientLevel.${value}`),
+                }))}
+              />
+            </div>
             <div className="flex flex-col gap-stack">
               <ToggleRow
                 id="r3d-downlights"
@@ -844,6 +1386,12 @@ export function Room3DAppearanceForm({ initial, dimensionDefaults = DEFAULT_CINE
 
             <div className="flex flex-col gap-stack">
               <ToggleRow
+                id="r3d-aisle-handrails"
+                label={t("fields.aisleHandrailsVisible")}
+                checked={draft.aisleHandrailsVisible}
+                onChange={(aisleHandrailsVisible) => set({ aisleHandrailsVisible })}
+              />
+              <ToggleRow
                 id="r3d-proj-port"
                 label={t("fields.projectionPortVisible")}
                 checked={draft.projectionPortVisible}
@@ -855,6 +1403,22 @@ export function Room3DAppearanceForm({ initial, dimensionDefaults = DEFAULT_CINE
                 checked={draft.projectorBeamVisible}
                 onChange={(projectorBeamVisible) => set({ projectorBeamVisible })}
               />
+              {draft.projectorBeamVisible ? (
+                <div className="flex flex-col gap-item">
+                  <span className="type-label leading-none! text-muted-foreground">
+                    {t("fields.projectorBeamIntensity")}
+                  </span>
+                  <ChoiceGroup
+                    label={t("fields.projectorBeamIntensity")}
+                    value={draft.projectorBeamIntensity}
+                    onChange={(projectorBeamIntensity) => set({ projectorBeamIntensity })}
+                    options={PROJECTOR_BEAM_INTENSITIES.map((value) => ({
+                      value,
+                      label: t(`options.projectorBeamIntensity.${value}`),
+                    }))}
+                  />
+                </div>
+              ) : null}
               <ToggleRow
                 id="r3d-surround"
                 label={t("fields.surroundSpeakersVisible")}
@@ -866,6 +1430,12 @@ export function Room3DAppearanceForm({ initial, dimensionDefaults = DEFAULT_CINE
                 label={t("fields.ceilingSpeakersVisible")}
                 checked={draft.ceilingSpeakersVisible}
                 onChange={(ceilingSpeakersVisible) => set({ ceilingSpeakersVisible })}
+              />
+              <ToggleRow
+                id="r3d-4dx-wall"
+                label={t("fields.fourDxWallPropsVisible")}
+                checked={draft.fourDxWallPropsVisible}
+                onChange={(fourDxWallPropsVisible) => set({ fourDxWallPropsVisible })}
               />
             </div>
           </CollapsibleSection>
@@ -884,7 +1454,7 @@ export function Room3DAppearanceForm({ initial, dimensionDefaults = DEFAULT_CINE
             variant="outline"
             size="cta"
             disabled={pending || uploading}
-            onClick={resetToDefault}
+            onClick={() => setConfirmReset(true)}
             className="pointer-events-auto w-auto flex-auto bg-background px-inset-sm"
           >
             <RestartIcon aria-hidden />
@@ -908,6 +1478,18 @@ export function Room3DAppearanceForm({ initial, dimensionDefaults = DEFAULT_CINE
           </Button>
         </div>
       </div>
+      {confirmReset ? (
+        <LazyConfirmDialog
+          open={confirmReset}
+          onOpenChange={setConfirmReset}
+          title={t("resetConfirmTitle")}
+          description={t("resetConfirmDescription")}
+          icon={<RestartIcon aria-hidden />}
+          confirmLabel={t("reset")}
+          onConfirm={resetToDefault}
+        />
+      ) : null}
     </div>
+    </UploadBusyContext.Provider>
   );
 }

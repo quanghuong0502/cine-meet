@@ -19,7 +19,7 @@ async function readRoom3DAppearance(): Promise<Room3DAppearance> {
   return parsed.success ? parsed.data : DEFAULT_ROOM_3D_APPEARANCE;
 }
 
-const getRoom3DAppearanceCached = safeCache(readRoom3DAppearance, ["room-3d-appearance-v2"], {
+const getRoom3DAppearanceCached = safeCache(readRoom3DAppearance, ["room-3d-appearance-v3"], {
   tags: [ROOM_3D_APPEARANCE_TAG],
   revalidate: 3600,
 });

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { ProfileOverview } from "@/components/profile-overview";
 import { requireUser } from "@/lib/auth/guards";
+import { countIncomingFriendRequests } from "@/services/friend.service";
 import { getProfile } from "@/services/profile.service";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -11,7 +12,10 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function ProfilePage() {
   const user = await requireUser();
-  const profile = await getProfile(user.userId);
+  const [profile, incomingFriends] = await Promise.all([
+    getProfile(user.userId),
+    countIncomingFriendRequests(user.userId).catch(() => 0),
+  ]);
   return (
     <ProfileOverview
       name={user.name}
@@ -23,6 +27,7 @@ export default async function ProfilePage() {
       settingsHref="/settings"
       editHref="/profile/edit"
       friendsHref="/friends"
+      incomingFriends={incomingFriends}
     />
   );
 }

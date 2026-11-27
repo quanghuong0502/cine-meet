@@ -26,7 +26,7 @@ import { enqueueNotifications } from "@/notifications/outbox";
 import type { NotificationPayload, NotificationType } from "@/notifications/types";
 import { deadlineWarningSendAt } from "@/lib/appointment/reminders";
 import { pushProvider } from "@/notifications/provider";
-import { cancelScheduled, dropDeadlineWarningFor, scheduleDeadlineWarning } from "@/services/scheduled-notification.service";
+import { cancelScheduled, dropDeadlineWarningFor, dropReminderFor, scheduleDeadlineWarning } from "@/services/scheduled-notification.service";
 
 export type Doc = HydratedDocument<AppointmentDoc>;
 
@@ -506,6 +506,7 @@ export async function withdraw(userId: string, id: string, now = new Date()): Pr
   });
   if (result.ok) {
     await releaseUnusedClaims(id, result.keep);
+    await dropReminderFor(id, userId);
     await notifyPeople(id, userId, "participant_withdrew", [result.creatorId]);
     return { ok: true, creatorId: result.creatorId };
   }
@@ -551,7 +552,23 @@ export interface OptionView {
 export interface ParticipantView extends PersonView {
   status: ParticipantStatus;
   overdue: boolean;
+  /** Invited person who voted "no" on every time option: they have replied, so they are not waiting or overdue. */
+  allNo?: boolean;
   declineReason?: string;
+}
+
+export interface VenueView {
+  branchId: string;
+  auditoriumId: string;
+  brandName?: string;
+  branchName: string;
+  roomName: string;
+  address?: string;
+  mapsUrl?: string;
+  floor?: string;
+  parkingFee?: number;
+  parkingLocation?: string;
+  parkingEntrance?: string;
 }
 
 export interface AppointmentView {
@@ -562,7 +579,7 @@ export interface AppointmentView {
   isCreator: boolean;
   myStatus: ParticipantStatus | null;
   creator: PersonView;
-  movie: { id: string; title: string; posterUrl?: string };
+  movie: { id: string; title: string; posterUrl?: string; trailerVideoId?: string };
   responseDeadline: string | null;
   /** The answer-by time has passed: people can no longer reply (the creator can still lock). */
   deadlinePassed: boolean;
@@ -587,6 +604,8 @@ export interface AppointmentView {
   /** The room the showtime is in, for rating a seat after the viewing (design 3.2, 3.4). Missing before a showtime is chosen. */
   auditoriumId?: string;
   layoutId?: string;
+  /** Practical cinema & parking details for the chosen showtime (directions, parking, deep-link to room seat map). */
+  venue?: VenueView;
 }
 
 async function loadPeople(ids: string[]): Promise<Map<string, PersonView>> {
@@ -594,22 +613,54 @@ async function loadPeople(ids: string[]): Promise<Map<string, PersonView>> {
   return new Map(users.map((u) => [u._id.toString(), { id: u._id.toString(), name: u.name, avatar: u.avatar ?? undefined }]));
 }
 
-/** "Branch · Room" for each showtime id, plus each showtime's `auditoriumId`/`layoutId` so callers skip duplicate lookups. */
+/** "Branch · Room" for each showtime id, plus each showtime's `auditoriumId`/`layoutId` and branch venue details. */
 async function loadShowtimesWithPlaces(showtimeIds: string[]) {
   const uniqueIds = [...new Set(showtimeIds)];
   if (uniqueIds.length === 0) {
-    return { places: new Map<string, string>(), byId: new Map<string, { auditoriumId: { toString(): string }; layoutId: { toString(): string } }>() };
+    return {
+      places: new Map<string, string>(),
+      byId: new Map<string, { auditoriumId: { toString(): string }; layoutId: { toString(): string } }>(),
+      venues: new Map<string, VenueView>(),
+    };
   }
   const showtimes = await Showtime.find({ _id: { $in: uniqueIds } }, "auditoriumId layoutId").lean();
   const roomIds = [...new Set(showtimes.map((s) => s.auditoriumId.toString()))];
   const rooms = roomIds.length ? await Auditorium.find({ _id: { $in: roomIds } }, "name branchId").lean() : [];
   const branchIds = [...new Set(rooms.map((r) => r.branchId.toString()))];
-  const branches = branchIds.length ? await Branch.find({ _id: { $in: branchIds } }, "name").lean() : [];
-  const branchName = new Map(branches.map((b) => [b._id.toString(), b.name]));
-  const roomText = new Map(rooms.map((r) => [r._id.toString(), [branchName.get(r.branchId.toString()), r.name].filter(Boolean).join(" · ")]));
+  const [branches, brandOptions] = await Promise.all([
+    branchIds.length
+      ? Branch.find({ _id: { $in: branchIds } }, "name brandId address mapsUrl floor parkingFee parkingLocation parkingEntrance").lean()
+      : Promise.resolve([]),
+    branchIds.length ? import("@/services/master-data/brand-options").then((m) => m.getBrandOptions()) : Promise.resolve([]),
+  ]);
+  const brandName = new Map(brandOptions.map((b) => [b.id, b.name]));
+  const branchById = new Map(branches.map((b) => [b._id.toString(), b]));
+  const roomById = new Map(rooms.map((r) => [r._id.toString(), r]));
+  const roomText = new Map(rooms.map((r) => [r._id.toString(), [branchById.get(r.branchId.toString())?.name, r.name].filter(Boolean).join(" · ")]));
+  const venues = new Map<string, VenueView>();
+  for (const s of showtimes) {
+    const room = roomById.get(s.auditoriumId.toString());
+    const branch = room ? branchById.get(room.branchId.toString()) : undefined;
+    if (room && branch) {
+      venues.set(s._id.toString(), {
+        branchId: branch._id.toString(),
+        auditoriumId: room._id.toString(),
+        brandName: brandName.get(branch.brandId.toString()),
+        branchName: branch.name,
+        roomName: room.name,
+        address: branch.address ?? undefined,
+        mapsUrl: branch.mapsUrl ?? undefined,
+        floor: branch.floor ?? undefined,
+        parkingFee: branch.parkingFee ?? undefined,
+        parkingLocation: branch.parkingLocation ?? undefined,
+        parkingEntrance: branch.parkingEntrance ?? undefined,
+      });
+    }
+  }
   return {
     places: new Map(showtimes.map((s) => [s._id.toString(), roomText.get(s.auditoriumId.toString()) ?? ""])),
     byId: new Map(showtimes.map((s) => [s._id.toString(), { auditoriumId: s.auditoriumId, layoutId: s.layoutId }])),
+    venues,
   };
 }
 
@@ -631,7 +682,7 @@ export async function getAppointment(userId: string, id: string, now = new Date(
   ];
   const [people, movie, showtimeData] = await Promise.all([
     loadPeople([doc.creatorId.toString(), ...doc.participants.map((p) => p.userId.toString()), ...doc.timeOptions.map((o) => o.proposedBy.toString())]),
-    Movie.findById(doc.movieId, "title posterUrl").lean(),
+    Movie.findById(doc.movieId, "title posterUrl trailer").lean(),
     loadShowtimesWithPlaces(allShowtimeIds),
   ]);
   const places = showtimeData.places;
@@ -646,7 +697,12 @@ export async function getAppointment(userId: string, id: string, now = new Date(
     isCreator,
     myStatus: me?.status ?? null,
     creator: person(doc.creatorId.toString()),
-    movie: { id: doc.movieId.toString(), title: movie?.title ?? "", posterUrl: movie?.posterUrl ?? undefined },
+    movie: {
+      id: doc.movieId.toString(),
+      title: movie?.title ?? "",
+      posterUrl: movie?.posterUrl ?? undefined,
+      trailerVideoId: movie?.trailer?.provider === "youtube" ? movie.trailer.videoId : undefined,
+    },
     responseDeadline: doc.responseDeadline?.toISOString() ?? null,
     deadlinePassed: deadlinePassed(doc, now),
     options: doc.timeOptions.map((o) => ({
@@ -661,12 +717,20 @@ export async function getAppointment(userId: string, id: string, now = new Date(
       myVote: o.votes.find((v) => v.userId.toString() === userId)?.vote,
     })),
     chosenOptionId: doc.chosenOptionId?.toString(),
-    participants: doc.participants.map((p) => ({
-      ...person(p.userId.toString()),
-      status: p.status,
-      overdue: isOverdue(doc.responseDeadline, p.status, now),
-      declineReason: p.declineReason ?? undefined,
-    })),
+    participants: doc.participants.map((p) => {
+      const pid = p.userId.toString();
+      const votedAll =
+        doc.timeOptions.length > 0 &&
+        doc.timeOptions.every((o) => o.votes.some((v) => v.userId.toString() === pid));
+      const allNo = p.status === "invited" && votedAll;
+      return {
+        ...person(pid),
+        status: p.status,
+        overdue: !allNo && isOverdue(doc.responseDeadline, p.status, now),
+        ...(allNo ? { allNo: true } : {}),
+        declineReason: p.declineReason ?? undefined,
+      };
+    }),
     cancelReason: doc.cancelReason ?? undefined,
     allPaidByCreator: doc.allPaidByCreator ?? false,
     showtimeId: (doc.showtimeId ?? doc.timeOptions.find((o) => o._id.toString() === doc.chosenOptionId?.toString())?.showtimeId)?.toString(),
@@ -683,6 +747,7 @@ export async function getAppointment(userId: string, id: string, now = new Date(
     actualCost: doc.actualCost ? { ticket: doc.actualCost.ticket ?? 0, fnb: doc.actualCost.fnb ?? 0, other: doc.actualCost.other ?? 0, total: doc.actualCost.total ?? 0 } : undefined,
     auditoriumId: finalShowtime?.auditoriumId.toString(),
     layoutId: finalShowtime?.layoutId.toString(),
+    venue: finalShowtimeId ? showtimeData.venues.get(finalShowtimeId) : undefined,
   };
 }
 
@@ -710,7 +775,7 @@ export async function listAppointments(userId: string, now = new Date()): Promis
   await connectToDatabase();
   const docs = await Appointment.find(
     { $or: [{ creatorId: userId }, { "participants.userId": userId, status: { $ne: "DRAFT" } }] },
-    "status creatorId movieId responseDeadline chosenOptionId createdAt timeOptions._id timeOptions.startAt participants.userId participants.status",
+    "status creatorId movieId responseDeadline chosenOptionId createdAt timeOptions._id timeOptions.startAt timeOptions.votes.userId participants.userId participants.status",
   )
     .sort({ updatedAt: -1 })
     .limit(200)
@@ -730,12 +795,14 @@ export async function listAppointments(userId: string, now = new Date()): Promis
     const chosen = doc.timeOptions.find((o) => o._id.toString() === doc.chosenOptionId?.toString());
     const times = doc.timeOptions.map((o) => o.startAt.getTime());
     const movie = movieById.get(doc.movieId.toString());
+    const hasVotedAll = (pid: string) =>
+      doc.timeOptions.length > 0 && doc.timeOptions.every((o) => (o.votes ?? []).some((v) => v.userId.toString() === pid));
     return {
       id: doc._id.toString(),
       status: doc.status,
       isCreator: doc.creatorId.toString() === userId,
-      // Waiting for this person's answer, and the answer-by time has not passed.
-      needsReply: doc.status === "INVITING" && me?.status === "invited" && !deadlinePassed(doc, now),
+      // Waiting for this person's answer (excluding people who already voted "no" on every option), before the deadline.
+      needsReply: doc.status === "INVITING" && me?.status === "invited" && !hasVotedAll(userId) && !deadlinePassed(doc, now),
       createdAt: ((doc as unknown as { createdAt?: Date }).createdAt ?? new Date(0)).toISOString(),
       creatorName: creatorName.get(doc.creatorId.toString()) ?? "",
       movie: { title: movie?.title ?? "", posterUrl: movie?.posterUrl ?? undefined },
@@ -743,7 +810,9 @@ export async function listAppointments(userId: string, now = new Date()): Promis
       optionCount: doc.timeOptions.length,
       attendeeCount: doc.participants.filter((p) => p.status === "accepted").length + 1,
       participantCount: doc.participants.length,
-      answeredCount: doc.participants.filter((p) => p.status === "accepted" || p.status === "declined").length,
+      answeredCount: doc.participants.filter(
+        (p) => p.status === "accepted" || p.status === "declined" || (p.status === "invited" && hasVotedAll(p.userId.toString())),
+      ).length,
     };
   });
   const byTime = (a: AppointmentSummary, b: AppointmentSummary) => a.startAt.localeCompare(b.startAt);

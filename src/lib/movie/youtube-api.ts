@@ -9,6 +9,9 @@ export interface YtPlayer {
   mute(): void;
   unMute(): void;
   isMuted(): boolean;
+  setVolume?(volume: number): void;
+  getVolume?(): number;
+  getPlayerState?(): number;
   getCurrentTime(): number;
   getDuration(): number;
 }
@@ -16,7 +19,10 @@ export interface YtPlayer {
 interface YtNamespace {
   Player: new (
     iframe: HTMLIFrameElement,
-    options: { events: { onReady?: () => void; onStateChange?: (event: { data: number }) => void } },
+    options: {
+      host?: string;
+      events: { onReady?: () => void; onStateChange?: (event: { data: number }) => void };
+    },
   ) => YtPlayer;
 }
 
@@ -28,7 +34,7 @@ declare global {
 }
 
 /** `onStateChange` values. */
-export const YT_STATE = { ended: 0, playing: 1, paused: 2, buffering: 3, cued: 5 } as const;
+export const YT_STATE = { unstarted: -1, ended: 0, playing: 1, paused: 2, buffering: 3, cued: 5 } as const;
 
 const LOAD_TIMEOUT_MS = 6_000;
 let loading: Promise<YtNamespace> | null = null;

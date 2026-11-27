@@ -29,7 +29,7 @@ export default async function AdminSettingsPage() {
         <h2 id="admin-settings-general" className="type-label text-muted-foreground">
           {t("sections.general")}
         </h2>
-        <div className="flex flex-col gap-group">
+        <div className="grid grid-cols-1 gap-group md:grid-cols-2">
           <LanguageSetting />
           <AppearanceSettingsCard />
           <Room3DAppearanceCard />
@@ -41,7 +41,7 @@ export default async function AdminSettingsPage() {
         <h2 id="admin-settings-operations" className="type-label text-muted-foreground">
           {t("sections.operations")}
         </h2>
-        <div className="flex flex-col gap-group">
+        <div className="grid grid-cols-1 gap-group md:grid-cols-2">
           <SystemSettingsCard />
           <CinemaDimensionsCard />
           <Suspense fallback={null}>

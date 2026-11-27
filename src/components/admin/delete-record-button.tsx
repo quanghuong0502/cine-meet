@@ -30,8 +30,12 @@ export function DeleteRecordButton({ id, name, backHref, removeAction }: DeleteR
 
   function confirm() {
     startDeleting(async () => {
-      const result = await removeAction(id);
+      const result = await removeAction(id).catch(() => null);
       setOpen(false);
+      if (!result) {
+        toast.error(t("errors.network"));
+        return;
+      }
       if (result.ok) {
         toast.success(t("deleted"));
         // The delete action ran revalidatePath, so the list opens fresh (no router.refresh()).

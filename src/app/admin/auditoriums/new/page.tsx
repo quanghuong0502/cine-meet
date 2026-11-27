@@ -7,7 +7,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t("newTitle") };
 }
 
-export default async function NewAuditoriumPage({ searchParams }: { searchParams: Promise<{ back?: string }> }) {
-  const { back } = await searchParams;
-  return <AuditoriumEditorScreen id={null} back={back} />;
+export default async function NewAuditoriumPage({ searchParams }: { searchParams: Promise<{ back?: string; from?: string }> }) {
+  const { back, from } = await searchParams;
+  return <AuditoriumEditorScreen id={null} back={back} copyFromId={from} />;
 }

@@ -26,7 +26,7 @@ function weekdayFormatter(locale: string): Intl.DateTimeFormat {
  * (one day is shown at a time), then the cinema and the format available on that day. All rows are already here, so
  * filtering is instant and needs no round trip.
  */
-export function MovieShowtimes({ rows }: { rows: ShowtimeRow[] }) {
+export function MovieShowtimes({ rows, backHref }: { rows: ShowtimeRow[]; backHref?: string }) {
   const t = useTranslations("showtimes");
   const tm = useTranslations("movie");
   const locale = useLocale();
@@ -128,7 +128,7 @@ export function MovieShowtimes({ rows }: { rows: ShowtimeRow[] }) {
       ) : (
         <ul className="flex flex-col gap-item">
           {shown.map((row) => (
-            <ShowtimeCard key={row.id} row={row} />
+            <ShowtimeCard key={row.id} row={row} backHref={backHref} />
           ))}
         </ul>
       )}

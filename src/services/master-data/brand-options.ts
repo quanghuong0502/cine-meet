@@ -9,6 +9,7 @@ export interface BrandOption {
   name: string;
   /** Off brands are hidden from users and from new pick-lists. */
   active: boolean;
+  room3dPreset?: string;
 }
 
 /**
@@ -17,7 +18,13 @@ export interface BrandOption {
  * Plain strings only (no ObjectId or Date), so it survives the cache's JSON round trip. Falls back to a fresh read after 5 minutes.
  */
 export const getBrandOptions = safeCache(
-  async (): Promise<BrandOption[]> => (await brandService.list({})).map((brand) => ({ id: brand._id.toString(), name: brand.name, active: brand.active !== false })),
-  ["master-data-brand-options"],
+  async (): Promise<BrandOption[]> =>
+    (await brandService.list({})).map((brand) => ({
+      id: brand._id.toString(),
+      name: brand.name,
+      active: brand.active !== false,
+      room3dPreset: brand.room3dPreset ?? undefined,
+    })),
+  ["master-data-brand-options-v2"],
   { tags: [BRAND_OPTIONS_TAG], revalidate: 300 },
 );

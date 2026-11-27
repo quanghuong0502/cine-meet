@@ -29,7 +29,7 @@ import {
 } from "@/services/master-data/catalog-cache";
 import { listFilterMovies } from "@/services/movie.service";
 import { getSystemSettings } from "@/services/settings.service";
-import { listShowtimeFacets, searchShowtimes } from "@/services/showtime.service";
+import { listActiveShowtimeDays, listShowtimeFacets, searchShowtimes } from "@/services/showtime.service";
 import { PX } from "@/lib/ui-sizes";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -44,15 +44,17 @@ const first = (value: string | string[] | undefined) => (Array.isArray(value) ? 
 
 export default async function ShowtimesPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   await requireUser();
-  const [t, locale, params, movies, ratings] = await Promise.all([
+  const today = vietnamToday();
+  const days = datesBetween(today, new Date(Date.parse(`${today}T00:00:00Z`) + DAYS_AHEAD * 86_400_000).toISOString().slice(0, 10));
+  const [t, locale, params, movies, ratings, activeDays] = await Promise.all([
     getTranslations("showtimes"),
     getLocale(),
     searchParams,
     listFilterMovies(),
     getCachedAgeRatings(),
+    listActiveShowtimeDays(days[0]!, days[days.length - 1]!),
   ]);
 
-  const today = vietnamToday();
   const requested = first(params.date);
   const date = requested && isCalendarDate(requested) ? requested : today;
   const values: FilterValues = {};
@@ -64,8 +66,8 @@ export default async function ShowtimesPage({ searchParams }: { searchParams: Pr
   const en = locale === "en";
   const nowShowing = movies;
   const ratingById = new Map(ratings.map((r) => [r.id, r]));
-  const days = datesBetween(today, new Date(Date.parse(`${today}T00:00:00Z`) + DAYS_AHEAD * 86_400_000).toISOString().slice(0, 10));
   const query = (day: string) => `/showtimes?${new URLSearchParams({ date: day, ...Object.fromEntries(Object.entries(values)) })}`;
+  const currentHref = query(date);
   const dayLabel = new Intl.DateTimeFormat(en ? "en-GB" : "vi-VN", { timeZone: "UTC", weekday: "short" });
 
   return (
@@ -79,7 +81,7 @@ export default async function ShowtimesPage({ searchParams }: { searchParams: Pr
             {nowShowing.map((movie, index) => (
               <li key={movie._id.toString()} className="w-[calc((100%-var(--spacing-item))*0.36)] shrink-0">
                 <Link
-                  href={`/movies/${movie._id.toString()}`}
+                  href={`/movies/${movie._id.toString()}?back=${encodeURIComponent(currentHref)}`}
                   prefetch={false}
                   className="flex flex-col gap-stack rounded-lg transition-opacity outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:opacity-80"
                 >
@@ -118,6 +120,7 @@ export default async function ShowtimesPage({ searchParams }: { searchParams: Pr
         <ul className="scroll-strip flex gap-stack pb-tight">
           {days.map((day, index) => {
             const selected = day === date;
+            const hasShowtimes = activeDays.has(day);
             const monthChanged = index > 0 && day.slice(5, 7) !== days[index - 1]?.slice(5, 7);
             const dayNum = Number(day.slice(8));
             const monthNum = Number(day.slice(5, 7));
@@ -131,11 +134,22 @@ export default async function ShowtimesPage({ searchParams }: { searchParams: Pr
                   aria-current={selected ? "date" : undefined}
                   className={cn(
                     "flex min-h-row min-w-row flex-col items-center justify-center gap-tight rounded-xl border px-inset py-inset-xs type-micro leading-tight! transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:opacity-80",
-                    selected ? "border-transparent bg-primary text-primary-foreground" : "bg-card text-muted-foreground hover:text-foreground",
+                    selected
+                      ? "border-transparent bg-primary text-primary-foreground"
+                      : hasShowtimes
+                        ? "bg-card text-muted-foreground hover:text-foreground"
+                        : "bg-card text-muted-foreground/60 hover:text-foreground",
                   )}
                 >
                   <span>{day === today ? t("today") : dayLabel.format(new Date(`${day}T00:00:00Z`))}</span>
                   <span className="type-item-title tabular-nums">{monthChanged ? `${dayNum}/${monthNum}` : dayNum}</span>
+                  <span
+                    aria-hidden
+                    className={cn(
+                      "h-hair w-stack rounded-full",
+                      hasShowtimes ? (selected ? "bg-primary-foreground" : "bg-primary") : "bg-transparent",
+                    )}
+                  />
                 </Link>
               </li>
             );
@@ -143,11 +157,11 @@ export default async function ShowtimesPage({ searchParams }: { searchParams: Pr
         </ul>
       </nav>
 
-      <Suspense key={date} fallback={null}>
+      <Suspense key={date} fallback={<div className="min-h-target" aria-hidden />}>
         <FiltersBar date={date} values={values} locale={locale} />
       </Suspense>
       <Suspense key={`${date}|${JSON.stringify(values)}`} fallback={<LoadingState compact />}>
-        <Results date={date} values={values} />
+        <Results date={date} values={values} currentHref={currentHref} />
       </Suspense>
       </div>
     </ScopedIntlProvider>
@@ -175,7 +189,7 @@ async function FiltersBar({ date, values, locale }: { date: string; values: Filt
   return <ShowtimeFilters date={date} values={values} options={options} records={facets} />;
 }
 
-async function Results({ date, values }: { date: string; values: FilterValues }) {
+async function Results({ date, values, currentHref }: { date: string; values: FilterValues; currentHref: string }) {
   const t = await getTranslations("showtimes");
   const rows = await searchShowtimes({ date, branchId: values.branch, genreId: values.genre, formatId: values.format, slot: values.slot });
   const hasFilters = FILTER_KEYS.some((key) => Boolean(values[key]));
@@ -209,7 +223,7 @@ async function Results({ date, values }: { date: string; values: FilterValues })
         <section key={group[0].movie.id} className="flex flex-col gap-item">
           <h2 className="type-heading">
             <Link
-              href={`/movies/${group[0].movie.id}`}
+              href={`/movies/${group[0].movie.id}?back=${encodeURIComponent(currentHref)}`}
               prefetch={false}
               className="flex min-h-target items-center justify-between gap-stack rounded-lg py-tight transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:opacity-75"
             >
@@ -219,7 +233,7 @@ async function Results({ date, values }: { date: string; values: FilterValues })
           </h2>
           <ul className="flex flex-col gap-item">
             {group.map((row) => (
-              <ShowtimeCard key={row.id} row={row} />
+              <ShowtimeCard key={row.id} row={row} backHref={currentHref} />
             ))}
           </ul>
         </section>

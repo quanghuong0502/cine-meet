@@ -84,6 +84,19 @@ describe("buildRoomScene", () => {
     expect(scene.seats.find((s) => s.row === "B")?.typeColor).toBe("#B45309");
   });
 
+  it("propagates broken, obstructed, and recommended seat flags cleanly into SceneSeat", () => {
+    const { scene } = makeRoom({
+      overrides: [
+        { row: "B", cols: [1], flags: ["broken"] },
+        { row: "B", cols: [2], flags: ["obstructed"] },
+        { row: "B", cols: [3], flags: ["recommended"] },
+      ],
+    });
+    expect(scene.seats.find((s) => s.code === "B1")).toMatchObject({ broken: true, obstructed: false, recommended: false });
+    expect(scene.seats.find((s) => s.code === "B2")).toMatchObject({ broken: false, obstructed: true, recommended: false });
+    expect(scene.seats.find((s) => s.code === "B3")).toMatchObject({ broken: false, obstructed: false, recommended: true });
+  });
+
   it("raises row floors according to stadiumFromRow and stepsPerRow (15 cm per step)", () => {
     const { scene } = makeRoom({ stadiumFromRow: 3, stepsPerRow: 3 });
     expect(scene.rowFloors[0].height).toBe(0);

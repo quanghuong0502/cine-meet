@@ -44,7 +44,8 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 import type { CSS3DObject, CSS3DRenderer } from "three/addons/renderers/CSS3DRenderer.js";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
-import { parseYoutubeId, youtubeEmbedUrl } from "@/lib/movie/youtube";
+import { computeYoutubeCoverLayout, parseYoutubeId, YOUTUBE_EMBED_HOST, youtubeScreenEmbedUrl } from "@/lib/movie/youtube";
+import { loadYouTubeApi, YT_STATE, type YtPlayer } from "@/lib/movie/youtube-api";
 import type { RoomScene, SceneSeat } from "@/lib/seat-layout/scene";
 import {
   normalizeRoom3DAppearance,
@@ -55,13 +56,43 @@ import {
   type ExitSignText,
   type LightAccentColor,
   type Room3DAppearance,
+  type ScreenBorderStyle,
   type ScreenContentPreset,
+  type StarlightColor,
   type SubtitleColor,
   type WallStyle,
 } from "@/lib/seat-layout/room-3d-appearance.defaults";
 import type { SeatStyle } from "@/lib/seat-layout/types";
 import { EYE_HEIGHT_M, HEAD_ABOVE_EYE_M, sittingEyeHeightM } from "@/services/seat-score";
 import { heatColor, heatLevel } from "./heat-color";
+import {
+  build4dxWallProps,
+  buildAisleHandrails,
+  buildCeilingAndCornerDetails,
+  buildEmergencyLightUnit,
+  buildHighlightRingsOverlay,
+  buildHolderTagsOverlay,
+  buildSeatFlagsOverlay,
+  buildSeatNumberMesh,
+  buildSightlineOverlay,
+  buildSnackPropRig,
+  buildStageSubwoofers,
+  composeRoomSnapshot,
+  createRoomSignTexture,
+  type Room3DMeta,
+  type Room3DSnapshotMeta,
+} from "./room-3d-extras";
+
+export type { Room3DMeta, Room3DSnapshotMeta };
+export type Room3DCameraPreset = "overview" | "entrance" | "frontRow" | "booth";
+export interface Room3DCameraState {
+  mode: Room3DMode;
+  pos: [number, number, number];
+  target: [number, number, number];
+  lookYaw: number;
+  lookPitch: number;
+  zoom: number;
+}
 
 /**
  * Cinematic vanilla three.js auditorium renderer engineered for iPhone standalone PWA stability:
@@ -79,6 +110,7 @@ export type SeatMarkKind3D = "favorite" | "avoid";
 
 export interface Room3D {
   setMode: (mode: Room3DMode) => void;
+  setCameraPreset: (preset: Room3DCameraPreset) => void;
   recenter: () => void;
   setHeat: (on: boolean) => void;
   setSelected: (code: string | null) => void;
@@ -86,10 +118,19 @@ export interface Room3D {
   setLightsUp: (on: boolean) => void;
   setHeights: (viewerHeightCm: number, frontHeightCm: number) => void;
   setMarks: (marks: Map<string, SeatMarkKind3D> | undefined) => void;
+  setSightline: (on: boolean) => void;
+  setOccupancy: (reserved: Set<string> | undefined, holders: Map<string, string> | undefined) => void;
+  setHighlightedCodes: (codes: Set<string> | undefined) => void;
+  /** Returns current orbit/POV camera coordinates so scene rebuilds on the same layout keep the user's exact vantage. */
+  getCameraState: () => Room3DCameraState;
+  /** Applies a clamped yaw/pitch viewing offset in seated POV mode (used by mobile gyroscope look-around). */
+  setLookOffset: (yawRad: number, pitchRad: number) => void;
   /** Updates auditorium visual UI/fixtures in-place inside the same WebGL context (preserves camera pose). */
   setAppearance: (appearance: Room3DAppearance) => void;
   /** Mutes or unmutes the active YouTube cinema screen iframe (no-op when not in YouTube mode). */
   setYoutubeMuted: (muted: boolean) => void;
+  /** Captures a shareable PNG snapshot of the current 3D view with an optional cinema watermark bar. */
+  captureSnapshot: (meta?: Room3DSnapshotMeta) => Promise<Blob | null>;
   /** Reparents the live WebGL canvas without losing GPU context (used for inline ↔ fullscreen transitions). */
   mountTo: (target: HTMLElement) => void;
   refit: () => void;
@@ -106,9 +147,17 @@ export interface Room3DOptions {
   viewerHeightCm: number;
   frontHeightCm: number;
   marks?: Map<string, SeatMarkKind3D>;
+  reservedCodes?: Set<string>;
+  holderLabels?: Map<string, string>;
+  highlightedCodes?: Set<string>;
+  initialCameraState?: Room3DCameraState | null;
+  sightline?: boolean;
+  roomMeta?: Room3DMeta;
   subtitleText?: string;
   appearance?: Room3DAppearance;
   youtubeMuted?: boolean;
+  /** Called whenever the YouTube player falls back or resets its real mute state (keeps UI honest). */
+  onYoutubeMutedChange?: (muted: boolean) => void;
   onPick: (code: string) => void;
   onHover?: (code: string | null) => void;
   /** Called when WebGL cannot start or is permanently lost. */
@@ -126,11 +175,15 @@ const LOOK_LIMIT_PITCH = (38 * Math.PI) / 180;
 const HEAT_STEPS = 16;
 const ORBIT_FOV = 54;
 const SEAT_FOV = 60;
+const SEAT_MAX_ZOOM = 2.2;
 const FLIGHT_MS = 480;
 const DIMMER_MS = 340;
+const CURTAIN_MS = 620;
 
 const DEFAULT_SEAT_COLOR = 0x8e1e36;
 const BROKEN_COLOR = 0x242029;
+const RESERVED_SEAT_COLOR = 0x2a3140;
+const FRIEND_SEAT_COLOR = 0x0ea5e9;
 const SELECTED_ACCENT = 0xf43f5e;
 const HOVER_ACCENT = 0xfde047;
 const FAVORITE_MARK_COLOR = 0xf5b800;
@@ -341,15 +394,116 @@ function mergeParts(parts: BufferGeometry[], fallback: BufferGeometry): BufferGe
   return merged;
 }
 
+function cylPart(
+  rTop: number,
+  rBot: number,
+  h: number,
+  x: number,
+  y: number,
+  z: number,
+  seg = 12,
+  rotX = 0,
+  rotZ = 0,
+): BufferGeometry {
+  const g = new CylinderGeometry(rTop, rBot, h, seg);
+  if (rotX !== 0) g.rotateX(rotX);
+  if (rotZ !== 0) g.rotateZ(rotZ);
+  g.translate(x, y, z);
+  return normalizePart(g);
+}
+
+function paintPart(geom: BufferGeometry, hex: number): BufferGeometry {
+  const c = new Color(hex);
+  const count = geom.getAttribute("position").count;
+  const arr = new Float32Array(count * 3);
+  for (let i = 0; i < count; i++) {
+    arr[i * 3] = c.r;
+    arr[i * 3 + 1] = c.g;
+    arr[i * 3 + 2] = c.b;
+  }
+  geom.setAttribute("color", new BufferAttribute(arr, 3));
+  return geom;
+}
+
+/** Integrated armrest cupholder (molded outer sleeve + brushed metallic rim + deep dark cup socket). */
+function addCupholder(
+  frameParts: BufferGeometry[],
+  hardwareParts: BufferGeometry[],
+  x: number,
+  topY: number,
+  z: number,
+  outerR = 0.043,
+  depth = 0.095,
+) {
+  frameParts.push(cylPart(outerR, outerR * 0.84, depth, x, topY - depth / 2, z, 12));
+  hardwareParts.push(paintPart(cylPart(outerR + 0.005, outerR + 0.002, 0.011, x, topY + 0.003, z, 14), 0x6a7288));
+  hardwareParts.push(paintPart(cylPart(outerR * 0.78, outerR * 0.78, 0.004, x, topY + 0.0095, z, 14), 0x050508));
+}
+
+/** Luxury Gold-Class swivel popcorn & snack tray mounted via brushed steel stem off the console armrest. */
+function addSwivelTray(
+  hardwareParts: BufferGeometry[],
+  pivotX: number,
+  armTopY: number,
+  pivotZ: number,
+  trayX: number,
+  trayZ: number,
+  trayW = 0.24,
+  trayD = 0.17,
+) {
+  const trayY = armTopY + 0.068;
+  // Vertical brushed steel pivot post + horizontal support arm
+  hardwareParts.push(paintPart(cylPart(0.011, 0.013, 0.064, pivotX, armTopY + 0.032, pivotZ, 10), 0x6a7286));
+  const armDx = trayX - pivotX;
+  const armDz = trayZ - pivotZ;
+  const armLen = Math.hypot(armDx, armDz);
+  if (armLen > 0.01) {
+    const link = new BoxGeometry(armLen, 0.014, 0.022);
+    link.rotateY(-Math.atan2(armDz, armDx));
+    link.translate((pivotX + trayX) / 2, trayY - 0.012, (pivotZ + trayZ) / 2);
+    hardwareParts.push(paintPart(normalizePart(link), 0x565d70));
+  }
+  // Smoked-walnut tabletop + dark perimeter edge lip
+  hardwareParts.push(paintPart(roundedPart(trayW, 0.015, trayD, trayX, trayY, trayZ, 0.007), 0x5d4536));
+  hardwareParts.push(paintPart(roundedPart(trayW + 0.012, 0.011, trayD + 0.012, trayX, trayY - 0.003, trayZ, 0.006), 0x2a1f18));
+}
+
+/** Protective molded polypropylene rear back shell shielding upholstery from rear-row foot traffic. */
+function addBackShell(
+  frameParts: BufferGeometry[],
+  width: number,
+  height: number,
+  cushionH: number,
+  seatD: number,
+  backThick: number,
+  tilt: number,
+) {
+  const shellOffset = backThick / 2 + 0.01;
+  frameParts.push(
+    roundedPart(
+      width * 0.96,
+      height * 0.94,
+      0.02,
+      0,
+      cushionH + (height / 2) * Math.cos(tilt) - 0.04 - shellOffset * Math.sin(tilt),
+      seatD / 2 - 0.025 + (height / 2) * Math.sin(tilt) + shellOffset * Math.cos(tilt),
+      0.014,
+      tilt,
+    ),
+  );
+}
+
 interface ChairGeometries {
   fabric: BufferGeometry;
   frame: BufferGeometry;
+  hardware: BufferGeometry | null;
 }
 
 /**
  * Sculpted multi-material cinema chair facing `-z` (toward the screen), sitting on `y = 0`, centred at `x = 0, z = 0`.
- * Splits plush beveled upholstery (`fabric`) from dark matte pedestals/armrests (`frame`) so every seat reads
- * distinctly in both cinema lighting and heatmap mode, calibrated to Ferco / Figueras dimensions.
+ * Splits plush beveled upholstery (`fabric`), matte frame/armrests/back-shell (`frame`), and metallic/wood convenience
+ * hardware (`hardware`: armrest cupholders, Gold-Class swivel popcorn trays, cinema-bed snack caddies, 4DX footrest/nozzles)
+ * calibrated to Ferco / Figueras / Irwin & CJ 4DPLEX real-world dimensions.
  */
 function buildChairGeometries(
   style: SeatStyle,
@@ -361,30 +515,44 @@ function buildChairGeometries(
   const tilt = (reclineDeg * Math.PI) / 180;
   const fabricParts: BufferGeometry[] = [];
   const frameParts: BufferGeometry[] = [];
+  const hardwareParts: BufferGeometry[] = [];
 
   if (style === "bed") {
     const bedW = seatPitchM * 0.96;
     const bedD = Math.min(rowPitchM * 0.86, 1.45);
-    // Low dark architectural plinth
+    const caddyW = 0.095;
+    const mattressW = bedW - caddyW - 0.015;
+    const mattressX = -caddyW * 0.45;
+    const caddyX = bedW / 2 - caddyW / 2;
+
+    // Low dark architectural plinth + integrated right bedside snack/drink console
     frameParts.push(boxPart(bedW * 0.96, 0.14, bedD * 0.96, 0, 0.07, -0.04));
+    frameParts.push(roundedPart(caddyW, 0.36, 0.46, caddyX, 0.28, 0.16, 0.018));
+    hardwareParts.push(paintPart(roundedPart(caddyW + 0.01, 0.018, 0.48, caddyX, 0.468, 0.16, 0.008), 0x5d4536));
+    addCupholder(frameParts, hardwareParts, caddyX, 0.474, -0.005, 0.036, 0.075);
+
     // Plush mattress + duvet throw + angled headboard bolster + pillow
-    fabricParts.push(roundedPart(bedW, 0.24, bedD, 0, 0.26, -0.04, 0.055));
-    fabricParts.push(roundedPart(bedW * 0.98, 0.09, bedD * 0.64, 0, 0.41, -0.17, 0.038));
-    fabricParts.push(roundedPart(bedW * 0.94, 0.52, 0.17, 0, 0.59, bedD / 2 - 0.15, 0.06, 0.36));
-    fabricParts.push(roundedPart(bedW * 0.72, 0.14, 0.22, 0, 0.47, bedD / 2 - 0.28, 0.05, 0.25));
+    fabricParts.push(roundedPart(mattressW, 0.24, bedD, mattressX, 0.26, -0.04, 0.055));
+    fabricParts.push(roundedPart(mattressW * 0.98, 0.09, bedD * 0.64, mattressX, 0.41, -0.17, 0.038));
+    fabricParts.push(roundedPart(mattressW * 0.94, 0.52, 0.17, mattressX, 0.59, bedD / 2 - 0.15, 0.06, 0.36));
+    fabricParts.push(roundedPart(mattressW * 0.76, 0.14, 0.22, mattressX, 0.47, bedD / 2 - 0.28, 0.05, 0.25));
   } else if (style === "recliner") {
-    // Luxury recliner (Ferco Verona/Milano ~1.09 m upright, ~1.07 m at 28° deep recline)
+    // Luxury Gold-Class recliner (Ferco Verona/Milano ~1.09 m upright, ~1.07 m at deep recline)
     const cushionH = 0.46;
     const seatD = 0.58;
-    const armW = 0.092;
+    const armW = 0.094;
     const innerW = w - armW * 1.4;
     const backH = 0.72;
     const backTilt = Math.max(tilt, 0.32);
+    const armX = (w - armW) / 2;
 
-    // Matte dark recliner base + wide sculpted console armrests with cupholder ring
+    // Matte dark recliner base + wide sculpted console armrests + flush console cupholder + swivel popcorn tray + recline panel
     frameParts.push(boxPart(w * 0.78, 0.24, seatD * 0.86, 0, 0.12, 0.02));
-    frameParts.push(roundedPart(armW, 0.44, seatD + 0.08, -(w - armW) / 2, 0.36, 0, 0.028));
-    frameParts.push(roundedPart(armW, 0.44, seatD + 0.08, (w - armW) / 2, 0.36, 0, 0.028));
+    frameParts.push(roundedPart(armW, 0.44, seatD + 0.08, -armX, 0.36, 0, 0.028));
+    frameParts.push(roundedPart(armW, 0.44, seatD + 0.08, armX, 0.36, 0, 0.028));
+    addCupholder(frameParts, hardwareParts, armX, 0.58, -seatD / 2 + 0.035, 0.042, 0.085);
+    addSwivelTray(hardwareParts, -armX, 0.58, -seatD / 2 + 0.035, -0.095, -seatD / 2 - 0.035, 0.24, 0.17);
+    hardwareParts.push(paintPart(boxPart(0.012, 0.075, 0.042, armX + armW / 2 + 0.002, 0.47, -0.06), 0x768098));
 
     // Plush seat, angled footrest, two-tier ergonomic backrest + plump headrest pillow
     fabricParts.push(roundedPart(innerW, 0.18, seatD, 0, cushionH - 0.09, -0.02, 0.055, -0.05));
@@ -413,6 +581,57 @@ function buildChairGeometries(
         backTilt - 0.08,
       ),
     );
+  } else if (style === "4dx") {
+    // CJ 4DPLEX / CGV 4DX motion seat (~1.08 m): steel motion base, suspended footrest bar, bucket wings, air nozzles & deep cupholder
+    const cushionH = 0.46;
+    const seatD = 0.52;
+    const armW = 0.072;
+    const innerW = w - armW * 1.55;
+    const backH = 0.68;
+    const armX = (w - armW) / 2;
+
+    // Raised heavy-duty steel motion platform + hydraulic actuator struts + suspended metal footrest rail
+    frameParts.push(boxPart(w * 0.88, 0.11, seatD * 0.94, 0, 0.055, 0.02));
+    frameParts.push(boxPart(w * 0.54, 0.22, 0.34, 0, 0.21, 0.04));
+    hardwareParts.push(paintPart(cylPart(0.022, 0.026, 0.22, -w * 0.24, 0.21, 0.04, 10, 0, 0.22), 0x626a7e));
+    hardwareParts.push(paintPart(cylPart(0.022, 0.026, 0.22, w * 0.24, 0.21, 0.04, 10, 0, -0.22), 0x626a7e));
+    // Hanging 4DX footrest bar + twin angled mounting rods
+    hardwareParts.push(paintPart(roundedPart(innerW * 0.92, 0.032, 0.068, 0, 0.135, -seatD / 2 - 0.13, 0.012), 0x666e82));
+    hardwareParts.push(paintPart(cylPart(0.013, 0.013, 0.24, -innerW * 0.36, 0.22, -seatD / 2 - 0.05, 8, -0.68), 0x4c5366));
+    hardwareParts.push(paintPart(cylPart(0.013, 0.013, 0.24, innerW * 0.36, 0.22, -seatD / 2 - 0.05, 8, -0.68), 0x4c5366));
+
+    // Sturdy boxed armrests + deep anti-spill right cupholder + rear protective shell
+    frameParts.push(roundedPart(armW * 0.8, 0.44, seatD * 0.9, -armX, 0.36, 0.02, 0.018));
+    frameParts.push(roundedPart(armW * 0.8, 0.44, seatD * 0.9, armX, 0.36, 0.02, 0.018));
+    frameParts.push(roundedPart(armW, 0.065, seatD + 0.05, -armX, 0.59, -0.01, 0.022));
+    frameParts.push(roundedPart(armW, 0.065, seatD + 0.05, armX, 0.59, -0.01, 0.022));
+    addCupholder(frameParts, hardwareParts, armX - 0.008, 0.618, -seatD / 2 - 0.032, 0.044, 0.11);
+    addBackShell(frameParts, innerW, backH, cushionH, seatD, 0.13, tilt);
+
+    // Sport-bolstered seat cushion, bucket side bolsters, contoured backrest & high headrest with twin shoulder effect nozzles
+    fabricParts.push(roundedPart(innerW, 0.15, seatD, 0, cushionH - 0.075, -0.01, 0.048, -0.04));
+    fabricParts.push(
+      roundedPart(
+        innerW,
+        backH,
+        0.125,
+        0,
+        cushionH + (backH / 2) * Math.cos(tilt) - 0.04,
+        seatD / 2 - 0.03 + (backH / 2) * Math.sin(tilt),
+        0.048,
+        tilt,
+      ),
+    );
+    // Lateral sport torso bolsters
+    const wingY = cushionH + backH * 0.42 * Math.cos(tilt) - 0.02;
+    const wingZ = seatD / 2 - 0.07 + backH * 0.42 * Math.sin(tilt);
+    fabricParts.push(roundedPart(0.055, backH * 0.52, 0.12, -innerW * 0.45, wingY, wingZ, 0.024, tilt));
+    fabricParts.push(roundedPart(0.055, backH * 0.52, 0.12, innerW * 0.45, wingY, wingZ, 0.024, tilt));
+    // Twin shoulder air-blast / scent nozzles flanking upper headrest
+    const nozzleY = cushionH + (backH - 0.12) * Math.cos(tilt) - 0.02;
+    const nozzleZ = seatD / 2 - 0.055 + (backH - 0.12) * Math.sin(tilt);
+    hardwareParts.push(paintPart(roundedPart(0.048, 0.078, 0.058, -innerW * 0.42, nozzleY, nozzleZ, 0.014, tilt), 0x727b92));
+    hardwareParts.push(paintPart(roundedPart(0.048, 0.078, 0.058, innerW * 0.42, nozzleY, nozzleZ, 0.014, tilt), 0x727b92));
   } else if (style === "vip") {
     // High-back VIP cinema chair (Ferco/Figueras 1,050–1,080 mm total height)
     const cushionH = 0.45;
@@ -420,13 +639,16 @@ function buildChairGeometries(
     const armW = 0.072;
     const innerW = w - armW * 1.55;
     const backH = 0.66;
+    const armX = (w - armW) / 2;
 
-    // Dark pedestal, stanchions, sculpted shared armrests
+    // Dark pedestal, stanchions, sculpted shared armrests, outer rear shell & integrated armrest cupholder
     frameParts.push(boxPart(w * 0.56, 0.26, 0.32, 0, 0.13, 0.06));
-    frameParts.push(roundedPart(armW * 0.72, 0.44, seatD * 0.88, -(w - armW) / 2, 0.34, 0.02, 0.018));
-    frameParts.push(roundedPart(armW * 0.72, 0.44, seatD * 0.88, (w - armW) / 2, 0.34, 0.02, 0.018));
-    frameParts.push(roundedPart(armW, 0.065, seatD + 0.04, -(w - armW) / 2, 0.58, 0.0, 0.024));
-    frameParts.push(roundedPart(armW, 0.065, seatD + 0.04, (w - armW) / 2, 0.58, 0.0, 0.024));
+    frameParts.push(roundedPart(armW * 0.72, 0.44, seatD * 0.88, -armX, 0.34, 0.02, 0.018));
+    frameParts.push(roundedPart(armW * 0.72, 0.44, seatD * 0.88, armX, 0.34, 0.02, 0.018));
+    frameParts.push(roundedPart(armW, 0.065, seatD + 0.04, -armX, 0.58, 0.0, 0.024));
+    frameParts.push(roundedPart(armW, 0.065, seatD + 0.04, armX, 0.58, 0.0, 0.024));
+    addCupholder(frameParts, hardwareParts, armX - 0.01, 0.608, -seatD / 2 - 0.034, 0.045, 0.102);
+    addBackShell(frameParts, innerW, backH, cushionH, seatD, 0.125, tilt);
 
     // Deep plush cushion, contoured backrest, headrest bolster
     fabricParts.push(roundedPart(innerW, 0.15, seatD, 0, cushionH - 0.075, -0.01, 0.05, -0.04));
@@ -461,12 +683,15 @@ function buildChairGeometries(
     const armW = 0.058;
     const innerW = w - armW * 1.65;
     const backH = 0.64;
+    const armX = (w - armW) / 2;
 
     frameParts.push(boxPart(w * 0.46, 0.27, 0.24, 0, 0.135, 0.06));
-    frameParts.push(roundedPart(armW * 0.68, 0.42, seatD * 0.84, -(w - armW) / 2, 0.33, 0.02, 0.014));
-    frameParts.push(roundedPart(armW * 0.68, 0.42, seatD * 0.84, (w - armW) / 2, 0.33, 0.02, 0.014));
-    frameParts.push(roundedPart(armW, 0.055, seatD + 0.04, -(w - armW) / 2, 0.56, 0.0, 0.02));
-    frameParts.push(roundedPart(armW, 0.055, seatD + 0.04, (w - armW) / 2, 0.56, 0.0, 0.02));
+    frameParts.push(roundedPart(armW * 0.68, 0.42, seatD * 0.84, -armX, 0.33, 0.02, 0.014));
+    frameParts.push(roundedPart(armW * 0.68, 0.42, seatD * 0.84, armX, 0.33, 0.02, 0.014));
+    frameParts.push(roundedPart(armW, 0.055, seatD + 0.04, -armX, 0.56, 0.0, 0.02));
+    frameParts.push(roundedPart(armW, 0.055, seatD + 0.04, armX, 0.56, 0.0, 0.02));
+    addCupholder(frameParts, hardwareParts, armX - 0.01, 0.585, -seatD / 2 - 0.03, 0.043, 0.094);
+    addBackShell(frameParts, innerW, backH, cushionH, seatD, 0.11, tilt);
 
     fabricParts.push(roundedPart(innerW, 0.135, seatD, 0, cushionH - 0.068, -0.01, 0.048, -0.04));
     fabricParts.push(
@@ -490,12 +715,15 @@ function buildChairGeometries(
     0.46,
   );
   const frame = mergeParts(frameParts, normalizePart(new BoxGeometry(w * 0.5, 0.25, 0.25)));
-  return { fabric, frame };
+  const hardware =
+    hardwareParts.length > 0 ? mergeParts(hardwareParts, paintPart(normalizePart(new BoxGeometry(0.01, 0.01, 0.01)), 0x666e80)) : null;
+  return { fabric, frame, hardware };
 }
 
 /**
  * Couple / Sweetbox seat (`span === 2`): continuous double-wide plush bench without a middle armrest,
- * enclosed on left and right by tall architectural privacy divider panels (1.12 m) matching CGV / Lotte / BHD Sweetbox.
+ * enclosed on left and right by tall architectural privacy divider panels (1.12 m) with twin outer cupholders
+ * (and optional Gold-Class snack trays, cinema-bed bedside caddies, or 4DX motion footrest bar).
  */
 function buildCoupleChairGeometries(
   style: SeatStyle,
@@ -507,32 +735,62 @@ function buildCoupleChairGeometries(
   const tilt = (reclineDeg * Math.PI) / 180;
   const fabricParts: BufferGeometry[] = [];
   const frameParts: BufferGeometry[] = [];
+  const hardwareParts: BufferGeometry[] = [];
 
   if (style === "bed") {
     const bedD = Math.min(rowPitchM * 0.86, 1.45);
+    const railW = 0.092;
+    const railX = (totalW - railW) / 2;
     frameParts.push(boxPart(totalW * 0.97, 0.14, bedD * 0.96, 0, 0.07, -0.04));
-    frameParts.push(roundedPart(0.075, 0.5, bedD * 0.74, -(totalW - 0.075) / 2, 0.41, 0.04, 0.025));
-    frameParts.push(roundedPart(0.075, 0.5, bedD * 0.74, (totalW - 0.075) / 2, 0.41, 0.04, 0.025));
+    frameParts.push(roundedPart(railW, 0.5, bedD * 0.74, -railX, 0.41, 0.04, 0.024));
+    frameParts.push(roundedPart(railW, 0.5, bedD * 0.74, railX, 0.41, 0.04, 0.024));
+    // Twin smoked-walnut bedside snack ledges + recessed cupholders on both side rails
+    hardwareParts.push(paintPart(roundedPart(railW + 0.014, 0.018, 0.48, -railX, 0.668, 0.04, 0.008), 0x5d4536));
+    hardwareParts.push(paintPart(roundedPart(railW + 0.014, 0.018, 0.48, railX, 0.668, 0.04, 0.008), 0x5d4536));
+    addCupholder(frameParts, hardwareParts, -railX, 0.674, -0.11, 0.036, 0.075);
+    addCupholder(frameParts, hardwareParts, railX, 0.674, -0.11, 0.036, 0.075);
 
-    fabricParts.push(roundedPart(totalW - 0.08, 0.24, bedD, 0, 0.26, -0.04, 0.055));
-    fabricParts.push(roundedPart(totalW - 0.1, 0.09, bedD * 0.64, 0, 0.41, -0.17, 0.038));
-    fabricParts.push(roundedPart(totalW - 0.14, 0.52, 0.17, 0, 0.59, bedD / 2 - 0.15, 0.06, 0.36));
-    fabricParts.push(roundedPart(seatPitchM * 0.68, 0.14, 0.22, -seatPitchM * 0.42, 0.47, bedD / 2 - 0.28, 0.05, 0.25));
-    fabricParts.push(roundedPart(seatPitchM * 0.68, 0.14, 0.22, seatPitchM * 0.42, 0.47, bedD / 2 - 0.28, 0.05, 0.25));
+    fabricParts.push(roundedPart(totalW - railW * 2 - 0.01, 0.24, bedD, 0, 0.26, -0.04, 0.055));
+    fabricParts.push(roundedPart(totalW - railW * 2 - 0.03, 0.09, bedD * 0.64, 0, 0.41, -0.17, 0.038));
+    fabricParts.push(roundedPart(totalW - railW * 2 - 0.05, 0.52, 0.17, 0, 0.59, bedD / 2 - 0.15, 0.06, 0.36));
+    fabricParts.push(roundedPart(seatPitchM * 0.64, 0.14, 0.22, -seatPitchM * 0.4, 0.47, bedD / 2 - 0.28, 0.05, 0.25));
+    fabricParts.push(roundedPart(seatPitchM * 0.64, 0.14, 0.22, seatPitchM * 0.4, 0.47, bedD / 2 - 0.28, 0.05, 0.25));
   } else {
     const cushionH = 0.45;
     const seatD = style === "recliner" ? 0.58 : 0.52;
     const wallT = 0.075;
     const innerW = totalW - wallT * 2;
-    const backH = style === "recliner" ? 0.72 : style === "vip" ? 0.67 : 0.65;
+    const backH = style === "recliner" ? 0.72 : style === "4dx" ? 0.68 : style === "vip" ? 0.67 : 0.65;
     const backTilt = style === "recliner" ? Math.max(tilt, 0.32) : tilt;
-    const dividerH = 1.12;
+    const dividerH = style === "4dx" ? 0.62 : 1.12;
     const dividerD = seatD + 0.18;
 
-    // Dark structural base + tall architectural Sweetbox privacy walls with rounded upper contour
-    frameParts.push(boxPart(innerW * 0.9, 0.25, seatD * 0.78, 0, 0.125, 0.04));
+    // Dark structural base + Sweetbox privacy walls (or low 4DX side consoles) + inner outer-side cupholders
+    frameParts.push(boxPart(innerW * 0.9, style === "4dx" ? 0.12 : 0.25, seatD * 0.84, 0, style === "4dx" ? 0.06 : 0.125, 0.04));
     frameParts.push(roundedPart(wallT, dividerH, dividerD, -(totalW - wallT) / 2, dividerH / 2, 0.04, 0.032));
     frameParts.push(roundedPart(wallT, dividerH, dividerD, (totalW - wallT) / 2, dividerH / 2, 0.04, 0.032));
+    // Inner armrest ledges along both outer walls with 1 personal cupholder per viewer
+    const cupX = innerW / 2 - 0.048;
+    frameParts.push(roundedPart(0.09, 0.055, seatD * 0.72, -cupX, 0.56, -0.02, 0.018));
+    frameParts.push(roundedPart(0.09, 0.055, seatD * 0.72, cupX, 0.56, -0.02, 0.018));
+    addCupholder(frameParts, hardwareParts, -cupX, 0.588, -seatD / 2 + 0.02, 0.043, 0.095);
+    addCupholder(frameParts, hardwareParts, cupX, 0.588, -seatD / 2 + 0.02, 0.043, 0.095);
+    addBackShell(frameParts, innerW, backH, cushionH, seatD, 0.125, backTilt);
+
+    if (style === "recliner") {
+      // Twin swivel popcorn/snack trays pivoting cleanly from left & right side walls
+      addSwivelTray(hardwareParts, -cupX, 0.588, -seatD / 2 + 0.08, -innerW * 0.28, -seatD / 2 - 0.04, 0.24, 0.17);
+      addSwivelTray(hardwareParts, cupX, 0.588, -seatD / 2 + 0.08, innerW * 0.28, -seatD / 2 - 0.04, 0.24, 0.17);
+    } else if (style === "4dx") {
+      // Full-width 4DX steel footrest rail + hydraulic struts + twin outer headrest air nozzles
+      hardwareParts.push(paintPart(roundedPart(innerW * 0.94, 0.034, 0.07, 0, 0.135, -seatD / 2 - 0.13, 0.012), 0x666e82));
+      hardwareParts.push(paintPart(cylPart(0.014, 0.014, 0.24, -innerW * 0.38, 0.22, -seatD / 2 - 0.05, 8, -0.68), 0x4c5366));
+      hardwareParts.push(paintPart(cylPart(0.014, 0.014, 0.24, innerW * 0.38, 0.22, -seatD / 2 - 0.05, 8, -0.68), 0x4c5366));
+      const nozzleY = cushionH + (backH - 0.12) * Math.cos(backTilt) - 0.02;
+      const nozzleZ = seatD / 2 - 0.055 + (backH - 0.12) * Math.sin(backTilt);
+      hardwareParts.push(paintPart(roundedPart(0.05, 0.08, 0.058, -innerW * 0.44, nozzleY, nozzleZ, 0.014, backTilt), 0x727b92));
+      hardwareParts.push(paintPart(roundedPart(0.05, 0.08, 0.058, innerW * 0.44, nozzleY, nozzleZ, 0.014, backTilt), 0x727b92));
+    }
 
     // Continuous plush 2-person seat cushion + shared high backrest + subtle twin headrest pillows
     fabricParts.push(roundedPart(innerW, 0.16, seatD, 0, cushionH - 0.08, -0.01, 0.052, -0.04));
@@ -564,7 +822,9 @@ function buildCoupleChairGeometries(
     0.46,
   );
   const frame = mergeParts(frameParts, normalizePart(new BoxGeometry(totalW, 1.12, 0.6)));
-  return { fabric, frame };
+  const hardware =
+    hardwareParts.length > 0 ? mergeParts(hardwareParts, paintPart(normalizePart(new BoxGeometry(0.01, 0.01, 0.01)), 0x666e80)) : null;
+  return { fabric, frame, hardware };
 }
 
 /**
@@ -689,6 +949,101 @@ function buildScreenHousingGeometry(
   return g;
 }
 
+/**
+ * Builds a single-draw-call low-profile 3D mitered perimeter masking frame with an open center window and a tight inner
+ * light-trap bevel flush against the dark proscenium wall. The inner lip overlaps the screen edge by 8 mm at `z = +0.004 m`
+ * to eliminate subpixel seams on `antialias: false` mobile WebGL for both image and YouTube screens without looking like a
+ * thick wall-mounted whiteboard or TV box.
+ */
+function buildScreenFrameGeometry(
+  screenW: number,
+  screenH: number,
+  borderStyle: ScreenBorderStyle,
+  curveDepth: number,
+): BufferGeometry {
+  const outerPad = borderStyle === "velvet" ? 0.2 : borderStyle === "slim" ? 0.055 : 0.012;
+  const bevelW = borderStyle === "velvet" ? 0.028 : borderStyle === "slim" ? 0.014 : 0.006;
+  const zFront = borderStyle === "velvet" ? 0.026 : borderStyle === "slim" ? 0.016 : 0.008;
+  const zLip = 0.004;
+  const zBack = -0.05;
+  const overlap = 0.008;
+
+  const halfW = screenW / 2;
+  const halfH = screenH / 2;
+  const innerX = Math.max(0.05, halfW - overlap);
+  const innerY = Math.max(0.05, halfH - overlap);
+  const bevelX = halfW + bevelW - overlap;
+  const bevelY = halfH + bevelW - overlap;
+  const outerX = halfW + outerPad;
+  const outerY = halfH + outerPad;
+
+  // Profile rings from inner screen lip -> tight light-trap bevel -> flush velvet face -> rear shroud return
+  const rings: { x: number; y: number; z: number; ao: number }[] = [
+    { x: innerX, y: innerY, z: zLip, ao: 0.32 },
+    { x: bevelX, y: bevelY, z: zFront, ao: 0.72 },
+    { x: outerX, y: outerY, z: zFront, ao: 0.62 },
+    { x: outerX, y: outerY, z: zBack, ao: 0.42 },
+  ];
+
+  // CCW corner signs around the frame perimeter (looking from +Z toward the screen)
+  const corners: [number, number][] = [
+    [-1, -1],
+    [1, -1],
+    [1, 1],
+    [-1, 1],
+  ];
+
+  const pos: number[] = [];
+  const col: number[] = [];
+  const curveZ = (x: number) => {
+    if (curveDepth <= 0 || halfW <= 0) return 0;
+    const u = Math.min(1, Math.abs(x) / halfW);
+    return curveDepth * u * u;
+  };
+  const pushV = (x: number, y: number, z: number, ao: number) => {
+    pos.push(x, y, z + curveZ(x));
+    col.push(ao, ao, ao);
+  };
+
+  for (let r = 0; r < rings.length - 1; r++) {
+    const r0 = rings[r];
+    const r1 = rings[r + 1];
+    for (let e = 0; e < 4; e++) {
+      const [sx0, sy0] = corners[e];
+      const [sx1, sy1] = corners[(e + 1) % 4];
+      const isHorizontal = sy0 === sy1;
+      const segs = isHorizontal && curveDepth > 0 ? 24 : 1;
+      for (let s = 0; s < segs; s++) {
+        const t0 = s / segs;
+        const t1 = (s + 1) / segs;
+        const x0i = (sx0 + (sx1 - sx0) * t0) * r0.x;
+        const y0i = (sy0 + (sy1 - sy0) * t0) * r0.y;
+        const x0j = (sx0 + (sx1 - sx0) * t1) * r0.x;
+        const y0j = (sy0 + (sy1 - sy0) * t1) * r0.y;
+        const x1i = (sx0 + (sx1 - sx0) * t0) * r1.x;
+        const y1i = (sy0 + (sy1 - sy0) * t0) * r1.y;
+        const x1j = (sx0 + (sx1 - sx0) * t1) * r1.x;
+        const y1j = (sy0 + (sy1 - sy0) * t1) * r1.y;
+
+        // Outward-wound CCW triangles (`D × T`) across inner bevel, front face, and outer return
+        pushV(x0i, y0i, r0.z, r0.ao);
+        pushV(x1i, y1i, r1.z, r1.ao);
+        pushV(x1j, y1j, r1.z, r1.ao);
+
+        pushV(x0i, y0i, r0.z, r0.ao);
+        pushV(x1j, y1j, r1.z, r1.ao);
+        pushV(x0j, y0j, r0.z, r0.ao);
+      }
+    }
+  }
+
+  const g = new BufferGeometry();
+  g.setAttribute("position", new BufferAttribute(new Float32Array(pos), 3));
+  g.setAttribute("color", new BufferAttribute(new Float32Array(col), 3));
+  g.computeVertexNormals();
+  return g;
+}
+
 // Module-level bounded caches for 2D procedural canvas images so repeat mounts/rebuilds skip all 2D canvas painting.
 // Each WebGLRenderer still creates & disposes its own `CanvasTexture` wrapper to keep context lifecycles isolated.
 const MAX_CANVAS_CACHE = 6;
@@ -697,6 +1052,9 @@ const cachedAcousticWallCanvases = new Map<string, HTMLCanvasElement>();
 const cachedCeilingCanvases = new Map<string, HTMLCanvasElement>();
 const cachedSconceGlowCanvases = new Map<LightAccentColor, HTMLCanvasElement>();
 let cachedScreenHaloCanvas: HTMLCanvasElement | null | undefined;
+let cachedStageReflectCanvas: HTMLCanvasElement | null | undefined;
+let cachedStageLedWashCanvas: HTMLCanvasElement | null | undefined;
+let cachedFrontWallCanvas: HTMLCanvasElement | null | undefined;
 const cachedExitSignCanvases = new Map<string, HTMLCanvasElement>();
 const cachedScreenCanvases = new Map<string, HTMLCanvasElement>();
 
@@ -765,50 +1123,299 @@ const AISLE_LED_HEX: Record<AisleLedColor, number> = {
   red: 0xf87171,
 };
 
+const CARPET_TILE_M = 1.6;
+
+/** Projects true 1:1 world-space metre UVs onto floors, row slabs & stair treads so carpet textures never stretch or squish. */
+function applyWorldBoxUVs(geom: BufferGeometry, tileM = CARPET_TILE_M): BufferGeometry {
+  const pos = geom.getAttribute("position");
+  const norm = geom.getAttribute("normal");
+  const uv = new Float32Array(pos.count * 2);
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i);
+    const y = pos.getY(i);
+    const z = pos.getZ(i);
+    const nx = Math.abs(norm.getX(i));
+    const ny = Math.abs(norm.getY(i));
+    const nz = Math.abs(norm.getZ(i));
+    if (ny >= nx && ny >= nz) {
+      uv[i * 2] = x / tileM;
+      uv[i * 2 + 1] = -z / tileM;
+    } else if (nz >= nx) {
+      uv[i * 2] = x / tileM;
+      uv[i * 2 + 1] = y / tileM;
+    } else {
+      uv[i * 2] = z / tileM;
+      uv[i * 2 + 1] = y / tileM;
+    }
+  }
+  geom.setAttribute("uv", new BufferAttribute(uv, 2));
+  return geom;
+}
+
+let cachedCarpetBumpCanvas: HTMLCanvasElement | null | undefined;
+let cachedChairShadowCanvas: HTMLCanvasElement | null | undefined;
+let cachedAisleSpillCanvas: HTMLCanvasElement | null | undefined;
+
+/** Soft dark elliptical contact shadow texture placed directly beneath each chair base so seats sit grounded on the carpet. */
+function createChairShadowTexture(): CanvasTexture | null {
+  if (cachedChairShadowCanvas === undefined) {
+    const c = document.createElement("canvas");
+    c.width = 64;
+    c.height = 64;
+    const ctx = c.getContext("2d");
+    if (!ctx) {
+      cachedChairShadowCanvas = null;
+    } else {
+      ctx.clearRect(0, 0, 64, 64);
+      const g = ctx.createRadialGradient(32, 34, 4, 32, 34, 30);
+      g.addColorStop(0, "rgba(4, 3, 10, 0.72)");
+      g.addColorStop(0.52, "rgba(4, 3, 10, 0.36)");
+      g.addColorStop(0.82, "rgba(4, 3, 10, 0.1)");
+      g.addColorStop(1, "rgba(4, 3, 10, 0)");
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, 64, 64);
+      cachedChairShadowCanvas = c;
+    }
+  }
+  if (!cachedChairShadowCanvas) return null;
+  const tex = new CanvasTexture(cachedChairShadowCanvas);
+  tex.minFilter = LinearFilter;
+  tex.magFilter = LinearFilter;
+  tex.generateMipmaps = false;
+  return tex;
+}
+
+/** Soft horizontal light spill decal texture cast onto carpet treads by each aisle step LED strip. */
+function createAisleLedSpillTexture(): CanvasTexture | null {
+  if (cachedAisleSpillCanvas === undefined) {
+    const c = document.createElement("canvas");
+    c.width = 64;
+    c.height = 64;
+    const ctx = c.getContext("2d");
+    if (!ctx) {
+      cachedAisleSpillCanvas = null;
+    } else {
+      ctx.clearRect(0, 0, 64, 64);
+      const g = ctx.createRadialGradient(32, 32, 2, 32, 32, 31);
+      g.addColorStop(0, "rgba(255, 255, 255, 0.85)");
+      g.addColorStop(0.35, "rgba(255, 255, 255, 0.34)");
+      g.addColorStop(0.72, "rgba(255, 255, 255, 0.08)");
+      g.addColorStop(1, "rgba(255, 255, 255, 0)");
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, 64, 64);
+      cachedAisleSpillCanvas = c;
+    }
+  }
+  if (!cachedAisleSpillCanvas) return null;
+  const tex = new CanvasTexture(cachedAisleSpillCanvas);
+  tex.minFilter = LinearFilter;
+  tex.magFilter = LinearFilter;
+  tex.generateMipmaps = false;
+  return tex;
+}
+
+/** Bakes physical architectural ambient occlusion (corner/baseboard/cornice falloff) into room wall vertices. */
+function bakeWallAO(
+  geom: BufferGeometry,
+  w: number,
+  h: number,
+  floorHeightAtLocalX: (localX: number) => number,
+): BufferGeometry {
+  const pos = geom.getAttribute("position");
+  const colors = new Float32Array(pos.count * 3);
+  const halfW = w / 2;
+  const halfH = h / 2;
+  for (let i = 0; i < pos.count; i++) {
+    const lx = pos.getX(i);
+    const ly = pos.getY(i);
+    const worldY = ly + halfH;
+    const floorY = floorHeightAtLocalX(lx);
+    const distFloor = Math.max(0, worldY - floorY);
+    const distCeil = Math.max(0, h - worldY);
+    const distCorner = Math.max(0, halfW - Math.abs(lx));
+
+    const floorAO = 0.5 + 0.5 * smoothstep01(0, 1.15, distFloor);
+    const ceilAO = 0.62 + 0.38 * smoothstep01(0, 0.95, distCeil);
+    const cornerAO = 0.58 + 0.42 * smoothstep01(0, 1.25, distCorner);
+    const ao = Math.max(0.34, Math.min(1, floorAO * ceilAO * cornerAO));
+    colors[i * 3] = ao;
+    colors[i * 3 + 1] = ao;
+    colors[i * 3 + 2] = ao;
+  }
+  geom.setAttribute("color", new BufferAttribute(colors, 3));
+  return geom;
+}
+
+/** Bakes soft perimeter corner ambient occlusion into the auditorium ceiling plane. */
+function bakeCeilingAO(geom: BufferGeometry, w: number, d: number): BufferGeometry {
+  const pos = geom.getAttribute("position");
+  const colors = new Float32Array(pos.count * 3);
+  const halfW = w / 2;
+  const halfD = d / 2;
+  for (let i = 0; i < pos.count; i++) {
+    const lx = pos.getX(i);
+    const ly = pos.getY(i);
+    const dx = Math.max(0, halfW - Math.abs(lx));
+    const dz = Math.max(0, halfD - Math.abs(ly));
+    const aoX = 0.58 + 0.42 * smoothstep01(0, 1.35, dx);
+    const aoZ = 0.62 + 0.38 * smoothstep01(0, 1.35, dz);
+    const ao = Math.max(0.4, Math.min(1, aoX * aoZ));
+    colors[i * 3] = ao;
+    colors[i * 3 + 1] = ao;
+    colors[i * 3 + 2] = ao;
+  }
+  geom.setAttribute("color", new BufferAttribute(colors, 3));
+  return geom;
+}
+
+/** Bakes wall-junction & under-riser crease ambient occlusion into world-space floor slabs and stair treads. */
+function bakeFloorAO(
+  geom: BufferGeometry,
+  xMin: number,
+  xMax: number,
+  zCreaseBack: number | null,
+  zCreaseFront: number | null,
+): BufferGeometry {
+  const pos = geom.getAttribute("position");
+  const norm = geom.getAttribute("normal");
+  const colors = new Float32Array(pos.count * 3);
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i);
+    const z = pos.getZ(i);
+    const ny = norm ? norm.getY(i) : 1;
+    const distWall = Math.max(0, Math.min(x - xMin, xMax - x));
+    const wallAO = 0.56 + 0.44 * smoothstep01(0, 1.05, distWall);
+    const backAO =
+      zCreaseBack !== null && ny > 0.5
+        ? 0.64 + 0.36 * smoothstep01(0, 0.42, Math.max(0, zCreaseBack - z))
+        : 1;
+    const frontAO =
+      zCreaseFront !== null && ny > 0.5
+        ? 0.62 + 0.38 * smoothstep01(0, 0.55, Math.max(0, z - zCreaseFront))
+        : 1;
+    const sideDarken = ny > 0.5 ? 1 : 0.72;
+    const ao = Math.max(0.38, Math.min(1, wallAO * backAO * frontAO * sideDarken));
+    colors[i * 3] = ao;
+    colors[i * 3 + 1] = ao;
+    colors[i * 3 + 2] = ao;
+  }
+  geom.setAttribute("color", new BufferAttribute(colors, 3));
+  return geom;
+}
+function getProceduralCarpetBumpCanvas(): HTMLCanvasElement | null {
+  if (cachedCarpetBumpCanvas !== undefined) return cachedCarpetBumpCanvas;
+  const SIZE = 256;
+  const canvas = document.createElement("canvas");
+  canvas.width = SIZE;
+  canvas.height = SIZE;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    cachedCarpetBumpCanvas = null;
+    return null;
+  }
+  const img = ctx.createImageData(SIZE, SIZE);
+  const out = img.data;
+  for (let y = 0; y < SIZE; y++) {
+    for (let x = 0; x < SIZE; x++) {
+      const h = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453;
+      const grain = h - Math.floor(h);
+      const tuft = (((x + (y & 2)) & 3) === 0 ? 0.16 : -0.05) + ((y & 3) === 0 ? 0.12 : -0.04);
+      const v = Math.max(0, Math.min(255, Math.round((0.46 + tuft + (grain - 0.5) * 0.36) * 255)));
+      const idx = (y * SIZE + x) * 4;
+      out[idx] = v;
+      out[idx + 1] = v;
+      out[idx + 2] = v;
+      out[idx + 3] = 255;
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+  cachedCarpetBumpCanvas = canvas;
+  return canvas;
+}
+
 function getCarpetCanvas(style: CarpetStyle, baseHex: string): HTMLCanvasElement | null {
   const key = `${style}:${baseHex}`;
   const existing = cachedCarpetCanvases.get(key);
   if (existing) return existing;
+  const SIZE = 256;
   const canvas = document.createElement("canvas");
-  canvas.width = 256;
-  canvas.height = 256;
+  canvas.width = SIZE;
+  canvas.height = SIZE;
   const ctx = canvas.getContext("2d");
   if (!ctx) return null;
 
   ctx.fillStyle = shadeHex(baseHex, 1, "#161320");
-  ctx.fillRect(0, 0, 256, 256);
+  ctx.fillRect(0, 0, SIZE, SIZE);
+
+  // Fine woven broadloom tuft base common across all cinema carpets
+  let seed = 1337;
+  const rand = () => {
+    seed = (seed * 16807) % 2147483647;
+    return (seed - 1) / 2147483646;
+  };
+  for (let i = 0; i < 1400; i++) {
+    const px = Math.floor(rand() * SIZE);
+    const py = Math.floor(rand() * SIZE);
+    ctx.fillStyle = i % 2 === 0 ? "rgba(255, 255, 255, 0.032)" : "rgba(0, 0, 0, 0.14)";
+    ctx.fillRect(px, py, 2, 2);
+  }
 
   if (style === "striped") {
-    for (let x = 0; x < 256; x += 32) {
-      ctx.fillStyle = "rgba(255, 255, 255, 0.045)";
-      ctx.fillRect(x, 0, 12, 256);
-      ctx.fillStyle = "rgba(0, 0, 0, 0.2)";
-      ctx.fillRect(x + 12, 0, 4, 256);
+    // Plush directional ribbed auditorium broadloom
+    for (let x = 0; x < SIZE; x += 32) {
+      const g = ctx.createLinearGradient(x, 0, x + 32, 0);
+      g.addColorStop(0, "rgba(0, 0, 0, 0.22)");
+      g.addColorStop(0.22, "rgba(255, 255, 255, 0.055)");
+      g.addColorStop(0.55, "rgba(255, 255, 255, 0.015)");
+      g.addColorStop(0.85, "rgba(0, 0, 0, 0.14)");
+      g.addColorStop(1, "rgba(0, 0, 0, 0.22)");
+      ctx.fillStyle = g;
+      ctx.fillRect(x, 0, 32, SIZE);
     }
-    ctx.fillStyle = "rgba(255, 255, 255, 0.018)";
-    for (let y = 0; y < 256; y += 4) ctx.fillRect(0, y, 256, 1);
+    ctx.fillStyle = "rgba(255, 255, 255, 0.02)";
+    for (let y = 0; y < SIZE; y += 4) ctx.fillRect(0, y, SIZE, 1);
   } else if (style === "solid") {
-    ctx.fillStyle = "rgba(255, 255, 255, 0.014)";
-    for (let y = 0; y < 256; y += 4) ctx.fillRect(0, y, 256, 1);
-    ctx.fillStyle = "rgba(0, 0, 0, 0.09)";
-    for (let x = 0; x < 256; x += 8) ctx.fillRect(x, 0, 1, 256);
+    // Dense cut-pile matte wool broadloom with soft micro-pile variation
+    for (let i = 0; i < 900; i++) {
+      const px = Math.floor(rand() * SIZE);
+      const py = Math.floor(rand() * SIZE);
+      ctx.fillStyle = i % 3 === 0 ? "rgba(255, 255, 255, 0.022)" : "rgba(0, 0, 0, 0.085)";
+      ctx.fillRect(px, py, 3, 2);
+    }
   } else {
-    // Subtle woven ribs + deterministic cinema carpet fleck pattern
-    ctx.fillStyle = "rgba(255, 255, 255, 0.022)";
-    for (let y = 0; y < 256; y += 4) ctx.fillRect(0, y, 256, 1);
-    ctx.fillStyle = "rgba(0, 0, 0, 0.16)";
-    for (let x = 0; x < 256; x += 8) ctx.fillRect(x, 0, 1, 256);
-
-    let seed = 1337;
-    const rand = () => {
-      seed = (seed * 16807) % 2147483647;
-      return (seed - 1) / 2147483646;
-    };
-    for (let i = 0; i < 420; i++) {
-      const x = rand() * 256;
-      const y = rand() * 256;
-      const r = 1 + rand() * 2.2;
-      ctx.fillStyle = i % 3 === 0 ? "rgba(148, 42, 74, 0.12)" : "rgba(58, 66, 104, 0.12)";
+    // Authentic woven Axminster cinema carpet: subtle tonal diamond lattice + warm burgundy/slate flecks
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.045)";
+    ctx.lineWidth = 2;
+    const step = 64;
+    for (let o = -SIZE; o <= SIZE * 2; o += step) {
+      ctx.beginPath();
+      ctx.moveTo(o, 0);
+      ctx.lineTo(o + SIZE, SIZE);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(o, SIZE);
+      ctx.lineTo(o + SIZE, 0);
+      ctx.stroke();
+    }
+    // Small woven intersection nodes
+    ctx.fillStyle = "rgba(255, 215, 175, 0.06)";
+    for (let y = 0; y < SIZE; y += step / 2) {
+      for (let x = 0; x < SIZE; x += step / 2) {
+        if (((x / (step / 2)) + (y / (step / 2))) % 2 === 0) {
+          ctx.fillRect(x - 2, y - 2, 4, 4);
+        }
+      }
+    }
+    for (let i = 0; i < 650; i++) {
+      const x = rand() * SIZE;
+      const y = rand() * SIZE;
+      const r = 1.2 + rand() * 2.2;
+      ctx.fillStyle =
+        i % 4 === 0
+          ? "rgba(182, 58, 92, 0.14)"
+          : i % 4 === 1
+            ? "rgba(188, 152, 104, 0.09)"
+            : "rgba(64, 72, 114, 0.14)";
       ctx.fillRect(x, y, r, r);
     }
   }
@@ -816,21 +1423,32 @@ function getCarpetCanvas(style: CarpetStyle, baseHex: string): HTMLCanvasElement
   return putCanvasCache(cachedCarpetCanvases, key, canvas);
 }
 
-/** Procedural plush dark cinema carpet texture (256×256). */
+/** Procedural plush dark cinema carpet texture (256×256) with optional pile bump map. */
 function createCarpetTexture(
   repeatX: number,
   repeatZ: number,
   style: CarpetStyle,
   baseHex: string,
-): CanvasTexture | null {
+): { map: CanvasTexture; bumpMap: CanvasTexture | null } | null {
   const canvas = getCarpetCanvas(style, baseHex);
   if (!canvas) return null;
-  const tex = new CanvasTexture(canvas);
-  tex.wrapS = RepeatWrapping;
-  tex.wrapT = RepeatWrapping;
-  tex.repeat.set(Math.max(1, repeatX), Math.max(1, repeatZ));
-  tex.colorSpace = SRGBColorSpace;
-  return tex;
+  const rx = Math.max(1, repeatX);
+  const ry = Math.max(1, repeatZ);
+  const map = new CanvasTexture(canvas);
+  map.wrapS = RepeatWrapping;
+  map.wrapT = RepeatWrapping;
+  map.repeat.set(rx, ry);
+  map.colorSpace = SRGBColorSpace;
+
+  const bumpCanvas = getProceduralCarpetBumpCanvas();
+  let bumpMap: CanvasTexture | null = null;
+  if (bumpCanvas) {
+    bumpMap = new CanvasTexture(bumpCanvas);
+    bumpMap.wrapS = RepeatWrapping;
+    bumpMap.wrapT = RepeatWrapping;
+    bumpMap.repeat.set(rx * 2, ry * 2);
+  }
+  return { map, bumpMap };
 }
 
 function getAcousticWallCanvas(style: WallStyle, baseHex: string): HTMLCanvasElement | null {
@@ -912,8 +1530,12 @@ function createAcousticWallTexture(
   return tex;
 }
 
-function getCeilingCanvas(style: CeilingStyle, baseHex: string): HTMLCanvasElement | null {
-  const key = `${style}:${baseHex}`;
+function getCeilingCanvas(
+  style: CeilingStyle,
+  baseHex: string,
+  starlightColor: StarlightColor = "cool",
+): HTMLCanvasElement | null {
+  const key = `${style}:${baseHex}:${style === "starlight" ? starlightColor : ""}`;
   const existing = cachedCeilingCanvases.get(key);
   if (existing) return existing;
   const canvas = document.createElement("canvas");
@@ -959,18 +1581,32 @@ function getCeilingCanvas(style: CeilingStyle, baseHex: string): HTMLCanvasEleme
     }
   } else if (style === "starlight") {
     // Delicate VIP theater fiber-optic starfield ceiling
-    for (let i = 0; i < 42; i++) {
+    const rainbowPalette = [
+      [186, 230, 253],
+      [253, 224, 150],
+      [216, 180, 254],
+      [253, 164, 175],
+      [224, 242, 254],
+    ] as const;
+    for (let i = 0; i < 48; i++) {
       const sx = rand() * 256;
       const sy = rand() * 256;
-      const r = rand() > 0.8 ? 2.2 : 1.25;
-      const alpha = 0.38 + rand() * 0.55;
-      const warm = i % 3 === 0;
-      const halo = ctx.createRadialGradient(sx, sy, 0, sx, sy, r * 3.2);
-      halo.addColorStop(0, warm ? `rgba(255, 236, 198, ${alpha.toFixed(2)})` : `rgba(210, 230, 255, ${alpha.toFixed(2)})`);
+      const r = rand() > 0.8 ? 2.3 : 1.3;
+      const alpha = 0.4 + rand() * 0.56;
+      let rgb: readonly [number, number, number];
+      if (starlightColor === "warm") {
+        rgb = i % 3 === 0 ? [255, 214, 145] : [255, 240, 206];
+      } else if (starlightColor === "rainbow") {
+        rgb = rainbowPalette[i % rainbowPalette.length];
+      } else {
+        rgb = i % 3 === 0 ? [255, 242, 222] : [200, 226, 255];
+      }
+      const halo = ctx.createRadialGradient(sx, sy, 0, sx, sy, r * 3.3);
+      halo.addColorStop(0, `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${alpha.toFixed(2)})`);
       halo.addColorStop(1, "rgba(255, 255, 255, 0)");
       ctx.fillStyle = halo;
       ctx.beginPath();
-      ctx.arc(sx, sy, r * 3.2, 0, Math.PI * 2);
+      ctx.arc(sx, sy, r * 3.3, 0, Math.PI * 2);
       ctx.fill();
     }
   }
@@ -984,8 +1620,9 @@ function createCeilingTexture(
   repeatZ: number,
   style: CeilingStyle,
   baseHex: string,
+  starlightColor: StarlightColor = "cool",
 ): CanvasTexture | null {
-  const canvas = getCeilingCanvas(style, baseHex);
+  const canvas = getCeilingCanvas(style, baseHex, starlightColor);
   if (!canvas) return null;
   const tex = new CanvasTexture(canvas);
   tex.wrapS = RepeatWrapping;
@@ -1076,7 +1713,7 @@ function createRowMarkerAtlas(
   if (labels.length === 0) return null;
   const cols = Math.min(8, Math.max(1, labels.length));
   const gridRows = Math.ceil(labels.length / cols);
-  const cell = 64;
+  const cell = 96;
   const canvas = document.createElement("canvas");
   canvas.width = cols * cell;
   canvas.height = gridRows * cell;
@@ -1094,19 +1731,19 @@ function createRowMarkerAtlas(
     const oy = gy * cell;
 
     ctx.fillStyle = "#0c0c14";
-    ctx.fillRect(ox + 2, oy + 2, cell - 4, cell - 4);
+    ctx.fillRect(ox + 3, oy + 3, cell - 6, cell - 6);
     ctx.strokeStyle = style.border;
-    ctx.lineWidth = 3;
-    ctx.strokeRect(ox + 5, oy + 5, cell - 10, cell - 10);
+    ctx.lineWidth = 4;
+    ctx.strokeRect(ox + 7, oy + 7, cell - 14, cell - 14);
 
     ctx.save();
-    ctx.font = `700 ${label.length > 2 ? 22 : label.length > 1 ? 28 : 36}px -apple-system, BlinkMacSystemFont, 'Be Vietnam Pro', sans-serif`;
+    ctx.font = `700 ${label.length > 2 ? 32 : label.length > 1 ? 42 : 54}px -apple-system, BlinkMacSystemFont, 'Be Vietnam Pro', sans-serif`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.shadowColor = style.glow;
-    ctx.shadowBlur = 9;
+    ctx.shadowBlur = 12;
     ctx.fillStyle = style.text;
-    ctx.fillText(label, ox + cell / 2, oy + cell / 2 + 1, cell - 14);
+    ctx.fillText(label, ox + cell / 2, oy + cell / 2 + 2, cell - 20);
     ctx.restore();
   });
 
@@ -1159,20 +1796,32 @@ function getScreenHaloCanvas(): HTMLCanvasElement | null {
     return null;
   }
 
-  ctx.clearRect(0, 0, 256, 128);
-  const g = ctx.createRadialGradient(128, 64, 24, 128, 64, 126);
-  g.addColorStop(0, "rgba(130, 178, 255, 0.55)");
-  g.addColorStop(0.45, "rgba(148, 152, 220, 0.22)");
-  g.addColorStop(0.75, "rgba(218, 138, 92, 0.08)");
-  g.addColorStop(1, "rgba(0, 0, 0, 0)");
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, 256, 128);
+  // Soft rectangular feathered light-spill alpha mask (white base tinted dynamically via `haloMat.color`)
+  const img = ctx.createImageData(256, 128);
+  const data = img.data;
+  for (let y = 0; y < 128; y++) {
+    const ny = Math.abs((y + 0.5) / 128 - 0.5) * 2; // 0 at center, 1 at edge
+    for (let x = 0; x < 256; x++) {
+      const nx = Math.abs((x + 0.5) / 256 - 0.5) * 2;
+      // Soft rounded-rectangle SDF extending outside the inner screen box [0..0.68] to 1.0
+      const dx = Math.max(0, nx - 0.62) / 0.38;
+      const dy = Math.max(0, ny - 0.56) / 0.44;
+      const d = Math.hypot(dx, dy);
+      const falloff = d >= 1 ? 0 : (1 - d) ** 2.15;
+      const idx = (y * 256 + x) * 4;
+      data[idx] = 255;
+      data[idx + 1] = 255;
+      data[idx + 2] = 255;
+      data[idx + 3] = Math.round(falloff * 185);
+    }
+  }
+  ctx.putImageData(img, 0, 0);
 
   cachedScreenHaloCanvas = canvas;
   return canvas;
 }
 
-/** Soft additive radial glow behind the cinema screen framing to simulate wall light spill. */
+/** Soft neutral rectangular light-spill texture behind the screen framing (tinted dynamically to match the movie frame). */
 function createScreenHaloTexture(): CanvasTexture | null {
   const canvas = getScreenHaloCanvas();
   if (!canvas) return null;
@@ -1181,6 +1830,119 @@ function createScreenHaloTexture(): CanvasTexture | null {
   tex.minFilter = LinearFilter;
   tex.magFilter = LinearFilter;
   tex.generateMipmaps = false;
+  return tex;
+}
+
+function getStageReflectCanvas(): HTMLCanvasElement | null {
+  if (cachedStageReflectCanvas !== undefined) return cachedStageReflectCanvas;
+  const canvas = document.createElement("canvas");
+  canvas.width = 256;
+  canvas.height = 128;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    cachedStageReflectCanvas = null;
+    return null;
+  }
+  const img = ctx.createImageData(256, 128);
+  const data = img.data;
+  for (let y = 0; y < 128; y++) {
+    // v = 0 near front wall / screen base, v = 1 toward audience front edge of stage
+    const v = (y + 0.5) / 128;
+    const zFade = Math.sin(Math.min(1, v * 1.15) * Math.PI * 0.5) * (1 - v) ** 1.45;
+    for (let x = 0; x < 256; x++) {
+      const nx = Math.abs((x + 0.5) / 256 - 0.5) * 2;
+      const xFade = nx >= 1 ? 0 : (1 - nx * nx) ** 1.7;
+      const idx = (y * 256 + x) * 4;
+      data[idx] = 255;
+      data[idx + 1] = 255;
+      data[idx + 2] = 255;
+      data[idx + 3] = Math.round(zFade * xFade * 190);
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+  cachedStageReflectCanvas = canvas;
+  return canvas;
+}
+
+function createStageReflectTexture(): CanvasTexture | null {
+  const canvas = getStageReflectCanvas();
+  if (!canvas) return null;
+  const tex = new CanvasTexture(canvas);
+  tex.colorSpace = SRGBColorSpace;
+  tex.minFilter = LinearFilter;
+  tex.magFilter = LinearFilter;
+  tex.generateMipmaps = false;
+  return tex;
+}
+
+function getStageLedWashCanvas(): HTMLCanvasElement | null {
+  if (cachedStageLedWashCanvas !== undefined) return cachedStageLedWashCanvas;
+  const canvas = document.createElement("canvas");
+  canvas.width = 128;
+  canvas.height = 64;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    cachedStageLedWashCanvas = null;
+    return null;
+  }
+  const grad = ctx.createLinearGradient(0, 0, 0, 64);
+  grad.addColorStop(0, "rgba(255, 206, 146, 0.72)");
+  grad.addColorStop(0.32, "rgba(242, 168, 92, 0.32)");
+  grad.addColorStop(0.75, "rgba(218, 130, 64, 0.07)");
+  grad.addColorStop(1, "rgba(0, 0, 0, 0)");
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 128, 64);
+  cachedStageLedWashCanvas = canvas;
+  return canvas;
+}
+
+function createStageLedWashTexture(): CanvasTexture | null {
+  const canvas = getStageLedWashCanvas();
+  if (!canvas) return null;
+  const tex = new CanvasTexture(canvas);
+  tex.colorSpace = SRGBColorSpace;
+  tex.minFilter = LinearFilter;
+  tex.magFilter = LinearFilter;
+  tex.generateMipmaps = false;
+  return tex;
+}
+
+function getFrontWallCanvas(): HTMLCanvasElement | null {
+  if (cachedFrontWallCanvas !== undefined) return cachedFrontWallCanvas;
+  const canvas = document.createElement("canvas");
+  canvas.width = 256;
+  canvas.height = 256;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    cachedFrontWallCanvas = null;
+    return null;
+  }
+  // Pitch-black Dolby/CGV acoustic velour baffle wall (absorbs 99% of stray light — never grey vertical stripes)
+  ctx.fillStyle = "#030305";
+  ctx.fillRect(0, 0, 256, 256);
+  let seed = 9137;
+  const rand = () => {
+    seed = (seed * 16807) % 2147483647;
+    return (seed - 1) / 2147483646;
+  };
+  for (let i = 0; i < 900; i++) {
+    const gx = rand() * 256;
+    const gy = rand() * 256;
+    ctx.fillStyle = i % 3 === 0 ? "rgba(255,255,255,0.008)" : "rgba(0,0,0,0.2)";
+    ctx.fillRect(gx, gy, 2, 2);
+  }
+  cachedFrontWallCanvas = canvas;
+  return canvas;
+}
+
+function createFrontWallTexture(repeatX: number, repeatY: number): CanvasTexture | null {
+  const canvas = getFrontWallCanvas();
+  if (!canvas) return null;
+  const tex = new CanvasTexture(canvas);
+  tex.colorSpace = SRGBColorSpace;
+  tex.wrapS = RepeatWrapping;
+  tex.wrapT = RepeatWrapping;
+  tex.repeat.set(Math.max(1, repeatX), Math.max(1, repeatY));
   return tex;
 }
 
@@ -1225,316 +1987,545 @@ function createExitSignTexture(color: ExitSignColor, text: ExitSignText): Canvas
   return tex;
 }
 
-function paintNoirScreen(ctx: CanvasRenderingContext2D) {
-  // Moody neon-noir rain-slicked metropolis at night
-  const sky = ctx.createLinearGradient(0, 0, 0, 512);
-  sky.addColorStop(0, "#050712");
-  sky.addColorStop(0.38, "#12172e");
-  sky.addColorStop(0.65, "#2b2038");
-  sky.addColorStop(0.8, "#582c3a");
-  sky.addColorStop(1, "#0b0912");
-  ctx.fillStyle = sky;
-  ctx.fillRect(0, 0, 1024, 512);
+function computeScreenCanvasSize(aspect: number): { w: number; h: number } {
+  const clamped = Math.max(1.1, Math.min(3.2, Number.isFinite(aspect) && aspect > 0 ? aspect : 2.39));
+  const w = clamped >= 1.7 ? 1280 : 1024;
+  const h = Math.max(384, Math.min(896, Math.round(w / clamped)));
+  return { w, h };
+}
 
-  // Warm atmospheric city horizon bloom
-  const bloom = ctx.createRadialGradient(512, 336, 20, 512, 336, 420);
-  bloom.addColorStop(0, "rgba(255, 168, 92, 0.42)");
-  bloom.addColorStop(0.42, "rgba(218, 72, 114, 0.2)");
-  bloom.addColorStop(0.75, "rgba(44, 104, 178, 0.1)");
+function paintScreenFilmGrain(ctx: CanvasRenderingContext2D, w: number, h: number, seedInit: number) {
+  let seed = seedInit;
+  const rand = () => {
+    seed = (seed * 16807) % 2147483647;
+    return (seed - 1) / 2147483646;
+  };
+  ctx.save();
+  for (let i = 0; i < 1600; i++) {
+    const gx = rand() * w;
+    const gy = rand() * h;
+    ctx.fillStyle = i % 2 === 0 ? "rgba(255, 252, 245, 0.022)" : "rgba(0, 0, 0, 0.045)";
+    ctx.fillRect(gx, gy, 2, 2);
+  }
+  ctx.restore();
+}
+
+function paintNoirScreen(ctx: CanvasRenderingContext2D, w: number, h: number) {
+  const horizonY = Math.round(h * 0.72);
+  // Moody neon-noir rain-slicked metropolis at night
+  const sky = ctx.createLinearGradient(0, 0, 0, h);
+  sky.addColorStop(0, "#040610");
+  sky.addColorStop(0.36, "#10162c");
+  sky.addColorStop(0.62, "#291e38");
+  sky.addColorStop(0.75, "#5c2b3d");
+  sky.addColorStop(1, "#090810");
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, w, h);
+
+  // Warm atmospheric city horizon bloom + secondary cool cyan alley glow
+  const bloom = ctx.createRadialGradient(w * 0.5, horizonY - h * 0.04, h * 0.04, w * 0.5, horizonY - h * 0.04, w * 0.44);
+  bloom.addColorStop(0, "rgba(255, 174, 102, 0.48)");
+  bloom.addColorStop(0.38, "rgba(220, 76, 118, 0.24)");
+  bloom.addColorStop(0.72, "rgba(44, 112, 192, 0.12)");
   bloom.addColorStop(1, "rgba(0, 0, 0, 0)");
   ctx.fillStyle = bloom;
-  ctx.fillRect(0, 0, 1024, 512);
+  ctx.fillRect(0, 0, w, h);
 
-  // Layered city skyline silhouettes + lit office windows
+  const cyanGlow = ctx.createRadialGradient(w * 0.24, horizonY - h * 0.06, 10, w * 0.24, horizonY - h * 0.06, w * 0.28);
+  cyanGlow.addColorStop(0, "rgba(72, 186, 255, 0.24)");
+  cyanGlow.addColorStop(1, "rgba(0, 0, 0, 0)");
+  ctx.fillStyle = cyanGlow;
+  ctx.fillRect(0, 0, w, h);
+
   let seed = 8080;
   const rand = () => {
     seed = (seed * 16807) % 2147483647;
     return (seed - 1) / 2147483646;
   };
-  for (let x = 0; x < 1024; ) {
-    const bw = 34 + Math.floor(rand() * 58);
-    const bh = 90 + Math.floor(rand() * 210);
-    const top = 365 - bh;
-    ctx.fillStyle = "#10101c";
-    ctx.fillRect(x, top, bw - 3, bh + 15);
-    for (let wy = top + 12; wy < 350; wy += 14) {
-      for (let wx = x + 6; wx < x + bw - 10; wx += 11) {
+
+  // Distant atmospheric skyline silhouettes for depth
+  for (let x = 0; x < w; ) {
+    const bw = Math.round((w / 1024) * (28 + rand() * 52));
+    const bh = Math.round(h * (0.24 + rand() * 0.36));
+    const top = horizonY - bh;
+    ctx.fillStyle = "rgba(22, 22, 40, 0.72)";
+    ctx.fillRect(x, top, Math.max(12, bw - 2), bh + 12);
+    x += bw;
+  }
+
+  // Soft city mist band separating far and foreground towers
+  const mist = ctx.createLinearGradient(0, horizonY - h * 0.22, 0, horizonY + 8);
+  mist.addColorStop(0, "rgba(230, 128, 120, 0)");
+  mist.addColorStop(0.75, "rgba(225, 134, 126, 0.14)");
+  mist.addColorStop(1, "rgba(28, 22, 42, 0.42)");
+  ctx.fillStyle = mist;
+  ctx.fillRect(0, horizonY - h * 0.22, w, h * 0.24);
+
+  // Foreground skyscrapers with crisp lit office windows & rooftop beacons
+  const stepY = Math.max(11, Math.round(h * 0.026));
+  const stepX = Math.max(9, Math.round(w * 0.01));
+  for (let x = 0; x < w; ) {
+    const bw = Math.round((w / 1024) * (36 + rand() * 62));
+    const bh = Math.round(h * (0.16 + rand() * 0.42));
+    const top = horizonY - bh;
+    ctx.fillStyle = "#0f0f1b";
+    ctx.fillRect(x, top, Math.max(18, bw - 3), bh + 14);
+    if (bh > h * 0.36 && rand() > 0.45) {
+      ctx.fillStyle = "rgba(255, 76, 98, 0.85)";
+      ctx.beginPath();
+      ctx.arc(x + bw * 0.5, top - 4, 2.4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    for (let wy = top + stepY; wy < horizonY - 10; wy += stepY) {
+      for (let wx = x + 6; wx < x + bw - 10; wx += stepX) {
         if (rand() > 0.62) {
-          ctx.fillStyle = rand() > 0.25 ? "rgba(255, 214, 146, 0.48)" : "rgba(125, 206, 255, 0.42)";
-          ctx.fillRect(wx, wy, 5, 7);
+          ctx.fillStyle = rand() > 0.28 ? "rgba(255, 214, 146, 0.54)" : "rgba(120, 210, 255, 0.46)";
+          ctx.fillRect(wx, wy, Math.max(4, stepX * 0.46), Math.max(5, stepY * 0.5));
         }
       }
     }
     x += bw;
   }
 
-  // Wet street reflection deck
-  const street = ctx.createLinearGradient(0, 365, 0, 512);
+  // Wet street reflection deck with vertical rain-slicked neon streaks
+  const street = ctx.createLinearGradient(0, horizonY, 0, h);
   street.addColorStop(0, "#151224");
-  street.addColorStop(1, "#07060d");
+  street.addColorStop(1, "#06050c");
   ctx.fillStyle = street;
-  ctx.fillRect(0, 365, 1024, 147);
+  ctx.fillRect(0, horizonY, w, h - horizonY);
 
-  for (let i = 0; i < 24; i++) {
-    const rx = 40 + rand() * 944;
-    const ry = 374 + rand() * 95;
-    const rw = 18 + rand() * 56;
+  for (let i = 0; i < 32; i++) {
+    const rx = w * (0.04 + rand() * 0.92);
+    const ry = horizonY + (h - horizonY) * (0.08 + rand() * 0.78);
+    const rw = w * (0.018 + rand() * 0.055);
     const warm = i % 3 !== 0;
     const g = ctx.createRadialGradient(rx, ry, 2, rx, ry, rw);
-    g.addColorStop(0, warm ? "rgba(255, 184, 112, 0.34)" : "rgba(96, 186, 255, 0.32)");
+    g.addColorStop(0, warm ? "rgba(255, 186, 114, 0.36)" : "rgba(92, 192, 255, 0.34)");
     g.addColorStop(1, "rgba(0, 0, 0, 0)");
     ctx.fillStyle = g;
-    ctx.fillRect(rx - rw, ry - 8, rw * 2, 16);
+    ctx.fillRect(rx - rw, ry - 9, rw * 2, 18);
   }
+
+  paintScreenFilmGrain(ctx, w, h, 8821);
 }
 
-function paintGridScreen(ctx: CanvasRenderingContext2D) {
-  // Precision cinema optical framing & sightline calibration chart
-  const bg = ctx.createRadialGradient(512, 256, 40, 512, 256, 620);
+function paintGridScreen(ctx: CanvasRenderingContext2D, w: number, h: number) {
+  const cx = w / 2;
+  const cy = h / 2;
+  const minDim = Math.min(w, h);
+  // Precision cinema optical framing & sightline calibration chart (true circles at every screen aspect)
+  const bg = ctx.createRadialGradient(cx, cy, minDim * 0.08, cx, cy, Math.max(w, h) * 0.62);
   bg.addColorStop(0, "#1d2638");
   bg.addColorStop(0.65, "#111724");
   bg.addColorStop(1, "#090c14");
   ctx.fillStyle = bg;
-  ctx.fillRect(0, 0, 1024, 512);
+  ctx.fillRect(0, 0, w, h);
 
-  // Subtle calibration grid
+  const cell = Math.max(48, Math.round(minDim / 8));
   ctx.strokeStyle = "rgba(148, 178, 224, 0.14)";
   ctx.lineWidth = 1;
-  for (let x = 64; x < 1024; x += 64) {
+  for (let x = cx % cell; x < w; x += cell) {
     ctx.beginPath();
     ctx.moveTo(x, 0);
-    ctx.lineTo(x, 512);
+    ctx.lineTo(x, h);
     ctx.stroke();
   }
-  for (let y = 64; y < 512; y += 64) {
+  for (let y = cy % cell; y < h; y += cell) {
     ctx.beginPath();
     ctx.moveTo(0, y);
-    ctx.lineTo(1024, y);
+    ctx.lineTo(w, y);
     ctx.stroke();
   }
 
-  // Safe-action & safe-title borders
+  // Safe-action (93%) & safe-title (84%) borders
+  const padX1 = Math.round(w * 0.035);
+  const padY1 = Math.round(h * 0.045);
+  const padX2 = Math.round(w * 0.08);
+  const padY2 = Math.round(h * 0.1);
   ctx.strokeStyle = "rgba(148, 198, 255, 0.35)";
   ctx.lineWidth = 2;
-  ctx.strokeRect(36, 24, 952, 464);
+  ctx.strokeRect(padX1, padY1, w - padX1 * 2, h - padY1 * 2);
   ctx.setLineDash([10, 8]);
   ctx.strokeStyle = "rgba(255, 255, 255, 0.24)";
-  ctx.strokeRect(86, 52, 852, 408);
+  ctx.strokeRect(padX2, padY2, w - padX2 * 2, h - padY2 * 2);
   ctx.setLineDash([]);
 
-  // Center optical crosshair & target circles
-  ctx.strokeStyle = "rgba(186, 224, 255, 0.45)";
+  // Center optical crosshair & true target circles
+  ctx.strokeStyle = "rgba(186, 224, 255, 0.48)";
   ctx.lineWidth = 2;
+  const rOuter = minDim * 0.25;
+  const rInner = minDim * 0.085;
+  const arm = minDim * 0.33;
   ctx.beginPath();
-  ctx.arc(512, 256, 128, 0, Math.PI * 2);
+  ctx.arc(cx, cy, rOuter, 0, Math.PI * 2);
   ctx.stroke();
   ctx.beginPath();
-  ctx.arc(512, 256, 42, 0, Math.PI * 2);
+  ctx.arc(cx, cy, rInner, 0, Math.PI * 2);
   ctx.stroke();
   ctx.beginPath();
-  ctx.moveTo(512 - 170, 256);
-  ctx.lineTo(512 + 170, 256);
-  ctx.moveTo(512, 256 - 160);
-  ctx.lineTo(512, 256 + 160);
+  ctx.moveTo(cx - arm, cy);
+  ctx.lineTo(cx + arm, cy);
+  ctx.moveTo(cx, cy - arm);
+  ctx.lineTo(cx, cy + arm);
   ctx.stroke();
 
   // Corner framing L-brackets
-  ctx.strokeStyle = "rgba(248, 250, 252, 0.72)";
+  ctx.strokeStyle = "rgba(248, 250, 252, 0.74)";
   ctx.lineWidth = 4;
+  const mX = Math.round(w * 0.022);
+  const mY = Math.round(h * 0.03);
+  const bLen = Math.round(minDim * 0.065);
   const corners: [number, number, number, number][] = [
-    [22, 16, 1, 1],
-    [1002, 16, -1, 1],
-    [22, 496, 1, -1],
-    [1002, 496, -1, -1],
+    [mX, mY, 1, 1],
+    [w - mX, mY, -1, 1],
+    [mX, h - mY, 1, -1],
+    [w - mX, h - mY, -1, -1],
   ];
-  for (const [cx, cy, sx, sy] of corners) {
+  for (const [bx, by, sx, sy] of corners) {
     ctx.beginPath();
-    ctx.moveTo(cx + sx * 36, cy);
-    ctx.lineTo(cx, cy);
-    ctx.lineTo(cx, cy + sy * 28);
+    ctx.moveTo(bx + sx * bLen, by);
+    ctx.lineTo(bx, by);
+    ctx.lineTo(bx, by + sy * bLen);
     ctx.stroke();
   }
 }
 
+function paintCosmosScreen(ctx: CanvasRenderingContext2D, w: number, h: number) {
+  const cx = w * 0.5;
+  const horizonY = h * 0.7;
+
+  // High-contrast anamorphic cinema twilight sky (deep midnight zenith -> fiery golden horizon)
+  const sky = ctx.createLinearGradient(0, 0, 0, h);
+  sky.addColorStop(0, "#02040b");
+  sky.addColorStop(0.24, "#071128");
+  sky.addColorStop(0.46, "#17325c");
+  sky.addColorStop(0.61, "#a84a2d");
+  sky.addColorStop(0.695, "#ffba74");
+  sky.addColorStop(0.76, "#221628");
+  sky.addColorStop(1, "#04040a");
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, w, h);
+
+  let seed = 2026;
+  const rand = () => {
+    seed = (seed * 16807) % 2147483647;
+    return (seed - 1) / 2147483646;
+  };
+
+  // Faint diagonal Milky Way atmospheric dust band across upper night sky
+  ctx.save();
+  ctx.translate(w * 0.36, h * 0.22);
+  ctx.rotate(-0.34);
+  const milky = ctx.createRadialGradient(0, 0, 10, 0, 0, w * 0.36);
+  milky.addColorStop(0, "rgba(154, 188, 255, 0.12)");
+  milky.addColorStop(0.45, "rgba(110, 148, 224, 0.05)");
+  milky.addColorStop(1, "rgba(0, 0, 0, 0)");
+  ctx.scale(1.6, 0.28);
+  ctx.fillStyle = milky;
+  ctx.beginPath();
+  ctx.arc(0, 0, w * 0.36, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // Crisp pinprick stars in upper zenith
+  for (let i = 0; i < 210; i++) {
+    const sx = rand() * w;
+    const sy = rand() * (h * 0.44);
+    const alpha = (1 - sy / (h * 0.44)) ** 1.2 * (0.22 + rand() * 0.72);
+    const r = rand() > 0.9 ? 1.5 : 0.85;
+    ctx.fillStyle = i % 5 === 0 ? `rgba(255, 226, 184, ${alpha.toFixed(2)})` : `rgba(218, 236, 255, ${alpha.toFixed(2)})`;
+    ctx.beginPath();
+    ctx.arc(sx, sy, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Dramatic backlit sunset volumetric glow
+  const sunY = horizonY - h * 0.02;
+  const atmos = ctx.createRadialGradient(cx, sunY, h * 0.04, cx, sunY, w * 0.38);
+  atmos.addColorStop(0, "rgba(255, 248, 224, 0.95)");
+  atmos.addColorStop(0.18, "rgba(255, 198, 124, 0.72)");
+  atmos.addColorStop(0.46, "rgba(226, 104, 58, 0.3)");
+  atmos.addColorStop(0.75, "rgba(68, 118, 206, 0.1)");
+  atmos.addColorStop(1, "rgba(0, 0, 0, 0)");
+  ctx.fillStyle = atmos;
+  ctx.fillRect(0, 0, w, h);
+
+  // Subtle volumetric sunset crepuscular rays fanning upward from behind central peaks
+  ctx.save();
+  for (let i = -3; i <= 3; i++) {
+    const rayAngle = i * 0.16;
+    ctx.save();
+    ctx.translate(cx, sunY);
+    ctx.rotate(rayAngle);
+    const rg = ctx.createLinearGradient(0, 0, 0, -h * 0.56);
+    rg.addColorStop(0, "rgba(255, 226, 174, 0.16)");
+    rg.addColorStop(0.55, "rgba(255, 184, 120, 0.04)");
+    rg.addColorStop(1, "rgba(255, 184, 120, 0)");
+    ctx.fillStyle = rg;
+    ctx.beginPath();
+    ctx.moveTo(-14, 0);
+    ctx.lineTo(14, 0);
+    ctx.lineTo(w * 0.085, -h * 0.56);
+    ctx.lineTo(-w * 0.085, -h * 0.56);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+  ctx.restore();
+
+  // Layered backlit storm/twilight cloud decks (bright golden rim underside + deep slate cloud tops)
+  for (let i = 0; i < 14; i++) {
+    const clX = w * (0.04 + (i / 13) * 0.92) + (rand() - 0.5) * (w * 0.06);
+    const clY = h * (0.28 + rand() * 0.28);
+    const rw = w * (0.08 + rand() * 0.13);
+    const rh = h * (0.02 + rand() * 0.026);
+    const nearSun = Math.max(0, 1 - Math.abs(clX - cx) / (w * 0.45));
+    ctx.save();
+    ctx.translate(clX, clY);
+    ctx.scale(1, rh / rw);
+    // Warm sunlit under-rim
+    const rim = ctx.createRadialGradient(0, rw * 0.18, 2, 0, rw * 0.18, rw);
+    rim.addColorStop(0, `rgba(255, 198, 134, ${(0.12 + nearSun * 0.28).toFixed(2)})`);
+    rim.addColorStop(1, "rgba(255, 198, 134, 0)");
+    ctx.fillStyle = rim;
+    ctx.beginPath();
+    ctx.arc(0, rw * 0.18, rw, 0, Math.PI * 2);
+    ctx.fill();
+    // Dark upper cloud volume for contrast
+    const top = ctx.createRadialGradient(0, -rw * 0.12, 2, 0, -rw * 0.12, rw * 0.88);
+    top.addColorStop(0, "rgba(10, 16, 36, 0.36)");
+    top.addColorStop(1, "rgba(10, 16, 36, 0)");
+    ctx.fillStyle = top;
+    ctx.beginPath();
+    ctx.arc(0, -rw * 0.12, rw * 0.88, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // Sharp multi-octave fractal alpine mountain ranges (genuine craggy peaks instead of wavy smooth hills)
+  const drawAlpineRange = (
+    baseY: number,
+    amp: number,
+    phase: number,
+    valleyDip: number,
+    fill: string | CanvasGradient,
+    rimColor?: string,
+  ) => {
+    const steps = 160;
+    const pts: [number, number][] = [];
+    for (let i = 0; i <= steps; i++) {
+      const u = i / steps;
+      const x = u * w;
+      const centerDist = Math.abs(u - 0.5) * 2;
+      const valley = 1 - valleyDip * Math.exp(-centerDist * centerDist * 4.5);
+      // Multi-octave ridged noise for crisp natural alpine crags
+      const n1 = 1 - Math.abs(Math.sin(u * 9.5 + phase));
+      const n2 = (1 - Math.abs(Math.sin(u * 23.0 + phase * 1.9))) * 0.48;
+      const n3 = (1 - Math.abs(Math.sin(u * 51.0 + phase * 3.1))) * 0.2;
+      const n4 = (1 - Math.abs(Math.sin(u * 107.0 + phase * 5.7))) * 0.08;
+      const ridge = (n1 + n2 + n3 + n4) / 1.76;
+      const y = baseY - ridge * amp * valley;
+      pts.push([x, y]);
+    }
+    ctx.fillStyle = fill;
+    ctx.beginPath();
+    ctx.moveTo(0, h);
+    for (const [x, y] of pts) ctx.lineTo(x, y);
+    ctx.lineTo(w, h);
+    ctx.closePath();
+    ctx.fill();
+
+    if (rimColor) {
+      ctx.strokeStyle = rimColor;
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      for (let i = 0; i < pts.length; i++) {
+        const [x, y] = pts[i];
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    }
+  };
+
+  // Far misty mountain peaks
+  const farGrad = ctx.createLinearGradient(0, horizonY - h * 0.24, 0, horizonY + 12);
+  farGrad.addColorStop(0, "rgba(38, 36, 68, 0.85)");
+  farGrad.addColorStop(1, "rgba(116, 68, 72, 0.45)");
+  drawAlpineRange(horizonY + h * 0.02, h * 0.24, 1.3, 0.55, farGrad);
+
+  // Warm golden mist nestled in the mountain valley
+  const valleyMist = ctx.createLinearGradient(0, horizonY - h * 0.14, 0, horizonY + 10);
+  valleyMist.addColorStop(0, "rgba(255, 186, 128, 0)");
+  valleyMist.addColorStop(1, "rgba(255, 194, 134, 0.24)");
+  ctx.fillStyle = valleyMist;
+  ctx.fillRect(0, horizonY - h * 0.14, w, h * 0.14 + 10);
+
+  // Mid-range dark alpine silhouette with warm sunset rim kiss near center
+  const midGrad = ctx.createLinearGradient(0, horizonY - h * 0.16, 0, horizonY + 16);
+  midGrad.addColorStop(0, "#141222");
+  midGrad.addColorStop(1, "#0b0a14");
+  drawAlpineRange(horizonY + h * 0.04, h * 0.18, 3.8, 0.72, midGrad, "rgba(255, 198, 140, 0.18)");
+
+  // Crisp anamorphic horizontal lens flare cutting across the solar horizon
+  const flare = ctx.createLinearGradient(w * 0.12, sunY, w * 0.88, sunY);
+  flare.addColorStop(0, "rgba(100, 180, 255, 0)");
+  flare.addColorStop(0.28, "rgba(110, 190, 255, 0.14)");
+  flare.addColorStop(0.5, "rgba(255, 242, 214, 0.5)");
+  flare.addColorStop(0.72, "rgba(110, 190, 255, 0.14)");
+  flare.addColorStop(1, "rgba(100, 180, 255, 0)");
+  ctx.fillStyle = flare;
+  ctx.fillRect(w * 0.12, sunY - 2, w * 0.76, 4);
+
+  // Deep reflective alpine lake (dark mirror surface + organic randomized golden specular flecks — no barcode stripes)
+  const lake = ctx.createLinearGradient(0, horizonY, 0, h);
+  lake.addColorStop(0, "#161426");
+  lake.addColorStop(0.28, "#0b0c18");
+  lake.addColorStop(1, "#030308");
+  ctx.fillStyle = lake;
+  ctx.fillRect(0, horizonY, w, h - horizonY);
+
+  const lakeGlow = ctx.createRadialGradient(cx, horizonY + 8, 6, cx, horizonY + h * 0.12, w * 0.22);
+  lakeGlow.addColorStop(0, "rgba(255, 188, 118, 0.34)");
+  lakeGlow.addColorStop(0.5, "rgba(218, 112, 74, 0.1)");
+  lakeGlow.addColorStop(1, "rgba(0, 0, 0, 0)");
+  ctx.fillStyle = lakeGlow;
+  ctx.fillRect(0, horizonY, w, h - horizonY);
+
+  for (let i = 0; i < 165; i++) {
+    const t = Math.pow(rand(), 1.35);
+    const y = horizonY + 3 + t * (h - horizonY - 12);
+    const coneHalf = w * (0.014 + t * 0.11);
+    const offset = (rand() - 0.5) * 2 * coneHalf;
+    const glintW = (8 + rand() * 34) * (0.35 + t * 1.25);
+    const glintH = 1.0 + t * 1.9;
+    const alpha = Math.max(0.04, (0.58 - t * 0.44) * (0.4 + rand() * 0.6));
+    const gx = cx + offset;
+    const gg = ctx.createLinearGradient(gx - glintW * 0.5, y, gx + glintW * 0.5, y);
+    gg.addColorStop(0, "rgba(255, 192, 124, 0)");
+    gg.addColorStop(0.5, `rgba(255, 224, 174, ${alpha.toFixed(2)})`);
+    gg.addColorStop(1, "rgba(255, 192, 124, 0)");
+    ctx.fillStyle = gg;
+    ctx.fillRect(gx - glintW * 0.5, y, glintW, glintH);
+  }
+
+  // Deep pitch-black rocky shore silhouettes framing bottom-left & bottom-right corners for cinematic depth
+  const drawCornerCliff = (fromLeft: boolean) => {
+    ctx.fillStyle = "#040409";
+    ctx.beginPath();
+    if (fromLeft) {
+      ctx.moveTo(0, h);
+      ctx.lineTo(0, horizonY + h * 0.02);
+      ctx.lineTo(w * 0.11, horizonY + h * 0.05);
+      ctx.lineTo(w * 0.19, horizonY + h * 0.13);
+      ctx.lineTo(w * 0.31, horizonY + h * 0.24);
+      ctx.lineTo(w * 0.38, h);
+    } else {
+      ctx.moveTo(w, h);
+      ctx.lineTo(w, horizonY + h * 0.01);
+      ctx.lineTo(w * 0.89, horizonY + h * 0.05);
+      ctx.lineTo(w * 0.8, horizonY + h * 0.14);
+      ctx.lineTo(w * 0.69, horizonY + h * 0.25);
+      ctx.lineTo(w * 0.62, h);
+    }
+    ctx.closePath();
+    ctx.fill();
+  };
+  drawCornerCliff(true);
+  drawCornerCliff(false);
+
+  paintScreenFilmGrain(ctx, w, h, 3109);
+}
+
 function getScreenCanvas(
   preset: ScreenContentPreset,
+  aspect: number,
   showSubtitle: boolean,
   subtitleText: string,
   subtitleColor: SubtitleColor,
 ): HTMLCanvasElement | null {
-  const key = `${preset}|${showSubtitle ? 1 : 0}|${subtitleText}|${subtitleColor}`;
+  const { w, h } = computeScreenCanvasSize(aspect);
+  const key = `${preset}|${w}x${h}|${showSubtitle ? 1 : 0}|${subtitleText}|${subtitleColor}`;
   const existing = cachedScreenCanvases.get(key);
   if (existing) return existing;
   const canvas = document.createElement("canvas");
-  canvas.width = 1024;
-  canvas.height = 512;
+  canvas.width = w;
+  canvas.height = h;
   const ctx = canvas.getContext("2d");
   if (!ctx) return null;
 
   if (preset === "noir") {
-    paintNoirScreen(ctx);
+    paintNoirScreen(ctx, w, h);
   } else if (preset === "grid") {
-    paintGridScreen(ctx);
+    paintGridScreen(ctx, w, h);
   } else {
-    // Deep anamorphic twilight sky gradient
-    const sky = ctx.createLinearGradient(0, 0, 0, 512);
-    sky.addColorStop(0, "#050915");
-    sky.addColorStop(0.24, "#0d1b38");
-    sky.addColorStop(0.48, "#1f3e68");
-    sky.addColorStop(0.64, "#c46c44");
-    sky.addColorStop(0.74, "#f4b777");
-    sky.addColorStop(0.8, "#312036");
-    sky.addColorStop(1, "#090811");
-    ctx.fillStyle = sky;
-    ctx.fillRect(0, 0, 1024, 512);
-
-    // Subtle starfield in upper night sky
-    let seed = 2026;
-    const rand = () => {
-      seed = (seed * 16807) % 2147483647;
-      return (seed - 1) / 2147483646;
-    };
-    for (let i = 0; i < 160; i++) {
-      const sx = rand() * 1024;
-      const sy = rand() * 210;
-      const alpha = (1 - sy / 210) * (0.2 + rand() * 0.65);
-      const size = rand() > 0.85 ? 2 : 1.2;
-      ctx.fillStyle = `rgba(225, 238, 255, ${alpha.toFixed(2)})`;
-      ctx.fillRect(sx, sy, size, size);
-    }
-
-    // Dramatic celestial horizon glow (full-frame fillRect avoids any clipped arc edge)
-    const planetX = 512;
-    const planetY = 315;
-    const planetR = 140;
-    const atmos = ctx.createRadialGradient(planetX, planetY, planetR * 0.4, planetX, planetY, planetR * 1.9);
-    atmos.addColorStop(0, "rgba(255, 232, 188, 0.75)");
-    atmos.addColorStop(0.32, "rgba(244, 152, 86, 0.34)");
-    atmos.addColorStop(0.66, "rgba(86, 138, 218, 0.12)");
-    atmos.addColorStop(1, "rgba(0, 0, 0, 0)");
-    ctx.fillStyle = atmos;
-    ctx.fillRect(0, 0, 1024, 512);
-
-    // Solar core & anamorphic horizontal cinema flare
-    const sun = ctx.createRadialGradient(512, 346, 4, 512, 346, 185);
-    sun.addColorStop(0, "rgba(255, 252, 236, 0.98)");
-    sun.addColorStop(0.2, "rgba(255, 214, 152, 0.72)");
-    sun.addColorStop(0.55, "rgba(226, 118, 66, 0.24)");
-    sun.addColorStop(1, "rgba(226, 118, 66, 0)");
-    ctx.fillStyle = sun;
-    ctx.fillRect(0, 0, 1024, 512);
-
-    const flare = ctx.createLinearGradient(96, 344, 928, 344);
-    flare.addColorStop(0, "rgba(120, 190, 255, 0)");
-    flare.addColorStop(0.28, "rgba(130, 198, 255, 0.14)");
-    flare.addColorStop(0.5, "rgba(255, 236, 200, 0.42)");
-    flare.addColorStop(0.72, "rgba(130, 198, 255, 0.14)");
-    flare.addColorStop(1, "rgba(120, 190, 255, 0)");
-    ctx.fillStyle = flare;
-    ctx.fillRect(96, 341, 832, 6);
-
-    // Soft lit horizon clouds
-    for (let i = 0; i < 8; i++) {
-      const cx = 110 + i * 116 + (rand() - 0.5) * 40;
-      const cy = 235 + (rand() - 0.5) * 58;
-      const rw = 110 + rand() * 110;
-      const rh = 16 + rand() * 14;
-      const cg = ctx.createRadialGradient(cx, cy, 4, cx, cy, rw);
-      cg.addColorStop(0, "rgba(255, 200, 148, 0.2)");
-      cg.addColorStop(1, "rgba(255, 200, 148, 0)");
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.scale(1, rh / rw);
-      ctx.fillStyle = cg;
-      ctx.beginPath();
-      ctx.arc(0, 0, rw, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-    }
-
-    const drawRidge = (pts: [number, number][], fill: string | CanvasGradient) => {
-      ctx.fillStyle = fill;
-      ctx.beginPath();
-      ctx.moveTo(0, 512);
-      for (const [x, y] of pts) ctx.lineTo(x, y);
-      ctx.lineTo(1024, 512);
-      ctx.closePath();
-      ctx.fill();
-    };
-
-    drawRidge(
-      [
-        [0, 342], [90, 304], [190, 326], [305, 276], [420, 318],
-        [512, 336], [620, 294], [740, 266], [860, 310], [955, 286], [1024, 316],
-      ],
-      "rgba(34, 38, 66, 0.72)",
-    );
-
-    drawRidge(
-      [
-        [0, 376], [120, 328], [240, 358], [350, 312], [448, 354],
-        [512, 366], [595, 346], [715, 304], [835, 342], [945, 318], [1024, 354],
-      ],
-      "#181628",
-    );
-
-    const lake = ctx.createLinearGradient(0, 372, 0, 512);
-    lake.addColorStop(0, "#1c192b");
-    lake.addColorStop(0.35, "#111220");
-    lake.addColorStop(1, "#07070e");
-    ctx.fillStyle = lake;
-    ctx.fillRect(0, 372, 1024, 140);
-
-    for (let y = 376; y < 486; y += 5) {
-      const spread = 24 + (y - 376) * 0.95;
-      const alpha = Math.max(0.03, 0.36 - (y - 376) * 0.0028);
-      const rg = ctx.createLinearGradient(512 - spread, y, 512 + spread, y);
-      rg.addColorStop(0, "rgba(255, 185, 118, 0)");
-      rg.addColorStop(0.5, `rgba(255, 206, 144, ${alpha.toFixed(2)})`);
-      rg.addColorStop(1, "rgba(255, 185, 118, 0)");
-      ctx.fillStyle = rg;
-      ctx.fillRect(512 - spread, y, spread * 2, 2.2);
-    }
-
-    drawRidge(
-      [[0, 396], [115, 382], [235, 424], [340, 444], [0, 470]],
-      "#0a0912",
-    );
-    drawRidge(
-      [[1024, 386], [895, 376], [775, 422], [685, 448], [1024, 466]],
-      "#0a0912",
-    );
+    paintCosmosScreen(ctx, w, h);
   }
 
-  // Subtle cinematic edge vignette
-  const vig = ctx.createRadialGradient(512, 256, 220, 512, 256, 610);
+  // Gentle organic optical vignette (kept light because the projection shader handles physical lens falloff + bezel AO)
+  const vig = ctx.createRadialGradient(w * 0.5, h * 0.5, Math.min(w, h) * 0.36, w * 0.5, h * 0.5, Math.max(w, h) * 0.64);
   vig.addColorStop(0, "rgba(0, 0, 0, 0)");
-  vig.addColorStop(0.72, "rgba(0, 0, 0, 0.16)");
-  vig.addColorStop(1, "rgba(0, 0, 0, 0.52)");
+  vig.addColorStop(0.75, "rgba(0, 0, 0, 0.08)");
+  vig.addColorStop(1, "rgba(0, 0, 0, 0.28)");
   ctx.fillStyle = vig;
-  ctx.fillRect(0, 0, 1024, 512);
+  ctx.fillRect(0, 0, w, h);
 
-  if (preset !== "grid") {
-    // Subtle rule-of-thirds optical framing lines
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.045)";
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(341, 18);
-    ctx.lineTo(341, 494);
-    ctx.moveTo(683, 18);
-    ctx.lineTo(683, 494);
-    ctx.stroke();
-  }
-
-  // Crisp cinema-grade subtitle in the bottom safe-title region
+  // Crisp DCI-proportioned subtitle in the bottom safe-title region
   if (showSubtitle) {
-    paintScreenSubtitle(ctx, subtitleText, subtitleColor);
+    paintScreenSubtitle(ctx, w, h, subtitleText, subtitleColor);
   }
 
   return putCanvasCache(cachedScreenCanvases, key, canvas);
 }
 
-const MAX_LOADED_IMAGE_CACHE = 4;
+/**
+ * Samples a fast 16×8 grid from any screen canvas to derive a pleasing, luminance-balanced cinema bounce color
+ * so screen light spill onto the front wall, stage apron, and front seats naturally matches the movie frame.
+ */
+function sampleCanvasScreenTint(canvas: HTMLCanvasElement | null, fallbackHex = 0xc4dcff): Color {
+  const out = new Color(fallbackHex);
+  if (!canvas || canvas.width <= 0 || canvas.height <= 0) return out;
+  try {
+    const sample = document.createElement("canvas");
+    sample.width = 16;
+    sample.height = 8;
+    const sCtx = sample.getContext("2d", { willReadFrequently: true });
+    if (!sCtx) return out;
+    sCtx.drawImage(canvas, 0, 0, 16, 8);
+    const data = sCtx.getImageData(0, 0, 16, 8).data;
+    let rSum = 0;
+    let gSum = 0;
+    let bSum = 0;
+    let wSum = 0;
+    for (let i = 0; i < data.length; i += 4) {
+      const r = data[i] / 255;
+      const g = data[i + 1] / 255;
+      const b = data[i + 2] / 255;
+      const max = Math.max(r, g, b);
+      const min = Math.min(r, g, b);
+      const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+      const sat = max > 0.001 ? (max - min) / max : 0;
+      // Weight brighter and subtly colorful areas more than pitch-black borders
+      const weight = (0.15 + lum * 0.85) * (0.65 + sat * 0.75);
+      rSum += r * weight;
+      gSum += g * weight;
+      bSum += b * weight;
+      wSum += weight;
+    }
+    if (wSum > 0.001) {
+      const avg = new Color(rSum / wSum, gSum / wSum, bSum / wSum);
+      const hsl = { h: 0, s: 0, l: 0 };
+      avg.getHSL(hsl);
+      // Keep bounce light bright & cinematic (never muddy dark or neon-oversaturated)
+      out.setHSL(hsl.h, Math.min(0.42, hsl.s * 0.78), Math.max(0.68, Math.min(0.84, 0.56 + hsl.l * 0.34)));
+    }
+  } catch {
+    // CORS-tainted external images fall back cleanly to neutral cinema xenon tint.
+  }
+  return out;
+}
+
+const MAX_LOADED_IMAGE_CACHE = 8;
 const cachedLoadedImages = new Map<string, HTMLImageElement>();
 
 function putLoadedImageCache(url: string, img: HTMLImageElement): HTMLImageElement {
@@ -1546,69 +2537,397 @@ function putLoadedImageCache(url: string, img: HTMLImageElement): HTMLImageEleme
   return img;
 }
 
+type SurfacePbrKind = "wall" | "ceiling" | "carpet";
+
+interface SurfacePbrCanvases {
+  albedo: HTMLCanvasElement;
+  bump: HTMLCanvasElement;
+  roughness: HTMLCanvasElement;
+}
+
+const MAX_SURFACE_PBR_CACHE = 6;
+const cachedSurfacePbrCanvases = new Map<string, SurfacePbrCanvases>();
+
+function smoothstep01(edge0: number, edge1: number, x: number): number {
+  const t = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0)));
+  return t * t * (3 - 2 * t);
+}
+
+/**
+ * Computes aspect-preserving physical tile size (metres) and repeat counts from a surface's dimensions (`surfaceW × surfaceH`),
+ * the uploaded image's natural aspect ratio (`imgAspect`), and the user's configured repeat count (`repeatCount`, 1–12).
+ * Guarantees `repeatCount` complete, uncropped characters/frames fit cleanly inside the surface without stretching.
+ */
+function computeSurfaceTileLayout(
+  surfaceW: number,
+  surfaceH: number,
+  imgAspect: number,
+  repeatCount: number,
+): { tileW: number; tileH: number; repeatX: number; repeatY: number } {
+  const n = Math.max(1, Math.min(12, Math.round(repeatCount) || 1));
+  const safeAspect = Math.max(0.25, Math.min(4.0, imgAspect || 1));
+  const tileWFromW = surfaceW / n;
+  const tileHFromW = tileWFromW / safeAspect;
+  const tileHFromH = surfaceH / n;
+  const tileWFromH = tileHFromH * safeAspect;
+  const tileW = tileHFromW <= tileHFromH ? tileWFromW : tileWFromH;
+  const tileH = tileW / safeAspect;
+  return {
+    tileW,
+    tileH,
+    repeatX: surfaceW / tileW,
+    repeatY: surfaceH / tileH,
+  };
+}
+
+/**
+ * Synthesizes surface-appropriate PBR canvases (`albedo`, `bump`, `roughness`) from an arbitrary uploaded photo:
+ * - Preserves the FULL uploaded image at its natural aspect ratio (up to `512 px` max side — never crops off characters).
+ * - Auto-detects already-seamless tiles; otherwise applies a subtle `4.5%` symmetric border soften so repeat edges meet seamlessly with zero ghosting over the subject.
+ * - Calibrates cinema light-absorption, micro-relief (bump) and physical roughness specifically for `carpet`, `wall`, or `ceiling`.
+ */
+function getSurfacePbrCanvases(
+  url: string,
+  img: HTMLImageElement,
+  kind: SurfacePbrKind,
+  style: string,
+): SurfacePbrCanvases | null {
+  const nw = img.naturalWidth;
+  const nh = img.naturalHeight;
+  if (nw <= 0 || nh <= 0) return null;
+
+  const safeAspect = Math.max(0.25, Math.min(4.0, nw / nh));
+  const round8 = (n: number) => Math.max(128, Math.round(n / 8) * 8);
+  const W = safeAspect >= 1 ? 512 : round8(512 * safeAspect);
+  const H = safeAspect >= 1 ? round8(512 / safeAspect) : 512;
+
+  const key = `${kind}|${style}|${W}x${H}|${url}`;
+  const existing = cachedSurfacePbrCanvases.get(key);
+  if (existing) return existing;
+
+  const srcCanvas = document.createElement("canvas");
+  srcCanvas.width = W;
+  srcCanvas.height = H;
+  const srcCtx = srcCanvas.getContext("2d");
+  if (!srcCtx) return null;
+
+  // Draw the entire uploaded photo without cropping so characters remain 100% intact
+  srcCtx.drawImage(img, 0, 0, nw, nh, 0, 0, W, H);
+
+  let srcData: Uint8ClampedArray;
+  try {
+    srcData = srcCtx.getImageData(0, 0, W, H).data;
+  } catch {
+    return null;
+  }
+
+  // Detect whether opposite borders already tile seamlessly
+  let edgeDiff = 0;
+  let edgeSamples = 0;
+  for (let y = 0; y < H; y += 4) {
+    const l = (y * W) * 4;
+    const rIdx = (y * W + (W - 1)) * 4;
+    edgeDiff +=
+      Math.abs(srcData[l] - srcData[rIdx]) +
+      Math.abs(srcData[l + 1] - srcData[rIdx + 1]) +
+      Math.abs(srcData[l + 2] - srcData[rIdx + 2]);
+    edgeSamples += 3;
+  }
+  for (let x = 0; x < W; x += 4) {
+    const t = x * 4;
+    const bIdx = ((H - 1) * W + x) * 4;
+    edgeDiff +=
+      Math.abs(srcData[t] - srcData[bIdx]) +
+      Math.abs(srcData[t + 1] - srcData[bIdx + 1]) +
+      Math.abs(srcData[t + 2] - srcData[bIdx + 2]);
+    edgeSamples += 3;
+  }
+  const alreadySeamless = edgeSamples > 0 && edgeDiff / edgeSamples < 14;
+
+  const albedoCanvas = document.createElement("canvas");
+  const bumpCanvas = document.createElement("canvas");
+  const roughCanvas = document.createElement("canvas");
+  albedoCanvas.width = bumpCanvas.width = roughCanvas.width = W;
+  albedoCanvas.height = bumpCanvas.height = roughCanvas.height = H;
+  const aCtx = albedoCanvas.getContext("2d");
+  const bCtx = bumpCanvas.getContext("2d");
+  const rCtx = roughCanvas.getContext("2d");
+  if (!aCtx || !bCtx || !rCtx) return null;
+
+  const aImg = aCtx.createImageData(W, H);
+  const bImg = bCtx.createImageData(W, H);
+  const rImg = rCtx.createImageData(W, H);
+  const aOut = aImg.data;
+  const bOut = bImg.data;
+  const rOut = rImg.data;
+
+  const clampByte = (v: number) => (v < 0 ? 0 : v > 255 ? 255 : Math.round(v));
+  const halfW = W / 2;
+  const halfH = H / 2;
+
+  for (let y = 0; y < H; y++) {
+    // Symmetric outer-border soften (only outermost ~4.5%) so repeat boundaries meet smoothly without ghosting the center character
+    const ty = alreadySeamless ? 1 : smoothstep01(0.0, 0.045, Math.min(y, H - 1 - y) / halfH);
+    const wySelf = 0.5 + 0.5 * ty;
+    const yMirror = H - 1 - y;
+    for (let x = 0; x < W; x++) {
+      const tx = alreadySeamless ? 1 : smoothstep01(0.0, 0.045, Math.min(x, W - 1 - x) / halfW);
+      const wxSelf = 0.5 + 0.5 * tx;
+      const xMirror = W - 1 - x;
+
+      const i1 = (y * W + x) * 4;
+      let r = srcData[i1];
+      let g = srcData[i1 + 1];
+      let b = srcData[i1 + 2];
+      if (wxSelf < 0.999) {
+        const imx = (y * W + xMirror) * 4;
+        r = r * wxSelf + srcData[imx] * (1 - wxSelf);
+        g = g * wxSelf + srcData[imx + 1] * (1 - wxSelf);
+        b = b * wxSelf + srcData[imx + 2] * (1 - wxSelf);
+      }
+      if (wySelf < 0.999) {
+        const imy = (yMirror * W + x) * 4;
+        r = r * wySelf + srcData[imy] * (1 - wySelf);
+        g = g * wySelf + srcData[imy + 1] * (1 - wySelf);
+        b = b * wySelf + srcData[imy + 2] * (1 - wySelf);
+      }
+
+      // Fast deterministic tileable hash in [-0.5, 0.5]
+      const h = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453;
+      const grain = h - Math.floor(h) - 0.5;
+      const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+
+      let bumpVal = lum;
+      let roughVal = 0.88;
+
+      if (kind === "carpet") {
+        const toneScale = lum > 0.55 ? (0.55 + (lum - 0.55) * 0.42) / lum : 0.92;
+        const tuft = (((x + (y & 2)) & 3) === 0 ? 0.032 : -0.012) + ((y & 3) === 0 ? 0.024 : -0.01);
+        const rib = style === "striped" ? (x % 32 < 14 ? 0.038 : -0.03) : 0;
+        const micro = grain * 9 + (tuft + rib) * 38;
+        r = r * toneScale + micro;
+        g = g * toneScale + micro;
+        b = b * toneScale + micro;
+        bumpVal = 0.42 * lum + 0.32 * (0.5 + tuft * 3.5 + rib * 2) + 0.26 * (0.5 + grain);
+        roughVal = 0.96 - lum * 0.08 + grain * 0.05;
+      } else if (kind === "wall") {
+        const toneScale = lum > 0.68 ? (0.68 + (lum - 0.68) * 0.5) / lum : 0.96;
+        let groove = 0;
+        if (style === "slats") {
+          const slot = x % 24;
+          if (slot >= 20) groove = -0.3;
+          else if (slot <= 1) groove = 0.08;
+        } else if (style === "panels") {
+          if (x % 128 < 4 || y % 256 < 4) groove = -0.26;
+        }
+        const mul = toneScale * (1 + groove * 0.55);
+        r = r * mul + grain * 4;
+        g = g * mul + grain * 4;
+        b = b * mul + grain * 4;
+        bumpVal = 0.68 * lum + 0.22 * (0.5 + groove * 1.4) + 0.1 * (0.5 + grain);
+        roughVal = groove < -0.15 ? 0.96 : 0.88 - lum * 0.12;
+      } else {
+        const toneScale = lum > 0.6 ? (0.6 + (lum - 0.6) * 0.42) / lum : 0.9;
+        let seam = 0;
+        if (style === "coffered" && (x % 128 < 4 || y % 128 < 4)) seam = -0.32;
+        const mul = toneScale * (1 + seam * 0.5);
+        r = r * mul + grain * 4;
+        g = g * mul + grain * 4;
+        b = b * mul + grain * 4;
+        bumpVal = 0.62 * lum + 0.26 * (0.5 + seam * 1.3) + 0.12 * (0.5 + grain);
+        roughVal = seam < -0.15 ? 0.78 : 0.93 - lum * 0.08;
+      }
+
+      aOut[i1] = clampByte(r);
+      aOut[i1 + 1] = clampByte(g);
+      aOut[i1 + 2] = clampByte(b);
+      aOut[i1 + 3] = 255;
+
+      const bByte = clampByte(bumpVal * 255);
+      bOut[i1] = bByte;
+      bOut[i1 + 1] = bByte;
+      bOut[i1 + 2] = bByte;
+      bOut[i1 + 3] = 255;
+
+      const rByte = clampByte(roughVal * 255);
+      rOut[i1] = rByte;
+      rOut[i1 + 1] = rByte;
+      rOut[i1 + 2] = rByte;
+      rOut[i1 + 3] = 255;
+    }
+  }
+
+  aCtx.putImageData(aImg, 0, 0);
+  bCtx.putImageData(bImg, 0, 0);
+  rCtx.putImageData(rImg, 0, 0);
+
+  if (kind === "ceiling" && style === "starlight") {
+    let seed = 4242;
+    const rand = () => {
+      seed = (seed * 16807) % 2147483647;
+      return (seed - 1) / 2147483646;
+    };
+    for (let i = 0; i < 42; i++) {
+      const px = rand() * W;
+      const py = rand() * H;
+      const rad = 0.8 + rand() * 1.35;
+      aCtx.fillStyle = i % 4 === 0 ? "rgba(255, 224, 178, 0.88)" : "rgba(212, 232, 255, 0.82)";
+      aCtx.beginPath();
+      aCtx.arc(px, py, rad, 0, Math.PI * 2);
+      aCtx.fill();
+    }
+  }
+
+  const entry: SurfacePbrCanvases = { albedo: albedoCanvas, bump: bumpCanvas, roughness: roughCanvas };
+  if (cachedSurfacePbrCanvases.size >= MAX_SURFACE_PBR_CACHE && !cachedSurfacePbrCanvases.has(key)) {
+    const oldest = cachedSurfacePbrCanvases.keys().next().value;
+    if (oldest !== undefined) cachedSurfacePbrCanvases.delete(oldest);
+  }
+  cachedSurfacePbrCanvases.set(key, entry);
+  return entry;
+}
+
+interface SurfacePbrTextures {
+  map: CanvasTexture;
+  bumpMap: CanvasTexture;
+  roughnessMap: CanvasTexture;
+  bumpScale: number;
+  roughness: number;
+  metalness: number;
+}
+
+interface SurfaceTextureOptions {
+  repeatX: number;
+  repeatY: number;
+  offsetX?: number;
+  offsetY?: number;
+}
+
+function createCustomSurfaceTextures(
+  url: string,
+  img: HTMLImageElement,
+  kind: SurfacePbrKind,
+  style: string,
+  opts: SurfaceTextureOptions,
+): SurfacePbrTextures | null {
+  const canvases = getSurfacePbrCanvases(url, img, kind, style);
+  if (!canvases) return null;
+
+  const rx = Math.max(0.01, opts.repeatX);
+  const ry = Math.max(0.01, opts.repeatY);
+  const ox = opts.offsetX ?? 0;
+  const oy = opts.offsetY ?? 0;
+  const makeTile = (canvas: HTMLCanvasElement, isColor: boolean) => {
+    const tex = new CanvasTexture(canvas);
+    tex.wrapS = RepeatWrapping;
+    tex.wrapT = RepeatWrapping;
+    tex.repeat.set(rx, ry);
+    if (ox !== 0 || oy !== 0) tex.offset.set(ox, oy);
+    if (isColor) tex.colorSpace = SRGBColorSpace;
+    return tex;
+  };
+
+  return {
+    map: makeTile(canvases.albedo, true),
+    bumpMap: makeTile(canvases.bump, false),
+    roughnessMap: makeTile(canvases.roughness, false),
+    bumpScale: kind === "wall" ? 0.052 : kind === "carpet" ? 0.044 : 0.038,
+    roughness: kind === "carpet" ? 0.98 : kind === "wall" ? 0.95 : 0.94,
+    metalness: kind === "carpet" ? 0.01 : 0.02,
+  };
+}
+
+function loadSurfaceImage(url: string, onLoaded: (img: HTMLImageElement) => void): HTMLImageElement | null {
+  const cached = cachedLoadedImages.get(url);
+  if (cached) return cached;
+  const img = new Image();
+  img.crossOrigin = "anonymous";
+  img.decoding = "async";
+  img.onload = () => {
+    if (img.naturalWidth <= 0 || img.naturalHeight <= 0) return;
+    putLoadedImageCache(url, img);
+    onLoaded(img);
+  };
+  img.src = url;
+  return null;
+}
+
 function paintScreenSubtitle(
   ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
   subtitleText: string,
   subtitleColor: SubtitleColor,
 ): void {
   if (subtitleText.trim().length === 0) return;
   ctx.save();
-  ctx.font = "600 28px -apple-system, BlinkMacSystemFont, 'Be Vietnam Pro', sans-serif";
+  // Authentic DCI cinema subtitle proportions (~3.6% of screen height) so the screen feels monumentally wide
+  const fontSize = Math.round(Math.max(17, Math.min(24, h * 0.036)));
+  ctx.font = `500 ${fontSize}px -apple-system, BlinkMacSystemFont, 'Be Vietnam Pro', sans-serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "bottom";
-  const subY = 478;
-  ctx.shadowColor = "rgba(0, 0, 0, 0.92)";
-  ctx.shadowBlur = 10;
-  ctx.shadowOffsetY = 2;
-  ctx.lineWidth = 6;
-  ctx.strokeStyle = "rgba(0, 0, 0, 0.85)";
-  ctx.strokeText(subtitleText, 512, subY, 920);
-  ctx.fillStyle = subtitleColor === "yellow" ? "#fde047" : "#f8fafc";
-  ctx.fillText(subtitleText, 512, subY, 920);
+  const subY = Math.round(h * 0.935);
+  const maxWidth = Math.round(w * 0.78);
+  ctx.shadowColor = "rgba(0, 0, 0, 0.95)";
+  ctx.shadowBlur = 7;
+  ctx.shadowOffsetY = 1.5;
+  ctx.lineWidth = Math.max(2, Math.round(fontSize * 0.13));
+  ctx.strokeStyle = "rgba(0, 0, 0, 0.72)";
+  ctx.strokeText(subtitleText, w / 2, subY, maxWidth);
+  ctx.fillStyle = subtitleColor === "yellow" ? "#fef08a" : "#f4f5f7";
+  ctx.fillText(subtitleText, w / 2, subY, maxWidth);
   ctx.restore();
 }
 
+interface ScreenTextureResult {
+  texture: CanvasTexture;
+  tint: Color;
+}
+
 /**
- * High-contrast atmospheric widescreen movie still (1024×512) with configurable scene preset
- * and sample subtitles at the bottom safe-title zone.
+ * Aspect-matched atmospheric cinema still (`1280×536` for 2.39:1, `1280×692` for 1.85:1, `1024×716` for 1.43:1)
+ * with sample subtitles at the DCI bottom safe-title zone and sampled bounce color.
  */
 function createScreenTexture(
   preset: ScreenContentPreset,
+  aspect: number,
   showSubtitle: boolean,
   subtitleText: string,
   subtitleColor: SubtitleColor,
-): CanvasTexture | null {
-  const canvas = getScreenCanvas(preset, showSubtitle, subtitleText, subtitleColor);
+): ScreenTextureResult | null {
+  const canvas = getScreenCanvas(preset, aspect, showSubtitle, subtitleText, subtitleColor);
   if (!canvas) return null;
-  const tex = new CanvasTexture(canvas);
-  tex.colorSpace = SRGBColorSpace;
-  tex.minFilter = LinearFilter;
-  tex.magFilter = LinearFilter;
-  tex.generateMipmaps = false;
-  return tex;
+  const texture = new CanvasTexture(canvas);
+  texture.colorSpace = SRGBColorSpace;
+  texture.minFilter = LinearFilter;
+  texture.magFilter = LinearFilter;
+  texture.generateMipmaps = false;
+  return { texture, tint: sampleCanvasScreenTint(canvas) };
 }
 
-/** Composites an uploaded/external image onto a 1024×512 cinema screen canvas with cover-crop, subtle vignette & optional subtitle. */
+/** Composites an uploaded/external image onto a true-aspect cinema screen canvas with undistorted cover-crop & optional subtitle. */
 function createCustomImageScreenTexture(
   img: HTMLImageElement,
+  aspect: number,
   showSubtitle: boolean,
   subtitleText: string,
   subtitleColor: SubtitleColor,
-): CanvasTexture | null {
+): ScreenTextureResult | null {
   const nw = img.naturalWidth;
   const nh = img.naturalHeight;
   if (nw <= 0 || nh <= 0) return null;
+  const { w, h } = computeScreenCanvasSize(aspect);
   const canvas = document.createElement("canvas");
-  canvas.width = 1024;
-  canvas.height = 512;
+  canvas.width = w;
+  canvas.height = h;
   const ctx = canvas.getContext("2d");
   if (!ctx) return null;
 
   ctx.fillStyle = "#050508";
-  ctx.fillRect(0, 0, 1024, 512);
+  ctx.fillRect(0, 0, w, h);
 
-  // Center-crop ("cover") to fill the widescreen projection surface cleanly without distortion
-  const targetRatio = 1024 / 512;
+  // Center-crop ("cover") to fill the exact screen aspect ratio without horizontal/vertical stretching
+  const targetRatio = w / h;
   const srcRatio = nw / nh;
   let sx = 0;
   let sy = 0;
@@ -1621,37 +2940,112 @@ function createCustomImageScreenTexture(
     sh = nw / targetRatio;
     sy = (nh - sh) / 2;
   }
-  ctx.drawImage(img, sx, sy, sw, sh, 0, 0, 1024, 512);
+  ctx.drawImage(img, sx, sy, sw, sh, 0, 0, w, h);
 
-  // Subtle cinema lens edge vignette so bright photos still integrate naturally with the dark auditorium
-  const vig = ctx.createRadialGradient(512, 256, 260, 512, 256, 620);
+  // Subtle cinema lens edge vignette (projection shader adds physical gain falloff & recessed bezel AO)
+  const vig = ctx.createRadialGradient(w * 0.5, h * 0.5, Math.min(w, h) * 0.42, w * 0.5, h * 0.5, Math.max(w, h) * 0.65);
   vig.addColorStop(0, "rgba(0, 0, 0, 0)");
-  vig.addColorStop(0.8, "rgba(0, 0, 0, 0.08)");
-  vig.addColorStop(1, "rgba(0, 0, 0, 0.34)");
+  vig.addColorStop(0.82, "rgba(0, 0, 0, 0.06)");
+  vig.addColorStop(1, "rgba(0, 0, 0, 0.22)");
   ctx.fillStyle = vig;
-  ctx.fillRect(0, 0, 1024, 512);
+  ctx.fillRect(0, 0, w, h);
 
   if (showSubtitle) {
-    paintScreenSubtitle(ctx, subtitleText, subtitleColor);
+    paintScreenSubtitle(ctx, w, h, subtitleText, subtitleColor);
   }
 
-  const tex = new CanvasTexture(canvas);
-  tex.colorSpace = SRGBColorSpace;
-  tex.minFilter = LinearFilter;
-  tex.magFilter = LinearFilter;
-  tex.generateMipmaps = false;
-  return tex;
+  const texture = new CanvasTexture(canvas);
+  texture.colorSpace = SRGBColorSpace;
+  texture.minFilter = LinearFilter;
+  texture.magFilter = LinearFilter;
+  texture.generateMipmaps = false;
+  return { texture, tint: sampleCanvasScreenTint(canvas) };
 }
 
-function buildScreenYoutubeUrl(videoId: string, muted: boolean): string {
+/**
+ * Single-pass luminous cinema projection screen shader (Dolby / Harkness laser projection optics):
+ * - Crisp high-contrast luminous projection punch (never dusty grey chalkboard washout)
+ * - Gentle off-axis matte viewing gain & subtle optical lens uniformity
+ * - Realistic micro house-lights sheen when room lights are on, deepening into rich cinema contrast when dimmed
+ * - Razor-clean narrow edge kiss against pitch-black velvet masking
+ */
+function createProjectionScreenMaterial(
+  map: CanvasTexture,
+  screenW: number,
+  screenH: number,
+  borderStyle: ScreenBorderStyle,
+  initialLightsLevel: number,
+): ShaderMaterial {
+  const borderWeight = borderStyle === "velvet" ? 1.0 : borderStyle === "slim" ? 0.6 : 0.25;
+  return new ShaderMaterial({
+    uniforms: {
+      uMap: { value: map },
+      uLightsLevel: { value: initialLightsLevel },
+      uBorderStyle: { value: borderWeight },
+      uScreenSize: { value: new Vector2(Math.max(0.5, screenW), Math.max(0.5, screenH)) },
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      varying vec3 vWorldPos;
+      varying vec3 vWorldNormal;
+      void main() {
+        vUv = uv;
+        vec4 wp = modelMatrix * vec4(position, 1.0);
+        vWorldPos = wp.xyz;
+        vWorldNormal = normalize(mat3(modelMatrix) * normal);
+        gl_Position = projectionMatrix * viewMatrix * wp;
+      }
+    `,
+    fragmentShader: `
+      uniform sampler2D uMap;
+      uniform float uLightsLevel;
+      uniform float uBorderStyle;
+      uniform vec2 uScreenSize;
+      varying vec2 vUv;
+      varying vec3 vWorldPos;
+      varying vec3 vWorldNormal;
+      void main() {
+        vec3 tex = texture2D(uMap, vUv).rgb;
+
+        // Subtle matte cinema screen angular gain + gentle projector center luminance uniformity
+        vec3 viewDir = normalize(cameraPosition - vWorldPos);
+        float ndv = clamp(dot(normalize(vWorldNormal), viewDir), 0.22, 1.0);
+        float angularGain = mix(0.84, 1.05, pow(ndv, 0.36));
+        vec2 centered = (vUv - 0.5) * 2.0;
+        float lensFalloff = mix(1.04, 0.9, clamp(dot(centered, centered) * 0.42, 0.0, 1.0));
+
+        // Ultra-fine acoustic micro-perforation texture scaled to physical metres
+        vec2 mPos = vUv * uScreenSize;
+        float micro = 1.0 + sin(mPos.x * 92.0) * sin(mPos.y * 92.0) * 0.007;
+
+        // Luminous cinema projection contrast & brightness boost (crisp deep blacks + glowing highlights)
+        vec3 projected = pow(max(tex, vec3(0.0)), vec3(1.06)) * mix(1.24, 1.1, uLightsLevel);
+        projected *= angularGain * lensFalloff * micro;
+
+        // Realistic subtle house-lights ambient reflection in linear space (keeps blacks dark, never chalky grey!)
+        float topSpill = smoothstep(0.25, 1.0, vUv.y) * 0.0022 * uLightsLevel;
+        float ambientLift = uLightsLevel * 0.0042 + topSpill;
+        projected += vec3(0.95, 0.91, 0.86) * ambientLift;
+
+        // Razor-crisp narrow 2 cm edge kiss against jet-black velvet masking (no muddy inner smudge)
+        float edgeX = min(vUv.x, 1.0 - vUv.x) * uScreenSize.x;
+        float edgeY = min(vUv.y, 1.0 - vUv.y) * uScreenSize.y;
+        float recess = smoothstep(0.0, 0.022, edgeX) * smoothstep(0.0, 0.022, edgeY);
+        projected *= mix(1.0 - 0.1 * uBorderStyle, 1.0, recess);
+
+        gl_FragColor = vec4(projected, 1.0);
+        #include <colorspace_fragment>
+      }
+    `,
+  });
+}
+
+function buildScreenYoutubeUrl(videoId: string, muted: boolean, startSeconds?: number): string {
   const origin =
     typeof window !== "undefined" && /^https?:$/i.test(window.location.protocol)
       ? window.location.origin
       : undefined;
-  return (
-    `${youtubeEmbedUrl(videoId, { controls: false, origin })}` +
-    `&mute=${muted ? 1 : 0}&loop=1&playlist=${videoId}`
-  );
+  return youtubeScreenEmbedUrl(videoId, { muted, origin, startSeconds });
 }
 
 export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3DOptions): Room3D {
@@ -1663,6 +3057,7 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
     options.onFailed();
     return {
       setMode() {},
+      setCameraPreset() {},
       recenter() {},
       setHeat() {},
       setSelected() {},
@@ -1670,8 +3065,14 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
       setLightsUp() {},
       setHeights() {},
       setMarks() {},
+      setSightline() {},
+      setOccupancy() {},
+      setHighlightedCodes() {},
+      getCameraState: () => ({ mode: "orbit", pos: [0, 3, 8], target: [0, 1.5, 0], lookYaw: 0, lookPitch: 0, zoom: 1 }),
+      setLookOffset() {},
       setAppearance() {},
       setYoutubeMuted() {},
+      captureSnapshot: async () => null,
       mountTo() {},
       refit() {},
       dispose() {},
@@ -1714,26 +3115,36 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
   const shellCenterZ = (room.frontWallZ + room.backWallZ) / 2;
 
   // --- Dynamic Cinema Lighting (House Lights On ↔ Movie Dimmed) ---
-  const ambientLight = new AmbientLight(0xd4ddf5, 0.55);
+  const ambientLight = new AmbientLight(0xd4ddf5, 0.22);
   scene.add(ambientLight);
 
-  const hemiLight = new HemisphereLight(0xffe9cf, 0x0e0b16, 0.72);
+  const hemiLight = new HemisphereLight(0xffe9cf, 0x0b0912, 0.32);
   scene.add(hemiLight);
 
-  const ceilingKey = new DirectionalLight(0xffe7c8, 0.95);
+  const ceilingKey = new DirectionalLight(0xffe7c8, 0.46);
   ceilingKey.position.set(shellCenterX, room.ceilingY + 2, shellCenterZ + 2);
   ceilingKey.target.position.set(shellCenterX, 0.8, room.depthM * 0.45);
   scene.add(ceilingKey);
   scene.add(ceilingKey.target);
 
+  // Two spatial ceiling tungsten downlight pools casting realistic warm light-and-shadow falloff across seats, steps & walls
+  const poolRange = Math.max(12, shellD * 0.95);
+  const housePoolFront = new PointLight(0xffdca8, 22, poolRange, 2.0);
+  housePoolFront.position.set(shellCenterX, room.ceilingY - 0.35, room.frontWallZ + shellD * 0.34);
+  scene.add(housePoolFront);
+
+  const housePoolBack = new PointLight(0xffdca8, 22, poolRange, 2.0);
+  housePoolBack.position.set(shellCenterX, room.ceilingY - 0.35, room.frontWallZ + shellD * 0.72);
+  scene.add(housePoolBack);
+
   const screenTiltRad = (room.screen.tiltDeg * Math.PI) / 180;
 
-  // Screen bounce lights casting cinematic illumination onto front/mid seats & audience heads
-  const screenBounce = new PointLight(0xb8d4ff, 26, Math.max(18, room.backWallZ * 1.5), 1.55);
+  // Screen bounce light with true inverse-square falloff (softly kisses nearby walls/seats without floodlighting bright custom surfaces)
+  const screenBounce = new PointLight(0xb8d4ff, 6, Math.max(16, room.backWallZ * 1.4), 2.0);
   screenBounce.position.set(room.screen.centreX, room.screen.centerY, room.screen.centerZ + 1.35);
   scene.add(screenBounce);
 
-  const screenFill = new DirectionalLight(0x9ec2f7, 0.55);
+  const screenFill = new DirectionalLight(0x9ec2f7, 0.14);
   screenFill.position.set(
     room.screen.centreX,
     room.screen.centerY + room.screen.height * 0.2,
@@ -1749,41 +3160,44 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
   const tmpScale = new Vector3(1, 1, 1);
   const yAxis = new Vector3(0, 1, 0);
 
-  // --- 1. Persistent Stepped Stadium Floor, Contrast Risers & Aisle Stairs (Carpet texture swaps in-place) ---
-  let carpetTex: CanvasTexture | null = createCarpetTexture(
-    shellW / 2.2,
-    shellD / 2.2,
-    currentAppearance.carpetStyle,
-    currentAppearance.carpetColor,
-  );
-  const baseFloorGeom = track(new PlaneGeometry(shellW, shellD));
+  // --- 1. Persistent Stepped Stadium Floor, Contrast Risers & Aisle Stairs (Carpet/Floor PBR swaps in-place) ---
+  let carpetTex: CanvasTexture | null = null;
+  let carpetBumpTex: CanvasTexture | null = null;
+  let carpetRoughTex: CanvasTexture | null = null;
+  let carpetBuildToken = 0;
+
+  const floorXMin = -leftMargin;
+  const floorXMax = room.widthM + rightMargin;
+  const baseFloorGeom = new PlaneGeometry(shellW, shellD, 12, 12);
+  baseFloorGeom.rotateX(-Math.PI / 2);
+  baseFloorGeom.translate(shellCenterX, 0.004, shellCenterZ);
+  applyWorldBoxUVs(baseFloorGeom);
+  bakeFloorAO(baseFloorGeom, floorXMin, floorXMax, null, room.frontWallZ + 0.5);
+  track(baseFloorGeom);
   const baseFloorMat = track(
     new MeshStandardMaterial({
       color: 0xffffff,
-      map: carpetTex,
-      roughness: 0.94,
-      metalness: 0.02,
+      roughness: 0.96,
+      metalness: 0.01,
+      vertexColors: true,
     }),
   );
   const baseFloor = new Mesh(baseFloorGeom, baseFloorMat);
-  baseFloor.rotation.x = -Math.PI / 2;
-  baseFloor.position.set(shellCenterX, 0.004, shellCenterZ);
   scene.add(baseFloor);
 
   let slabMaterial: MeshStandardMaterial | null = null;
   if (room.floorSlabs.length > 0) {
-    const slabGeometry = track(new BoxGeometry(1, 1, 1));
     slabMaterial = track(
       new MeshStandardMaterial({
-        color: 0xded9eb,
-        map: carpetTex,
-        roughness: 0.92,
-        metalness: 0.02,
+        color: 0xf4f2f8,
+        roughness: 0.96,
+        metalness: 0.01,
+        vertexColors: true,
       }),
     );
-    const slabMesh = track(new InstancedMesh(slabGeometry, slabMaterial, room.floorSlabs.length));
 
-    // Crisp recessed dark riser facings + subtle top lip trim so every stadium row reads sharply from both front and rear
+    // Build all tiered row slabs with world-space metre UVs + wall/under-riser AO (merged into 1 draw call)
+    const slabParts: BufferGeometry[] = [];
     const raisedSlabs = room.floorSlabs.filter((s) => s.height > 0.03);
     const riserGeom = track(new PlaneGeometry(1, 1));
     const riserMat = track(new MeshStandardMaterial({ color: 0x09070f, roughness: 0.96, metalness: 0.02 }));
@@ -1798,12 +3212,18 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
     room.floorSlabs.forEach((slab, i) => {
       const h = Math.max(slab.height, 0.02);
       const d = Math.max(slab.zEnd - slab.zStart, 0.05);
-      tmpMat.compose(
-        tmpPos.set(shellCenterX, h / 2, (slab.zStart + slab.zEnd) / 2),
-        tmpQuat.identity(),
-        tmpScale.set(shellW - 0.02, h, d + 0.01),
+      const g = new BoxGeometry(shellW - 0.02, h, d + 0.01, 10, 1, 4);
+      g.translate(shellCenterX, h / 2, (slab.zStart + slab.zEnd) / 2);
+      const hasBackRiser = i < room.floorSlabs.length - 1 && room.floorSlabs[i + 1].height > slab.height + 0.02;
+      slabParts.push(
+        bakeFloorAO(
+          applyWorldBoxUVs(normalizePart(g)),
+          floorXMin,
+          floorXMax,
+          hasBackRiser ? slab.zEnd : room.backWallZ,
+          null,
+        ),
       );
-      slabMesh.setMatrixAt(i, tmpMat);
 
       if (riserMesh && lipMesh && slab.height > 0.03) {
         const prevH = i > 0 ? room.floorSlabs[i - 1].height : 0;
@@ -1823,8 +3243,12 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
         riserIdx++;
       }
     });
-    slabMesh.instanceMatrix.needsUpdate = true;
-    scene.add(slabMesh);
+    const mergedSlabs = mergeGeometries(slabParts, false);
+    for (const p of slabParts) p.dispose();
+    if (mergedSlabs) {
+      track(mergedSlabs);
+      scene.add(new Mesh(mergedSlabs, slabMaterial));
+    }
     if (riserMesh) {
       riserMesh.instanceMatrix.needsUpdate = true;
       scene.add(riserMesh);
@@ -1835,30 +3259,125 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
     }
   }
 
-  // Real intermediate stair treads along open vertical/side walkways (QCVN 06 / IBC stepped aisles)
+  // Real intermediate stair treads along open vertical/side walkways (world-space UVs + crisp front riser & nosing trim)
   let stairMat: MeshStandardMaterial | null = null;
   if (room.aisleSteps.length > 0) {
-    const stairGeom = track(new BoxGeometry(1, 1, 1));
     stairMat = track(
       new MeshStandardMaterial({
-        color: 0xd0c9e0,
-        map: carpetTex,
-        roughness: 0.9,
-        metalness: 0.03,
+        color: 0xeceaf2,
+        roughness: 0.92,
+        metalness: 0.02,
       }),
     );
-    const stairMesh = track(new InstancedMesh(stairGeom, stairMat, room.aisleSteps.length));
+    const stairParts: BufferGeometry[] = [];
+    const stepRiserGeom = track(new PlaneGeometry(1, 1));
+    const stepRiserMat = track(new MeshStandardMaterial({ color: 0x0a0810, roughness: 0.95, metalness: 0.02 }));
+    const stepRiserMesh = track(new InstancedMesh(stepRiserGeom, stepRiserMat, room.aisleSteps.length));
+    const stepLipGeom = track(new BoxGeometry(1, 0.016, 0.036));
+    const stepLipMat = track(new MeshStandardMaterial({ color: 0x262134, roughness: 0.68, metalness: 0.16 }));
+    const stepLipMesh = track(new InstancedMesh(stepLipGeom, stepLipMat, room.aisleSteps.length));
+
     room.aisleSteps.forEach((step, i) => {
+      const g = new BoxGeometry(step.widthM, step.heightM, step.depthM);
+      g.translate(step.x, step.y, step.z);
+      stairParts.push(applyWorldBoxUVs(normalizePart(g)));
+
       tmpMat.compose(
-        tmpPos.set(step.x, step.y, step.z),
-        tmpQuat.identity(),
-        tmpScale.set(step.widthM, step.heightM, step.depthM),
+        tmpPos.set(step.x, step.y, step.z - step.depthM / 2 - 0.004),
+        tmpQuat.setFromAxisAngle(yAxis, Math.PI),
+        tmpScale.set(step.widthM - 0.01, step.heightM, 1),
       );
-      stairMesh.setMatrixAt(i, tmpMat);
+      stepRiserMesh.setMatrixAt(i, tmpMat);
+      tmpMat.compose(
+        tmpPos.set(step.x, step.y + step.heightM / 2 + 0.003, step.z - step.depthM / 2 + 0.016),
+        tmpQuat.identity(),
+        tmpScale.set(step.widthM - 0.01, 1, 1),
+      );
+      stepLipMesh.setMatrixAt(i, tmpMat);
     });
-    stairMesh.instanceMatrix.needsUpdate = true;
-    scene.add(stairMesh);
+    const mergedStairs = mergeGeometries(stairParts, false);
+    for (const p of stairParts) p.dispose();
+    if (mergedStairs) {
+      track(mergedStairs);
+      scene.add(new Mesh(mergedStairs, stairMat));
+    }
+    stepRiserMesh.instanceMatrix.needsUpdate = true;
+    stepLipMesh.instanceMatrix.needsUpdate = true;
+    scene.add(stepRiserMesh, stepLipMesh);
   }
+
+  function assignCarpetMaps(
+    nextMap: CanvasTexture | null,
+    nextBump: CanvasTexture | null,
+    nextRough: CanvasTexture | null,
+    bumpScale: number,
+    roughness: number,
+    metalness: number,
+  ) {
+    const prevMap = carpetTex;
+    const prevBump = carpetBumpTex;
+    const prevRough = carpetRoughTex;
+    carpetTex = nextMap;
+    carpetBumpTex = nextBump;
+    carpetRoughTex = nextRough;
+
+    for (const mat of [baseFloorMat, slabMaterial, stairMat]) {
+      if (!mat) continue;
+      mat.map = nextMap;
+      mat.bumpMap = nextBump;
+      mat.bumpScale = bumpScale;
+      mat.roughnessMap = nextRough;
+      mat.roughness = roughness;
+      mat.metalness = metalness;
+      mat.needsUpdate = true;
+    }
+    prevMap?.dispose();
+    prevBump?.dispose();
+    prevRough?.dispose();
+  }
+
+  function applyCarpetSurface(ui: Room3DAppearance, triggerRender = false) {
+    const token = ++carpetBuildToken;
+    const customUrl = ui.carpetImageUrl.trim();
+    const repeatCount = ui.carpetImageRepeat;
+    const carpetOpts = (img: HTMLImageElement): SurfaceTextureOptions => {
+      const imgAspect = img.naturalHeight > 0 ? img.naturalWidth / img.naturalHeight : 1;
+      const layout = computeSurfaceTileLayout(shellW, shellD, imgAspect, repeatCount);
+      const phaseX = Math.round(layout.repeatX) % 2 === 1 ? 0.5 : 0;
+      const phaseY = Math.round(layout.repeatY) % 2 === 1 ? 0.5 : 0;
+      return {
+        repeatX: CARPET_TILE_M / layout.tileW,
+        repeatY: CARPET_TILE_M / layout.tileH,
+        offsetX: phaseX - shellCenterX / layout.tileW,
+        offsetY: phaseY + shellCenterZ / layout.tileH,
+      };
+    };
+    const applyCustom = (img: HTMLImageElement) => {
+      if (disposed || token !== carpetBuildToken) return;
+      const pbr = createCustomSurfaceTextures(customUrl, img, "carpet", ui.carpetStyle, carpetOpts(img));
+      if (!pbr) return;
+      assignCarpetMaps(pbr.map, pbr.bumpMap, pbr.roughnessMap, pbr.bumpScale, pbr.roughness, pbr.metalness);
+      requestRender();
+    };
+
+    if (customUrl) {
+      const cached = loadSurfaceImage(customUrl, applyCustom);
+      if (cached) {
+        const pbr = createCustomSurfaceTextures(customUrl, cached, "carpet", ui.carpetStyle, carpetOpts(cached));
+        if (pbr) {
+          assignCarpetMaps(pbr.map, pbr.bumpMap, pbr.roughnessMap, pbr.bumpScale, pbr.roughness, pbr.metalness);
+          if (triggerRender) requestRender();
+          return;
+        }
+      }
+    }
+
+    const fallback = createCarpetTexture(1, 1, ui.carpetStyle, ui.carpetColor);
+    assignCarpetMaps(fallback?.map ?? null, fallback?.bumpMap ?? null, null, 0.022, 0.94, 0.02);
+    if (triggerRender) requestRender();
+  }
+
+  applyCarpetSurface(currentAppearance);
 
   // --- 2. Configurable Interior Enclosure, Screen, Doors, Lighting & Cinema Fixtures (Rebuilt in-place on `setAppearance`) ---
   const interiorGroup = new Group();
@@ -1876,10 +3395,49 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
   let coveWashMat: MeshBasicMaterial | null = null;
   let portGlassMat: MeshBasicMaterial | null = null;
   let beamOpacityUniform: { value: number } | null = null;
+  let beamColorUniform: { value: Color } | null = null;
+  let screenLightsUniform: { value: number } | null = null;
   let stageLedMat: MeshBasicMaterial | null = null;
+  let stageLedWashMat: MeshBasicMaterial | null = null;
+  let stageReflectMat: MeshBasicMaterial | null = null;
+  let ceilingReflectMat: MeshBasicMaterial | null = null;
+  let sideWallReflectMat: MeshBasicMaterial | null = null;
+  let aisleLedSpillMat: MeshBasicMaterial | null = null;
   let haloMat: MeshBasicMaterial | null = null;
+  let leftCurtainWing: Group | null = null;
+  let rightCurtainWing: Group | null = null;
+  let leftCurtainClosedScale = 1;
+  let rightCurtainClosedScale = 1;
+  const screenTintColor = new Color(0xc4dcff);
+  const beamBaseColor = new Color(0xc2dcff);
+  const whiteTintRef = new Color(0xdce8ff);
+  // Dynamic House-Lights Dimmer State (0 = Movie Dimmed, 1 = House Lights On) — hoisted above `buildInterior`
+  let lightsTarget = options.lightsUp ? 1 : 0;
+  let lightsLevel = lightsTarget;
+  let lightTween: { start: number; from: number; to: number } | null = null;
+  // Animated velvet proscenium curtains (0 = dramatic pre-show framing when lights up, 1 = retracted wide open for movie)
+  let curtainTarget = options.lightsUp ? 0 : 1;
+  let curtainOpen = curtainTarget;
+  let curtainTween: { start: number; from: number; to: number } | null = null;
 
-  const bulbDimColor = new Color(0x1f1914);
+  function applyCurtainOpen(v: number) {
+    const open = currentAppearance.screenCurtainsAnimated ? v : 1;
+    if (leftCurtainWing) leftCurtainWing.scale.x = leftCurtainClosedScale + (1 - leftCurtainClosedScale) * open;
+    if (rightCurtainWing) rightCurtainWing.scale.x = rightCurtainClosedScale + (1 - rightCurtainClosedScale) * open;
+  }
+
+  function applyScreenTint(nextTint: Color) {
+    screenTintColor.copy(nextTint);
+    screenBounce.color.copy(nextTint);
+    screenFill.color.copy(nextTint).lerp(whiteTintRef, 0.18);
+    if (haloMat) haloMat.color.copy(nextTint);
+    if (stageReflectMat) stageReflectMat.color.copy(nextTint);
+    if (ceilingReflectMat) ceilingReflectMat.color.copy(nextTint);
+    if (sideWallReflectMat) sideWallReflectMat.color.copy(nextTint);
+    if (beamColorUniform) beamColorUniform.value.copy(beamBaseColor).lerp(nextTint, 0.28);
+  }
+
+  const bulbDimColor = new Color(0x0a090d);
   const bulbLitColor = new Color(0xffe1b5);
   const initSconceStops = SCONCE_ACCENT_STOPS[currentAppearance.sconceColor] ?? SCONCE_ACCENT_STOPS.warm;
   const initCoveStops = SCONCE_ACCENT_STOPS[currentAppearance.coveLedColor] ?? SCONCE_ACCENT_STOPS.warm;
@@ -1898,19 +3456,205 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
   let cssScreenObj: CSS3DObject | null = null;
   let youtubeWrapper: HTMLDivElement | null = null;
   let youtubeIframe: HTMLIFrameElement | null = null;
+  let youtubeGlazeEl: HTMLDivElement | null = null;
+  let youtubeCssW = 1280;
+  let youtubeCssH = 536;
   let activeYoutubeId: string | null = null;
   let youtubeMuted = options.youtubeMuted ?? true;
   let youtubeSyncToken = 0;
+  let ytPlayer: YtPlayer | null = null;
+  let ytReady = false;
+  let youtubePlayerToken = 0;
+  let youtubeVerifyTimer = 0;
+  let youtubeApiFallback = false;
+  let pausedYoutubeByVisibility = false;
   const screenWorldCenter = new Vector3(room.screen.centreX, room.screen.centerY, room.screen.centerZ);
   const screenCamPos = new Vector3();
 
-  function sendYoutubeCommand(func: string) {
-    if (!youtubeIframe?.contentWindow) return;
+  function clearYoutubeVerifyTimer() {
+    if (youtubeVerifyTimer) {
+      window.clearTimeout(youtubeVerifyTimer);
+      youtubeVerifyTimer = 0;
+    }
+  }
+
+  function teardownYoutubePlayer() {
+    youtubePlayerToken++;
+    clearYoutubeVerifyTimer();
+    ytPlayer = null;
+    ytReady = false;
+    youtubeApiFallback = false;
+  }
+
+  function postYoutubeCommand(func: string, args: unknown[] = []) {
+    const win = youtubeIframe?.contentWindow;
+    if (!win) return;
     try {
-      youtubeIframe.contentWindow.postMessage(JSON.stringify({ event: "command", func, args: "" }), "*");
+      win.postMessage(JSON.stringify({ event: "command", func, args }), YOUTUBE_EMBED_HOST);
     } catch {
       // Ignore cross-origin frame messaging errors before the YouTube player finishes mounting.
     }
+  }
+
+  function sendYoutubeListeningHandshake(iframe: HTMLIFrameElement) {
+    const win = iframe.contentWindow;
+    if (!win) return;
+    try {
+      win.postMessage(JSON.stringify({ event: "listening", id: 1, channel: "widget" }), YOUTUBE_EMBED_HOST);
+    } catch {
+      // Ignore cross-origin frame messaging errors before the YouTube player finishes mounting.
+    }
+  }
+
+  function scheduleYoutubeUnmuteVerify() {
+    clearYoutubeVerifyTimer();
+    const expectedToken = youtubePlayerToken;
+    youtubeVerifyTimer = window.setTimeout(() => {
+      youtubeVerifyTimer = 0;
+      if (disposed || expectedToken !== youtubePlayerToken || youtubeMuted || !activeYoutubeId) return;
+      if (!ytPlayer || !ytReady) return;
+      try {
+        const state = ytPlayer.getPlayerState?.();
+        const actuallyMuted = ytPlayer.isMuted?.() ?? false;
+        const stalled = state !== undefined && state !== YT_STATE.playing && state !== YT_STATE.buffering;
+        if (actuallyMuted || stalled) {
+          // Browser/iOS autoplay policy blocked unmuted playback — fall back cleanly to muted play and sync UI.
+          youtubeMuted = true;
+          ytPlayer.mute();
+          ytPlayer.playVideo();
+          options.onYoutubeMutedChange?.(true);
+        }
+      } catch {
+        // Ignore transient YouTube IFrame API errors during teardown.
+      }
+    }, 750);
+  }
+
+  function applyYoutubeAudio(muted: boolean) {
+    clearYoutubeVerifyTimer();
+    youtubeMuted = muted;
+    if (!activeYoutubeId || !youtubeIframe) return;
+    if (muted) {
+      if (ytPlayer && ytReady) {
+        try {
+          ytPlayer.mute();
+        } catch {
+          postYoutubeCommand("mute");
+        }
+      } else {
+        postYoutubeCommand("mute");
+      }
+      return;
+    }
+
+    // Run synchronously inside the user's click/tap gesture so Safari / iOS PWA preserves audio activation.
+    if (ytPlayer && ytReady) {
+      try {
+        ytPlayer.unMute();
+        ytPlayer.setVolume?.(100);
+        ytPlayer.playVideo();
+      } catch {
+        postYoutubeCommand("unMute");
+        postYoutubeCommand("setVolume", [100]);
+        postYoutubeCommand("playVideo");
+      }
+    } else {
+      if (youtubeApiFallback) sendYoutubeListeningHandshake(youtubeIframe);
+      postYoutubeCommand("unMute");
+      postYoutubeCommand("setVolume", [100]);
+      postYoutubeCommand("playVideo");
+    }
+    scheduleYoutubeUnmuteVerify();
+  }
+
+  function syncYoutubeOpticalGlaze(lvl: number, borderStyle: ScreenBorderStyle) {
+    if (!youtubeGlazeEl) return;
+    const shadowPx = borderStyle === "velvet" ? 14 : borderStyle === "slim" ? 8 : 4;
+    const shadowAlpha = borderStyle === "velvet" ? 0.28 : borderStyle === "slim" ? 0.18 : 0.1;
+    const topWash = (lvl * 0.045).toFixed(3);
+    const midWash = (lvl * 0.022).toFixed(3);
+    youtubeGlazeEl.style.boxShadow = `inset 0 0 ${shadowPx}px rgba(0, 0, 0, ${shadowAlpha})`;
+    youtubeGlazeEl.style.background =
+      lvl > 0.01
+        ? `linear-gradient(180deg, rgba(235, 232, 224, ${topWash}) 0%, rgba(235, 232, 224, ${midWash}) 100%)`
+        : "none";
+  }
+
+  function createAndAttachYoutubeIframe(videoId: string, startSeconds = 0) {
+    if (!youtubeWrapper) return;
+    teardownYoutubePlayer();
+    youtubeIframe?.remove();
+    const playerToken = youtubePlayerToken;
+
+    const cover = computeYoutubeCoverLayout(youtubeCssW, youtubeCssH);
+    const iframe = document.createElement("iframe");
+    iframe.src = buildScreenYoutubeUrl(videoId, youtubeMuted, startSeconds);
+    iframe.title = "YouTube cinema screen";
+    iframe.allow = "autoplay; encrypted-media; picture-in-picture";
+    iframe.referrerPolicy = "strict-origin-when-cross-origin";
+    iframe.style.cssText = `position:absolute;left:${cover.left}px;top:${cover.top}px;width:${cover.width}px;height:${cover.height}px;border:0;display:block;pointer-events:none`;
+    iframe.addEventListener("load", () => {
+      if (disposed || playerToken !== youtubePlayerToken || youtubeIframe !== iframe) return;
+      if (youtubeApiFallback) {
+        sendYoutubeListeningHandshake(iframe);
+        if (!youtubeMuted) {
+          postYoutubeCommand("unMute");
+          postYoutubeCommand("setVolume", [100]);
+          postYoutubeCommand("playVideo");
+        }
+      }
+    });
+    youtubeIframe = iframe;
+    if (youtubeGlazeEl) youtubeWrapper.insertBefore(iframe, youtubeGlazeEl);
+    else youtubeWrapper.appendChild(iframe);
+
+    void loadYouTubeApi()
+      .then((yt) => {
+        if (disposed || playerToken !== youtubePlayerToken || youtubeIframe !== iframe) return;
+        const player = new yt.Player(iframe, {
+          host: YOUTUBE_EMBED_HOST,
+          events: {
+            onReady: () => {
+              if (disposed || playerToken !== youtubePlayerToken || youtubeIframe !== iframe) return;
+              ytReady = true;
+              try {
+                if (youtubeMuted) {
+                  player.mute();
+                  player.playVideo();
+                } else {
+                  player.unMute();
+                  player.setVolume?.(100);
+                  player.playVideo();
+                  scheduleYoutubeUnmuteVerify();
+                }
+              } catch {
+                // Ignore transient YouTube IFrame API errors.
+              }
+            },
+            onStateChange: ({ data }) => {
+              if (disposed || playerToken !== youtubePlayerToken || youtubeIframe !== iframe) return;
+              if (data === YT_STATE.ended) {
+                try {
+                  player.playVideo();
+                } catch {
+                  postYoutubeCommand("playVideo");
+                }
+              }
+            },
+          },
+        });
+        ytPlayer = player;
+      })
+      .catch(() => {
+        if (disposed || playerToken !== youtubePlayerToken || youtubeIframe !== iframe) return;
+        youtubeApiFallback = true;
+        sendYoutubeListeningHandshake(iframe);
+        if (!youtubeMuted) {
+          postYoutubeCommand("unMute");
+          postYoutubeCommand("setVolume", [100]);
+          postYoutubeCommand("playVideo");
+        }
+      });
   }
 
   function syncYoutubeLayer(videoId: string | null) {
@@ -1918,15 +3662,23 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
     if (!videoId) {
       scene.background = bgColor;
       renderer.setClearColor(0x050508, 1);
+      pausedYoutubeByVisibility = false;
+      teardownYoutubePlayer();
       if (activeYoutubeId !== null || cssScreenObj !== null) {
         activeYoutubeId = null;
         if (cssScreenObj && cssScene) cssScene.remove(cssScreenObj);
         cssScreenObj = null;
         youtubeIframe?.remove();
         youtubeIframe = null;
+        youtubeGlazeEl?.remove();
+        youtubeGlazeEl = null;
         youtubeWrapper?.remove();
         youtubeWrapper = null;
         if (cssRenderer) cssRenderer.domElement.style.display = "none";
+        if (!youtubeMuted) {
+          youtubeMuted = true;
+          options.onYoutubeMutedChange?.(true);
+        }
       }
       return;
     }
@@ -1937,6 +3689,7 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
     // Preserve the live player when switching quick themes / walls / lights while keeping the same YouTube video.
     if (activeYoutubeId === videoId && youtubeIframe && cssScreenObj && cssRenderer) {
       cssRenderer.domElement.style.display = "block";
+      syncYoutubeOpticalGlaze(lightsLevel, currentAppearance.screenBorder);
       return;
     }
 
@@ -1956,30 +3709,33 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
         cssRenderer.domElement.style.display = "block";
 
         if (cssScreenObj && cssScene) cssScene.remove(cssScreenObj);
+        teardownYoutubePlayer();
         youtubeIframe?.remove();
+        youtubeIframe = null;
+        youtubeGlazeEl?.remove();
+        youtubeGlazeEl = null;
         youtubeWrapper?.remove();
 
         activeYoutubeId = videoId;
-        const cssW = 1280;
-        const cssH = Math.max(360, Math.round(cssW * (room.screen.height / Math.max(0.1, room.screen.width))));
+        youtubeCssW = 1280;
+        youtubeCssH = Math.max(360, Math.round(youtubeCssW * (room.screen.height / Math.max(0.1, room.screen.width))));
 
         youtubeWrapper = document.createElement("div");
-        youtubeWrapper.style.cssText = `width:${cssW}px;height:${cssH}px;background:#000;overflow:hidden;pointer-events:none;backface-visibility:hidden`;
+        youtubeWrapper.style.cssText = `position:relative;width:${youtubeCssW}px;height:${youtubeCssH}px;background:#000;overflow:hidden;pointer-events:none;backface-visibility:hidden`;
 
-        youtubeIframe = document.createElement("iframe");
-        youtubeIframe.src = buildScreenYoutubeUrl(videoId, youtubeMuted);
-        youtubeIframe.title = "YouTube cinema screen";
-        youtubeIframe.allow = "autoplay; encrypted-media; picture-in-picture";
-        youtubeIframe.referrerPolicy = "strict-origin-when-cross-origin";
-        youtubeIframe.style.cssText = "width:100%;height:100%;border:0;display:block;pointer-events:none";
-        youtubeWrapper.appendChild(youtubeIframe);
+        youtubeGlazeEl = document.createElement("div");
+        youtubeGlazeEl.style.cssText = "position:absolute;inset:0;pointer-events:none;z-index:2";
+        youtubeWrapper.appendChild(youtubeGlazeEl);
+        syncYoutubeOpticalGlaze(lightsLevel, currentAppearance.screenBorder);
+
+        createAndAttachYoutubeIframe(videoId);
 
         cssScreenObj = new CSS3DObjectCtor(youtubeWrapper);
         // `CSS3DObject` sets `pointerEvents = "auto"` in its constructor; override so WebGL owns 100% of orbit/click input.
         youtubeWrapper.style.pointerEvents = "none";
         cssScreenObj.position.set(room.screen.centreX, room.screen.centerY, room.screen.centerZ);
         cssScreenObj.rotation.x = screenTiltRad;
-        cssScreenObj.scale.set(room.screen.width / cssW, room.screen.height / cssH, 1);
+        cssScreenObj.scale.set(room.screen.width / youtubeCssW, room.screen.height / youtubeCssH, 1);
         cssScene!.add(cssScreenObj);
         requestRender();
       })
@@ -2000,8 +3756,19 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
     coveWashMat = null;
     portGlassMat = null;
     beamOpacityUniform = null;
+    beamColorUniform = null;
+    screenLightsUniform = null;
     stageLedMat = null;
+    stageLedWashMat = null;
+    stageReflectMat = null;
+    ceilingReflectMat = null;
+    sideWallReflectMat = null;
+    aisleLedSpillMat = null;
     haloMat = null;
+    leftCurtainWing = null;
+    rightCurtainWing = null;
+    leftCurtainClosedScale = 1;
+    rightCurtainClosedScale = 1;
 
     const sconceAccent = SCONCE_ACCENT_STOPS[ui.sconceColor] ?? SCONCE_ACCENT_STOPS.warm;
     slitDimColor.setHex(sconceAccent.dim);
@@ -2010,62 +3777,210 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
     coveDimColor.setHex(coveAccent.dim);
     coveLitColor.setHex(coveAccent.lit);
 
-    // Architectural walls & ceiling
+    // Architectural walls & ceiling (supports synthesized PBR materials from uploaded/external images)
     const wallTexSide = createAcousticWallTexture(shellD / 2.2, room.ceilingY / 2.5, ui.wallStyle, ui.wallColor);
     if (wallTexSide) trackInterior(wallTexSide);
     const wallTexBack = createAcousticWallTexture(shellW / 2.2, room.ceilingY / 2.5, ui.wallStyle, ui.wallColor);
     if (wallTexBack) trackInterior(wallTexBack);
-    const ceilTex = createCeilingTexture(shellW / 2.8, shellD / 2.8, ui.ceilingStyle, ui.ceilingColor);
+    const ceilTex = createCeilingTexture(shellW / 2.8, shellD / 2.8, ui.ceilingStyle, ui.ceilingColor, ui.starlightColor);
     if (ceilTex) trackInterior(ceilTex);
 
     const sideWallMat = trackInterior(
       new MeshStandardMaterial({
         color: 0xffffff,
         map: wallTexSide,
-        roughness: 0.9,
-        metalness: 0.04,
+        roughness: 0.94,
+        metalness: 0.02,
+        vertexColors: true,
       }),
     );
     const backWallMat = trackInterior(
       new MeshStandardMaterial({
-        color: 0xdad8e8,
+        color: 0xe6e4f0,
         map: wallTexBack,
-        roughness: 0.92,
-        metalness: 0.04,
+        roughness: 0.95,
+        metalness: 0.02,
+        vertexColors: true,
       }),
     );
-    const frontWallMat = trackInterior(new MeshStandardMaterial({ color: 0x06060b, roughness: 0.96, metalness: 0.02 }));
+    const frontWallTex = createFrontWallTexture(shellW / 2.2, room.ceilingY / 2.4);
+    if (frontWallTex) trackInterior(frontWallTex);
+    const frontWallMat = trackInterior(
+      new MeshStandardMaterial({
+        color: frontWallTex ? 0xffffff : 0x030305,
+        map: frontWallTex,
+        roughness: 0.99,
+        metalness: 0.0,
+      }),
+    );
     const ceilMat = trackInterior(
       new MeshStandardMaterial({
         color: 0xffffff,
         map: ceilTex,
-        roughness: 0.88,
-        metalness: 0.06,
+        roughness: 0.93,
+        metalness: 0.03,
+        vertexColors: true,
       }),
     );
 
-    const sideWallGeom = trackInterior(new PlaneGeometry(shellD, room.ceilingY));
-    const leftWall = new Mesh(sideWallGeom, sideWallMat);
+    const applyCustomPbr = (
+      mat: MeshStandardMaterial,
+      pbr: SurfacePbrTextures,
+    ) => {
+      const prevMap = mat.map;
+      const prevBump = mat.bumpMap;
+      const prevRough = mat.roughnessMap;
+      mat.map = pbr.map;
+      mat.bumpMap = pbr.bumpMap;
+      mat.bumpScale = pbr.bumpScale;
+      mat.roughnessMap = pbr.roughnessMap;
+      mat.roughness = pbr.roughness;
+      mat.metalness = pbr.metalness;
+      mat.needsUpdate = true;
+      trackInterior(pbr.map);
+      trackInterior(pbr.bumpMap);
+      trackInterior(pbr.roughnessMap);
+      prevMap?.dispose();
+      prevBump?.dispose();
+      prevRough?.dispose();
+    };
+
+    const planeSurfaceOpts = (
+      surfaceW: number,
+      surfaceH: number,
+      img: HTMLImageElement,
+      repeatCount: number,
+    ): SurfaceTextureOptions => {
+      const imgAspect = img.naturalHeight > 0 ? img.naturalWidth / img.naturalHeight : 1;
+      const layout = computeSurfaceTileLayout(surfaceW, surfaceH, imgAspect, repeatCount);
+      const phaseX = Math.round(layout.repeatX) % 2 === 1 ? 0.5 : 0;
+      const phaseY = Math.round(layout.repeatY) % 2 === 1 ? 0.5 : 0;
+      return {
+        repeatX: layout.repeatX,
+        repeatY: layout.repeatY,
+        offsetX: phaseX - 0.5 * layout.repeatX,
+        offsetY: phaseY - 0.5 * layout.repeatY,
+      };
+    };
+
+    const customWallUrl = ui.wallImageUrl.trim();
+    if (customWallUrl) {
+      const wallRepeat = ui.wallImageRepeat;
+      const applyWallImg = (img: HTMLImageElement) => {
+        if (disposed || buildToken !== interiorBuildToken) return;
+        const sidePbr = createCustomSurfaceTextures(
+          customWallUrl,
+          img,
+          "wall",
+          ui.wallStyle,
+          planeSurfaceOpts(shellD, room.ceilingY, img, wallRepeat),
+        );
+        const backPbr = createCustomSurfaceTextures(
+          customWallUrl,
+          img,
+          "wall",
+          ui.wallStyle,
+          planeSurfaceOpts(shellW, room.ceilingY, img, wallRepeat),
+        );
+        if (sidePbr) applyCustomPbr(sideWallMat, sidePbr);
+        if (backPbr) applyCustomPbr(backWallMat, backPbr);
+        requestRender();
+      };
+      const cachedWall = loadSurfaceImage(customWallUrl, applyWallImg);
+      if (cachedWall) {
+        const sidePbr = createCustomSurfaceTextures(
+          customWallUrl,
+          cachedWall,
+          "wall",
+          ui.wallStyle,
+          planeSurfaceOpts(shellD, room.ceilingY, cachedWall, wallRepeat),
+        );
+        const backPbr = createCustomSurfaceTextures(
+          customWallUrl,
+          cachedWall,
+          "wall",
+          ui.wallStyle,
+          planeSurfaceOpts(shellW, room.ceilingY, cachedWall, wallRepeat),
+        );
+        if (sidePbr) applyCustomPbr(sideWallMat, sidePbr);
+        if (backPbr) applyCustomPbr(backWallMat, backPbr);
+      }
+    }
+
+    const customCeilUrl = ui.ceilingImageUrl.trim();
+    if (customCeilUrl) {
+      const ceilRepeat = ui.ceilingImageRepeat;
+      const applyCeilImg = (img: HTMLImageElement) => {
+        if (disposed || buildToken !== interiorBuildToken) return;
+        const ceilPbr = createCustomSurfaceTextures(
+          customCeilUrl,
+          img,
+          "ceiling",
+          ui.ceilingStyle,
+          planeSurfaceOpts(shellW, shellD, img, ceilRepeat),
+        );
+        if (ceilPbr) applyCustomPbr(ceilMat, ceilPbr);
+        requestRender();
+      };
+      const cachedCeil = loadSurfaceImage(customCeilUrl, applyCeilImg);
+      if (cachedCeil) {
+        const ceilPbr = createCustomSurfaceTextures(
+          customCeilUrl,
+          cachedCeil,
+          "ceiling",
+          ui.ceilingStyle,
+          planeSurfaceOpts(shellW, shellD, cachedCeil, ceilRepeat),
+        );
+        if (ceilPbr) applyCustomPbr(ceilMat, ceilPbr);
+      }
+    }
+
+    const firstRowFloorZ = room.rowFloors.length > 0 ? room.rowFloors[0].z : Math.max(1.5, room.frontWallZ + 1.5);
+    const lastRowFloorZ =
+      room.rowFloors.length > 0 ? room.rowFloors[room.rowFloors.length - 1].z : Math.max(firstRowFloorZ + 1, room.backWallZ - 1);
+    const rakedFloorYAtZ = (z: number) => {
+      if (z <= firstRowFloorZ || lastRowFloorZ <= firstRowFloorZ) return 0;
+      const t = Math.min(1, Math.max(0, (z - firstRowFloorZ) / (lastRowFloorZ - firstRowFloorZ)));
+      return t * room.maxFloorY;
+    };
+
+    // Subdivided enclosure planes with baked architectural corner, baseboard & cornice AO
+    const leftWallGeom = trackInterior(
+      bakeWallAO(new PlaneGeometry(shellD, room.ceilingY, 16, 10), shellD, room.ceilingY, (lx) =>
+        rakedFloorYAtZ(shellCenterZ - lx),
+      ),
+    );
+    const leftWall = new Mesh(leftWallGeom, sideWallMat);
     leftWall.position.set(-leftMargin, room.ceilingY / 2, shellCenterZ);
     leftWall.rotation.y = Math.PI / 2;
     interiorGroup.add(leftWall);
 
-    const rightWall = new Mesh(sideWallGeom, sideWallMat);
+    const rightWallGeom = trackInterior(
+      bakeWallAO(new PlaneGeometry(shellD, room.ceilingY, 16, 10), shellD, room.ceilingY, (lx) =>
+        rakedFloorYAtZ(shellCenterZ + lx),
+      ),
+    );
+    const rightWall = new Mesh(rightWallGeom, sideWallMat);
     rightWall.position.set(room.widthM + rightMargin, room.ceilingY / 2, shellCenterZ);
     rightWall.rotation.y = -Math.PI / 2;
     interiorGroup.add(rightWall);
 
-    const endWallGeom = trackInterior(new PlaneGeometry(shellW, room.ceilingY));
-    const frontWall = new Mesh(endWallGeom, frontWallMat);
+    const frontWallGeom = trackInterior(new PlaneGeometry(shellW, room.ceilingY));
+    const frontWall = new Mesh(frontWallGeom, frontWallMat);
     frontWall.position.set(shellCenterX, room.ceilingY / 2, room.frontWallZ);
     interiorGroup.add(frontWall);
 
-    const backWall = new Mesh(endWallGeom, backWallMat);
+    const backWallGeom = trackInterior(
+      bakeWallAO(new PlaneGeometry(shellW, room.ceilingY, 16, 10), shellW, room.ceilingY, () => room.maxFloorY),
+    );
+    const backWall = new Mesh(backWallGeom, backWallMat);
     backWall.position.set(shellCenterX, room.ceilingY / 2, room.backWallZ);
     backWall.rotation.y = Math.PI;
     interiorGroup.add(backWall);
 
-    const ceilingGeom = trackInterior(new PlaneGeometry(shellW, shellD));
+    const ceilingGeom = trackInterior(
+      bakeCeilingAO(new PlaneGeometry(shellW, shellD, 14, 14), shellW, shellD),
+    );
     const ceilingMesh = new Mesh(ceilingGeom, ceilMat);
     ceilingMesh.position.set(shellCenterX, room.ceilingY, shellCenterZ);
     ceilingMesh.rotation.x = Math.PI / 2;
@@ -2241,6 +4156,17 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
       interiorGroup.add(mountMesh, ovCabMesh, ovGrilleMesh);
     }
 
+    // Recessed ceiling HVAC air diffusers & 4 architectural corner acoustic bass-trap columns
+    if (ui.ceilingDetailsVisible) {
+      interiorGroup.add(buildCeilingAndCornerDetails(room, leftMargin, rightMargin, trackInterior));
+    }
+
+    // Industrial 4DX wall wind-effect blowers & strobe pods (auto-mounted in rooms with 4DX seats)
+    if (ui.fourDxWallPropsVisible) {
+      const fourDxProps = build4dxWallProps(room, leftMargin, rightMargin, trackInterior);
+      if (fourDxProps) interiorGroup.add(fourDxProps);
+    }
+
     // Architectural Cove LED strips (ceiling perimeter and/or raked lower-wall rail, dimming cleanly with house lights)
     if (ui.coveLedVisible) {
       const coveChannelMat = trackInterior(
@@ -2366,13 +4292,50 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
       interiorGroup.add(portGlass);
     }
 
-    // Volumetric projector beam
+    // Volumetric cinema projector beam (dual-shell concentric squircle frustum + xenon lens hotspot, 2 draw calls)
     if (ui.projectorBeamVisible) {
-      const lensVec = new Vector3(room.projectionPort.x, room.projectionPort.y, room.projectionPort.z - 0.1);
+      const lensVec = new Vector3(room.projectionPort.x, room.projectionPort.y, room.projectionPort.z - 0.085);
       const screenCenterVec = new Vector3(room.screen.centreX, room.screen.centerY, room.screen.centerZ + 0.05);
       const beamLength = lensVec.distanceTo(screenCenterVec);
-      const beamGeom = trackInterior(new CylinderGeometry(1, 0.06, beamLength, 32, 1, true));
-      beamOpacityUniform = { value: 0.08 };
+
+      const buildBeamShell = (scale: number): BufferGeometry => {
+        const g = new CylinderGeometry(1, 1, beamLength, 36, 1, true);
+        const posAttr = g.attributes.position;
+        const endRx = room.screen.width * 0.46 * scale;
+        const endRz = room.screen.height * 0.46 * scale;
+        const startRx = 0.14 * scale;
+        const startRz = 0.08 * scale;
+        for (let i = 0; i < posAttr.count; i++) {
+          const vx = posAttr.getX(i);
+          const vy = posAttr.getY(i);
+          const vz = posAttr.getZ(i);
+          const t = (vy + beamLength * 0.5) / beamLength;
+          // Soft squircle cross-section matching the rectangular screen frame without hard corner seams
+          const sx = Math.sign(vx) * Math.pow(Math.abs(vx), 0.78);
+          const sz = Math.sign(vz) * Math.pow(Math.abs(vz), 0.78);
+          const rx = startRx + (endRx - startRx) * t;
+          const rz = startRz + (endRz - startRz) * t;
+          posAttr.setXYZ(i, sx * rx, vy, sz * rz);
+        }
+        posAttr.needsUpdate = true;
+        g.computeVertexNormals();
+        return g;
+      };
+
+      const outerShell = buildBeamShell(1.0);
+      const innerShell = buildBeamShell(0.58);
+      const beamGeom = mergeGeometries([outerShell, innerShell], false);
+      outerShell.dispose();
+      innerShell.dispose();
+
+      const beamAxis = new Vector3().subVectors(screenCenterVec, lensVec).normalize();
+      const upRef = new Vector3(0, 1, 0);
+      const beamX = new Vector3().crossVectors(beamAxis, upRef).normalize();
+      const beamZ = new Vector3().crossVectors(beamX, beamAxis).normalize();
+      const beamBasis = new Matrix4().makeBasis(beamX, beamAxis, beamZ);
+
+      beamOpacityUniform = { value: 0.16 };
+      beamColorUniform = { value: beamBaseColor.clone().lerp(screenTintColor, 0.28) };
       const beamMat = trackInterior(
         new ShaderMaterial({
           transparent: true,
@@ -2381,7 +4344,9 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
           blending: AdditiveBlending,
           uniforms: {
             uOpacity: beamOpacityUniform,
-            uColor: { value: new Color(0x9fc2ff) },
+            uColor: beamColorUniform,
+            uBeamAxis: { value: beamAxis.clone() },
+            uNearFade: { value: ui.projectionPortVisible ? 0.04 : 0.18 },
           },
           vertexShader: `
         varying vec2 vUv;
@@ -2398,40 +4363,110 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
           fragmentShader: `
         uniform float uOpacity;
         uniform vec3 uColor;
+        uniform vec3 uBeamAxis;
+        uniform float uNearFade;
         varying vec2 vUv;
         varying vec3 vWorldPos;
         varying vec3 vWorldNormal;
         void main() {
           vec3 viewDir = normalize(cameraPosition - vWorldPos);
-          float facing = pow(abs(dot(normalize(vWorldNormal), viewDir)), 2.8);
-          float ends = smoothstep(0.0, 0.18, vUv.y) * smoothstep(1.0, 0.72, vUv.y);
-          float alpha = facing * ends * uOpacity;
-          gl_FragColor = vec4(uColor * alpha, alpha);
+          float ndv = abs(dot(normalize(vWorldNormal), viewDir));
+          // Normalize silhouette rolloff against view-axis foreshortening so the beam stays
+          // visible from the rear overview camera while still feathering smoothly to 0 at edges.
+          float alongAxis = abs(dot(viewDir, uBeamAxis));
+          float maxNdv = max(0.2, sqrt(max(0.0, 1.0 - alongAxis * alongAxis)));
+          float edgeFade = pow(clamp(ndv / maxNdv, 0.0, 1.0), 1.85);
+          float density = mix(1.65, 0.42, pow(vUv.y, 0.72));
+          float ends = smoothstep(0.0, uNearFade, vUv.y) * smoothstep(1.0, 0.78, vUv.y);
+          float angle = vUv.x * 6.2831853;
+          float rays = 0.76 + 0.24 * sin(angle * 7.0 + vUv.y * 2.5) * cos(angle * 11.0 - 0.8);
+          float alpha = clamp(edgeFade * density * ends * rays * uOpacity, 0.0, 0.48);
+          gl_FragColor = vec4(uColor, alpha);
         }
       `,
         }),
       );
-      const beamMesh = new Mesh(beamGeom, beamMat);
-      const beamAxis = new Vector3().subVectors(screenCenterVec, lensVec).normalize();
-      const upRef = new Vector3(0, 1, 0);
-      const beamX = new Vector3().crossVectors(beamAxis, upRef).normalize();
-      const beamZ = new Vector3().crossVectors(beamX, beamAxis).normalize();
-      beamMesh.matrixAutoUpdate = false;
-      beamMesh.matrix
-        .makeBasis(beamX, beamAxis, beamZ)
-        .scale(new Vector3(room.screen.width * 0.44, 1, room.screen.height * 0.44))
-        .setPosition(lensVec.clone().add(screenCenterVec).multiplyScalar(0.5));
-      beamMesh.renderOrder = 8;
-      interiorGroup.add(beamMesh);
+      if (beamGeom) {
+        trackInterior(beamGeom);
+        const beamMesh = new Mesh(beamGeom, beamMat);
+        beamMesh.position.copy(lensVec).add(screenCenterVec).multiplyScalar(0.5);
+        beamMesh.quaternion.setFromRotationMatrix(beamBasis);
+        beamMesh.frustumCulled = false;
+        beamMesh.renderOrder = 8;
+        interiorGroup.add(beamMesh);
+      }
+
+      // Soft xenon projector lens hotspot at the rear booth window (shown only when the booth window itself is visible)
+      if (ui.projectionPortVisible) {
+        const lensFlareGeom = trackInterior(new PlaneGeometry(0.56, 0.42));
+        const lensFlareMat = trackInterior(
+          new ShaderMaterial({
+            transparent: true,
+            depthWrite: false,
+            blending: AdditiveBlending,
+            uniforms: {
+              uOpacity: beamOpacityUniform,
+              uColor: { value: new Color(0xdceaff) },
+            },
+            vertexShader: `
+        varying vec2 vUv;
+        void main() {
+          vUv = uv;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+            fragmentShader: `
+        uniform float uOpacity;
+        uniform vec3 uColor;
+        varying vec2 vUv;
+        void main() {
+          vec2 p = (vUv - 0.5) * 2.0;
+          float r = length(p);
+          float core = exp(-r * r * 9.0);
+          float halo = exp(-r * r * 2.4) * 0.45;
+          float alpha = clamp((core + halo) * min(1.0, uOpacity * 5.8), 0.0, 0.92);
+          gl_FragColor = vec4(uColor, alpha);
+        }
+      `,
+          }),
+        );
+        const lensFlareMesh = new Mesh(lensFlareGeom, lensFlareMat);
+        lensFlareMesh.position.copy(lensVec);
+        lensFlareMesh.rotation.y = Math.PI;
+        lensFlareMesh.renderOrder = 9;
+        interiorGroup.add(lensFlareMesh);
+      }
     }
 
-    // Luminous LED step-nosing strips along open vertical & side aisles (omitted on aisle-fill rows)
+    // Luminous LED step-nosing strips + realistic soft carpet light spill along open vertical & side aisles
     if (ui.aisleLedVisible && room.aisleLights.length > 0) {
-      const aisleLedMat = trackInterior(
-        new MeshBasicMaterial({ color: AISLE_LED_HEX[ui.aisleLedColor] ?? AISLE_LED_HEX.amber, toneMapped: false }),
-      );
+      const ledHex = AISLE_LED_HEX[ui.aisleLedColor] ?? AISLE_LED_HEX.amber;
+      const aisleLedMat = trackInterior(new MeshBasicMaterial({ color: ledHex, toneMapped: false }));
       const stripGeom = trackInterior(new BoxGeometry(1, 0.02, 0.028));
       const stripMesh = trackInterior(new InstancedMesh(stripGeom, aisleLedMat, room.aisleLights.length));
+
+      const spillTex = createAisleLedSpillTexture();
+      if (spillTex) trackInterior(spillTex);
+      aisleLedSpillMat = spillTex
+        ? trackInterior(
+            new MeshBasicMaterial({
+              color: ledHex,
+              map: spillTex,
+              transparent: true,
+              opacity: 0.24,
+              blending: AdditiveBlending,
+              depthWrite: false,
+              toneMapped: false,
+            }),
+          )
+        : null;
+      const spillGeom = aisleLedSpillMat ? trackInterior(new PlaneGeometry(1, 1)) : null;
+      if (spillGeom) spillGeom.rotateX(-Math.PI / 2);
+      const spillMesh =
+        aisleLedSpillMat && spillGeom
+          ? trackInterior(new InstancedMesh(spillGeom, aisleLedSpillMat, room.aisleLights.length))
+          : null;
+
       room.aisleLights.forEach((light, i) => {
         tmpMat.compose(
           tmpPos.set(light.x, light.y + 0.011, light.z),
@@ -2439,12 +4474,31 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
           tmpScale.set(light.widthM, 1, 1),
         );
         stripMesh.setMatrixAt(i, tmpMat);
+        if (spillMesh) {
+          tmpMat.compose(
+            tmpPos.set(light.x, light.y + 0.008, light.z + 0.09),
+            tmpQuat.identity(),
+            tmpScale.set(light.widthM * 1.38, 1, 0.26),
+          );
+          spillMesh.setMatrixAt(i, tmpMat);
+        }
       });
       stripMesh.instanceMatrix.needsUpdate = true;
       interiorGroup.add(stripMesh);
+      if (spillMesh) {
+        spillMesh.instanceMatrix.needsUpdate = true;
+        interiorGroup.add(spillMesh);
+      }
     }
 
-    // Illuminated Row Letter Markers (`A, B, C...`) along vertical aisles or side walls (2 draw calls total)
+    // Matte-black sloped handrails along stepped vertical & side aisles (never behind horizontal cross-aisles)
+    if (ui.aisleHandrailsVisible) {
+      const ledHex = AISLE_LED_HEX[ui.aisleLedColor] ?? AISLE_LED_HEX.amber;
+      const handrails = buildAisleHandrails(room, leftMargin, rightMargin, ui.aisleLedVisible, ledHex, trackInterior);
+      if (handrails) interiorGroup.add(handrails);
+    }
+
+    // Illuminated Row Letter Markers (`A, B, C...`) on step treads, step risers, aisles, or side walls (2 draw calls total)
     if (ui.rowMarkersVisible && room.seats.length > 0) {
       const rowMap = new Map<
         number,
@@ -2459,6 +4513,7 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
         }
       }
       const rows = [...rowMap.values()].sort((a, b) => a.rowIndex - b.rowIndex);
+      const rowFloorByIdx = new Map(room.rowFloors.map((f) => [f.rowIndex, f]));
       const atlas = createRowMarkerAtlas(
         rows.map((r) => r.row),
         ui.rowMarkersColor,
@@ -2468,15 +4523,23 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
         trackInterior(atlas.texture);
         const faceGeoms: BufferGeometry[] = [];
         const plaqueMats: Matrix4[] = [];
-        const isWall = ui.rowMarkersPlacement === "wall";
-        const markerSize = isWall ? 0.26 : 0.22;
+        const placement = ui.rowMarkersPlacement;
         const leftWallQuat = new Quaternion().setFromAxisAngle(yAxis, Math.PI / 2);
         const rightWallQuat = new Quaternion().setFromAxisAngle(yAxis, -Math.PI / 2);
         const aisleTiltQuat = new Quaternion().setFromAxisAngle(new Vector3(1, 0, 0), -0.38);
+        const stepTreadQuat = new Quaternion().setFromAxisAngle(new Vector3(1, 0, 0), -Math.PI / 2);
+        const stepRiserQuat = new Quaternion().setFromAxisAngle(yAxis, Math.PI);
         const faceOffset = new Vector3();
         const postPositions: Vector3[] = [];
 
-        const pushMarker = (rowSlot: number, pos: Vector3, quat: Quaternion) => {
+        const pushMarker = (
+          rowSlot: number,
+          pos: Vector3,
+          quat: Quaternion,
+          size: number,
+          bezelDepth: number,
+          bezelPad = 0.025,
+        ) => {
           const gx = rowSlot % atlas.cols;
           const gy = Math.floor(rowSlot / atlas.cols);
           const u0 = gx / atlas.cols;
@@ -2484,31 +4547,92 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
           const v1 = 1 - gy / atlas.gridRows;
           const v0 = 1 - (gy + 1) / atlas.gridRows;
 
-          const plane = new PlaneGeometry(markerSize, markerSize);
+          const plane = new PlaneGeometry(size, size);
           const uv = plane.attributes.uv;
           for (let i = 0; i < uv.count; i++) {
             uv.setXY(i, u0 + uv.getX(i) * (u1 - u0), v0 + uv.getY(i) * (v1 - v0));
           }
-          faceOffset.set(0, 0, 0.013).applyQuaternion(quat);
+          faceOffset.set(0, 0, bezelDepth / 2 + 0.0018).applyQuaternion(quat);
           tmpMat.compose(tmpPos.copy(pos).add(faceOffset), quat, tmpScale.set(1, 1, 1));
           plane.applyMatrix4(tmpMat);
           faceGeoms.push(plane);
 
-          const m = new Matrix4().compose(pos, quat, new Vector3(1, 1, 1));
+          const m = new Matrix4().compose(
+            pos,
+            quat,
+            new Vector3(size + bezelPad, size + bezelPad, bezelDepth),
+          );
           plaqueMats.push(m);
         };
 
         const roomMidX = room.widthM / 2;
         rows.forEach((r, slot) => {
-          if (isWall) {
+          if (placement === "wall") {
             const leftBlocked = room.entrances.some((e) => e.side === "left" && Math.abs(e.z - r.z) < 0.95);
             const rightBlocked = room.entrances.some((e) => e.side === "right" && Math.abs(e.z - r.z) < 0.95);
             const markerY = Math.min(room.ceilingY - 0.5, r.floorY + 1.24);
             if (!leftBlocked) {
-              pushMarker(slot, new Vector3(-leftMargin + 0.022, markerY, r.z), leftWallQuat);
+              pushMarker(slot, new Vector3(-leftMargin + 0.022, markerY, r.z), leftWallQuat, 0.26, 0.022);
             }
             if (!rightBlocked) {
-              pushMarker(slot, new Vector3(room.widthM + rightMargin - 0.022, markerY, r.z), rightWallQuat);
+              pushMarker(slot, new Vector3(room.widthM + rightMargin - 0.022, markerY, r.z), rightWallQuat, 0.26, 0.022);
+            }
+            return;
+          }
+
+          if (placement === "step" || placement === "riser") {
+            // Inlaid Gradus-style step tread tiles or backlit vertical step-riser badges on every open walkway
+            const rf = rowFloorByIdx.get(r.rowIndex);
+            const zFront = (rf?.z ?? r.z) - room.rowPitchM / 2;
+            const prevFloor = rowFloorByIdx.get(r.rowIndex - 1);
+            const prevH = prevFloor ? prevFloor.height : 0;
+
+            for (const wx of room.aisleLightXs) {
+              const filled = r.seats.some((s) => Math.abs(s.x - wx) < room.seatPitchM * (s.span * 0.5 + 0.35));
+              if (filled) continue;
+
+              if (placement === "step") {
+                pushMarker(
+                  slot,
+                  new Vector3(wx, r.floorY + 0.0045, zFront + 0.2),
+                  stepTreadQuat,
+                  0.21,
+                  0.008,
+                  0.026,
+                );
+                continue;
+              }
+
+              // Riser mode: mount on the exposed upper vertical riser right below the main row step nosing
+              let stepBaseY = prevH;
+              for (const st of room.aisleSteps) {
+                if (Math.abs(st.x - wx) < 0.25 && Math.abs(st.z + st.depthM / 2 - zFront) < 0.08) {
+                  const stTop = st.y + st.heightM / 2;
+                  if (stTop < r.floorY - 0.04 && stTop > stepBaseY) stepBaseY = stTop;
+                }
+              }
+              const exposedRise = r.floorY - stepBaseY;
+              if (exposedRise >= 0.08) {
+                const riserSize = Math.min(0.14, Math.max(0.095, exposedRise * 0.72));
+                pushMarker(
+                  slot,
+                  new Vector3(wx, r.floorY - exposedRise / 2, zFront - 0.0045),
+                  stepRiserQuat,
+                  riserSize,
+                  0.008,
+                  0.018,
+                );
+              } else {
+                // Flat front rows without a step rise fall back cleanly to a flush floor indicator
+                pushMarker(
+                  slot,
+                  new Vector3(wx, r.floorY + 0.0045, zFront + 0.2),
+                  stepTreadQuat,
+                  0.18,
+                  0.008,
+                  0.024,
+                );
+              }
             }
             return;
           }
@@ -2551,7 +4675,7 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
             }
           }
           for (const mx of xs) {
-            pushMarker(slot, new Vector3(mx, r.floorY + 0.54, r.z + 0.14), aisleTiltQuat);
+            pushMarker(slot, new Vector3(mx, r.floorY + 0.54, r.z + 0.14), aisleTiltQuat, 0.22, 0.022);
             postPositions.push(new Vector3(mx, r.floorY + 0.25, r.z + 0.12));
           }
         });
@@ -2564,7 +4688,7 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
             const faceMat = trackInterior(new MeshBasicMaterial({ map: atlas.texture, toneMapped: false }));
             interiorGroup.add(new Mesh(mergedFaces, faceMat));
           }
-          const plaqueGeom = trackInterior(new BoxGeometry(markerSize + 0.025, markerSize + 0.025, 0.022));
+          const plaqueGeom = trackInterior(new BoxGeometry(1, 1, 1));
           const plaqueMat = trackInterior(
             new MeshStandardMaterial({ color: 0x0a0a12, roughness: 0.72, metalness: 0.25 }),
           );
@@ -2587,66 +4711,225 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
       }
     }
 
-    // Front stage apron & optional recessed stage-lip LED
+    // Backlit seat number plates on upper rear chair shells (1 draw call across the room)
+    if (ui.seatNumbersVisible && room.seats.length > 0) {
+      const seatNumMesh = buildSeatNumberMesh(room.seats, room, trackInterior);
+      if (seatNumMesh) interiorGroup.add(seatNumMesh);
+    }
+
+    // Deep matte-carpeted cinema stage platform (no shiny chalk-tray ledge), under-lip LED & screen reflection pool
+    const firstRowZ = room.rowFloors[0]?.z ?? Math.max(2.5, room.depthM * 0.3);
+    const apronH = ui.screenStageApron ? Math.min(0.22, Math.max(0.11, room.screen.bottom * 0.2)) : 0;
+    const apronD = Math.min(
+      Math.max(0.85, firstRowZ - room.frontWallZ - 0.85),
+      Math.max(1.08, -room.frontWallZ + 0.86),
+    );
+    const reflectTex = createStageReflectTexture();
+    if (reflectTex) trackInterior(reflectTex);
+
     if (ui.screenStageApron) {
-      const apronH = Math.min(0.22, Math.max(0.1, room.screen.bottom * 0.22));
-      const apronD = Math.max(0.68, -room.frontWallZ + 0.48);
-      const apronGeom = trackInterior(new BoxGeometry(shellW - 0.04, apronH, apronD));
-      const apronMat = trackInterior(new MeshStandardMaterial({ color: 0x0c0b12, roughness: 0.92, metalness: 0.04 }));
-      const apronMesh = new Mesh(apronGeom, apronMat);
-      apronMesh.position.set(shellCenterX, apronH / 2, room.frontWallZ + apronD / 2);
-      interiorGroup.add(apronMesh);
+      const toeH = apronH * 0.34;
+      const deckH = apronH - toeH;
+      const toeRecess = 0.06;
+      const frontEdgeZ = room.frontWallZ + apronD;
+
+      // Recessed jet-black toe-kick plinth underneath stage overhang
+      const plinthGeom = trackInterior(new BoxGeometry(shellW - 0.04, toeH, Math.max(0.35, apronD - toeRecess)));
+      const plinthMat = trackInterior(new MeshStandardMaterial({ color: 0x040407, roughness: 0.98, metalness: 0.01 }));
+      const plinthMesh = new Mesh(plinthGeom, plinthMat);
+      plinthMesh.position.set(shellCenterX, toeH / 2, room.frontWallZ + (apronD - toeRecess) / 2);
+      interiorGroup.add(plinthMesh);
+
+      // Deep matte dark-carpeted cinema stage deck (grounded, low-reflection, never a bright shelf)
+      const deckGeom = trackInterior(new BoxGeometry(shellW - 0.04, deckH, apronD));
+      const deckMat = trackInterior(new MeshStandardMaterial({ color: 0x08080e, roughness: 0.96, metalness: 0.01 }));
+      const deckMesh = new Mesh(deckGeom, deckMat);
+      deckMesh.position.set(shellCenterX, toeH + deckH / 2, room.frontWallZ + apronD / 2);
+      interiorGroup.add(deckMesh);
+
+      // Soft additive screen light reflection pool washing across the stage deck below the screen
+      stageReflectMat = trackInterior(
+        new MeshBasicMaterial({
+          color: screenTintColor.clone(),
+          map: reflectTex,
+          transparent: true,
+          opacity: 0.18,
+          blending: AdditiveBlending,
+          depthWrite: false,
+          toneMapped: false,
+        }),
+      );
+      const reflectW = Math.min(shellW - 0.14, room.screen.width * 1.18);
+      const reflectMesh = new Mesh(trackInterior(new PlaneGeometry(reflectW, apronD * 0.94)), stageReflectMat);
+      reflectMesh.rotation.x = -Math.PI / 2;
+      reflectMesh.position.set(room.screen.centreX, apronH + 0.004, room.frontWallZ + apronD * 0.5);
+      interiorGroup.add(reflectMesh);
 
       if (ui.screenStageLed) {
-        const stageLedGeom = trackInterior(new BoxGeometry(Math.min(shellW - 0.6, room.screen.width * 1.02), 0.018, 0.02));
-        stageLedMat = trackInterior(new MeshBasicMaterial({ color: 0x7c5838, toneMapped: false }));
+        const ledW = Math.min(shellW - 0.4, room.screen.width * 1.04);
+        const stageLedGeom = trackInterior(new BoxGeometry(ledW, 0.012, 0.014));
+        stageLedMat = trackInterior(new MeshBasicMaterial({ color: 0x9c6d42, toneMapped: false }));
         const stageLed = new Mesh(stageLedGeom, stageLedMat);
-        stageLed.position.set(room.screen.centreX, apronH - 0.012, room.frontWallZ + apronD + 0.008);
+        // Tucked discreetly underneath the stage overhang inside the toe-kick recess
+        stageLed.position.set(room.screen.centreX, toeH - 0.006, frontEdgeZ - toeRecess + 0.01);
         interiorGroup.add(stageLed);
+
+        const washTex = createStageLedWashTexture();
+        if (washTex) trackInterior(washTex);
+        stageLedWashMat = trackInterior(
+          new MeshBasicMaterial({
+            map: washTex,
+            transparent: true,
+            opacity: 0.28,
+            blending: AdditiveBlending,
+            depthWrite: false,
+            toneMapped: false,
+          }),
+        );
+        const washMesh = new Mesh(trackInterior(new PlaneGeometry(ledW * 1.04, 0.44)), stageLedWashMat);
+        washMesh.rotation.x = -Math.PI / 2;
+        washMesh.position.set(room.screen.centreX, 0.009, frontEdgeZ + 0.18);
+        interiorGroup.add(washMesh);
       }
     }
 
-    // Soft additive ambient wall glow behind the screen masking
+    // Soft cinema screen light spill washing across the front ceiling directly above the screen
+    if (reflectTex) {
+      const ceilSpillD = Math.min(3.4, Math.max(1.5, shellD * 0.28));
+      const ceilSpillW = Math.min(shellW - 0.16, room.screen.width * 1.24);
+      ceilingReflectMat = trackInterior(
+        new MeshBasicMaterial({
+          color: screenTintColor.clone(),
+          map: reflectTex,
+          transparent: true,
+          opacity: 0.16,
+          blending: AdditiveBlending,
+          depthWrite: false,
+          toneMapped: false,
+        }),
+      );
+      const ceilSpillMesh = new Mesh(trackInterior(new PlaneGeometry(ceilSpillW, ceilSpillD)), ceilingReflectMat);
+      ceilSpillMesh.rotation.x = Math.PI / 2;
+      ceilSpillMesh.position.set(room.screen.centreX, room.ceilingY - 0.014, room.frontWallZ + ceilSpillD * 0.5);
+      interiorGroup.add(ceilSpillMesh);
+
+      // Subtle ScreenX-inspired screen bounce glow washing across the front portion of the left & right side walls
+      if (ui.screenWallWash) {
+        const wallSpillD = Math.min(5.2, Math.max(2.2, shellD * 0.42));
+        const wallSpillH = Math.min(room.ceilingY - 0.16, room.screen.height * 1.56);
+        sideWallReflectMat = trackInterior(
+          new MeshBasicMaterial({
+            color: screenTintColor.clone(),
+            map: reflectTex,
+            transparent: true,
+            opacity: 0.18,
+            blending: AdditiveBlending,
+            depthWrite: false,
+            toneMapped: false,
+          }),
+        );
+        const wallSpillGeom = trackInterior(new PlaneGeometry(wallSpillD, wallSpillH));
+        const leftWallSpill = new Mesh(wallSpillGeom, sideWallReflectMat);
+        leftWallSpill.position.set(-leftMargin + 0.012, room.screen.centerY, room.frontWallZ + wallSpillD * 0.48);
+        leftWallSpill.rotation.y = Math.PI / 2;
+        const rightWallSpill = new Mesh(wallSpillGeom, sideWallReflectMat);
+        rightWallSpill.position.set(room.widthM + rightMargin - 0.012, room.screen.centerY, room.frontWallZ + wallSpillD * 0.48);
+        rightWallSpill.rotation.y = -Math.PI / 2;
+        interiorGroup.add(leftWallSpill, rightWallSpill);
+      }
+    }
+
+    // Commercial cinema Proscenium architecture: matte-black acoustic baffle skirt below screen, upper masking fascia,
+    // and front side-wall light-trap wings so the screen reads as a recessed theater stage (never a wall-hung whiteboard)
+    const borderPad = ui.screenBorder === "velvet" ? 0.4 : ui.screenBorder === "slim" ? 0.11 : 0.024;
+    const frameW = room.screen.width + borderPad;
+    const frameH = room.screen.height + borderPad;
+    const prosceniumBlackMat = trackInterior(
+      new MeshStandardMaterial({ color: 0x030305, roughness: 0.99, metalness: 0.0 }),
+    );
+    const baffleZ = Math.min(room.screen.bottomZ, room.screen.centerZ) - 0.045;
+    const baffleDepth = Math.max(0.06, baffleZ - room.frontWallZ);
+    const baffleFrontZ = room.frontWallZ + baffleDepth;
+
+    // Soft rectangular feathered light spill resting cleanly in front of the matte-black proscenium baffle
     if (ui.screenHalo) {
       const haloTex = createScreenHaloTexture();
       if (haloTex) trackInterior(haloTex);
-      const haloGeom = trackInterior(new PlaneGeometry(room.screen.width * 1.48, room.screen.height * 1.62));
+      const haloGeom = trackInterior(new PlaneGeometry(room.screen.width * 1.38, room.screen.height * 1.48));
       haloMat = trackInterior(
         new MeshBasicMaterial({
+          color: screenTintColor.clone(),
           map: haloTex,
           transparent: true,
-          opacity: 0.42,
+          opacity: 0.34,
           blending: AdditiveBlending,
           depthWrite: false,
           toneMapped: false,
         }),
       );
       const haloMesh = new Mesh(haloGeom, haloMat);
-      haloMesh.position.set(room.screen.centreX, room.screen.centerY, room.frontWallZ + 0.03);
+      haloMesh.position.set(room.screen.centreX, room.screen.centerY, baffleFrontZ + 0.012);
       interiorGroup.add(haloMesh);
     }
 
-    // Solid architectural mounting shroud + tilted screen assembly
-    const borderPad = ui.screenBorder === "velvet" ? 0.48 : ui.screenBorder === "slim" ? 0.16 : 0.04;
-    const frameW = room.screen.width + borderPad;
-    const frameH = room.screen.height + borderPad;
+    // Lower acoustic subwoofer baffle skirt connecting screen bottom seamlessly down to stage deck
+    const screenLowerY = room.screen.centerY - (frameH / 2) * Math.cos(screenTiltRad);
+    const skirtH = screenLowerY - apronH;
+    if (skirtH > 0.08) {
+      const skirtMesh = new Mesh(
+        trackInterior(new BoxGeometry(shellW - 0.04, skirtH + 0.03, baffleDepth)),
+        prosceniumBlackMat,
+      );
+      skirtMesh.position.set(shellCenterX, apronH + skirtH / 2, room.frontWallZ + baffleDepth / 2);
+      interiorGroup.add(skirtMesh);
+    }
 
-    // Proscenium pleated velvet curtains flanking both sides of the cinema screen
+    // Commercial subwoofer enclosures recessed along front stage apron
+    if (ui.screenStageApron && ui.stageSubwoofersVisible) {
+      const subs = buildStageSubwoofers(room, apronH, baffleFrontZ, trackInterior);
+      if (subs) interiorGroup.add(subs);
+    }
+
+    // Upper proscenium masking fascia bridging from top of screen frame up to ceiling
+    const screenUpperY = room.screen.centerY + (frameH / 2) * Math.cos(screenTiltRad);
+    const upperMaskH = room.ceilingY - screenUpperY;
+    if (upperMaskH > 0.08) {
+      const fasciaMesh = new Mesh(
+        trackInterior(new BoxGeometry(shellW - 0.04, upperMaskH + 0.03, baffleDepth)),
+        prosceniumBlackMat,
+      );
+      fasciaMesh.position.set(shellCenterX, screenUpperY + upperMaskH / 2, room.frontWallZ + baffleDepth / 2);
+      interiorGroup.add(fasciaMesh);
+    }
+
+    // Matte-black proscenium side light-trap return wings shielding the screen zone from bright side wall textures
+    const wingDepth = Math.min(0.62, Math.max(0.32, apronD * 0.56));
+    const wingH = Math.max(0.5, room.ceilingY - apronH);
+    const wingGeom = trackInterior(new PlaneGeometry(wingDepth, wingH));
+    const leftWing = new Mesh(wingGeom, prosceniumBlackMat);
+    leftWing.rotation.y = Math.PI / 2;
+    leftWing.position.set(-leftMargin + 0.014, apronH + wingH / 2, room.frontWallZ + wingDepth / 2);
+    const rightWing = new Mesh(wingGeom, prosceniumBlackMat);
+    rightWing.rotation.y = -Math.PI / 2;
+    rightWing.position.set(room.widthM + rightMargin - 0.014, apronH + wingH / 2, room.frontWallZ + wingDepth / 2);
+    interiorGroup.add(leftWing, rightWing);
+
+    // Proscenium pleated velvet curtains with organic fold depth variation, per-fold shading & animated open/close wings
     if (ui.screenCurtainsVisible) {
-      const apronH = ui.screenStageApron ? Math.min(0.22, Math.max(0.1, room.screen.bottom * 0.22)) : 0;
       const curtainBottomY = apronH;
       const curtainH = Math.max(0.6, room.ceilingY - curtainBottomY);
       const curtainCenterY = curtainBottomY + curtainH / 2;
-      const curtainZ = room.frontWallZ + 0.13;
+      const curtainZ = Math.max(room.frontWallZ + 0.13, baffleFrontZ + 0.06);
       const curtainHex = parseHexOrRgb(ui.screenCurtainsColor) ?? 0x2b0c14;
+      const curtainBaseColor = new Color(curtainHex);
       const curtainMat = trackInterior(
-        new MeshStandardMaterial({ color: curtainHex, roughness: 0.94, metalness: 0.02 }),
+        new MeshStandardMaterial({ color: 0xffffff, roughness: 0.96, metalness: 0.01 }),
       );
       const curtainBackMat = trackInterior(
         new MeshStandardMaterial({
-          color: new Color(curtainHex).multiplyScalar(0.55),
-          roughness: 0.96,
-          metalness: 0.01,
+          color: curtainBaseColor.clone().multiplyScalar(0.46),
+          roughness: 0.98,
+          metalness: 0.0,
         }),
       );
 
@@ -2654,48 +4937,77 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
       const leftEnd = room.screen.centreX - frameW / 2 + 0.06;
       const rightStart = room.screen.centreX + frameW / 2 - 0.06;
       const rightEnd = room.widthM + rightMargin - 0.03;
-      const sides: [number, number][] = [];
-      if (leftEnd - leftStart > 0.16) sides.push([leftStart, leftEnd]);
-      if (rightEnd - rightStart > 0.16) sides.push([rightStart, rightEnd]);
+      const pleatGeom = trackInterior(new CylinderGeometry(0.098, 0.116, curtainH, 12));
+      const foldColor = new Color();
+      const extraDraw = Math.min(room.screen.width * 0.14, 1.35);
 
-      const pleatPositions: { x: number; z: number }[] = [];
-      for (const [x0, x1] of sides) {
-        const span = x1 - x0;
+      const buildWing = (pivotX: number, edgeX: number, dir: 1 | -1): { wing: Group; closedScale: number } | null => {
+        const span = Math.abs(edgeX - pivotX);
+        if (span <= 0.16) return null;
+        const wing = new Group();
+        wing.position.set(pivotX, 0, 0);
+
         const backPlane = new Mesh(trackInterior(new PlaneGeometry(span, curtainH)), curtainBackMat);
-        backPlane.position.set((x0 + x1) / 2, curtainCenterY, curtainZ - 0.075);
-        interiorGroup.add(backPlane);
+        backPlane.position.set(dir * (span / 2), curtainCenterY, curtainZ - 0.08);
+        wing.add(backPlane);
 
-        const count = Math.max(3, Math.min(18, Math.round(span / 0.18)));
+        const count = Math.max(3, Math.min(20, Math.round(span / 0.17)));
+        const pleatMesh = trackInterior(new InstancedMesh(pleatGeom, curtainMat, count));
         for (let p = 0; p < count; p++) {
-          const px = x0 + ((p + 0.5) / count) * span;
-          const pz = curtainZ + (p % 2 === 0 ? 0.024 : -0.024);
-          pleatPositions.push({ x: px, z: pz });
+          const t = (p + 0.5) / count;
+          const wave = Math.sin(p * 2.15 + span * 1.7);
+          const localX = dir * (t * span) + wave * 0.014;
+          const isCrest = p % 2 === 0;
+          const pz = curtainZ + (isCrest ? 0.032 + wave * 0.01 : -0.022 + wave * 0.008);
+          const sx = (isCrest ? 1.06 : 0.9) + wave * 0.08;
+          const sz = (isCrest ? 1.28 : 1.04) + Math.cos(p * 1.7) * 0.1;
+          const shade = isCrest ? 1.08 + wave * 0.06 : 0.72 + wave * 0.05;
+          tmpMat.compose(tmpPos.set(localX, curtainCenterY, pz), tmpQuat.identity(), tmpScale.set(sx, 1, sz));
+          pleatMesh.setMatrixAt(p, tmpMat);
+          foldColor.copy(curtainBaseColor).multiplyScalar(shade);
+          pleatMesh.setColorAt(p, foldColor);
         }
-      }
-
-      if (pleatPositions.length > 0) {
-        const pleatGeom = trackInterior(new CylinderGeometry(0.105, 0.115, curtainH, 10));
-        const pleatMesh = trackInterior(new InstancedMesh(pleatGeom, curtainMat, pleatPositions.length));
-        pleatPositions.forEach((p, i) => {
-          tmpMat.compose(tmpPos.set(p.x, curtainCenterY, p.z), tmpQuat.identity(), tmpScale.set(1, 1, 1.18));
-          pleatMesh.setMatrixAt(i, tmpMat);
-        });
         pleatMesh.instanceMatrix.needsUpdate = true;
-        interiorGroup.add(pleatMesh);
+        if (pleatMesh.instanceColor) pleatMesh.instanceColor.needsUpdate = true;
+        wing.add(pleatMesh);
+        interiorGroup.add(wing);
+        return { wing, closedScale: Math.min(2.2, 1 + extraDraw / span) };
+      };
+
+      const builtLeft = buildWing(leftStart, leftEnd, 1);
+      if (builtLeft) {
+        leftCurtainWing = builtLeft.wing;
+        leftCurtainClosedScale = builtLeft.closedScale;
+      }
+      const builtRight = buildWing(rightEnd, rightStart, -1);
+      if (builtRight) {
+        rightCurtainWing = builtRight.wing;
+        rightCurtainClosedScale = builtRight.closedScale;
+      }
+      applyCurtainOpen(curtainOpen);
+
+      if (builtLeft || builtRight) {
+        // Sleek matte-black ceiling curtain track rail
+        const trackRailMat = trackInterior(new MeshStandardMaterial({ color: 0x09090e, roughness: 0.75, metalness: 0.18 }));
+        const trackRail = new Mesh(trackInterior(new BoxGeometry(shellW - 0.06, 0.04, 0.075)), trackRailMat);
+        trackRail.position.set(shellCenterX, room.ceilingY - 0.022, curtainZ + 0.01);
+        interiorGroup.add(trackRail);
       }
 
       // Optional upper proscenium pelmet valance when clear space exists above the screen frame
       const topGap = room.ceilingY - (room.screen.centerY + frameH / 2);
       if (topGap >= 0.28) {
         const pelmetH = Math.min(0.32, topGap * 0.72);
+        const pelmetMat = trackInterior(new MeshStandardMaterial({ color: curtainHex, roughness: 0.96, metalness: 0.01 }));
         const pelmet = new Mesh(
           trackInterior(new BoxGeometry(shellW - 0.06, pelmetH, 0.22)),
-          curtainMat,
+          pelmetMat,
         );
         pelmet.position.set(shellCenterX, room.ceilingY - pelmetH / 2, curtainZ + 0.04);
         interiorGroup.add(pelmet);
       }
     }
+
     const housingGeom = trackInterior(
       buildScreenHousingGeometry(
         frameW,
@@ -2707,7 +5019,7 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
         room.frontWallZ,
       ),
     );
-    const housingMat = trackInterior(new MeshStandardMaterial({ color: 0x11101a, roughness: 0.78, metalness: 0.22 }));
+    const housingMat = trackInterior(new MeshStandardMaterial({ color: 0x030306, roughness: 0.98, metalness: 0.0 }));
     const housingMesh = new Mesh(housingGeom, housingMat);
     housingMesh.position.set(room.screen.centreX, 0, 0);
     interiorGroup.add(housingMesh);
@@ -2716,22 +5028,31 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
     screenGroup.position.set(room.screen.centreX, room.screen.centerY, room.screen.centerZ);
     screenGroup.rotation.x = screenTiltRad;
 
-    if (ui.screenBorder !== "frameless") {
-      const frameGeom = trackInterior(buildScreenGeometry(frameW, frameH, room.screen.curveDepth));
-      const frameMat = trackInterior(new MeshBasicMaterial({ color: 0x030306 }));
-      const frameMesh = new Mesh(frameGeom, frameMat);
-      frameMesh.position.set(0, 0, -0.045);
-      screenGroup.add(frameMesh);
-    }
+    // Flush light-absorbing matte-black masking frame seamlessly integrated into the dark proscenium
+    const frameGeom = trackInterior(
+      buildScreenFrameGeometry(room.screen.width, room.screen.height, ui.screenBorder, room.screen.curveDepth),
+    );
+    const frameMat = trackInterior(
+      ui.screenBorder === "slim"
+        ? new MeshStandardMaterial({ color: 0x050508, roughness: 0.88, metalness: 0.08, vertexColors: true })
+        : ui.screenBorder === "frameless"
+          ? new MeshStandardMaterial({ color: 0x030306, roughness: 0.95, metalness: 0.02, vertexColors: true })
+          : new MeshStandardMaterial({ color: 0x020204, roughness: 0.99, metalness: 0.0, vertexColors: true }),
+    );
+    const frameMesh = new Mesh(frameGeom, frameMat);
+    frameMesh.renderOrder = 1;
+    screenGroup.add(frameMesh);
 
+    const screenAspect = room.screen.width / Math.max(0.1, room.screen.height);
     const screenGeom = trackInterior(buildScreenGeometry(room.screen.width, room.screen.height, room.screen.curveDepth));
     const effectiveSubtitle = ui.screenSubtitleText.trim() || options.subtitleText || "Sample subtitle · Phụ đề mẫu";
     const youtubeId = ui.screenSource === "youtube" ? parseYoutubeId(ui.screenYoutubeUrl) : null;
-    let screenMat: MeshBasicMaterial;
+    let screenMat: MeshBasicMaterial | ShaderMaterial;
 
     if (youtubeId) {
       syncYoutubeLayer(youtubeId);
-      // Depth-tested alpha cutout: punches a transparent window through frontWall/frame while chairs & audience still occlude the video.
+      applyScreenTint(new Color(0xc8dcf8));
+      // Depth-tested alpha cutout: punches a transparent window through frontWall/shroud while 3D bevel frame, chairs & audience occlude the video.
       screenMat = trackInterior(
         new MeshBasicMaterial({
           color: 0x000000,
@@ -2746,22 +5067,35 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
       syncYoutubeLayer(null);
       const customImageUrl = ui.screenSource === "image" ? ui.screenImageUrl.trim() : "";
       const cachedImg = customImageUrl ? cachedLoadedImages.get(customImageUrl) : undefined;
-      const initialTexture =
+      const initialResult =
         (cachedImg
-          ? createCustomImageScreenTexture(cachedImg, ui.screenShowSubtitle, effectiveSubtitle, ui.screenSubtitleColor)
+          ? createCustomImageScreenTexture(cachedImg, screenAspect, ui.screenShowSubtitle, effectiveSubtitle, ui.screenSubtitleColor)
           : null) ??
         createScreenTexture(
           ui.screenContent,
+          screenAspect,
           ui.screenShowSubtitle,
           effectiveSubtitle,
           ui.screenSubtitleColor,
         );
-      if (initialTexture) trackInterior(initialTexture);
-      screenMat = trackInterior(
-        initialTexture
-          ? new MeshBasicMaterial({ map: initialTexture, toneMapped: false })
-          : new MeshBasicMaterial({ color: 0xe8e0ff, toneMapped: false }),
-      );
+      if (initialResult) {
+        trackInterior(initialResult.texture);
+        applyScreenTint(initialResult.tint);
+        const projMat = trackInterior(
+          createProjectionScreenMaterial(
+            initialResult.texture,
+            room.screen.width,
+            room.screen.height,
+            ui.screenBorder,
+            lightsLevel,
+          ),
+        );
+        screenLightsUniform = projMat.uniforms.uLightsLevel as { value: number };
+        screenMat = projMat;
+      } else {
+        applyScreenTint(new Color(0xc4dcff));
+        screenMat = trackInterior(new MeshBasicMaterial({ color: 0xe8e0ff, toneMapped: false }));
+      }
 
       if (customImageUrl && !cachedImg) {
         const img = new Image();
@@ -2771,25 +5105,64 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
           if (img.naturalWidth <= 0 || img.naturalHeight <= 0) return;
           putLoadedImageCache(customImageUrl, img);
           if (disposed || buildToken !== interiorBuildToken) return;
-          const customTex = createCustomImageScreenTexture(
+          const customRes = createCustomImageScreenTexture(
             img,
+            screenAspect,
             ui.screenShowSubtitle,
             effectiveSubtitle,
             ui.screenSubtitleColor,
           );
-          if (!customTex) return;
-          const prevMap = screenMat.map;
-          screenMat.map = customTex;
-          screenMat.needsUpdate = true;
-          trackInterior(customTex);
-          prevMap?.dispose();
+          if (!customRes) return;
+          trackInterior(customRes.texture);
+          applyScreenTint(customRes.tint);
+          if ("uniforms" in screenMat && screenMat.uniforms.uMap) {
+            const prevMap = screenMat.uniforms.uMap.value as CanvasTexture | null;
+            screenMat.uniforms.uMap.value = customRes.texture;
+            prevMap?.dispose();
+          } else if ("map" in screenMat) {
+            const prevMap = screenMat.map;
+            screenMat.map = customRes.texture;
+            screenMat.needsUpdate = true;
+            prevMap?.dispose();
+          }
           requestRender();
         };
         img.src = customImageUrl;
       }
     }
     const screenMesh = new Mesh(screenGeom, screenMat);
+    screenMesh.renderOrder = 0;
     screenGroup.add(screenMesh);
+
+    // Motorized cinema velvet screen masking bars (letterbox 2.39:1 or pillarbox 1.85:1 simulation)
+    if (ui.screenMasking !== "none") {
+      const targetAspect = ui.screenMasking === "scope" ? 2.39 : 1.85;
+      const maskMat = trackInterior(new MeshStandardMaterial({ color: 0x020204, roughness: 0.99, metalness: 0.0 }));
+      if (targetAspect > screenAspect * 1.03) {
+        const visH = room.screen.width / targetAspect;
+        const barH = Math.max(0.05, (room.screen.height - visH) / 2);
+        const barGeom = trackInterior(new BoxGeometry(room.screen.width + 0.04, barH, 0.028));
+        const topBar = new Mesh(barGeom, maskMat);
+        topBar.position.set(0, room.screen.height / 2 - barH / 2, 0.018);
+        topBar.renderOrder = 2;
+        const botBar = new Mesh(barGeom, maskMat);
+        botBar.position.set(0, -room.screen.height / 2 + barH / 2, 0.018);
+        botBar.renderOrder = 2;
+        screenGroup.add(topBar, botBar);
+      } else if (targetAspect < screenAspect * 0.97) {
+        const visW = room.screen.height * targetAspect;
+        const barW = Math.max(0.05, (room.screen.width - visW) / 2);
+        const barGeom = trackInterior(new BoxGeometry(barW, room.screen.height + 0.04, 0.028));
+        const leftBar = new Mesh(barGeom, maskMat);
+        leftBar.position.set(-room.screen.width / 2 + barW / 2, 0, 0.018);
+        leftBar.renderOrder = 2;
+        const rightBar = new Mesh(barGeom, maskMat);
+        rightBar.position.set(room.screen.width / 2 - barW / 2, 0, 0.018);
+        rightBar.renderOrder = 2;
+        screenGroup.add(leftBar, rightBar);
+      }
+    }
+
     interiorGroup.add(screenGroup);
 
     // Exit Doors (QCVN 06:2022/BXD: 1.30 m × 2.10 m) & Backlit EXIT Signs
@@ -2885,6 +5258,38 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
           group.add(signBox, signFace);
         }
 
+        if (ui.emergencyLightsVisible) {
+          const emY = Math.min(room.ceilingY - e.floorY - 0.14, doorH + (ui.exitSignVisible ? 0.52 : 0.24));
+          if (emY > doorH + 0.08) {
+            const emUnit = buildEmergencyLightUnit(trackInterior);
+            emUnit.position.set(0.02, emY, 0);
+            group.add(emUnit);
+          }
+        }
+
+        if (ui.roomSignVisible) {
+          const roomSignTex = createRoomSignTexture(
+            options.roomMeta?.roomName || "ROOM 01",
+            options.roomMeta?.brandName,
+          );
+          if (roomSignTex) {
+            trackInterior(roomSignTex);
+            const plaqueZ = e.position === "front" ? doorW / 2 + 0.34 : -(doorW / 2 + 0.34);
+            const plaqueFrame = new Mesh(
+              trackInterior(new BoxGeometry(0.03, 0.18, 0.44)),
+              doorFrameMat,
+            );
+            plaqueFrame.position.set(0.015, 1.56, plaqueZ);
+            const plaqueFace = new Mesh(
+              trackInterior(new PlaneGeometry(0.4, 0.15)),
+              trackInterior(new MeshBasicMaterial({ map: roomSignTex, toneMapped: false })),
+            );
+            plaqueFace.position.set(0.033, 1.56, plaqueZ);
+            plaqueFace.rotation.y = Math.PI / 2;
+            group.add(plaqueFrame, plaqueFace);
+          }
+        }
+
         const wallX =
           e.side === "left" ? -leftMargin + 0.05 : e.side === "right" ? room.widthM + rightMargin - 0.05 : e.x;
         const wallZ =
@@ -2942,27 +5347,40 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
       metalness: 0.08,
     }),
   );
+  const hardwareMaterial = track(
+    new MeshStandardMaterial({
+      color: 0xffffff,
+      roughness: 0.42,
+      metalness: 0.48,
+      vertexColors: true,
+    }),
+  );
 
   for (const { style, span, seats: list } of byBucket.values()) {
-    const { fabric, frame } =
+    const { fabric, frame, hardware } =
       span === 2
         ? buildCoupleChairGeometries(style, room.reclineDeg, room.seatPitchM, room.rowPitchM)
         : buildChairGeometries(style, room.reclineDeg, room.seatPitchM, room.rowPitchM);
     track(fabric);
     track(frame);
+    if (hardware) track(hardware);
 
     const fabricMesh = track(new InstancedMesh(fabric, fabricMaterial, list.length));
     const frameMesh = track(new InstancedMesh(frame, frameMaterial, list.length));
+    const hardwareMesh = hardware ? track(new InstancedMesh(hardware, hardwareMaterial, list.length)) : null;
     list.forEach((seat, i) => {
       tmpQuat.setFromAxisAngle(yAxis, seat.yaw);
       tmpMat.compose(tmpPos.set(seat.x, seat.floorY, seat.z), tmpQuat, tmpScale.set(1, 1, 1));
       fabricMesh.setMatrixAt(i, tmpMat);
       frameMesh.setMatrixAt(i, tmpMat);
+      hardwareMesh?.setMatrixAt(i, tmpMat);
     });
     fabricMesh.instanceMatrix.needsUpdate = true;
     frameMesh.instanceMatrix.needsUpdate = true;
+    if (hardwareMesh) hardwareMesh.instanceMatrix.needsUpdate = true;
     scene.add(fabricMesh);
     scene.add(frameMesh);
+    if (hardwareMesh) scene.add(hardwareMesh);
     styleGroups.push({ fabricMesh, seats: list });
   }
 
@@ -3008,6 +5426,35 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
   selectIndicator.visible = false;
   scene.add(selectIndicator);
 
+  // Soft grounded contact shadows beneath every chair (1 InstancedMesh draw call across the entire room)
+  if (room.seats.length > 0) {
+    const shadowTex = createChairShadowTexture();
+    if (shadowTex) {
+      track(shadowTex);
+      const shadowGeom = track(new PlaneGeometry(1, 1));
+      shadowGeom.rotateX(-Math.PI / 2);
+      const shadowMat = track(
+        new MeshBasicMaterial({
+          map: shadowTex,
+          transparent: true,
+          opacity: 0.82,
+          depthWrite: false,
+        }),
+      );
+      const chairShadowMesh = track(new InstancedMesh(shadowGeom, shadowMat, room.seats.length));
+      room.seats.forEach((seat, i) => {
+        const sw = seat.span * room.seatPitchM * 1.08;
+        const sd = seat.style === "bed" ? Math.min(room.rowPitchM * 0.92, 1.54) : 0.8;
+        tmpQuat.setFromAxisAngle(yAxis, seat.yaw);
+        tmpMat.compose(tmpPos.set(seat.x, seat.floorY + 0.005, seat.z + 0.02), tmpQuat, tmpScale.set(sw, 1, sd));
+        chairShadowMesh.setMatrixAt(i, tmpMat);
+      });
+      chairShadowMesh.instanceMatrix.needsUpdate = true;
+      chairShadowMesh.renderOrder = 2;
+      scene.add(chairShadowMesh);
+    }
+  }
+
   // --- 6. Contoured Seated Audience Silhouettes (couple seats place 2 viewers) ---
   const audienceCapacity = Math.max(
     1,
@@ -3029,9 +5476,31 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
   let audienceOn = options.audience;
   let viewerHeightCm = options.viewerHeightCm;
   let frontHeightCm = options.frontHeightCm;
+  let reservedCodes = options.reservedCodes;
+  let holderLabels = options.holderLabels;
+  let highlightedCodes = options.highlightedCodes;
+  let sightlineOn = Boolean(options.sightline);
+
+  const snackRig = buildSnackPropRig(track);
+  scene.add(snackRig.group);
+  const sightlineOverlay = buildSightlineOverlay(room);
+  scene.add(sightlineOverlay.group);
+  const holderTagsOverlay = buildHolderTagsOverlay(room);
+  scene.add(holderTagsOverlay.group);
+  const seatFlagsOverlay = buildSeatFlagsOverlay(room);
+  scene.add(seatFlagsOverlay.group);
+  const highlightRingsOverlay = buildHighlightRingsOverlay(room);
+  scene.add(highlightRingsOverlay.group);
+
   function updateAudience() {
-    const selectedSeat = mode === "seat" && audienceOn && selected ? seatByCode.get(selected) : undefined;
-    if (!selectedSeat || room.seats.length === 0) {
+    const selectedSeat = mode === "seat" && selected ? seatByCode.get(selected) : undefined;
+    const hasFriends = Boolean(holderLabels && holderLabels.size > 0);
+    if ((!selectedSeat || !audienceOn) && !hasFriends) {
+      audienceMesh.count = 0;
+      audienceMesh.visible = false;
+      return;
+    }
+    if (room.seats.length === 0) {
       audienceMesh.count = 0;
       audienceMesh.visible = false;
       return;
@@ -3041,18 +5510,23 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
     const halfPitch = room.seatPitchM / 2;
     let activeCount = 0;
     for (const seat of room.seats) {
-      if (seat.broken || seat.rowIndex >= selectedSeat.rowIndex) continue;
+      if (seat.broken) continue;
+      if (mode === "seat" && seat.code === selected) continue;
+      const isFrontViewer = Boolean(selectedSeat && audienceOn && seat.rowIndex < selectedSeat.rowIndex);
+      const isFriendSeated = Boolean(holderLabels?.has(seat.code));
+      if (!isFrontViewer && !isFriendSeated) continue;
       const bedDropY = seat.style === "bed" ? -0.16 : 0;
+      const statureY = isFrontViewer ? frontStatureDeltaY : 0;
       tmpQuat.setFromAxisAngle(yAxis, seat.yaw);
       if (seat.span === 2) {
         const dx = Math.cos(seat.yaw) * halfPitch;
         const dz = -Math.sin(seat.yaw) * halfPitch;
-        tmpMat.compose(tmpPos.set(seat.x - dx, seat.floorY + frontStatureDeltaY + bedDropY, seat.z - dz), tmpQuat, tmpScale.set(1, 1, 1));
+        tmpMat.compose(tmpPos.set(seat.x - dx, seat.floorY + statureY + bedDropY, seat.z - dz), tmpQuat, tmpScale.set(1, 1, 1));
         audienceMesh.setMatrixAt(activeCount++, tmpMat);
-        tmpMat.compose(tmpPos.set(seat.x + dx, seat.floorY + frontStatureDeltaY + bedDropY, seat.z + dz), tmpQuat, tmpScale.set(1, 1, 1));
+        tmpMat.compose(tmpPos.set(seat.x + dx, seat.floorY + statureY + bedDropY, seat.z + dz), tmpQuat, tmpScale.set(1, 1, 1));
         audienceMesh.setMatrixAt(activeCount++, tmpMat);
       } else {
-        tmpMat.compose(tmpPos.set(seat.x, seat.floorY + frontStatureDeltaY + bedDropY, seat.z), tmpQuat, tmpScale.set(1, 1, 1));
+        tmpMat.compose(tmpPos.set(seat.x, seat.floorY + statureY + bedDropY, seat.z), tmpQuat, tmpScale.set(1, 1, 1));
         audienceMesh.setMatrixAt(activeCount++, tmpMat);
       }
     }
@@ -3073,6 +5547,7 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
   const color = new Color();
   const whiteColor = new Color(0xffffff);
   const hoverColor = new Color(HOVER_ACCENT);
+  const friendColor = new Color(FRIEND_SEAT_COLOR);
   function updateMarks() {
     if (!marks || marks.size === 0 || room.seats.length === 0) {
       markMesh.count = 0;
@@ -3106,6 +5581,13 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
 
   function updateSelectionIndicator() {
     const s = selected ? seatByCode.get(selected) : undefined;
+    // Show cinema snack combo on the selected seat, or preview it on the best center seat in overview so toggling is immediately visible.
+    const snackSeat = s ?? (room.bestSeatCode ? seatByCode.get(room.bestSeatCode) : room.seats[0]);
+    snackRig.placeOnSeat(snackSeat, currentAppearance.snackPropsVisible, room.seatPitchM);
+    sightlineOverlay.update(sightlineOn, mode, s, viewerHeightCm, frontHeightCm);
+    holderTagsOverlay.update(holderLabels, selected, mode);
+    seatFlagsOverlay.update(selected, mode);
+    highlightRingsOverlay.update(highlightedCodes, selected, mode);
     if (!s || mode === "seat") {
       selectIndicator.visible = false;
       return;
@@ -3119,15 +5601,24 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
   function paintSeats() {
     for (const group of styleGroups) {
       group.seats.forEach((seat, i) => {
+        const isReserved = Boolean(reservedCodes?.has(seat.code));
+        const isFriend = Boolean(holderLabels?.has(seat.code));
         let hex = resolvedTypeColors.get(seat.type) ?? DEFAULT_SEAT_COLOR;
         if (seat.broken) {
           hex = BROKEN_COLOR;
+        } else if (isReserved) {
+          hex = RESERVED_SEAT_COLOR;
+        } else if (isFriend && !heat) {
+          hex = FRIEND_SEAT_COLOR;
         } else if (heat) {
           hex = palette[Math.round(heatLevel(seat.score, options.range.min, options.range.max) * (HEAT_STEPS - 1))];
         }
         color.setHex(hex);
+        if (isFriend && heat && !seat.broken && !isReserved) {
+          color.lerp(friendColor, 0.55);
+        }
         // Subtle organic plush velvet micro-variation across normal rows (just like real cinema fabric)
-        if (!heat && !seat.broken) {
+        if (!heat && !seat.broken && !isReserved && !isFriend) {
           const micro = (((seat.rowIndex * 13 + seat.colIndex * 7) % 5) - 2) * 0.008;
           color.offsetHSL(0, 0.04, micro);
         }
@@ -3143,28 +5634,48 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
     updateSelectionIndicator();
   }
 
-  // --- Dynamic House-Lights Dimmer State (0 = Movie Dimmed, 1 = House Lights On) ---
-  let lightsTarget = options.lightsUp ? 1 : 0;
-  let lightsLevel = lightsTarget;
-  let lightTween: { start: number; from: number; to: number } | null = null;
-
+  // --- Dynamic House-Lights Dimmer Application (0 = Movie Dimmed, 1 = House Lights On) ---
   function applyLighting(lvl: number) {
     const heatBoost = heat ? 0.24 : 0;
-    ambientLight.intensity = 0.16 + 0.5 * lvl + heatBoost;
-    hemiLight.intensity = 0.24 + 0.68 * lvl + heatBoost * 0.6;
-    ceilingKey.intensity = 0.08 + 1.05 * lvl + heatBoost * 0.4;
-    screenBounce.intensity = 30 - 8 * lvl;
-    screenFill.intensity = 0.62 - 0.14 * lvl;
+    const isSeat = mode === "seat";
+    const movieScale =
+      currentAppearance.movieAmbientLevel === "deep"
+        ? 0.45
+        : currentAppearance.movieAmbientLevel === "bright"
+          ? 2.15
+          : 1.0;
+    const beamScale =
+      currentAppearance.projectorBeamIntensity === "subtle"
+        ? 0.55
+        : currentAppearance.projectorBeamIntensity === "vivid"
+          ? 1.65
+          : 1.0;
+    // Combine low ambient fill with real spatial tungsten downlight pools so walls, steps & floor read with realistic depth
+    ambientLight.intensity = (isSeat ? 0.02 : 0.042) * movieScale + 0.2 * lvl + heatBoost;
+    hemiLight.intensity = (isSeat ? 0.025 : 0.055) * movieScale + 0.3 * lvl + heatBoost * 0.5;
+    ceilingKey.intensity = 0.44 * lvl + heatBoost * 0.35;
+    const poolStrength = currentAppearance.downlightsVisible ? 26 : 16;
+    housePoolFront.intensity = poolStrength * lvl;
+    housePoolBack.intensity = poolStrength * lvl;
+    screenBounce.intensity = isSeat ? (4.8 - 2.6 * lvl) : (7.8 - 3.6 * lvl);
+    screenFill.intensity = isSeat ? (0.11 - 0.04 * lvl) : (0.16 - 0.07 * lvl);
 
     if (bulbMat) bulbMat.color.copy(bulbDimColor).lerp(bulbLitColor, lvl);
-    if (sconceSlitMat) sconceSlitMat.color.copy(slitDimColor).lerp(slitLitColor, lvl);
-    if (coveStripMat) coveStripMat.color.copy(coveDimColor).lerp(coveLitColor, lvl);
+    if (sconceSlitMat) sconceSlitMat.color.copy(slitDimColor).multiplyScalar(0.38).lerp(slitLitColor, lvl);
+    if (coveStripMat) coveStripMat.color.copy(coveDimColor).multiplyScalar(0.45).lerp(coveLitColor, lvl);
     if (portGlassMat) portGlassMat.color.copy(portDimColor).lerp(portLitColor, lvl);
-    if (sconceGlowMat) sconceGlowMat.opacity = 0.22 + 0.44 * lvl;
-    if (coveWashMat) coveWashMat.opacity = 0.15 + 0.42 * lvl;
-    if (haloMat) haloMat.opacity = 0.48 - 0.24 * lvl;
-    if (beamOpacityUniform) beamOpacityUniform.value = mode === "seat" ? (0.045 - 0.03 * lvl) : (0.11 - 0.075 * lvl);
-    if (stageLedMat) stageLedMat.color.setHex(lvl > 0.5 ? 0x6e5136 : 0xb87638);
+    if (sconceGlowMat) sconceGlowMat.opacity = 0.04 + 0.64 * lvl;
+    if (coveWashMat) coveWashMat.opacity = 0.04 + 0.52 * lvl;
+    if (haloMat) haloMat.opacity = 0.36 - 0.2 * lvl;
+    if (stageReflectMat) stageReflectMat.opacity = 0.14 - 0.08 * lvl;
+    if (ceilingReflectMat) ceilingReflectMat.opacity = 0.11 - 0.07 * lvl;
+    if (sideWallReflectMat) sideWallReflectMat.opacity = 0.22 - 0.14 * lvl;
+    if (aisleLedSpillMat) aisleLedSpillMat.opacity = 0.32 - 0.16 * lvl;
+    if (screenLightsUniform) screenLightsUniform.value = lvl;
+    syncYoutubeOpticalGlaze(lvl, currentAppearance.screenBorder);
+    if (beamOpacityUniform) beamOpacityUniform.value = (isSeat ? (0.048 - 0.02 * lvl) : (0.165 - 0.045 * lvl)) * beamScale;
+    if (stageLedMat) stageLedMat.color.setHex(lvl > 0.5 ? 0x7c5838 : 0xc68242);
+    if (stageLedWashMat) stageLedWashMat.opacity = 0.28 - 0.14 * lvl;
   }
 
   // --- Camera Rig: Inside-Auditorium Overview + Clamped OrbitControls + Cubic Bézier Fly-To-Seat ---
@@ -3180,7 +5691,7 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
   controls.panSpeed = 0.85;
   controls.zoomSpeed = 1.25;
   controls.touches = { ONE: TOUCH.ROTATE, TWO: TOUCH.DOLLY_PAN };
-  controls.minDistance = 1.15;
+  controls.minDistance = 1.6;
   controls.maxDistance = Math.max(10, shellD * 1.05);
   controls.minPolarAngle = 0.18;
   // Allow tilting below target height to inspect ceiling, downlights, starlight, screen & projection booth.
@@ -3220,17 +5731,81 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
   const maxCamX = room.widthM + rightMargin - 0.38;
   const minCamY = 0.65;
   const maxCamY = Math.max(1.4, room.ceilingY - 0.32);
-  const minCamZ = Math.max(0.55, room.screen.topZ + 0.35);
-  const maxCamZ = Math.max(1.5, room.backWallZ - 0.32);
+  // Keep a comfortable optical clearance in front of the screen so max zoom frames the screen cleanly without over-zooming.
+  const screenClearanceZ = Math.min(
+    Math.max(2.5, firstZ * 0.85),
+    Math.max(room.screen.height * 1.08, room.screen.width * 0.46),
+  );
+  const minCamZ = Math.max(2.2, room.screen.topZ + 1.8, screenClearanceZ);
+  const maxCamZ = Math.max(minCamZ + 1.2, room.backWallZ - 0.32);
 
-  const minTargetX = Math.max(minCamX + 0.2, 0);
-  const maxTargetX = Math.min(maxCamX - 0.2, room.widthM);
+  const minTargetX = Math.max(minCamX + 0.15, -leftMargin + 0.4);
+  const maxTargetX = Math.min(maxCamX - 0.15, room.widthM + rightMargin - 0.4);
   const minTargetY = 0.45;
-  const maxTargetY = Math.max(1.2, Math.min(maxCamY - 0.3, room.maxFloorY + 2.2));
-  const minTargetZ = Math.max(minCamZ + 0.6, firstZ * 0.45);
-  const maxTargetZ = Math.min(maxCamZ - 0.4, lastZ + 0.4);
+  const maxTargetY = Math.max(1.2, maxCamY - 0.12);
+  // Keep orbit target cleanly in front of the screen plane aligned with the front clearance stop.
+  const minTargetZ = Math.max(room.screen.centerZ + 0.05, minCamZ - controls.minDistance);
+  const maxTargetZ = Math.min(maxCamZ - 0.35, lastZ + 0.4);
   const clampOffset = new Vector3();
   const clampDir = new Vector3();
+  const dollyForward = new Vector3();
+
+  function dollyOrbitForward(stepM: number) {
+    dollyForward.subVectors(controls.target, camera.position);
+    const dist = dollyForward.length();
+    if (dist < 0.001) return;
+    dollyForward.divideScalar(dist);
+
+    // When zooming forward toward the cinema screen, gently level out onto the screen's optical center
+    // and lock cleanly once the camera reaches the front screen clearance `minCamZ`.
+    const aimingAtScreen = dollyForward.z < -0.35;
+    if (aimingAtScreen && camera.position.z <= minCamZ + 0.02) {
+      const screenFocusY = Math.max(minTargetY, Math.min(maxTargetY, room.screen.centerY));
+      controls.target.y += (screenFocusY - controls.target.y) * 0.35;
+      camera.position.y += (screenFocusY - camera.position.y) * 0.35;
+      camera.lookAt(controls.target);
+      return;
+    }
+
+    const prevTargetX = controls.target.x;
+    const prevTargetY = controls.target.y;
+    const prevTargetZ = controls.target.z;
+
+    const screenFocusY = Math.max(minTargetY, Math.min(maxTargetY, room.screen.centerY));
+    const nextTargetX = Math.max(minTargetX, Math.min(maxTargetX, prevTargetX + dollyForward.x * stepM));
+    const nextTargetZ = Math.max(minTargetZ, Math.min(maxTargetZ, prevTargetZ + dollyForward.z * stepM));
+    const rawTargetY = Math.max(minTargetY, Math.min(maxTargetY, prevTargetY + dollyForward.y * stepM));
+    const nextTargetY = aimingAtScreen
+      ? prevTargetY + (screenFocusY - prevTargetY) * Math.min(0.45, stepM * 0.35)
+      : rawTargetY;
+
+    controls.target.set(nextTargetX, nextTargetY, nextTargetZ);
+
+    const movedX = controls.target.x - prevTargetX;
+    const movedY = controls.target.y - prevTargetY;
+    const movedZ = controls.target.z - prevTargetZ;
+    const movedLen = Math.hypot(movedX, movedY, movedZ);
+
+    if (movedLen > 0.001) {
+      camera.position.x = Math.max(minCamX, Math.min(maxCamX, camera.position.x + movedX));
+      camera.position.y = aimingAtScreen
+        ? Math.max(minCamY, Math.min(maxCamY, camera.position.y + (screenFocusY - camera.position.y) * Math.min(0.4, stepM * 0.3)))
+        : Math.max(minCamY, Math.min(maxCamY, camera.position.y + movedY));
+      camera.position.z = Math.max(minCamZ, Math.min(maxCamZ, camera.position.z + movedZ));
+    } else if (dist > controls.minDistance + 0.01) {
+      // Target already reached its front bound: close only down to `minDistance` & `minCamZ`.
+      const closeStep = Math.min(stepM, dist - controls.minDistance);
+      camera.position.x = Math.max(minCamX, Math.min(maxCamX, camera.position.x + dollyForward.x * closeStep));
+      camera.position.y = aimingAtScreen
+        ? Math.max(minCamY, Math.min(maxCamY, camera.position.y + (screenFocusY - camera.position.y) * 0.35))
+        : Math.max(minCamY, Math.min(maxCamY, camera.position.y + dollyForward.y * closeStep));
+      camera.position.z = Math.max(minCamZ, Math.min(maxCamZ, camera.position.z + dollyForward.z * closeStep));
+    }
+
+    const nextDist = camera.position.distanceTo(controls.target);
+    desiredOrbitDist = Math.max(controls.minDistance, Math.min(controls.maxDistance, nextDist));
+    camera.lookAt(controls.target);
+  }
 
   function clampCameraInsideRoom() {
     if (mode !== "orbit") return;
@@ -3389,6 +5964,7 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
   let lastTapTime = 0;
   let pinchStartDist = 0;
   let pinchStartZoom = 1;
+  let prevOrbitPinchDist = 0;
   let cachedRect: DOMRect | null = null;
   let hoverRaf = 0;
   let pendingHoverX = 0;
@@ -3438,7 +6014,16 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
     }
   };
 
-  const onWheelCapture = () => {
+  const onWheelCapture = (e: WheelEvent) => {
+    if (mode === "seat") {
+      e.preventDefault();
+      if (tween) tween = null;
+      const factor = e.deltaY < 0 ? 1.12 : 1 / 1.12;
+      camera.zoom = Math.max(1, Math.min(SEAT_MAX_ZOOM, camera.zoom * factor));
+      camera.updateProjectionMatrix();
+      requestRender();
+      return;
+    }
     if (mode === "orbit") {
       if (tween) {
         tween = null;
@@ -3447,6 +6032,24 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
         controls.update();
       }
       wheelZooming = true;
+      const curDist = camera.position.distanceTo(controls.target);
+      // Once zoomed close to orbit pivot, keep gliding camera + target forward all the way up to the cinema screen.
+      if (e.deltaY < 0 && curDist <= controls.minDistance + 0.45) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        const step = Math.min(1.15, Math.max(0.22, Math.abs(e.deltaY) * 0.0085));
+        dollyOrbitForward(step);
+        clampCameraInsideRoom();
+        requestRender();
+      } else if (e.deltaY > 0 && controls.target.z < midSeatingZ - 0.08 && camera.position.z >= maxCamZ - 0.25) {
+        // When zooming back out against the rear wall, smoothly pull the target back toward the room center.
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        controls.target.lerp(orbitTarget, 0.22);
+        desiredOrbitDist = Math.min(controls.maxDistance, camera.position.distanceTo(controls.target));
+        clampCameraInsideRoom();
+        requestRender();
+      }
     }
   };
 
@@ -3465,6 +6068,8 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
           }
           pinchStartDist = Math.max(1, touchPairDist());
           pinchStartZoom = camera.zoom;
+        } else {
+          prevOrbitPinchDist = touchPairDist();
         }
         return;
       }
@@ -3489,9 +6094,17 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
         if (mode === "seat" && pinchStartDist > 0) {
           if (tween) tween = null;
           const dist = touchPairDist();
-          camera.zoom = Math.max(1, Math.min(2.5, pinchStartZoom * (dist / pinchStartDist)));
+          camera.zoom = Math.max(1, Math.min(SEAT_MAX_ZOOM, pinchStartZoom * (dist / pinchStartDist)));
           camera.updateProjectionMatrix();
           requestRender();
+        } else if (mode === "orbit") {
+          const dist = touchPairDist();
+          if (prevOrbitPinchDist > 0 && dist > prevOrbitPinchDist && camera.position.distanceTo(controls.target) <= controls.minDistance + 0.45) {
+            dollyOrbitForward(Math.min(0.6, (dist - prevOrbitPinchDist) * 0.014));
+            clampCameraInsideRoom();
+            requestRender();
+          }
+          prevOrbitPinchDist = dist;
         }
         return;
       }
@@ -3534,7 +6147,10 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
   const onPointerUp = (e: PointerEvent) => {
     if (e.pointerType === "touch") {
       activeTouches.delete(e.pointerId);
-      if (activeTouches.size < 2) pinchStartDist = 0;
+      if (activeTouches.size < 2) {
+        pinchStartDist = 0;
+        prevOrbitPinchDist = 0;
+      }
       if (activeTouches.size === 1) {
         const [remainingId, pos] = [...activeTouches.entries()][0];
         last = { x: pos.x, y: pos.y };
@@ -3589,7 +6205,7 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
   };
 
   canvas.addEventListener("pointerdown", onEdgeGuard, { capture: true });
-  canvas.addEventListener("wheel", onWheelCapture, { capture: true, passive: true });
+  canvas.addEventListener("wheel", onWheelCapture, { capture: true, passive: false });
   canvas.addEventListener("pointerdown", onPointerDown);
   canvas.addEventListener("pointermove", onPointerMove);
   canvas.addEventListener("pointerup", onPointerUp);
@@ -3635,6 +6251,18 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
       applyLighting(lightsLevel);
       if (elapsed >= 1) {
         lightTween = null;
+      } else {
+        keepGoing = true;
+      }
+    }
+
+    if (curtainTween) {
+      const elapsed = Math.min(1, (now - curtainTween.start) / CURTAIN_MS);
+      const ease = elapsed < 0.5 ? 4 * elapsed * elapsed * elapsed : 1 - (-2 * elapsed + 2) ** 3 / 2;
+      curtainOpen = curtainTween.from + (curtainTween.to - curtainTween.from) * ease;
+      applyCurtainOpen(curtainOpen);
+      if (elapsed >= 1) {
+        curtainTween = null;
       } else {
         keepGoing = true;
       }
@@ -3686,12 +6314,36 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
       cancelAnimationFrame(raf);
       raf = 0;
     }
-    if (activeYoutubeId && youtubeIframe) sendYoutubeCommand("pauseVideo");
+    if (activeYoutubeId && youtubeIframe) {
+      pausedYoutubeByVisibility = true;
+      if (ytPlayer && ytReady) {
+        try {
+          ytPlayer.pauseVideo();
+        } catch {
+          postYoutubeCommand("pauseVideo");
+        }
+      } else {
+        postYoutubeCommand("pauseVideo");
+      }
+    }
   };
   const onVisibility = () => {
     if (document.hidden) {
       pauseRendering();
       return;
+    }
+    if (pausedYoutubeByVisibility && activeYoutubeId && youtubeIframe) {
+      pausedYoutubeByVisibility = false;
+      if (ytPlayer && ytReady) {
+        try {
+          ytPlayer.playVideo();
+        } catch {
+          postYoutubeCommand("playVideo");
+        }
+      } else {
+        postYoutubeCommand("playVideo");
+      }
+      if (!youtubeMuted) scheduleYoutubeUnmuteVerify();
     }
     if (lost) {
       // Give WebKit a short grace window to fire `webglcontextrestored` after resuming from background.
@@ -3706,6 +6358,7 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
   const onPageHide = () => {
     tween = null;
     lightTween = null;
+    curtainTween = null;
     pauseRendering();
   };
   document.addEventListener("visibilitychange", onVisibility);
@@ -3738,18 +6391,120 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
   });
   observer.observe(currentHost);
 
-  // Initial paint & framing
+  function flyToOrbitView(pos: Vector3, target: Vector3) {
+    mode = "orbit";
+    controls.enabled = false;
+    hoveredCode = null;
+    options.onHover?.(null);
+    canvas.style.cursor = "grab";
+    updateAudience();
+    updateMarks();
+    applyLighting(lightsLevel);
+    paintSeats();
+    if (camera.zoom !== 1) {
+      camera.zoom = 1;
+      camera.updateProjectionMatrix();
+    }
+    const clampedPos = new Vector3(
+      Math.max(minCamX, Math.min(maxCamX, pos.x)),
+      Math.max(minCamY, Math.min(maxCamY, pos.y)),
+      Math.max(minCamZ, Math.min(maxCamZ, pos.z)),
+    );
+    const clampedTarget = new Vector3(
+      Math.max(minTargetX, Math.min(maxTargetX, target.x)),
+      Math.max(minTargetY, Math.min(maxTargetY, target.y)),
+      Math.max(minTargetZ, Math.min(maxTargetZ, target.z)),
+    );
+    const quat = new Quaternion().setFromRotationMatrix(new Matrix4().lookAt(clampedPos, clampedTarget, yAxis));
+    const targetFov = adaptiveFov(ORBIT_FOV, camera.aspect, 64);
+    startFlight(clampedPos, quat, targetFov, true, () => {
+      controls.target.copy(clampedTarget);
+      desiredOrbitDist = clampedPos.distanceTo(clampedTarget);
+      controls.enabled = true;
+      controls.update();
+    });
+  }
+
+  // Initial paint & framing (seamlessly restores saved camera state across live editor rebuilds on the same layout)
   applyLighting(lightsLevel);
   paintSeats();
   updateMarks();
   fit();
-  applyMode(options.initialMode === "seat" && selected ? "seat" : "orbit", false);
+  const savedCam = options.initialCameraState;
+  if (savedCam && savedCam.mode === "seat" && selected && seatByCode.has(selected)) {
+    applyMode("seat", false);
+    lookYaw = Math.max(-LOOK_LIMIT_YAW, Math.min(LOOK_LIMIT_YAW, savedCam.lookYaw));
+    lookPitch = Math.max(-LOOK_LIMIT_PITCH, Math.min(LOOK_LIMIT_PITCH, savedCam.lookPitch));
+    camera.zoom = Math.max(1, Math.min(SEAT_MAX_ZOOM, savedCam.zoom || 1));
+    camera.rotation.set(basePitch + lookPitch, baseYaw + lookYaw, 0);
+    camera.updateProjectionMatrix();
+    requestRender();
+  } else if (savedCam && savedCam.mode === "orbit" && options.initialMode !== "seat") {
+    applyMode("orbit", false);
+    camera.position.set(
+      Math.max(minCamX, Math.min(maxCamX, savedCam.pos[0])),
+      Math.max(minCamY, Math.min(maxCamY, savedCam.pos[1])),
+      Math.max(minCamZ, Math.min(maxCamZ, savedCam.pos[2])),
+    );
+    controls.target.set(
+      Math.max(minTargetX, Math.min(maxTargetX, savedCam.target[0])),
+      Math.max(minTargetY, Math.min(maxTargetY, savedCam.target[1])),
+      Math.max(minTargetZ, Math.min(maxTargetZ, savedCam.target[2])),
+    );
+    desiredOrbitDist = Math.max(controls.minDistance, Math.min(controls.maxDistance, camera.position.distanceTo(controls.target)));
+    controls.update();
+    clampCameraInsideRoom();
+    requestRender();
+  } else {
+    applyMode(options.initialMode === "seat" && selected ? "seat" : "orbit", false);
+  }
 
   return {
     setMode: (next) => {
       const targetMode: Room3DMode = next === "seat" && selected ? "seat" : "orbit";
       if (targetMode === mode) return;
       applyMode(targetMode, true);
+    },
+    setCameraPreset: (preset) => {
+      if (preset === "overview") {
+        flyToOrbitView(orbitPos, orbitTarget);
+        return;
+      }
+      if (preset === "entrance") {
+        const door = room.entrances[0];
+        const pos = door
+          ? new Vector3(
+              door.side === "left"
+                ? -leftMargin + 0.65
+                : door.side === "right"
+                  ? room.widthM + rightMargin - 0.65
+                  : door.x,
+              Math.min(maxCamY, door.floorY + 1.65),
+              Math.max(minCamZ, Math.min(maxCamZ, door.z)),
+            )
+          : new Vector3(-leftMargin + 0.65, Math.min(maxCamY, 1.65), Math.max(minCamZ, firstZ));
+        const target = new Vector3(room.screen.centreX, room.screen.centerY * 0.86, midSeatingZ * 0.72);
+        flyToOrbitView(pos, target);
+        return;
+      }
+      if (preset === "frontRow") {
+        const pos = new Vector3(
+          room.screen.centreX,
+          Math.max(minCamY, 1.15),
+          Math.max(minCamZ, firstZ + 0.35),
+        );
+        const target = new Vector3(room.screen.centreX, room.screen.centerY, Math.max(minTargetZ, room.screen.centerZ + 0.4));
+        flyToOrbitView(pos, target);
+        return;
+      }
+      // "booth": elevated rear projection booth vantage looking steeply down over the seating stadium
+      const pos = new Vector3(
+        room.projectionPort.x,
+        Math.min(maxCamY, Math.max(room.maxFloorY + 2.1, room.projectionPort.y - 0.15)),
+        Math.min(maxCamZ, room.backWallZ - 0.45),
+      );
+      const target = new Vector3(room.screen.centreX, Math.max(minTargetY, room.screen.bottom + room.screen.height * 0.28), firstZ);
+      flyToOrbitView(pos, target);
     },
     recenter: () => {
       if (mode === "seat" && selected) applyMode("seat", true);
@@ -3780,7 +6535,21 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
     },
     setLightsUp: (on) => {
       const next = on ? 1 : 0;
-      if (next === lightsTarget) return;
+      const nextCurtain = on ? 0 : 1;
+      if (nextCurtain !== curtainTarget) {
+        curtainTarget = nextCurtain;
+        if (prefersReducedMotion() || !currentAppearance.screenCurtainsAnimated) {
+          curtainTween = null;
+          curtainOpen = nextCurtain;
+          applyCurtainOpen(curtainOpen);
+        } else {
+          curtainTween = { start: performance.now(), from: curtainOpen, to: nextCurtain };
+        }
+      }
+      if (next === lightsTarget) {
+        if (curtainTween) requestRender();
+        return;
+      }
       lightsTarget = next;
       if (prefersReducedMotion()) {
         lightTween = null;
@@ -3799,6 +6568,7 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
       viewerHeightCm = nextViewerCm;
       frontHeightCm = nextFrontCm;
       if (frontChanged) updateAudience();
+      updateSelectionIndicator();
       if (viewerChanged && mode === "seat" && selected) {
         const pose = seatPose(selected);
         if (pose) {
@@ -3816,27 +6586,69 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
       updateMarks();
       requestRender();
     },
+    setSightline: (on) => {
+      sightlineOn = on;
+      updateSelectionIndicator();
+      if (on && selected && mode === "orbit") {
+        const s = seatByCode.get(selected);
+        if (s) {
+          // Swing cleanly to a side-elevated architectural cutaway angle so the sightline laser rays read clearly
+          const sideX = s.x >= room.shellCenterX ? -leftMargin + 0.9 : room.widthM + rightMargin - 0.9;
+          const pos = new Vector3(sideX, Math.min(maxCamY, Math.max(2.2, s.floorY + 2.0)), Math.min(maxCamZ, s.z + 1.4));
+          const target = new Vector3((s.x + room.screen.centreX) / 2, (s.floorY + 1.1 + room.screen.centerY) / 2, (s.z + room.screen.centerZ) / 2);
+          flyToOrbitView(pos, target);
+          return;
+        }
+      }
+      requestRender();
+    },
+    setOccupancy: (reserved, holders) => {
+      reservedCodes = reserved;
+      holderLabels = holders;
+      updateAudience();
+      paintSeats();
+      requestRender();
+    },
+    setHighlightedCodes: (codes) => {
+      highlightedCodes = codes;
+      updateSelectionIndicator();
+      requestRender();
+    },
+    getCameraState: () => ({
+      mode,
+      pos: [camera.position.x, camera.position.y, camera.position.z],
+      target: [controls.target.x, controls.target.y, controls.target.z],
+      lookYaw,
+      lookPitch,
+      zoom: camera.zoom,
+    }),
+    setLookOffset: (yawRad, pitchRad) => {
+      if (mode !== "seat" || tween) return;
+      lookYaw = Math.max(-LOOK_LIMIT_YAW, Math.min(LOOK_LIMIT_YAW, yawRad));
+      lookPitch = Math.max(-LOOK_LIMIT_PITCH, Math.min(LOOK_LIMIT_PITCH, pitchRad));
+      camera.rotation.set(basePitch + lookPitch, baseYaw + lookYaw, 0);
+      requestRender();
+    },
+    captureSnapshot: (meta) =>
+      composeRoomSnapshot(
+        canvas,
+        () => {
+          renderer.render(scene, camera);
+        },
+        meta,
+      ),
     setAppearance: (rawNext) => {
       if (disposed) return;
       const next = normalizeRoom3DAppearance(rawNext);
       const carpetChanged =
-        next.carpetStyle !== currentAppearance.carpetStyle || next.carpetColor !== currentAppearance.carpetColor;
+        next.carpetStyle !== currentAppearance.carpetStyle ||
+        next.carpetColor !== currentAppearance.carpetColor ||
+        next.carpetImageUrl !== currentAppearance.carpetImageUrl ||
+        next.carpetImageRepeat !== currentAppearance.carpetImageRepeat;
       currentAppearance = next;
 
       if (carpetChanged) {
-        const prevCarpet = carpetTex;
-        carpetTex = createCarpetTexture(shellW / 2.2, shellD / 2.2, next.carpetStyle, next.carpetColor);
-        baseFloorMat.map = carpetTex;
-        baseFloorMat.needsUpdate = true;
-        if (slabMaterial) {
-          slabMaterial.map = carpetTex;
-          slabMaterial.needsUpdate = true;
-        }
-        if (stairMat) {
-          stairMat.map = carpetTex;
-          stairMat.needsUpdate = true;
-        }
-        prevCarpet?.dispose();
+        applyCarpetSurface(next, false);
       }
 
       fabricMaterial.roughness = next.seatFinish === "leather" ? 0.42 : 0.82;
@@ -3846,24 +6658,39 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
 
       buildInterior(next);
       applyLighting(lightsLevel);
+      updateSelectionIndicator();
       requestRender();
     },
     setYoutubeMuted: (muted) => {
-      youtubeMuted = muted;
-      if (!activeYoutubeId || !youtubeIframe) return;
-      if (muted) {
-        sendYoutubeCommand("mute");
-      } else {
-        sendYoutubeCommand("unMute");
-        sendYoutubeCommand("playVideo");
-      }
+      applyYoutubeAudio(muted);
     },
     mountTo: (target) => {
       if (disposed || target === currentHost) return;
+      // Moving an iframe across DOM ancestors reloads it from `src`; detach first and recreate once with current mute + timestamp.
+      const videoIdToRestore = activeYoutubeId && youtubeWrapper ? activeYoutubeId : null;
+      let resumeSec = 0;
+      if (videoIdToRestore) {
+        if (ytPlayer && ytReady) {
+          try {
+            resumeSec = Math.floor(ytPlayer.getCurrentTime?.() ?? 0);
+          } catch {
+            resumeSec = 0;
+          }
+        }
+        teardownYoutubePlayer();
+        youtubeIframe?.remove();
+        youtubeIframe = null;
+      }
+
       observer.unobserve(currentHost);
       currentHost = target;
       currentHost.appendChild(stageEl);
       observer.observe(currentHost);
+
+      if (videoIdToRestore) {
+        createAndAttachYoutubeIframe(videoIdToRestore, resumeSec);
+      }
+
       sizeW = 0;
       sizeH = 0;
       fit();
@@ -3877,7 +6704,12 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
       disposed = true;
       tween = null;
       lightTween = null;
+      curtainTween = null;
       cancelHover();
+      sightlineOverlay.dispose();
+      holderTagsOverlay.dispose();
+      seatFlagsOverlay.dispose();
+      highlightRingsOverlay.dispose();
       if (raf) cancelAnimationFrame(raf);
       window.clearTimeout(resizeTimer);
       window.clearTimeout(lostTimer);
@@ -3908,6 +6740,10 @@ export function createRoom3D(host: HTMLElement, room: RoomScene, options: Room3D
       interiorDisposables.length = 0;
       carpetTex?.dispose();
       carpetTex = null;
+      carpetBumpTex?.dispose();
+      carpetBumpTex = null;
+      carpetRoughTex?.dispose();
+      carpetRoughTex = null;
       for (const item of disposables) item.dispose();
       renderer.dispose();
       // Immediately return GPU memory: iOS Safari counts every live context/canvas against the page limit.

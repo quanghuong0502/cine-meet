@@ -24,7 +24,7 @@ export default async function InvitePage({ params }: { params: Promise<{ code: s
   const relation = inviter && inviter.id !== user.userId ? await getRelationshipState(user.userId, inviter.id) : "none";
 
   return (
-    <div className="flex w-full flex-col gap-section p-inset">
+    <div className="flex w-full flex-1 flex-col gap-section p-inset">
       <PageHeader title={t("title")} backHref="/friends" />
       {!inviter ? (
         <EmptyState
@@ -48,7 +48,7 @@ export default async function InvitePage({ params }: { params: Promise<{ code: s
           }
         />
       ) : (
-        <div className="flex flex-col items-center gap-section px-inset-lg py-inset-xl text-center">
+        <div className="flex w-full flex-1 flex-col items-center justify-center gap-section px-inset-lg py-inset-xl text-center">
           <UserAvatar name={inviter.name} image={inviter.avatar} size={PX.avatarLg} />
           <p className="type-heading break-words">
             {relation === "friends"

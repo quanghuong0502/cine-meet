@@ -60,6 +60,30 @@ export async function setPushPreferenceAction(type: string, enabled: boolean): P
   return { ok };
 }
 
+const SELF_TEST_COOLDOWN_MS = 30_000;
+const selfTestCooldown = new Map<string, number>();
+
+/** User self-test: sends a test push to the signed-in user's own registered devices (rate-limited to once per 30s). */
+export async function sendSelfTestPushAction(): Promise<
+  { ok: true; result: TestResult } | { ok: false; error: "not_configured" | "cooldown" }
+> {
+  const user = await requireUser();
+  if (!pushReady()) return { ok: false, error: "not_configured" };
+  const now = Date.now();
+  const last = selfTestCooldown.get(user.userId) ?? 0;
+  if (now - last < SELF_TEST_COOLDOWN_MS) return { ok: false, error: "cooldown" };
+  selfTestCooldown.set(user.userId, now);
+  await connectToDatabase();
+  const target = await User.findById(user.userId, "locale").lean();
+  const payload = await buildTestPayload(target?.locale ?? "vi");
+  const options = { ttlSeconds: (await getSystemSettings()).pushTtlHours * 3600 };
+  const result =
+    pushProvider() === "onesignal"
+      ? await sendTestOneSignal(user.userId, payload, sendOneSignal, options)
+      : await sendTestPush(user.userId, payload, sendWebPush, options);
+  return { ok: true, result };
+}
+
 /** Admin only: sends a test push to the chosen person's devices, in that person's language. */
 export async function sendTestPushAction(
   targetId: string,

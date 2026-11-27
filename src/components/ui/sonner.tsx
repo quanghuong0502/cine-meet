@@ -7,8 +7,9 @@ const Toaster = ({ theme = "dark", ...props }: ToasterProps) => {
   return (
     <Sonner
       theme={theme}
+      position="top-center"
       className="toaster group"
-      mobileOffset={{ bottom: "var(--toast-offset)" }}
+      mobileOffset={{ top: "var(--inset-top)" }}
       icons={{
         success: (
           <CheckCircleIcon className="size-icon text-success" />

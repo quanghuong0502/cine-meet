@@ -16,7 +16,7 @@ export type SeatStagger = "aligned" | "staggered";
 /** Row-to-row spacing (legroom depth) calibrated to TCVN 5577 & commercial seating tiers. */
 export type RowPitch = "tight" | "standard" | "vip" | "bed";
 /** Chair silhouette rendered in 3D, configured once on the SeatType master data. */
-export type SeatStyle = "standard" | "vip" | "recliner" | "bed";
+export type SeatStyle = "standard" | "vip" | "recliner" | "bed" | "4dx";
 export const SCREEN_SHAPES: readonly ScreenShape[] = ["scope", "standard", "square"];
 export const SCREEN_MOUNTS: readonly ScreenMount[] = ["low", "mid", "high"];
 export const SCREEN_TILTS: readonly ScreenTilt[] = ["flat", "slight", "tilted"];
@@ -24,7 +24,7 @@ export const SEAT_RECLINES: readonly SeatRecline[] = ["upright", "slight", "deep
 export const ROW_CURVES: readonly RowCurve[] = ["straight", "curved"];
 export const SEAT_STAGGERS: readonly SeatStagger[] = ["aligned", "staggered"];
 export const ROW_PITCHES: readonly RowPitch[] = ["tight", "standard", "vip", "bed"];
-export const SEAT_STYLES: readonly SeatStyle[] = ["standard", "vip", "recliner", "bed"];
+export const SEAT_STYLES: readonly SeatStyle[] = ["standard", "vip", "recliner", "bed", "4dx"];
 export type EntranceSide = "left" | "center" | "right";
 export type EntrancePosition = "front" | "back";
 /** Vertical walkway running along the outer wall (outside the first/last seat column). */

@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { saveCinemaDimensionsAction } from "@/app/admin/settings/cinema-dimensions/actions";
+import { LazyConfirmDialog } from "@/components/lazy-dialogs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -118,18 +119,24 @@ export function CinemaDimensionsForm({ initial }: Props) {
   const t = useTranslations("admin.cinemaDimensions");
   const tc = useTranslations("admin.common");
   const [draft, setDraft] = useState<Draft>(() => toDraft(initial));
+  const [confirmReset, setConfirmReset] = useState(false);
   const [pending, startSaving] = useTransition();
 
   const set = (key: string) => (value: string) => setDraft((prev) => ({ ...prev, [key]: value }));
 
   function resetToStandards() {
+    setConfirmReset(false);
     setDraft(toDraft(DEFAULT_CINEMA_DIMENSIONS));
     toast.info(t("resetNotice"));
   }
 
   function save() {
     startSaving(async () => {
-      const result = await saveCinemaDimensionsAction(fromDraft(draft));
+      const result = await saveCinemaDimensionsAction(fromDraft(draft)).catch(() => null);
+      if (!result) {
+        toast.error(tc("errors.network"));
+        return;
+      }
       if (result.ok) {
         toast.success(result.rescored > 0 ? t("savedWithRescore", { count: result.rescored }) : tc("saved"));
       } else {
@@ -217,7 +224,7 @@ export function CinemaDimensionsForm({ initial }: Props) {
             variant="outline"
             size="cta"
             disabled={pending}
-            onClick={resetToStandards}
+            onClick={() => setConfirmReset(true)}
             className="pointer-events-auto w-auto flex-auto bg-background px-inset-sm"
           >
             <RestartIcon aria-hidden />
@@ -235,6 +242,17 @@ export function CinemaDimensionsForm({ initial }: Props) {
           </Button>
         </div>
       </div>
+      {confirmReset ? (
+        <LazyConfirmDialog
+          open={confirmReset}
+          onOpenChange={setConfirmReset}
+          title={t("resetConfirmTitle")}
+          description={t("resetConfirmDescription")}
+          icon={<RestartIcon aria-hidden />}
+          confirmLabel={t("reset")}
+          onConfirm={resetToStandards}
+        />
+      ) : null}
     </div>
   );
 }

@@ -11,7 +11,14 @@ describe("getSafeRedirectPath", () => {
     expect(getSafeRedirectPath("")).toBe("/");
   });
 
-  it.each(["https://evil.example", "//evil.example", "/\\evil.example", "javascript:alert(1)"])(
+  it.each([
+    "https://evil.example",
+    "//evil.example",
+    "/\\evil.example",
+    "javascript:alert(1)",
+    "/api",
+    "/api/auth/signout",
+  ])(
     "rejects unsafe target %s",
     (target) => {
       expect(getSafeRedirectPath(target)).toBe("/");

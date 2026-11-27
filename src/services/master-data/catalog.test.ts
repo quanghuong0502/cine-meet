@@ -101,6 +101,14 @@ describe("branches", () => {
     expect(codes(schema, { brandId: BRAND, name: "A", parkingFee: "5.5" })).toEqual({ parkingFee: "invalid_number" });
     expect(codes(schema, { brandId: BRAND, name: "A", parkingFee: "-1" })).toEqual({ parkingFee: "out_of_range" });
   });
+
+  it("refuses to delete a branch that still has auditoriums", async () => {
+    const { Auditorium } = await import("@/models/auditorium");
+    const branch = await s.branch.branchService.create({ brandId: BRAND, name: "With Room" }, ACTOR);
+    if (!branch.ok) throw new Error("setup failed");
+    await Auditorium.create({ branchId: branch.data._id.toString(), name: "Phòng 1" });
+    expect(await s.branch.branchService.remove(branch.data._id.toString(), ACTOR)).toEqual({ ok: false, error: "in_use" });
+  });
 });
 
 describe("simple types", () => {

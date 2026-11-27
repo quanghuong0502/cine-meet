@@ -1,6 +1,13 @@
 "use server";
 
-import { cloudinaryConfig, createBranchImageUploadTicket, createBrandLogoUploadTicket, createMoviePosterUploadTicket, createScreenImageUploadTicket } from "@/lib/cloudinary";
+import {
+  cloudinaryConfig,
+  createBranchImageUploadTicket,
+  createBrandLogoUploadTicket,
+  createMoviePosterUploadTicket,
+  createScreenImageUploadTicket,
+  createSurfaceTextureUploadTicket,
+} from "@/lib/cloudinary";
 import { requireAdmin } from "@/lib/auth/guards";
 import type { TicketResult } from "@/lib/upload-types";
 
@@ -34,4 +41,12 @@ export async function getScreenImageUploadTicket(): Promise<TicketResult> {
   const config = cloudinaryConfig();
   if (!config) return { ok: false, error: "not_configured" };
   return { ok: true, ticket: createScreenImageUploadTicket(config) };
+}
+
+/** A signed ticket for uploading a 3D auditorium surface texture (wall, ceiling, carpet/floor); only an admin can get one. */
+export async function getSurfaceTextureUploadTicket(): Promise<TicketResult> {
+  await requireAdmin();
+  const config = cloudinaryConfig();
+  if (!config) return { ok: false, error: "not_configured" };
+  return { ok: true, ticket: createSurfaceTextureUploadTicket(config) };
 }

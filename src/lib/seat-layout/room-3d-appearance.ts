@@ -12,11 +12,17 @@ import {
   LIGHT_ACCENT_COLORS,
   MAX_SCREEN_URL_LENGTH,
   MAX_SUBTITLE_LENGTH,
+  MAX_SURFACE_IMAGE_REPEAT,
+  MIN_SURFACE_IMAGE_REPEAT,
+  MOVIE_AMBIENT_LEVELS,
+  PROJECTOR_BEAM_INTENSITIES,
   ROW_MARKER_PLACEMENTS,
   SCREEN_BORDER_STYLES,
   SCREEN_CONTENT_PRESETS,
+  SCREEN_MASKINGS,
   SCREEN_SOURCES,
   SEAT_FINISHES,
+  STARLIGHT_COLORS,
   SUBTITLE_COLORS,
   WALL_STYLES,
   type Room3DAppearance,
@@ -24,6 +30,7 @@ import {
 
 export {
   AISLE_LED_COLORS,
+  applyRoom3DPreset,
   CARPET_STYLES,
   CEILING_STYLES,
   COVE_LED_PLACEMENTS,
@@ -31,17 +38,28 @@ export {
   DOOR_STYLES,
   EXIT_SIGN_COLORS,
   EXIT_SIGN_TEXTS,
+  getRoom3DPreset,
   LIGHT_ACCENT_COLORS,
   MAX_SCREEN_URL_LENGTH,
   MAX_SUBTITLE_LENGTH,
+  MAX_SURFACE_IMAGE_REPEAT,
+  MIN_SURFACE_IMAGE_REPEAT,
+  MOVIE_AMBIENT_LEVELS,
   normalizeRoom3DAppearance,
+  PROJECTOR_BEAM_INTENSITIES,
+  resolveBrandRoom3DAppearance,
   ROOM_3D_COLOR_SWATCHES,
+  ROOM_3D_PRESET_IDS,
+  ROOM_3D_PRESETS,
   ROW_MARKER_PLACEMENTS,
   SCREEN_BORDER_STYLES,
   SCREEN_CONTENT_PRESETS,
+  SCREEN_MASKINGS,
   SCREEN_SOURCES,
   SEAT_FINISHES,
+  STARLIGHT_COLORS,
   SUBTITLE_COLORS,
+  SURFACE_IMAGE_REPEAT_PRESETS,
   WALL_STYLES,
   type AisleLedColor,
   type CarpetStyle,
@@ -51,12 +69,18 @@ export {
   type ExitSignColor,
   type ExitSignText,
   type LightAccentColor,
+  type MovieAmbientLevel,
+  type ProjectorBeamIntensity,
   type Room3DAppearance,
+  type Room3DPreset,
+  type Room3DPresetId,
   type RowMarkerPlacement,
   type ScreenBorderStyle,
   type ScreenContentPreset,
+  type ScreenMasking,
   type ScreenSource,
   type SeatFinish,
+  type StarlightColor,
   type SubtitleColor,
   type WallStyle,
 } from "./room-3d-appearance.defaults";
@@ -88,11 +112,15 @@ const isHttpUrl = (value: string) => {
 export const room3DAppearanceSchema = z.object({
   screenSource: z.enum(SCREEN_SOURCES).default(d.screenSource),
   screenBorder: z.enum(SCREEN_BORDER_STYLES).default(d.screenBorder),
+  screenMasking: z.enum(SCREEN_MASKINGS).default(d.screenMasking),
   screenCurtainsVisible: z.boolean().default(d.screenCurtainsVisible),
+  screenCurtainsAnimated: z.boolean().default(d.screenCurtainsAnimated),
   screenCurtainsColor: hexColor(d.screenCurtainsColor),
   screenStageApron: z.boolean().default(d.screenStageApron),
   screenStageLed: z.boolean().default(d.screenStageLed),
+  stageSubwoofersVisible: z.boolean().default(d.stageSubwoofersVisible),
   screenHalo: z.boolean().default(d.screenHalo),
+  screenWallWash: z.boolean().default(d.screenWallWash),
   screenContent: z.enum(SCREEN_CONTENT_PRESETS).default(d.screenContent),
   screenImageUrl: z.string().trim().max(MAX_SCREEN_URL_LENGTH).refine(isHttpUrl).default(d.screenImageUrl),
   screenYoutubeUrl: z
@@ -107,6 +135,8 @@ export const room3DAppearanceSchema = z.object({
 
   seatFinish: z.enum(SEAT_FINISHES).default(d.seatFinish),
   seatFrameColor: hexColor(d.seatFrameColor),
+  seatNumbersVisible: z.boolean().default(d.seatNumbersVisible),
+  snackPropsVisible: z.boolean().default(d.snackPropsVisible),
 
   doorStyle: z.enum(DOOR_STYLES).default(d.doorStyle),
   doorPanicBar: z.boolean().default(d.doorPanicBar),
@@ -115,14 +145,35 @@ export const room3DAppearanceSchema = z.object({
   exitSignVisible: z.boolean().default(d.exitSignVisible),
   exitSignColor: z.enum(EXIT_SIGN_COLORS).default(d.exitSignColor),
   exitSignText: z.enum(EXIT_SIGN_TEXTS).default(d.exitSignText),
+  roomSignVisible: z.boolean().default(d.roomSignVisible),
+  emergencyLightsVisible: z.boolean().default(d.emergencyLightsVisible),
 
   wallStyle: z.enum(WALL_STYLES).default(d.wallStyle),
   wallColor: hexColor(d.wallColor),
+  wallImageUrl: z.string().trim().max(MAX_SCREEN_URL_LENGTH).refine(isHttpUrl).default(d.wallImageUrl),
+  wallImageRepeat: z.number().int().min(MIN_SURFACE_IMAGE_REPEAT).max(MAX_SURFACE_IMAGE_REPEAT).default(d.wallImageRepeat),
   ceilingStyle: z.enum(CEILING_STYLES).default(d.ceilingStyle),
+  starlightColor: z.enum(STARLIGHT_COLORS).default(d.starlightColor),
   ceilingColor: hexColor(d.ceilingColor),
+  ceilingImageUrl: z.string().trim().max(MAX_SCREEN_URL_LENGTH).refine(isHttpUrl).default(d.ceilingImageUrl),
+  ceilingImageRepeat: z
+    .number()
+    .int()
+    .min(MIN_SURFACE_IMAGE_REPEAT)
+    .max(MAX_SURFACE_IMAGE_REPEAT)
+    .default(d.ceilingImageRepeat),
+  ceilingDetailsVisible: z.boolean().default(d.ceilingDetailsVisible),
   carpetStyle: z.enum(CARPET_STYLES).default(d.carpetStyle),
   carpetColor: hexColor(d.carpetColor),
+  carpetImageUrl: z.string().trim().max(MAX_SCREEN_URL_LENGTH).refine(isHttpUrl).default(d.carpetImageUrl),
+  carpetImageRepeat: z
+    .number()
+    .int()
+    .min(MIN_SURFACE_IMAGE_REPEAT)
+    .max(MAX_SURFACE_IMAGE_REPEAT)
+    .default(d.carpetImageRepeat),
 
+  movieAmbientLevel: z.enum(MOVIE_AMBIENT_LEVELS).default(d.movieAmbientLevel),
   downlightsVisible: z.boolean().default(d.downlightsVisible),
   sconcesVisible: z.boolean().default(d.sconcesVisible),
   sconceColor: z.enum(LIGHT_ACCENT_COLORS).default(d.sconceColor),
@@ -131,13 +182,16 @@ export const room3DAppearanceSchema = z.object({
   coveLedColor: z.enum(LIGHT_ACCENT_COLORS).default(d.coveLedColor),
   aisleLedVisible: z.boolean().default(d.aisleLedVisible),
   aisleLedColor: z.enum(AISLE_LED_COLORS).default(d.aisleLedColor),
+  aisleHandrailsVisible: z.boolean().default(d.aisleHandrailsVisible),
   rowMarkersVisible: z.boolean().default(d.rowMarkersVisible),
   rowMarkersPlacement: z.enum(ROW_MARKER_PLACEMENTS).default(d.rowMarkersPlacement),
   rowMarkersColor: z.enum(AISLE_LED_COLORS).default(d.rowMarkersColor),
   projectionPortVisible: z.boolean().default(d.projectionPortVisible),
   projectorBeamVisible: z.boolean().default(d.projectorBeamVisible),
+  projectorBeamIntensity: z.enum(PROJECTOR_BEAM_INTENSITIES).default(d.projectorBeamIntensity),
   surroundSpeakersVisible: z.boolean().default(d.surroundSpeakersVisible),
   ceilingSpeakersVisible: z.boolean().default(d.ceilingSpeakersVisible),
+  fourDxWallPropsVisible: z.boolean().default(d.fourDxWallPropsVisible),
 });
 
 export function parseRoom3DAppearance(raw: unknown): Room3DAppearance {

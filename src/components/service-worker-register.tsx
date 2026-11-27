@@ -23,6 +23,8 @@ export function ServiceWorkerRegister() {
     let reloading = false;
     let lastCheckedAt = Date.now();
     let disposed = false;
+    // First-time install/claim on a fresh browser or PWA must never trigger a disruptive mid-session reload.
+    const hadController = Boolean(navigator.serviceWorker.controller);
 
     const promptUpdate = (worker: ServiceWorker) => {
       if (disposed) return;
@@ -52,7 +54,7 @@ export function ServiceWorkerRegister() {
     };
 
     const onControllerChange = () => {
-      if (reloading) return;
+      if (!hadController || reloading) return;
       reloading = true;
       window.location.reload();
     };

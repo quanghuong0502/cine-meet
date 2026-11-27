@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { BackButton } from "@/components/back-button";
 import { Mascot } from "@/components/mascot";
+import { SignOutButton } from "@/components/sign-out-button";
 import {
   Card,
   CardContent,
@@ -43,6 +44,7 @@ export default async function ChangePasswordPage() {
             <ChangePasswordForm />
           </CardContent>
         </Card>
+        {user.mustChangePassword ? <SignOutButton className="w-auto justify-center" /> : null}
       </div>
     </main>
   );

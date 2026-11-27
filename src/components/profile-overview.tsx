@@ -4,12 +4,14 @@ import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
 import { UserAvatar } from "@/components/user-avatar";
 import { SignOutButton } from "@/components/sign-out-button";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { IconBadge } from "@/components/ui/icon-badge";
 import { formatVietnamPhone } from "@/lib/phone";
 import type { SeatPreference, UserRole } from "@/lib/user-constants";
 import { PX } from "@/lib/ui-sizes";
+import { cn } from "@/lib/utils";
 
 interface ProfileOverviewProps {
   name: string;
@@ -26,18 +28,20 @@ interface ProfileOverviewProps {
   editHref: string;
   /** The Friends screen; only the user app has one (admin has no friends). */
   friendsHref?: string;
+  /** Pending incoming friend requests, shown as a compact badge on the Friends row. */
+  incomingFriends?: number;
 }
 
 /**
  * Body of the Profile page, opened from the avatar (user and admin share it): picture, name, phone and seat preference,
  * with Edit. Settings and Sign out live here because the avatar opens this page directly.
  */
-export async function ProfileOverview({ name, identity, role, avatar, phone, seatPreference, backHref, settingsHref, editHref, friendsHref }: ProfileOverviewProps) {
+export async function ProfileOverview({ name, identity, role, avatar, phone, seatPreference, backHref, settingsHref, editHref, friendsHref, incomingFriends = 0 }: ProfileOverviewProps) {
   const t = await getTranslations("profile");
   const account = await getTranslations("account");
 
   return (
-    <div className="flex w-full flex-col gap-group p-inset">
+    <div className={cn("flex w-full flex-col gap-group p-inset", role !== "user" && "mx-auto max-w-page")}>
       <PageHeader title={t("title")} backHref={backHref} />
       <Card>
         <CardHeader className="flex flex-row items-center gap-group">
@@ -83,6 +87,11 @@ export async function ProfileOverview({ name, identity, role, avatar, phone, sea
                 <UsersGroupRoundedIcon />
               </IconBadge>
               <span className="min-w-0 flex-1">{t("friends")}</span>
+              {incomingFriends > 0 ? (
+                <Badge variant="default" className="shrink-0 tabular-nums">
+                  {incomingFriends > 99 ? "99+" : incomingFriends}
+                </Badge>
+              ) : null}
               <AltArrowRightIcon className="size-icon-sm shrink-0 text-muted-foreground" aria-hidden />
             </Link>
           ) : null}

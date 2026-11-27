@@ -1,6 +1,6 @@
 "use client";
 
-import { AddIcon, AltArrowDownIcon, AltArrowUpIcon, BellRingIcon, CalendarAddIcon, ClockCircleIcon, CloseIcon, DisketteIcon, DislikeIcon, LikeIcon, LoaderIcon, UndoLeftRoundIcon, UserCheckRoundedIcon } from "@solar-icons/react/line-duotone";
+import { AddIcon, AltArrowDownIcon, AltArrowUpIcon, BellRingIcon, CalendarAddIcon, ClapperboardPlayIcon, ClockCircleIcon, CloseIcon, DisketteIcon, DislikeIcon, LikeIcon, LoaderIcon, UndoLeftRoundIcon, UserCheckRoundedIcon } from "@solar-icons/react/line-duotone";
 import { useTranslations } from "next-intl";
 import { useState, useTransition } from "react";
 import { createPortal } from "react-dom";
@@ -8,16 +8,20 @@ import { toast } from "sonner";
 import { submitResponseAction } from "@/actions/appointments";
 import { Chip } from "@/components/admin/auditorium-editor/chips";
 import { LockDialog } from "@/components/appointment/lock-dialog";
+import { ShowtimeFinder } from "@/components/appointment/showtime-finder";
 import { DateTimeField } from "@/components/date-time-field";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { vietnamToIso } from "@/lib/appointment/datetime";
 import { MAX_TIME_OPTIONS } from "@/lib/appointment/limits";
+import type { ShowtimeChoice } from "@/lib/appointment/showtime-choice";
 import { yesVoterIds } from "@/lib/appointment/state";
 import { vietnamToday } from "@/lib/movie/status";
+import type { TimeSlot } from "@/lib/showtime/slots";
 import type { AppointmentView } from "@/services/appointment.service";
 
 type Vote = "yes" | "no" | null;
+type ProposalDraft = { key: string; startAt: string; showtimeId?: string; place?: string; choice?: ShowtimeChoice };
 
 interface Props {
   view: AppointmentView;
@@ -32,18 +36,34 @@ interface Props {
   barSlot?: HTMLElement | null;
   /** A write is running (the lock, in the creator's case). */
   busy?: boolean;
+  /** Admin response deadline lead in minutes, to keep client-side proposal validation aligned with the server. */
+  deadlineLeadMinutes?: number;
+  /** Time slots for the optional ShowtimeFinder when proposing another time. */
+  timeSlots?: TimeSlot[];
 }
 
 /**
  * The candidate times with how people voted. Shows who voted Yes/No/Waiting via expandable detail on each option,
  * and gives the creator clear labeled controls to lock in a time or nudge pending voters.
  */
-export function PollSection({ view, canVote, when, onLock, onRemind, barSlot = null, busy = false }: Props) {
+export function PollSection({
+  view,
+  canVote,
+  when,
+  onLock,
+  onRemind,
+  barSlot = null,
+  busy = false,
+  deadlineLeadMinutes = 60,
+  timeSlots = [],
+}: Props) {
   const t = useTranslations("appointments.detail");
   const tc = useTranslations("appointments");
   const [pending, start] = useTransition();
   const [draft, setDraft] = useState<Record<string, Vote>>(() => Object.fromEntries(view.options.map((o) => [o.id, o.myVote ?? null])));
-  const [proposals, setProposals] = useState<string[]>([]);
+  const [proposals, setProposals] = useState<ProposalDraft[]>([]);
+  const [proposeMode, setProposeMode] = useState<"showtime" | "custom">("showtime");
+  const [finderOpen, setFinderOpen] = useState(false);
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [error, setError] = useState("");
@@ -51,21 +71,51 @@ export function PollSection({ view, canVote, when, onLock, onRemind, barSlot = n
   const [expandedOption, setExpandedOption] = useState<string | null>(null);
   const [remindingId, setRemindingId] = useState<string | null>(null);
 
+  const activeRemindingId = busy ? remindingId : null;
   const changed = view.options.filter((o) => (draft[o.id] ?? null) !== (o.myVote ?? null));
   const dirty = changed.length > 0 || proposals.length > 0;
   const barVisible = Boolean(canVote && dirty);
 
+  function validateProposal(iso: string, showtimeId?: string): string | null {
+    const ms = new Date(iso).getTime();
+    if (Number.isNaN(ms) || ms <= Date.now()) return t("proposeInvalid");
+    if (view.responseDeadline && ms < new Date(view.responseDeadline).getTime() + deadlineLeadMinutes * 60_000) {
+      return tc("errors.option_before_deadline");
+    }
+    const existingClash = view.options.some(
+      (o) => new Date(o.startAt).getTime() === ms && (o.showtimeId ?? undefined) === showtimeId,
+    );
+    const draftClash = proposals.some((p) => new Date(p.startAt).getTime() === ms && p.showtimeId === showtimeId);
+    if (existingClash || draftClash) return tc("errors.duplicate");
+    if (view.options.length + proposals.length >= MAX_TIME_OPTIONS) return tc("errors.limit");
+    return null;
+  }
+
   function addProposal() {
     const iso = vietnamToIso(date, time);
-    if (!iso || new Date(iso).getTime() <= Date.now()) return setError(t("proposeInvalid"));
-    if (view.responseDeadline && new Date(iso).getTime() <= new Date(view.responseDeadline).getTime()) return setError(tc("errors.option_before_deadline"));
-    const taken = [...view.options.map((o) => new Date(o.startAt).getTime()), ...proposals.map((p) => new Date(p).getTime())];
-    if (taken.includes(new Date(iso).getTime())) return setError(tc("errors.duplicate"));
-    if (view.options.length + proposals.length >= MAX_TIME_OPTIONS) return setError(tc("errors.limit"));
+    if (!iso) return setError(t("proposeInvalid"));
+    const problem = validateProposal(iso);
+    if (problem) return setError(problem);
     setError("");
-    setProposals([...proposals, iso]);
+    setProposals([...proposals, { key: `custom:${iso}`, startAt: iso }]);
     setDate("");
     setTime("");
+  }
+
+  function addShowtimeProposal(choice: ShowtimeChoice) {
+    const problem = validateProposal(choice.startAt, choice.id);
+    if (problem) {
+      setError(problem);
+      return;
+    }
+    setError("");
+    const place = [choice.branchName, choice.roomName].filter(Boolean).join(" · ");
+    setProposals((prev) => [...prev, { key: `st:${choice.id}`, startAt: choice.startAt, showtimeId: choice.id, place, choice }]);
+  }
+
+  function removeShowtimeProposal(showtimeId: string) {
+    setError("");
+    setProposals((prev) => prev.filter((p) => p.showtimeId !== showtimeId));
   }
 
   function discard() {
@@ -78,7 +128,7 @@ export function PollSection({ view, canVote, when, onLock, onRemind, barSlot = n
     start(async () => {
       const result = await submitResponseAction(view.id, {
         votes: changed.map((o) => ({ optionId: o.id, vote: draft[o.id] ?? null })),
-        proposals: proposals.map((startAt) => ({ startAt })),
+        proposals: proposals.map((p) => (p.showtimeId ? { showtimeId: p.showtimeId } : { startAt: p.startAt })),
       }).catch(() => null);
       if (!result) {
         toast.error(tc("networkError"));
@@ -123,10 +173,14 @@ export function PollSection({ view, canVote, when, onLock, onRemind, barSlot = n
           const waiting = waitingPeople.length;
           const expanded = expandedOption === option.id;
           const eligibleVoters = votersOf(option.id);
+          const isUnsaved = canVote && mine !== (option.myVote ?? null);
           return (
             <li key={option.id} className="flex flex-col gap-item rounded-xl border bg-card p-inset">
               <div className="flex flex-col gap-tight">
-                <span className="type-item-title tabular-nums">{when(option.startAt)}</span>
+                <span className="flex flex-wrap items-center gap-stack">
+                  <span className="type-item-title tabular-nums">{when(option.startAt)}</span>
+                  {isUnsaved ? <Badge variant="accent">{t("unsaved")}</Badge> : null}
+                </span>
                 {option.place ? <span className="break-words type-secondary text-muted-foreground">{option.place}</span> : null}
                 {option.proposedBy ? <span className="type-caption text-muted-foreground">{t("proposedBy", { name: option.proposedBy.name })}</span> : null}
               </div>
@@ -218,7 +272,7 @@ export function PollSection({ view, canVote, when, onLock, onRemind, barSlot = n
                       }}
                       className="shrink-0 rounded-full"
                     >
-                      {busy && remindingId === option.id ? <LoaderIcon className="motion-safe:animate-spin" aria-hidden /> : <BellRingIcon aria-hidden />}
+                      {activeRemindingId === option.id ? <LoaderIcon className="motion-safe:animate-spin" aria-hidden /> : <BellRingIcon aria-hidden />}
                       {t("remindShort")}
                     </Button>
                   ) : null}
@@ -228,10 +282,11 @@ export function PollSection({ view, canVote, when, onLock, onRemind, barSlot = n
           );
         })}
 
-        {proposals.map((iso) => (
-          <li key={iso} className="flex items-start gap-item rounded-xl border border-primary bg-accent p-inset-sm">
+        {proposals.map((proposal) => (
+          <li key={proposal.key} className="flex items-start gap-item rounded-xl border border-primary bg-accent p-inset-sm">
             <div className="flex min-w-0 flex-1 flex-col gap-stack">
-              <span className="type-item-title tabular-nums">{when(iso)}</span>
+              <span className="type-item-title tabular-nums">{when(proposal.startAt)}</span>
+              {proposal.place ? <span className="break-words type-secondary text-muted-foreground">{proposal.place}</span> : null}
               <span className="flex flex-wrap items-center gap-stack">
                 <Badge variant="outline" className="bg-card">
                   {t("unsaved")}
@@ -239,7 +294,7 @@ export function PollSection({ view, canVote, when, onLock, onRemind, barSlot = n
                 <span className="type-secondary text-muted-foreground">{t("proposedYes")}</span>
               </span>
             </div>
-            <Button type="button" variant="ghost" size="icon" disabled={pending} aria-label={t("removeProposal")} onClick={() => setProposals(proposals.filter((p) => p !== iso))}>
+            <Button type="button" variant="ghost" size="icon" disabled={pending} aria-label={t("removeProposal")} onClick={() => setProposals(proposals.filter((p) => p.key !== proposal.key))}>
               <CloseIcon aria-hidden />
             </Button>
           </li>
@@ -248,18 +303,51 @@ export function PollSection({ view, canVote, when, onLock, onRemind, barSlot = n
 
       {canVote ? (
         <div className="flex flex-col gap-stack">
-          <span className="type-label text-muted-foreground">
-            <CalendarAddIcon className="mr-stack inline size-icon-sm align-text-bottom" aria-hidden />
-            {t("proposeLabel")}
-          </span>
-          <div className="flex flex-wrap gap-stack">
-            <DateTimeField kind="date" label={t("proposeDate")} value={date} min={vietnamToday()} onChange={setDate} className="min-w-menu-min flex-1" />
-            <DateTimeField kind="time" label={t("proposeTime")} value={time} onChange={setTime} className="min-w-time-field flex-1" />
+          <div className="flex items-center justify-between gap-stack">
+            <span className="type-label text-muted-foreground">
+              <CalendarAddIcon className="mr-stack inline size-icon-sm align-text-bottom" aria-hidden />
+              {t("proposeLabel")}
+            </span>
+            {finderOpen ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setError("");
+                  setProposeMode((m) => (m === "showtime" ? "custom" : "showtime"));
+                }}
+              >
+                {proposeMode === "showtime" ? t("proposeCustomMode") : t("proposeShowtimeMode")}
+              </Button>
+            ) : null}
           </div>
-          <Button type="button" variant="outline" size="cta-sm" disabled={pending || !date || !time} onClick={addProposal}>
-            <AddIcon aria-hidden />
-            {t("proposeButton")}
-          </Button>
+          {!finderOpen ? (
+            <Button type="button" variant="outline" size="cta-sm" disabled={pending} onClick={() => setFinderOpen(true)}>
+              <ClapperboardPlayIcon aria-hidden />
+              {t("proposeShowtimeMode")}
+            </Button>
+          ) : proposeMode === "showtime" ? (
+            <ShowtimeFinder
+              movieId={view.movie.id}
+              slots={timeSlots}
+              chosen={proposals.flatMap((p) => (p.choice ? [p.choice] : []))}
+              onPick={addShowtimeProposal}
+              onUnpick={removeShowtimeProposal}
+              onError={setError}
+            />
+          ) : (
+            <>
+              <div className="flex flex-wrap gap-stack">
+                <DateTimeField kind="date" label={t("proposeDate")} value={date} min={vietnamToday()} onChange={setDate} className="min-w-menu-min flex-1" />
+                <DateTimeField kind="time" label={t("proposeTime")} value={time} onChange={setTime} className="min-w-time-field flex-1" />
+              </div>
+              <Button type="button" variant="outline" size="cta-sm" disabled={pending || !date || !time} onClick={addProposal}>
+                <AddIcon aria-hidden />
+                {t("proposeButton")}
+              </Button>
+            </>
+          )}
           {error ? (
             <p role="alert" className="type-secondary text-destructive">
               {error}

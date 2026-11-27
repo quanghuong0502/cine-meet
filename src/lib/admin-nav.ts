@@ -49,14 +49,8 @@ export const ENABLED_ADMIN_NAV_ITEMS = ADMIN_NAV_ITEMS.filter((item) => item.ena
 export const MIN_BOTTOM_NAV_ITEMS = 2;
 export const MAX_BOTTOM_NAV_ITEMS = 5;
 
-/**
- * Entry screens (a master-data record, later user and room forms) hide the bottom bar, as iOS does for a pushed screen:
- * the Save button takes its place and the person is working on one thing. Their parent list is the page just above them.
- */
-export function isFocusedAdminRoute(pathname: string): boolean {
-  // The showtimes list itself is a tab of the Movies page and keeps the bar; its entry screens (bulk, import) hide it.
-  return /^\/admin\/(master-data|users|auditoriums)\/.+/.test(pathname) || /^\/admin\/movies\/(?!showtimes$).+/.test(pathname) || pathname.startsWith("/admin/settings/") || pathname.startsWith("/admin/profile/");
-}
+import { isFocusedAdminRoute } from "./focused-routes";
+export { isFocusedAdminRoute };
 
 /** The bottom bar shows on every page except entry screens, and also while an entry screen is still loading (`holding`). */
 export function showsAdminBar(pathname: string, holding: boolean): boolean {

@@ -15,6 +15,8 @@ export interface BottomNavItem {
   exact?: boolean;
   /** Other paths that light this tab up (screens opened from it that live outside its own path). */
   alsoActive?: string[];
+  /** Optional small numeric counter shown on the tab icon (e.g. open room reports in Admin Settings). */
+  badge?: number;
 }
 
 interface BottomNavProps {
@@ -57,7 +59,17 @@ export function BottomNav({ label, items, className }: BottomNavProps) {
             <li key={item.href}>
               <Link
                 href={item.href}
-                onClick={() => markPending(item.href)}
+                onClick={(event) => {
+                  if (current === item.href) {
+                    const scroller = document.querySelector("[data-app-scroll]");
+                    if (scroller instanceof HTMLElement && scroller.scrollTop > 0) {
+                      event.preventDefault();
+                      scroller.scrollTo({ top: 0, behavior: "smooth" });
+                    }
+                    return;
+                  }
+                  markPending(item.href);
+                }}
                 aria-current={active ? "page" : undefined}
                 className={cn(
                   "flex min-h-nav flex-col items-center justify-center gap-tight rounded-full type-tag transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:opacity-75",
@@ -68,11 +80,16 @@ export function BottomNav({ label, items, className }: BottomNavProps) {
                 <span
                   aria-hidden
                   className={cn(
-                    "flex items-center justify-center rounded-full px-inset-sm py-hair transition-[background-color,transform] duration-200",
+                    "relative flex items-center justify-center rounded-full px-inset-sm py-hair transition-[background-color,transform] duration-200",
                     active && "bg-accent/85 motion-safe:scale-105",
                   )}
                 >
                   <Icon className="size-icon-lg" />
+                  {item.badge && item.badge > 0 ? (
+                    <span className="absolute -top-hair right-tight flex h-icon-sm min-w-icon-sm items-center justify-center rounded-full bg-primary px-hair type-micro text-primary-foreground tabular-nums">
+                      {item.badge > 99 ? "99+" : item.badge}
+                    </span>
+                  ) : null}
                 </span>
                 <span className="max-w-full truncate px-hair">{item.label}</span>
               </Link>

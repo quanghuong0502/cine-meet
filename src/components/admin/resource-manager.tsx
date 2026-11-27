@@ -97,8 +97,12 @@ export function ResourceManager({ items, basePath, query, labels, removeAction, 
     const target = pendingDelete;
     if (!target || !removeAction) return;
     startDeleting(async () => {
-      const result = await removeAction(target.id);
+      const result = await removeAction(target.id).catch(() => null);
       setPendingDelete(null);
+      if (!result) {
+        toast.error(t("errors.network"));
+        return;
+      }
       if (result.ok) {
         // The delete action ran revalidatePath, which refreshes this list by itself (no router.refresh()).
         toast.success(t("deleted"));

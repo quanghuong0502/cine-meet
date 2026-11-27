@@ -9,6 +9,7 @@ export const fnbItemsSection = createSection({
   saveAction: saveFnbItem,
   removeAction: removeFnbItem,
   needsBrand: true,
+  searchRendered: true,
   // The categories as a pick-list (switched-off ones are only kept for a record that already uses one) and as names for the cards.
   loadExtra: async ({ locale }) => {
     const categories = await fnbCategoryService.list({});
@@ -26,7 +27,7 @@ export const fnbItemsSection = createSection({
   }),
   values: (item) => ({
     brandId: item.brandId.toString(),
-    categoryId: item.categoryId?.toString() ?? "",
+    categoryId: item.categoryId?.toString() ?? "none",
     name: item.name,
     nameEn: item.nameEn ?? "",
     size: item.size ?? "",
@@ -34,9 +35,21 @@ export const fnbItemsSection = createSection({
     validFrom: item.validFrom ?? "",
     validTo: item.validTo ?? "",
   }),
-  fields: ({ t, brandOptions, categories }) => [
+  defaults: { categoryId: "none" },
+  fields: ({ t, brandOptions, categories, currentValues }) => [
     { name: "brandId", kind: "select", label: t("fields.brandId.label"), required: true, options: brandOptions, placeholder: t("fields.brandId.placeholder") },
-    { name: "categoryId", kind: "select", label: t("fields.categoryId.label"), options: categories.map(({ value, label }) => ({ value, label })), placeholder: t("fields.categoryId.placeholder") },
+    {
+      name: "categoryId",
+      kind: "select",
+      label: t("fields.categoryId.label"),
+      options: [
+        { value: "none", label: t("fields.categoryId.placeholder") },
+        ...categories
+          .filter((c) => c.active || c.value === currentValues?.categoryId)
+          .map(({ value, label }) => ({ value, label })),
+      ],
+      placeholder: t("fields.categoryId.placeholder"),
+    },
     { name: "name", kind: "text", label: t("fields.name.label"), required: true, maxLength: 80 },
     { name: "nameEn", kind: "text", label: t("fields.nameEn.label"), maxLength: 80 },
     { name: "size", kind: "text", label: t("fields.size.label"), placeholder: t("fields.size.placeholder"), maxLength: 30 },

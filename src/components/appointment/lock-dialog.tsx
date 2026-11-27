@@ -35,7 +35,7 @@ export function LockDialog({ open, onOpenChange, timeText, voters, pending, onCo
       titleClassName="tabular-nums"
       description={t("lockDialogDescription")}
       icon={<UserCheckRoundedIcon aria-hidden />}
-      confirmLabel={t("lockButton", { count: picked.length })}
+      confirmLabel={t("lockButton", { count: picked.length + 1 })}
       cancelLabel={t("back")}
       pending={pending}
       confirmDisabled={picked.length === 0}

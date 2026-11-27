@@ -131,6 +131,28 @@ describe("searchShowtimesFrom", () => {
   });
 });
 
+describe("searchMovieShowtimesForPicker, listActiveShowtimeDays, and removeShowtimesBulk", () => {
+  it("lists upcoming multi-day showtimes when no date is specified and filters when date is given", async () => {
+    await svc.createShowtimesBulk(bulk({ dates: ["2099-12-01", "2099-12-03"], times: ["10:00", "19:30"] }), ACTOR);
+    const allUpcoming = await svc.searchMovieShowtimesForPicker(movieId);
+    expect(allUpcoming).toHaveLength(4);
+    const singleDay = await svc.searchMovieShowtimesForPicker(movieId, { date: "2099-12-01", after: new Date("2099-12-01T08:00:00.000Z") });
+    expect(singleDay).toHaveLength(1);
+    expect(singleDay[0]?.startAt).toBe("2099-12-01T12:30:00.000Z");
+
+    const activeDays = await svc.listActiveShowtimeDays("2099-12-01", "2099-12-05");
+    expect([...activeDays].sort()).toEqual(["2099-12-01", "2099-12-03"]);
+  });
+
+  it("bulk removes multiple showtimes in one call", async () => {
+    await svc.createShowtimesBulk(bulk({ dates: ["2099-12-01"], times: ["10:00", "15:00", "19:30"] }), ACTOR);
+    const rows = await svc.searchShowtimes({ date: "2099-12-01" });
+    const res = await svc.removeShowtimesBulk(rows.slice(0, 2).map((r) => r.id), ACTOR);
+    expect(res).toEqual({ ok: true, deleted: 2, skipped: 0 });
+    expect(await svc.searchShowtimes({ date: "2099-12-01" })).toHaveLength(1);
+  });
+});
+
 describe("switched-off master data", () => {
   it("hides showtimes of an off branch, brand or format from users, but not from the admin view", async () => {
     await svc.createShowtimesBulk(bulk({ dates: ["2099-12-01"], times: ["10:00"] }), ACTOR);

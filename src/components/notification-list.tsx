@@ -19,6 +19,7 @@ import Link from "next/link";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { markAllNotificationsReadAction, markNotificationReadAction } from "@/actions/notifications";
+import { emitNotificationsRead } from "@/components/notification-bell-client";
 import { Button } from "@/components/ui/button";
 import { IconBadge, type IconBadgeTone } from "@/components/ui/icon-badge";
 import { formatDayLong, formatTime, vietnamDayKey } from "@/lib/datetime";
@@ -81,6 +82,7 @@ export function NotificationList({ items }: { items: NotificationItem[] }) {
     start(async () => {
       const result = await markAllNotificationsReadAction().catch(() => null);
       if (result) {
+        emitNotificationsRead({ all: true });
         toast.success(t("allRead"));
       } else {
         setReadIds((prev) => {
@@ -117,6 +119,7 @@ export function NotificationList({ items }: { items: NotificationItem[] }) {
                 onClick={() => {
                   if (!read) {
                     setReadIds((prev) => new Set(prev).add(item.id));
+                    emitNotificationsRead({ delta: 1 });
                     void markNotificationReadAction(item.id).catch(() => undefined);
                   }
                 }}

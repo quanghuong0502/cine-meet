@@ -52,7 +52,7 @@ export const CUSTOM_SPACING_TOKENS = [
   "save-clear",
 ] as const;
 
-export const CUSTOM_CONTAINER_TOKENS = ["app", "page", "form", "menu", "media", "hint"] as const;
+export const CUSTOM_CONTAINER_TOKENS = ["app", "page", "editor", "form", "menu", "media", "hint"] as const;
 
 export const CUSTOM_TYPE_ROLES = [
   "display",

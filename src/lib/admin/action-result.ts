@@ -17,6 +17,7 @@ export type SaveError =
   | "invalid_config"
   | "branch_not_found"
   | "seat_type_not_found"
+  | "network"
   | "unknown";
 
 export type SaveState =

@@ -1,6 +1,6 @@
 "use client";
 
-import { AltArrowDownIcon, AltArrowRightIcon, AltArrowUpIcon, CloseCircleIcon, ConfettiIcon, ForbiddenCircleIcon, LoaderIcon, Logout2Icon, TicketStarIcon } from "@solar-icons/react/line-duotone";
+import { AltArrowDownIcon, AltArrowRightIcon, AltArrowUpIcon, Armchair2Icon, CloseCircleIcon, ConfettiIcon, ForbiddenCircleIcon, GarageIcon, LoaderIcon, Logout2Icon, MapPointIcon, ShareIcon, SquareTopDownIcon, TicketStarIcon } from "@solar-icons/react/line-duotone";
 import { useLocale, useTranslations } from "next-intl";
 import dynamic from "next/dynamic";
 import Link from "next/link";
@@ -28,6 +28,7 @@ import { useFixedBarClearance } from "@/lib/use-fixed-bar-clearance";
 import { canWithdraw, isFinished, isOpenForReplies } from "@/lib/appointment/state";
 import { formatDayCompact, formatDayLong, formatTime } from "@/lib/datetime";
 import { formatVnd } from "@/lib/money";
+import type { TimeSlot } from "@/lib/showtime/slots";
 import { PX } from "@/lib/ui-sizes";
 import { cn } from "@/lib/utils";
 import type { AppointmentView, ParticipantView } from "@/services/appointment.service";
@@ -58,9 +59,22 @@ interface DetailProps {
   /** This person's own existing ratings, once the appointment is over (design 3.4). */
   initialMovieRating?: number;
   initialSeatRatings?: Record<string, number>;
+  /** Admin response deadline lead (minutes) & time slots for invitees proposing options in PollSection. */
+  deadlineLeadMinutes?: number;
+  timeSlots?: TimeSlot[];
 }
 
-export function AppointmentDetail({ view, friends = [], groups = [], plan = null, costs = [], initialMovieRating = 0, initialSeatRatings = {} }: DetailProps) {
+export function AppointmentDetail({
+  view,
+  friends = [],
+  groups = [],
+  plan = null,
+  costs = [],
+  initialMovieRating = 0,
+  initialSeatRatings = {},
+  deadlineLeadMinutes = 60,
+  timeSlots = [],
+}: DetailProps) {
   const t = useTranslations("appointments.detail");
   const tc = useTranslations("appointments");
   const locale = useLocale();
@@ -111,12 +125,53 @@ export function AppointmentDetail({ view, friends = [], groups = [], plan = null
   }
 
   const when = (iso: string) => `${formatDayLong(iso, locale)} · ${formatTime(iso, locale)}`;
+  const mySeat = view.seats.find((s) => s.userId === view.viewerId)?.seatCode;
+  const canSeeCosts = view.isCreator || view.myStatus === "accepted";
+  const canShare = (view.status === "INVITING" || view.status === "CONFIRMED") && (view.isCreator || view.myStatus !== "excluded");
+  const movieHref = `/movies/${view.movie.id}?back=${encodeURIComponent(`/appointments/${view.id}`)}`;
+
+  async function shareAppointment() {
+    const appUrl = typeof window !== "undefined" ? `${window.location.origin}/appointments/${view.id}` : `/appointments/${view.id}`;
+    const lines: string[] = [view.movie.title];
+    if (view.status === "CONFIRMED" && chosen) {
+      lines.push(when(chosen.startAt));
+      if (view.venue) {
+        lines.push([view.venue.brandName, view.venue.branchName, view.venue.roomName].filter(Boolean).join(" · "));
+      } else if (chosen.place) {
+        lines.push(chosen.place);
+      }
+      if (view.seats.length > 0) {
+        const nameOf = (uid: string) => view.attendees.find((a) => a.id === uid)?.name ?? "?";
+        lines.push(view.seats.map((s) => `${nameOf(s.userId)}: ${s.seatCode}`).join(", "));
+      }
+      if (view.venue?.mapsUrl) lines.push(view.venue.mapsUrl);
+    } else if (view.options.length > 0) {
+      for (const opt of view.options) {
+        lines.push(`• ${when(opt.startAt)}${opt.place ? ` (${opt.place})` : ""}`);
+      }
+    }
+    const text = lines.join("\n");
+    if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
+      try {
+        await navigator.share({ title: view.movie.title, text, url: appUrl });
+        return;
+      } catch (err) {
+        if ((err as { name?: string })?.name === "AbortError") return;
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(`${text}\n${appUrl}`);
+      toast.success(t("shareCopied"));
+    } catch {
+      toast.error(tc("networkError"));
+    }
+  }
 
   return (
     <div ref={contentRef} style={{ paddingBottom: clear }} className="flex flex-col gap-section">
       <section className="flex items-start gap-item">
         <Link
-          href={`/movies/${view.movie.id}`}
+          href={movieHref}
           className="shrink-0 rounded-lg outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:opacity-80"
         >
           <ListThumb
@@ -129,7 +184,7 @@ export function AppointmentDetail({ view, friends = [], groups = [], plan = null
         </Link>
         <div className="flex min-w-0 flex-1 flex-col gap-stack">
           <Link
-            href={`/movies/${view.movie.id}`}
+            href={movieHref}
             className="inline-flex items-center gap-tight rounded-md transition-opacity outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:opacity-75"
           >
             <h2 className="min-w-0 break-words type-heading">{view.movie.title}</h2>
@@ -139,6 +194,12 @@ export function AppointmentDetail({ view, friends = [], groups = [], plan = null
           {view.isCreator ? null : <span className="type-secondary text-muted-foreground">{tc("byName", { name: view.creator.name })}</span>}
           <span className="flex flex-wrap items-center gap-x-stack gap-y-tight">
             <AppointmentStatusBadge status={view.status} />
+            {mySeat && locked && view.status !== "CANCELLED" ? (
+              <Badge variant="accent" className="tabular-nums">
+                <Armchair2Icon aria-hidden />
+                {t("mySeat", { seat: mySeat })}
+              </Badge>
+            ) : null}
             {view.responseDeadline && open ? (
               <span className={cn("type-secondary tabular-nums", view.deadlinePassed ? "text-warning" : "text-muted-foreground")}>
                 {t("answerBy", { time: `${formatDayCompact(view.responseDeadline, locale, new Date(), { midSentence: true })} · ${formatTime(view.responseDeadline, locale)}` })}
@@ -152,8 +213,68 @@ export function AppointmentDetail({ view, friends = [], groups = [], plan = null
               {chosen.place ? <span className="break-words type-secondary text-muted-foreground">{chosen.place}</span> : null}
             </span>
           ) : null}
+          {canShare ? (
+            <div className="pt-hair">
+              <Button type="button" variant="outline" size="sm" onClick={() => void shareAppointment()} className="rounded-full">
+                <ShareIcon aria-hidden />
+                {t("share")}
+              </Button>
+            </div>
+          ) : null}
         </div>
       </section>
+
+      {locked && view.venue && view.status !== "CANCELLED" && canSeeCosts ? (
+        <section aria-label={t("venueTitle")} className="flex flex-col gap-item rounded-xl border bg-card p-inset">
+          <div className="flex flex-col gap-tight">
+            <span className="type-item-title">
+              {[view.venue.brandName, view.venue.branchName].filter(Boolean).join(" · ")}
+            </span>
+            {view.venue.address ? (
+              <span className="flex items-start gap-stack type-secondary text-muted-foreground">
+                <MapPointIcon className="mt-hair size-icon-sm shrink-0" aria-hidden />
+                <span className="break-words">
+                  {view.venue.address}
+                  {view.venue.floor ? ` · ${view.venue.floor}` : ""}
+                </span>
+              </span>
+            ) : null}
+            {view.venue.parkingFee !== undefined || view.venue.parkingLocation || view.venue.parkingEntrance ? (
+              <span className="flex items-start gap-stack type-secondary text-muted-foreground">
+                <GarageIcon className="mt-hair size-icon-sm shrink-0" aria-hidden />
+                <span className="break-words">
+                  {[
+                    view.venue.parkingFee !== undefined ? formatVnd(view.venue.parkingFee, locale) : null,
+                    view.venue.parkingLocation,
+                    view.venue.parkingEntrance,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </span>
+              </span>
+            ) : null}
+          </div>
+          <div className="flex flex-wrap gap-stack">
+            {view.venue.mapsUrl ? (
+              <Button asChild variant="secondary" size="sm" className="rounded-full">
+                <a href={view.venue.mapsUrl} target="_blank" rel="noopener noreferrer">
+                  <SquareTopDownIcon aria-hidden />
+                  {t("directions")}
+                </a>
+              </Button>
+            ) : null}
+            <Button asChild variant="outline" size="sm" className="rounded-full">
+              <Link
+                href={`/cinemas/${view.venue.branchId}/${view.venue.auditoriumId}?back=${encodeURIComponent(`/appointments/${view.id}`)}`}
+                prefetch={false}
+              >
+                <Armchair2Icon aria-hidden />
+                {t("openRoom", { room: view.venue.roomName })}
+              </Link>
+            </Button>
+          </div>
+        </section>
+      ) : null}
 
       {view.status === "CANCELLED" ? (
         <p role="status" className="rounded-xl border border-destructive/40 bg-destructive/10 p-inset-sm type-secondary">
@@ -187,7 +308,7 @@ export function AppointmentDetail({ view, friends = [], groups = [], plan = null
       {locked && chosen ? (
         <>
           {view.status !== "CANCELLED" && view.myStatus !== "excluded" && view.myStatus !== "dropped" ? <PlanSection view={view} plan={plan} run={run} busy={pending} draft={draft} /> : null}
-          {view.status === "COMPLETED" ? <CostSection view={view} costs={costs} onSave={run} busy={pending} /> : null}
+          {view.status === "COMPLETED" && canSeeCosts ? <CostSection view={view} costs={costs} onSave={run} busy={pending} /> : null}
           {view.status === "COMPLETED" && view.myStatus !== "excluded" && view.myStatus !== "dropped" ? (
             <RatingSection view={view} initialMovieRating={initialMovieRating} initialSeatRatings={initialSeatRatings} />
           ) : null}
@@ -201,8 +322,10 @@ export function AppointmentDetail({ view, friends = [], groups = [], plan = null
           when={when}
           busy={pending}
           barSlot={barSlot}
+          deadlineLeadMinutes={deadlineLeadMinutes}
+          timeSlots={timeSlots}
           // The creator locks a time straight from its card (the dialog there asks first and lets them untick people).
-          onLock={view.isCreator && open ? (optionId, attendeeIds) => run(() => lockParticipantsAction(view.id, { optionId, attendeeIds }), t("locked", { count: attendeeIds.length })) : undefined}
+          onLock={view.isCreator && open ? (optionId, attendeeIds) => run(() => lockParticipantsAction(view.id, { optionId, attendeeIds }), t("locked", { count: attendeeIds.length + 1 })) : undefined}
           onRemind={view.isCreator && open && !view.deadlinePassed ? (optionId) => run(() => remindVotersAction(view.id, optionId), (count) => t("reminded", { count: count ?? 0 })) : undefined}
         />
       )}
@@ -393,7 +516,7 @@ export function AppointmentDetail({ view, friends = [], groups = [], plan = null
 function ParticipantBadge({ participant }: { participant: ParticipantView }) {
   const t = useTranslations("appointments.detail.participant");
   const overdue = participant.status === "invited" && participant.overdue;
-  const key = overdue ? "overdue" : participant.status;
+  const key = participant.allNo ? "allNo" : overdue ? "overdue" : participant.status;
   if (participant.status === "accepted") {
     return <Badge variant="default">{t(key)}</Badge>;
   }

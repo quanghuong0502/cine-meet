@@ -19,6 +19,7 @@ export const priceRulesSection = createSection({
   saveAction: savePriceRule,
   removeAction: removePriceRule,
   needsBrand: true,
+  searchRendered: true,
   name: (rule) => rule.note || String(rule.price),
 
   async loadExtra({ locale, t }) {

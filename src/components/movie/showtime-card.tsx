@@ -1,6 +1,6 @@
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
-import { CalendarMarkIcon } from "@solar-icons/react/line-duotone";
+import { Armchair2Icon, CalendarMarkIcon } from "@solar-icons/react/line-duotone";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatTime } from "@/lib/datetime";
@@ -12,9 +12,13 @@ import type { ShowtimeRow } from "@/services/showtime.service";
  * and a small round "plan this showtime" button on the right (an icon, so it adds width rather than the height a full button would).
  * `showMovie` adds the movie title (when the list is not already grouped by movie).
  */
-export function ShowtimeCard({ row, showMovie = false }: { row: ShowtimeRow; showMovie?: boolean }) {
+export function ShowtimeCard({ row, showMovie = false, backHref }: { row: ShowtimeRow; showMovie?: boolean; backHref?: string }) {
   const t = useTranslations("showtimes");
   const locale = useLocale();
+  const backQuery = backHref ? `?back=${encodeURIComponent(backHref)}` : "";
+  const planHref = backHref
+    ? `/appointments/new?showtimeId=${row.id}&back=${encodeURIComponent(backHref)}`
+    : `/appointments/new?showtimeId=${row.id}`;
   // A room with several seat types (standard, VIP, couple...) shows the range; otherwise the one price.
   const priceText =
     row.priceMin !== null && row.priceMax !== null && row.priceMax > row.priceMin
@@ -41,7 +45,7 @@ export function ShowtimeCard({ row, showMovie = false }: { row: ShowtimeRow; sho
         <div className="flex min-w-0 flex-1 flex-col gap-tight">
           {showMovie ? (
             <Link
-              href={`/movies/${row.movie.id}`}
+              href={`/movies/${row.movie.id}${backQuery}`}
               prefetch={false}
               className="inline-flex min-h-target items-center truncate type-item-title text-primary-text outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
             >
@@ -49,10 +53,17 @@ export function ShowtimeCard({ row, showMovie = false }: { row: ShowtimeRow; sho
             </Link>
           ) : null}
           <span className="break-words type-body">{[row.branch.brandName, row.branch.name].filter(Boolean).join(" · ")}</span>
-          <span className="type-secondary text-muted-foreground">{row.auditorium.name}</span>
+          <Link
+            href={`/cinemas/${row.branch.id}/${row.auditorium.id}${backQuery}`}
+            prefetch={false}
+            className="inline-flex w-fit items-center gap-tight rounded-md py-hair type-secondary text-primary-text outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50 active:opacity-75"
+          >
+            <Armchair2Icon className="size-icon-sm shrink-0" aria-hidden />
+            <span className="truncate">{row.auditorium.name}</span>
+          </Link>
         </div>
         <Button asChild variant="outline" size="sm" className="shrink-0 rounded-full">
-          <Link href={`/appointments/new?showtimeId=${row.id}`} prefetch={false} aria-label={t("createPlan")}>
+          <Link href={planHref} prefetch={false} aria-label={t("createPlan")}>
             <CalendarMarkIcon aria-hidden />
             {t("planShort")}
           </Link>

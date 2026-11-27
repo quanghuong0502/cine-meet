@@ -28,8 +28,12 @@ export function UserActions({ id, name, locked, isSelf, canResetPassword, resetH
 
   function confirm() {
     startTransition(async () => {
-      const result = await setUserStatusAction(id, locked ? "active" : "locked");
+      const result = await setUserStatusAction(id, locked ? "active" : "locked").catch(() => null);
       setConfirming(false);
+      if (!result) {
+        toast.error(tc("errors.network"));
+        return;
+      }
       if (result.ok) {
         toast.success(t(locked ? "unlocked" : "lockedToast"));
       } else {

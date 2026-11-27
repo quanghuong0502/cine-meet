@@ -7,6 +7,7 @@ import { Appointment } from "@/models/appointment";
 import { Auditorium } from "@/models/auditorium";
 import { AuditoriumLayout } from "@/models/auditorium-layout";
 import { Branch } from "@/models/branch";
+import { Brand } from "@/models/brand";
 import { Expense } from "@/models/expense";
 import { FnbCategory } from "@/models/fnb-category";
 import { FnbCombo } from "@/models/fnb-combo";
@@ -20,9 +21,14 @@ import { attendeeIdsOf, computeSeatPrices, loadSeatPrices, recomputeEstimate } f
 import { mutate, sameId, type Doc, type Failure } from "@/services/appointment.service";
 import { cancelScheduled, scheduleExpenseReminder, scheduleReminders } from "@/services/scheduled-notification.service";
 import { checkBudgetWarnings } from "@/services/budget.service";
+import { DEFAULT_STEPS_PER_ROW } from "@/lib/seat-layout/config.constants";
 import { generateGrid } from "@/lib/seat-layout/generate";
-import type { LayoutConfig, LayoutGeometry, LayoutSeat, SeatTypeInfo } from "@/lib/seat-layout/types";
+import { resolveBrandRoom3DAppearance, type Room3DAppearance } from "@/lib/seat-layout/room-3d-appearance.defaults";
+import type { Room3DConfig } from "@/lib/seat-layout/scene";
+import type { LayoutConfig, LayoutGeometry, LayoutSeat, SeatStyle, SeatTypeInfo } from "@/lib/seat-layout/types";
+import { getCinemaDimensions } from "@/services/cinema-dimensions.service";
 import { getCachedSeatTypes } from "@/services/master-data/catalog-cache";
+import { getRoom3DAppearance } from "@/services/room-3d-appearance.service";
 import { loadPricing, searchShowtimes, type ShowtimeRow } from "@/services/showtime.service";
 import { vietnamDayKey } from "@/lib/datetime";
 import { vietnamParts } from "@/services/pricing/ticket-price";
@@ -430,7 +436,9 @@ export async function setPersonCost(actorId: string, id: string, input: PersonCo
         ? {
             updateOne: {
               filter: { appointmentId: id, userId: input.userId, category },
-              update: { $set: { amount, date, ...(input.note ? { note: input.note } : {}) } },
+              update: input.note
+                ? { $set: { amount, date, note: input.note } }
+                : { $set: { amount, date }, $unset: { note: 1 } },
               upsert: true,
             },
           }
@@ -440,7 +448,7 @@ export async function setPersonCost(actorId: string, id: string, input: PersonCo
     }),
     { ordered: false },
   );
-  await syncActualCost(id);
+  await Promise.all([syncActualCost(id), checkBudgetWarnings([input.userId])]);
   return { ok: true };
 }
 
@@ -474,7 +482,21 @@ export interface PlanData {
   /** Upcoming showtimes of the movie, to pick one (or change it). */
   showtimes: ShowtimeRow[];
   /** The room of the chosen showtime, as it was when that showtime was made. */
-  room?: { seats: LayoutSeat[]; geometry: LayoutGeometry; seatTypes: { id: string; name: string; nameEn: string | null; color: string | null }[]; taken: string[]; /** Ticket price of each seat code (0 when no price rule covers it), so the screen can work out the cost as the seats change. */ prices: Record<string, number> };
+  room?: {
+    layoutId: string;
+    roomName: string;
+    brandName: string;
+    seats: LayoutSeat[];
+    geometry: LayoutGeometry;
+    room3d: Room3DConfig;
+    room3dAppearance: Room3DAppearance;
+    seatTypes: { id: string; name: string; nameEn: string | null; color: string | null; color3d: string | null; style: SeatStyle }[];
+    taken: string[];
+    /** Creator's personal seat marks (`favorite` / `avoid`) for this room so they show up while seating the group. */
+    marks?: Record<string, "favorite" | "avoid">;
+    /** Ticket price of each seat code (0 when no price rule covers it), so the screen can work out the cost as the seats change. */
+    prices: Record<string, number>;
+  };
   food: {
     /** `categoryId` is missing for items made before categories existed. */
     items: { id: string; name: string; price: number; categoryId?: string }[];
@@ -504,23 +526,56 @@ export async function getPlanData(userId: string, id: string, roomOf?: string): 
   const data: PlanData = { showtimes, food: { items: [], combos: [], categories: [] } };
   if (!showtimeId || !showtime) return data;
 
-  const [layout, room, types, taken, pricing] = await Promise.all([
+  const [layout, room, types, taken, pricing, dimensionDefaults, systemAppearance, seatMarks] = await Promise.all([
     AuditoriumLayout.findById(showtime.layoutId, "config seats").lean(),
-    Auditorium.findById(showtime.auditoriumId, "branchId").lean(),
+    Auditorium.findById(showtime.auditoriumId, "name branchId").lean(),
     getCachedSeatTypes(),
     takenSeatCodes(showtimeId, id),
     loadPricing(),
+    getCinemaDimensions(),
+    getRoom3DAppearance(),
+    import("@/services/seat-mark.service").then((m) => m.getSeatMarks(userId, showtime.auditoriumId.toString(), showtime.layoutId.toString())).catch(() => ({ active: [], old: [] })),
   ]);
   const branch = room ? await Branch.findById(room.branchId, "brandId").lean() : null;
-  if (!layout || !branch) return data;
+  if (!layout || !room || !branch) return data;
+  const brand = await Brand.findById(branch.brandId, "name room3dPreset").lean();
+  const room3dAppearance = resolveBrandRoom3DAppearance(systemAppearance, brand?.room3dPreset);
 
-  const infos: SeatTypeInfo[] = types.map((t) => ({ id: t.id, name: t.name, capacity: t.capacity }));
+  const infos: SeatTypeInfo[] = types.map((t) => ({ id: t.id, name: t.name, capacity: t.capacity, style: t.style }));
+  const config = layout.config as LayoutConfig;
   const seatPrices = computeSeatPrices(showtime, branch, layout.seats, pricing);
   data.room = {
+    layoutId: showtime.layoutId.toString(),
+    roomName: room.name,
+    brandName: brand?.name ?? "",
     seats: JSON.parse(JSON.stringify(layout.seats)) as LayoutSeat[],
-    geometry: generateGrid(layout.config as LayoutConfig, infos).geometry,
-    seatTypes: types.map((t) => ({ id: t.id, name: t.name, nameEn: t.nameEn, color: t.color })),
+    geometry: generateGrid(config, infos).geometry,
+    room3d: {
+      stadiumFromRow: config.stadiumFromRow,
+      stepsPerRow: config.stepsPerRow ?? DEFAULT_STEPS_PER_ROW,
+      screenDistance: config.screen.distance,
+      screenShape: config.screen.shape,
+      screenMount: config.screen.mount,
+      screenTilt: config.screen.tilt,
+      screenCurved: Boolean(config.screen.curved),
+      seatRecline: config.seatRecline,
+      rowCurve: config.rowCurve ?? "straight",
+      seatStagger: config.seatStagger ?? "aligned",
+      rowPitch: config.rowPitch ?? "standard",
+      dimensions: config.dimensions,
+      defaults: dimensionDefaults,
+    },
+    room3dAppearance,
+    seatTypes: types.map((t) => ({
+      id: t.id,
+      name: t.name,
+      nameEn: t.nameEn,
+      color: t.color,
+      color3d: t.color3d,
+      style: t.style,
+    })),
     taken,
+    marks: Object.fromEntries(seatMarks.active.map((m) => [m.seatCode, m.kind])),
     prices: Object.fromEntries([...seatPrices].map(([code, info]) => [code, info.price ?? 0])),
   };
 

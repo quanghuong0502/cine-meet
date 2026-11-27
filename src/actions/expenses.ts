@@ -16,12 +16,18 @@ export async function logManualViewingAction(input: unknown): Promise<LogViewing
   }
   const result = await logManualViewing(user.userId, parsed.data);
   revalidatePath("/");
+  revalidatePath("/log-viewing");
+  revalidatePath("/cinemas", "layout");
   return result;
 }
 
 export async function removeManualViewingAction(id: string): Promise<{ ok: true } | { ok: false; error: "not_found" }> {
   const user = await requireUser();
   const result = await removeManualViewing(user.userId, typeof id === "string" ? id : "");
-  if (result.ok) revalidatePath("/");
+  if (result.ok) {
+    revalidatePath("/");
+    revalidatePath("/log-viewing");
+    revalidatePath("/cinemas", "layout");
+  }
   return result;
 }

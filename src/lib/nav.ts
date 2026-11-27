@@ -32,7 +32,7 @@ export interface NavItem {
 
 export const NAV_ITEMS: NavItem[] = [
   { href: "/", key: "overview", icon: HomeSmileIcon, activeIcon: HomeSmileActiveIcon, enabled: true },
-  { href: "/showtimes", key: "showtimes", icon: ClapperboardPlayIcon, activeIcon: ClapperboardPlayActiveIcon, enabled: true },
+  { href: "/showtimes", key: "showtimes", icon: ClapperboardPlayIcon, activeIcon: ClapperboardPlayActiveIcon, enabled: true, alsoActive: ["/movies"] },
   { href: "/appointments", key: "appointments", icon: CalendarMarkIcon, activeIcon: CalendarMarkActiveIcon, enabled: true },
   { href: "/cinemas", key: "cinemas", icon: Armchair2Icon, activeIcon: Armchair2ActiveIcon, enabled: true },
   { href: "/chat", key: "chat", icon: ChatRoundLikeIcon, activeIcon: ChatRoundLikeActiveIcon, enabled: false }, // Sprint 7
@@ -41,15 +41,7 @@ export const NAV_ITEMS: NavItem[] = [
 
 export const ENABLED_NAV_ITEMS = NAV_ITEMS.filter((item) => item.enabled);
 
-/** Entry screens (such as editing the profile) hide the bottom bar: the Save button takes its place. */
-export function isFocusedUserRoute(pathname: string): boolean {
-  return (
-    /^\/profile\/.+/.test(pathname) ||
-    /^\/friends\/groups\/.+/.test(pathname) ||
-    pathname === "/appointments/new" ||
-    pathname === "/log-viewing"
-  );
-}
+export { isFocusedUserRoute } from "./focused-routes";
 
 /**
  * Root screens of the user app: the ones that show the app bar (logo and avatar). Every other screen is an inner screen with its own

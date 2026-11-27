@@ -34,10 +34,11 @@ export default async function BulkShowtimesPage({ searchParams }: { searchParams
     branchService.list({}),
     getBrandOptions(),
   ]);
+  const activeMovies = movies.filter((m) => m.status !== "ended");
   const inactiveBranches = new Set(branches.filter((b) => b.active === false).map((b) => b._id.toString()));
   const roomsReady = rooms.filter((room) => room.currentLayoutId && !inactiveBranches.has(room.branchId));
 
-  if (movies.length === 0 || formats.every((f) => f.active === false) || roomsReady.length === 0) {
+  if (activeMovies.length === 0 || formats.every((f) => f.active === false) || roomsReady.length === 0) {
     return (
       <div className="mx-auto flex w-full max-w-page flex-1 flex-col gap-section p-inset">
         <PageHeader title={t("title")} backHref={backHref} />
@@ -62,7 +63,7 @@ export default async function BulkShowtimesPage({ searchParams }: { searchParams
       <div className="mx-auto flex w-full max-w-page flex-1 flex-col gap-section p-inset">
         <PageHeader title={t("title")} backHref={backHref} />
         <ShowtimeBulkForm
-          movies={movies.filter((m) => m.status !== "ended").map((m) => ({ value: m._id.toString(), label: m.title }))}
+          movies={activeMovies.map((m) => ({ value: m._id.toString(), label: m.title }))}
           formats={formats.filter((f) => f.active !== false).map((f) => ({ value: f._id.toString(), label: f.name }))}
           rooms={roomsReady
             .map((r) => ({ value: r.id, label: r.name, group: branchName.get(r.branchId) ?? "" }))

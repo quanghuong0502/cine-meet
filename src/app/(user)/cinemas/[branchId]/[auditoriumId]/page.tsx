@@ -7,13 +7,17 @@ import { RoomReviewForm } from "@/components/room-review-form";
 import { ScopedIntlProvider } from "@/components/scoped-intl-provider";
 import { RoomSeatView } from "@/components/seat-map/room-seat-view";
 import { requireUser } from "@/lib/auth/guards";
+import { resolveUserBackHref } from "@/lib/user-back-href";
 import { getRoomView } from "@/services/cinema.service";
 import { getMyAuditoriumReview, getMySeatRatingsForRoom } from "@/services/rating.service";
 import { getSeatMarks } from "@/services/seat-mark.service";
 import { listViewingSessionsForRoom, sittingHistoryOf } from "@/services/viewing-history.service";
 import { removeSeatMarkAction, saveSeatMarkAction } from "../../actions";
 
-type Props = { params: Promise<{ branchId: string; auditoriumId: string }> };
+type Props = {
+  params: Promise<{ branchId: string; auditoriumId: string }>;
+  searchParams: Promise<{ back?: string | string[] }>;
+};
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { branchId, auditoriumId } = await params;
@@ -21,8 +25,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return { title: view?.auditorium.name };
 }
 
-export default async function RoomPage({ params }: Props) {
-  const [user, { branchId, auditoriumId }] = await Promise.all([requireUser(), params]);
+export default async function RoomPage({ params, searchParams }: Props) {
+  const [user, { branchId, auditoriumId }, sp] = await Promise.all([requireUser(), params, searchParams]);
+  const backHref = resolveUserBackHref(sp.back, `/cinemas/${branchId}`);
   // Start room-scoped history and ratings in parallel with `getRoomView` (already deduplicated with `generateMetadata`).
   const [view, sessions, seatRatings] = await Promise.all([
     getRoomView(branchId, auditoriumId),
@@ -39,7 +44,7 @@ export default async function RoomPage({ params }: Props) {
   return (
     <ScopedIntlProvider namespaces={["cinemas.room", "seatMap", "admin.common"]}>
       <div className="flex flex-1 flex-col gap-section p-inset">
-        <PageHeader title={view.auditorium.name} backHref={`/cinemas/${branchId}`}>
+        <PageHeader title={view.auditorium.name} backHref={backHref}>
           <RoomReportButton auditoriumId={auditoriumId} />
         </PageHeader>
         <p className="-mt-item type-secondary text-muted-foreground">{branch.name}</p>

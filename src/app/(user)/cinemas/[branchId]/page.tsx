@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { StarIcon } from "@solar-icons/react/bold";
-import { AltArrowRightIcon, ClockCircleIcon, GarageIcon, MapPointIcon, SquareTopDownIcon } from "@solar-icons/react/line-duotone";
+import { AltArrowRightIcon, ClapperboardPlayIcon, ClockCircleIcon, GarageIcon, MapPointIcon, SquareTopDownIcon } from "@solar-icons/react/line-duotone";
 import { getLocale, getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { IconBadge } from "@/components/ui/icon-badge";
 import { requireUser } from "@/lib/auth/guards";
 import { formatVnd } from "@/lib/money";
+import { resolveUserBackHref } from "@/lib/user-back-href";
 import { getCinema, type CinemaRoom } from "@/services/cinema.service";
 import { PX } from "@/lib/ui-sizes";
 import { Badge } from "@/components/ui/badge";
@@ -34,8 +35,8 @@ export default async function CinemaPage({ params, searchParams }: Props) {
     getTranslations("cinemas"),
     getLocale(),
   ]);
-  const rawBack = Array.isArray(sp.back) ? sp.back[0] : sp.back;
-  const backHref = rawBack && rawBack.startsWith("/cinemas") && !rawBack.startsWith("//") ? rawBack : "/cinemas";
+  const backHref = resolveUserBackHref(sp.back, "/cinemas");
+  const currentUrl = backHref !== "/cinemas" ? `/cinemas/${branchId}?back=${encodeURIComponent(backHref)}` : `/cinemas/${branchId}`;
   const cinema = await getCinema(branchId, user.userId);
   if (!cinema) notFound();
   const { branch, brand, rooms } = cinema;
@@ -47,7 +48,7 @@ export default async function CinemaPage({ params, searchParams }: Props) {
 
   return (
     <div className="flex flex-1 flex-col gap-section p-inset">
-      <PageHeader backHref={backHref} />
+      <PageHeader title={branch.name} backHref={backHref} />
 
       {branch.imageUrl ? (
         <div className="relative aspect-video w-full overflow-hidden rounded-xl border bg-muted">
@@ -58,7 +59,7 @@ export default async function CinemaPage({ params, searchParams }: Props) {
       <section className="flex flex-col gap-item">
         <div className="flex flex-col gap-tight">
           <p className="type-secondary text-muted-foreground">{brand.name}</p>
-          <h1 className="type-heading">{branch.name}</h1>
+          <h2 className="type-heading">{branch.name}</h2>
         </div>
         {branch.address ? (
           <p className="flex items-start gap-item type-body">
@@ -91,18 +92,26 @@ export default async function CinemaPage({ params, searchParams }: Props) {
             </ul>
           </div>
         ) : null}
-        {/* Opens the maps app outside this app (Google Maps and the like), so it is a plain external link. */}
-        {branch.mapsUrl ? (
-          <Button asChild size="cta" variant="secondary">
-            <a href={branch.mapsUrl} target="_blank" rel="noopener noreferrer">
-              <SquareTopDownIcon aria-hidden />
-              {t("directions")}
-            </a>
+        <div className="flex flex-col gap-stack sm:flex-row">
+          {/* Opens the maps app outside this app (Google Maps and the like), so it is a plain external link. */}
+          {branch.mapsUrl ? (
+            <Button asChild size="cta" variant="secondary" className="min-w-0 sm:flex-1">
+              <a href={branch.mapsUrl} target="_blank" rel="noopener noreferrer">
+                <SquareTopDownIcon aria-hidden />
+                {t("directions")}
+              </a>
+            </Button>
+          ) : null}
+          <Button asChild size="cta" variant="outline" className="min-w-0 sm:flex-1">
+            <Link href={`/showtimes?branch=${branch.id}`} prefetch={false}>
+              <ClapperboardPlayIcon aria-hidden />
+              {t("viewShowtimes")}
+            </Link>
           </Button>
-        ) : null}
+        </div>
       </section>
 
-      <section className="flex flex-col gap-item">
+      <section className={rooms.length === 0 ? "flex flex-1 flex-col gap-item" : "flex flex-col gap-item"}>
         <h2 className="type-heading">{t("rooms")}</h2>
         {rooms.length === 0 ? (
           <EmptyState mascot="bubu-sleepy" title={t("emptyRooms")} />
@@ -111,7 +120,7 @@ export default async function CinemaPage({ params, searchParams }: Props) {
             {rooms.map((room) => (
               <li key={room.id}>
                 <Link
-                  href={`/cinemas/${branch.id}/${room.id}`}
+                  href={`/cinemas/${branch.id}/${room.id}?back=${encodeURIComponent(currentUrl)}`}
                   prefetch={false}
                   className="flex min-h-row items-center gap-item rounded-xl border bg-card px-inset py-inset-sm transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50 active:bg-muted/60"
                 >

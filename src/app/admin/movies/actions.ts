@@ -6,7 +6,7 @@ import { errorState, parseForm, type RemoveResult, type SaveState } from "@/lib/
 import { CATALOG_MOVIES_TAG } from "@/lib/cache";
 import { movieInputSchema, movieService } from "@/services/movie.service";
 import {
-  bulkShowtimeSchema, createShowtimesBulk, importShowtimesCsv, removeShowtime, type ShowtimeError,
+  bulkShowtimeSchema, createShowtimesBulk, importShowtimesCsv, removeShowtime, removeShowtimesBulk, type ShowtimeError,
 } from "@/services/showtime.service";
 import type { CsvRowError } from "@/lib/showtime/csv";
 
@@ -50,6 +50,16 @@ export async function removeShowtimeAction(id: string): Promise<RemoveResult> {
   if (!result.ok) return result;
   refreshMovies();
   return { ok: true };
+}
+
+export async function removeShowtimesBulkAction(
+  ids: string[],
+): Promise<{ ok: true; deleted: number; skipped: number } | { ok: false; error: "unknown" }> {
+  const admin = await requireAdmin();
+  if (!Array.isArray(ids) || ids.length === 0) return { ok: true, deleted: 0, skipped: 0 };
+  const result = await removeShowtimesBulk(ids.filter((id): id is string => typeof id === "string"), admin.userId);
+  if (result.deleted > 0) refreshMovies();
+  return result;
 }
 
 export type BulkState =

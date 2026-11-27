@@ -28,7 +28,8 @@
         "notRegistered": "This account hasn't been given access. Contact an admin.",
         "sessionExpired": "Your session has expired. Sign in again.",
         "accessDenied": "You don't have permission to sign in with this account.",
-        "fallback": "Couldn't sign you in. Try again."
+        "fallback": "Couldn't sign you in. Try again.",
+        "network": "Connection dropped, please try signing in again."
       }
     },
     "changePassword": {
@@ -40,6 +41,7 @@
       "confirmLabel": "Confirm new password",
       "submit": "Change password",
       "submitting": "Saving...",
+      "saved": "Password updated",
       "errors": {
         "currentRequired": "Enter your current password.",
         "tooShort": "The new password must be at least {min} characters.",
@@ -47,7 +49,8 @@
         "wrongCurrent": "Current password is incorrect.",
         "samePassword": "The new password must differ from the current one.",
         "noPassword": "This account signs in with Google, so it has no password to change.",
-        "invalid": "Invalid input."
+        "invalid": "Invalid input.",
+        "network": "Connection dropped, please try again."
       },
       "back": "Back"
     }
@@ -58,7 +61,8 @@
     "signOut": "Sign out",
     "signOutTitle": "Sign out?",
     "signOutDescription": "You'll need to sign in again to use SeatMate.",
-    "settings": "Settings"
+    "settings": "Settings",
+    "networkError": "Connection dropped, please try again."
   },
   "nav": {
     "label": "Main navigation",
@@ -115,7 +119,8 @@
         "no_password": "This account has no password (Google sign-in only).",
         "invalid_config": "The seat map settings are not valid. Check rows, columns and aisles.",
         "branch_not_found": "This cinema no longer exists. Choose another.",
-        "seat_type_not_found": "A seat type no longer exists. Choose again."
+        "seat_type_not_found": "A seat type no longer exists. Choose again.",
+        "network": "Connection dropped, please try again."
       },
       "activeLabel": "Active",
       "inactiveBadge": "Off"
@@ -213,6 +218,10 @@
         },
         "appUrl": {
           "label": "App link"
+        },
+        "room3dPreset": {
+          "label": "3D auditorium theme",
+          "defaultOption": "System default"
         }
       }
     },
@@ -362,7 +371,8 @@
         "standard": "Standard chair",
         "vip": "VIP high-back",
         "recliner": "Recliner with footrest",
-        "bed": "Cinema bed"
+        "bed": "Cinema bed",
+        "4dx": "4DX motion seat"
       }
     },
     "holidays": {
@@ -663,6 +673,22 @@
       "intro": "Purely visual styling and fixtures for the 3D auditorium — does not affect real room dimensions or seat scores. Applies across all auditoriums.",
       "previewHint": "Left-drag to orbit 360° · Scroll to zoom · Click a seat to sit in POV.",
       "previewHeatmap": "Show Heatmap",
+      "sampleRoomLabel": "Sample room",
+      "sampleRooms": {
+        "standard": "Standard",
+        "large": "Large hall",
+        "luxury": "VIP · 4DX · Bed",
+        "sideAisle": "Single side aisle"
+      },
+      "presetsTitle": "Quick cinema themes",
+      "presetsHint": "Apply a coordinated wall, ceiling, carpet, and lighting look in one tap — you can still tweak individual options below.",
+      "presets": {
+        "classic": "Classic Multiplex",
+        "blackbox": "Black-Box IMAX",
+        "goldclass": "Gold Class VIP",
+        "neon": "Cyber Neon",
+        "retro": "Retro Theater"
+      },
       "pickColor": "Pick custom color",
       "reset": "Reset to defaults",
       "resetNotice": "Default 3D appearance restored. Click Save to apply.",
@@ -682,21 +708,27 @@
         "screenImageInvalid": "Invalid image URL (must start with https:// or http://).",
         "screenYoutubeUrl": "YouTube video link",
         "screenYoutubePlaceholder": "https://www.youtube.com/watch?v=... or https://youtu.be/...",
-        "screenYoutubeHint": "Autoplays looped and muted by default; tap the speaker button on the 3D dock to unmute.",
+        "screenYoutubeHint": "Autoplays looped and muted by default; tap the \"Unmute\" button in the top corner of the 3D view for audio.",
         "screenYoutubeInvalid": "Invalid YouTube link (supports watch, youtu.be, shorts, or 11-character video ID).",
         "screenBorder": "Screen masking frame",
+        "screenMasking": "Film aspect masking",
         "screenCurtainsVisible": "Side screen velvet curtains",
+        "screenCurtainsAnimated": "Animate curtains opening in seat POV",
         "screenCurtainsColor": "Screen curtain color",
         "screenContent": "Sample screen scene",
         "screenStageApron": "Front stage apron",
         "screenStageLed": "Stage apron LED strip",
+        "stageSubwoofersVisible": "Under-stage subwoofer enclosures",
         "screenHalo": "Backlit wall halo",
+        "screenWallWash": "Side-wall screen color wash",
         "screenShowSubtitle": "Show sample subtitle",
         "screenSubtitleText": "Custom sample subtitle",
         "screenSubtitlePlaceholder": "Leave blank to use default localized subtitle",
         "screenSubtitleColor": "Subtitle color",
         "seatFinish": "Upholstery finish",
         "seatFrameColor": "Chair frame & armrest color",
+        "seatNumbersVisible": "Backrest seat number plates",
+        "snackPropsVisible": "Popcorn & drink at selected seat",
         "doorStyle": "Door style",
         "doorPanicBar": "Panic push bar",
         "doorColor": "Door / curtain color",
@@ -704,12 +736,23 @@
         "exitSignVisible": "Show EXIT sign",
         "exitSignColor": "EXIT sign color",
         "exitSignText": "EXIT sign label",
+        "roomSignVisible": "Auditorium room & brand plaque",
+        "emergencyLightsVisible": "Twin emergency exit spotlights",
         "wallStyle": "Wall finish",
         "wallColor": "Wall color",
+        "wallImageUrl": "Custom wall texture image (optional)",
         "ceilingStyle": "Ceiling finish",
+        "starlightColor": "Starlight ceiling tone",
         "ceilingColor": "Ceiling color",
+        "ceilingImageUrl": "Custom ceiling texture image (optional)",
+        "ceilingDetailsVisible": "Ceiling HVAC vents & corner bass traps",
         "carpetStyle": "Carpet pattern",
         "carpetColor": "Carpet color",
+        "carpetImageUrl": "Custom carpet / floor texture image (optional)",
+        "surfaceImageRepeat": "Image repeat count",
+        "surfaceImageRepeatHint": "Scaled to surface dimensions while keeping the full image & character visible (1–12×).",
+        "surfaceImageHint": "Upload an image or paste an HTTPS link — preserves full aspect ratio, scales cleanly by surface dimensions, and adds matched relief and roughness.",
+        "movieAmbientLevel": "Movie mode darkness level",
         "downlightsVisible": "Ceiling downlights",
         "sconcesVisible": "Wall pilasters & sconces",
         "sconceColor": "Wall sconce light color",
@@ -718,13 +761,16 @@
         "coveLedColor": "Cove LED color",
         "aisleLedVisible": "Aisle step LED strips",
         "aisleLedColor": "Aisle LED color",
+        "aisleHandrailsVisible": "Stepped aisle handrails",
         "rowMarkersVisible": "Illuminated row markers (A, B, C…)",
         "rowMarkersPlacement": "Row marker placement",
         "rowMarkersColor": "Row marker light color",
         "projectionPortVisible": "Projection booth window",
         "projectorBeamVisible": "Projector light beam",
+        "projectorBeamIntensity": "Projector beam intensity",
         "surroundSpeakersVisible": "Wall surround speakers",
-        "ceilingSpeakersVisible": "Overhead ceiling speakers"
+        "ceilingSpeakersVisible": "Overhead ceiling speakers",
+        "fourDxWallPropsVisible": "4DX wall wind blowers & strobes"
       },
       "options": {
         "screenSource": {
@@ -787,6 +833,8 @@
           "red": "Red"
         },
         "rowMarkerPlacement": {
+          "step": "Step treads",
+          "riser": "Step risers",
           "aisle": "Along aisles",
           "wall": "Side walls"
         },
@@ -794,8 +842,32 @@
           "ceiling": "Ceiling cove",
           "wall": "Wall rail",
           "both": "Both"
+        },
+        "screenMasking": {
+          "none": "Native screen",
+          "scope": "2.39:1 letterbox",
+          "flat": "1.85:1 pillarbox"
+        },
+        "starlightColor": {
+          "cool": "Cool midnight",
+          "warm": "Warm champagne",
+          "rainbow": "Galaxy mix"
+        },
+        "movieAmbientLevel": {
+          "deep": "Dolby pitch-dark",
+          "balanced": "Balanced",
+          "bright": "Easy-see chairs"
+        },
+        "projectorBeamIntensity": {
+          "subtle": "Subtle",
+          "medium": "Medium",
+          "vivid": "Vivid"
         }
-      }
+      },
+      "showPreview": "Show 3D preview",
+      "hidePreview": "Hide 3D preview",
+      "resetConfirmTitle": "Reset 3D appearance to defaults?",
+      "resetConfirmDescription": "All unsaved color, screen, and lighting edits will be reverted to defaults. Click Save afterward to apply."
     },
     "cinemaDimensions": {
       "title": "Cinema dimension standards",
@@ -837,7 +909,9 @@
         "distMedMin": "Medium · minimum",
         "distFarRatio": "Far · × screen width",
         "distFarMin": "Far · minimum"
-      }
+      },
+      "resetConfirmTitle": "Reset cinema dimensions to standards?",
+      "resetConfirmDescription": "All edited dimension values will revert to default standards. Click Save afterward to apply."
     },
     "systemSettings": {
       "title": "System settings",
@@ -898,6 +972,8 @@
         },
         "heatmap": "Heatmap",
         "view3d": "3D view",
+        "selectSeat3d": "Select {code} to edit",
+        "deselectSeat3d": "Deselect {code}",
         "showMap": "Show map",
         "hideMap": "Hide map",
         "decrease": "Decrease",
@@ -1059,8 +1135,12 @@
           "actionGroup": "Actions",
           "typeGroup": "Seat type",
           "flagGroup": "Condition"
-        }
-      }
+        },
+        "duplicate": "Duplicate",
+        "seatCount": "{count} seats"
+      },
+      "branchFilterLabel": "Filter by branch",
+      "allBranches": "All branches"
     },
     "movies": {
       "title": "Movies & showtimes",
@@ -1102,7 +1182,20 @@
         "bulkButton": "Create in bulk",
         "importButton": "Import CSV",
         "noPrice": "No price yet",
-        "deleteTitle": "Delete the {time} showtime of \"{movie}\"?"
+        "deleteTitle": "Delete the {time} showtime of \"{movie}\"?",
+        "filterDate": "Filter by date",
+        "filterBranch": "Filter by cinema",
+        "allBranches": "All cinemas",
+        "filterMovie": "Filter by movie",
+        "allMovies": "All movies",
+        "selectMany": "Select",
+        "selectedCount": "{count} selected",
+        "selectAll": "Select all",
+        "deselectAll": "Clear selection",
+        "limitNotice": "Showing the first {limit} showtimes. Filter by date, cinema, or movie to narrow down.",
+        "bulkDeleteTitle": "Delete {count} selected showtimes?",
+        "bulkDeleted": "Deleted {deleted} showtimes",
+        "bulkDeletedSkipped": "Deleted {deleted} showtimes ({skipped} kept because they are linked to appointments)"
       },
       "bulk": {
         "title": "Create showtimes in bulk",
@@ -1397,7 +1490,12 @@
         "reminders": "Reminders",
         "friends": "Friends",
         "budget": "Budget"
-      }
+      },
+      "checking": "Checking push notification status...",
+      "sendTest": "Send test notification",
+      "testSent": "Sent a test notification to your devices",
+      "testFailed": "Could not send a test notification. Check your device settings.",
+      "testCooldown": "Please wait about a minute before sending another test."
     }
   },
   "imageUpload": {
@@ -1430,7 +1528,9 @@
     "heatHigh": "High score",
     "doorLabel": "Entrance",
     "markFavorite": "marked as favorite",
-    "markAvoid": "marked to avoid"
+    "markAvoid": "marked to avoid",
+    "obstructedLegend": "Obstructed view",
+    "brokenLegend": "Broken seat"
   },
   "showtimes": {
     "title": "Showtimes",
@@ -1563,9 +1663,32 @@
       "lightsShort": "Lights",
       "youtubeMute": "Mute screen video",
       "youtubeUnmute": "Unmute screen video",
+      "youtubeMuteShort": "Mute",
+      "youtubeUnmuteShort": "Unmute",
       "youtubeAudioShort": "Audio",
       "expand3d": "Fullscreen cinema view",
       "collapse3d": "Exit fullscreen",
+      "cameraPresetsLabel": "Camera angles",
+      "cameraShort": "Angles",
+      "cameraPresets": {
+        "overview": "Overview",
+        "entrance": "From entrance",
+        "frontRow": "Front row",
+        "booth": "Booth view"
+      },
+      "sightline": "Sightlines",
+      "sightlineBanner": "Sightlines from seat {code} (green: clear · amber: high tilt · red: blocked)",
+      "comparePin": "Pin to compare",
+      "comparePinned": "Pinned {code} — select a 2nd seat to compare",
+      "compareSummary": "{a} ({aScore} pts) vs {b} ({bScore} pts) · {distDiff}",
+      "compareClear": "Clear comparison",
+      "snapshot": "Save 3D view snapshot",
+      "snapshotSaved": "3D view snapshot saved",
+      "snapshotFailed": "Couldn't capture this 3D view",
+      "gyro": "Tilt to look around",
+      "gyroDenied": "Motion sensor permission was denied",
+      "movieTrailer": "Play movie trailer on 3D screen",
+      "movieTrailerShort": "Movie trailer",
       "dragToLookHint": "Drag to look around · Double-tap to center",
       "hoverSeatHint": "Seat {code} · {score} pts — tap to sit",
       "seatScoreShort": "{score} pts",
@@ -1638,7 +1761,9 @@
         "format": "Format",
         "frequent": "Frequently visited"
       }
-    }
+    },
+    "viewShowtimes": "View showtimes",
+    "searchPlaceholder": "Search by cinema, brand, or address..."
   },
   "friends": {
     "title": "Friends",
@@ -1729,7 +1854,8 @@
         "required": "Give the group a name.",
         "too_many": "That's a lot of groups. Delete an old one first.",
         "invalid": "You can only add people who are your friends.",
-        "not_found": "Couldn't find this group."
+        "not_found": "Couldn't find this group.",
+        "membersRequired": "Pick at least one member for the group."
       }
     }
   },
@@ -1878,7 +2004,8 @@
         "accepted": "Going",
         "declined": "Declined",
         "dropped": "Left",
-        "excluded": "Not going"
+        "excluded": "Not going",
+        "allNo": "None work"
       },
       "deadlinePassed": "The answer-by time has passed. Wait for the organizer to lock it in.",
       "deadlinePassedCreator": "The response deadline has passed. You can lock in a time below or cancel the plan.",
@@ -1912,6 +2039,8 @@
         "whoIsSeated": "Pick who to seat",
         "noSeat": "No seat yet",
         "seatsSaved": "Seating saved",
+        "assignSeat3d": "Seat {name} at {code}",
+        "unassignSeat3d": "Remove {name} from {code}",
         "roomFailed": "Couldn't load that room, try picking the showtime again",
         "foodFilter": "Filter by type",
         "foodAll": "All",
@@ -1968,7 +2097,15 @@
         "movie": "Movie",
         "seat": "Seat {seatCode}",
         "error": "Could not save, try again"
-      }
+      },
+      "mySeat": "Your seat: {seat}",
+      "share": "Share",
+      "shareCopied": "Plan details copied",
+      "venueTitle": "Venue",
+      "directions": "Directions",
+      "openRoom": "{room} layout",
+      "proposeShowtimeMode": "Pick from showtimes",
+      "proposeCustomMode": "Enter date & time"
     },
     "invite": {
       "title": "Invite more",
@@ -2128,7 +2265,8 @@
     "test": {
       "title": "Test notification",
       "body": "Push notifications are working!"
-    }
+    },
+    "settingsAction": "Notification settings"
   },
   "dashboard": {
     "title": "Overview",
@@ -2152,7 +2290,14 @@
       "submitting": "Saving...",
       "saved": "Viewing saved",
       "futureDate": "Cannot log a viewing for a future date.",
-      "error": "Could not save, try again"
+      "error": "Could not save, try again",
+      "recentTitle": "Recently logged viewings",
+      "removeAria": "Remove viewing {title}",
+      "removeTitle": "Remove this viewing?",
+      "removeDescription": "Its spending and stats will be removed from your overview.",
+      "removeConfirm": "Remove",
+      "removed": "Viewing removed",
+      "removeFailed": "Could not remove, please try again"
     },
     "spending": {
       "title": "Spending",
@@ -2186,6 +2331,11 @@
     "companions": {
       "title": "Who you watch with most",
       "count": "{count, plural, one {# time} other {# times}}"
+    },
+    "upcoming": {
+      "title": "Upcoming plans",
+      "viewAll": "View all",
+      "needsReply": "Needs reply"
     }
   },
   "offline": {

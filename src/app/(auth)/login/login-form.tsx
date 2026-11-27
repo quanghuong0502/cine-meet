@@ -44,14 +44,23 @@ export function LoginForm({ callbackUrl, initialError }: LoginFormProps) {
   // Controlled, so a failed attempt keeps what was typed in the first box (React would reset an uncontrolled form) and clears only the password.
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
+  const identifierRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
   const [state, formAction, isPending] = useActionState(async (previous: LoginState, formData: FormData) => {
-    const next = await loginWithPassword(previous, formData);
-    if (next.error) {
-      setPassword("");
-      passwordRef.current?.focus();
+    try {
+      const next = await loginWithPassword(previous, formData);
+      if (next.error) {
+        setPassword("");
+        if (!String(formData.get("identifier") ?? "").trim()) identifierRef.current?.focus();
+        else passwordRef.current?.focus();
+      }
+      return next;
+    } catch (err) {
+      if (err && typeof err === "object" && "digest" in err && String((err as { digest?: unknown }).digest).startsWith("NEXT_REDIRECT")) {
+        throw err;
+      }
+      return { error: t("errors.network") };
     }
-    return next;
   }, INITIAL_STATE);
   const [showPassword, setShowPassword] = useState(false);
   const errorMessage = state.error ?? initialError;
@@ -70,6 +79,7 @@ export function LoginForm({ callbackUrl, initialError }: LoginFormProps) {
           </Label>
           <Input
             id="identifier"
+            ref={identifierRef}
             name="identifier"
             type="text"
             autoComplete="username"

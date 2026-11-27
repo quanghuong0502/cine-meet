@@ -22,6 +22,8 @@ export interface SectionContext {
   /** Brands as select options (loaded when the section depends on a brand). */
   brandOptions: { value: string; label: string }[];
   brandNames: Map<string, string>;
+  /** Current form values when rendering fields (present during loadForm so inactive linked options can be preserved). */
+  currentValues?: Record<string, string>;
 }
 
 interface SectionConfig<Doc extends { _id: { toString(): string } }, Extra extends object> {
@@ -43,6 +45,8 @@ interface SectionConfig<Doc extends { _id: { toString(): string } }, Extra exten
   /** Starting values of a NEW record (for example the "active" switch starts on). */
   defaults?: Record<string, string>;
   name: (doc: Doc) => string;
+  /** Filter rendered cards by title/subtitle/meta on the server instead of DB-only `searchFields` (ideal when names live in related collections). */
+  searchRendered?: boolean;
 }
 
 export { formatVnd } from "@/lib/money";
@@ -97,7 +101,10 @@ export function createSection<Doc extends { _id: { toString(): string } }, Extra
   return {
     async List({ q }) {
       // The list query does not depend on the context, so both run at the same time.
-      const [context, docs] = await Promise.all([buildContext(), config.service.list({ q })]);
+      const [context, docs] = await Promise.all([
+        buildContext(),
+        config.service.list({ q: config.searchRendered ? undefined : q }),
+      ]);
       const { t } = context;
 
       if (config.needsBrand && context.brandOptions.length === 0) {
@@ -117,12 +124,25 @@ export function createSection<Doc extends { _id: { toString(): string } }, Extra
         );
       }
 
+      const rendered = docs.map((doc) => ({ id: doc._id.toString(), ...config.item(doc, context) }));
+      const needle = (q ?? "").trim().toLowerCase();
+      const items =
+        config.searchRendered && needle
+          ? rendered.filter((item) =>
+              [item.title, item.subtitle, ...(item.meta ?? [])]
+                .filter(Boolean)
+                .join(" ")
+                .toLowerCase()
+                .includes(needle),
+            )
+          : rendered;
+
       return (
         <ResourceManager
           basePath={`/admin/master-data/${slug}`}
           query={q}
           labels={{ addButton: t("addButton"), emptyTitle: t("emptyTitle"), emptyDescription: t("emptyDescription") }}
-          items={docs.map((doc) => ({ id: doc._id.toString(), ...config.item(doc, context) }))}
+          items={items}
           removeAction={config.removeAction}
         />
       );
@@ -138,7 +158,7 @@ export function createSection<Doc extends { _id: { toString(): string } }, Extra
       const brandOptions = context.brandOptions.filter((option) => !context.inactiveBrandIds.has(option.value) || option.value === values.brandId);
       return {
         title: context.t(doc ? "editTitle" : "createTitle"),
-        fields: config.fields({ ...context, brandOptions }),
+        fields: config.fields({ ...context, brandOptions, currentValues: values }),
         values,
         itemName: doc ? config.name(doc) : undefined,
         saveAction: config.saveAction,

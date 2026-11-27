@@ -380,7 +380,19 @@ export function ResourceForm({ itemId, fields, values, backHref, saveAction, del
   const t = useTranslations("admin.common");
   const tv = useTranslations("admin.validation");
   const router = useRouter();
-  const [state, formAction, isPending] = useActionState(saveAction, IDLE_STATE);
+  const safeSaveAction = useCallback(
+    async (prev: SaveState, formData: FormData): Promise<SaveState> => {
+      try {
+        return await saveAction(prev, formData);
+      } catch {
+        const echo: Record<string, string> = {};
+        for (const [k, v] of formData.entries()) if (typeof v === "string") echo[k] = v;
+        return { status: "error", error: "network", values: echo };
+      }
+    },
+    [saveAction],
+  );
+  const [state, formAction, isPending] = useActionState(safeSaveAction, IDLE_STATE);
   // The value of each select, followed live: a field can depend on another (the combo's items depend on its brand).
   const [selected, setSelected] = useState<Record<string, string>>(() =>
     Object.fromEntries(fields.filter((field) => field.kind === "select").map((field) => [field.name, values[field.name] ?? ""])),

@@ -1,4 +1,4 @@
-import { processScheduledNotifications } from "./scheduler";
+import { autoCompleteOverdueAppointments, processScheduledNotifications } from "./scheduler";
 
 /** At most one sweep this often, per server instance: a person moving between pages should not cost a database round each time. */
 const MIN_GAP_MS = 30_000;
@@ -18,7 +18,7 @@ export function sweepDueNotifications(now = Date.now()): Promise<void> {
   if (running) return running;
   if (now - lastRun < MIN_GAP_MS) return Promise.resolve();
   lastRun = now;
-  running = processScheduledNotifications()
+  running = Promise.all([processScheduledNotifications(), autoCompleteOverdueAppointments()])
     .then(() => undefined)
     .catch(() => {
       console.error("notifications: could not sweep the due notifications");

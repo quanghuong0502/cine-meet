@@ -4,7 +4,7 @@ import { AltArrowDownIcon, AltArrowUpIcon, BellIcon, BellOffIcon, LoaderIcon, Re
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { removePushDeviceAction, saveOneSignalDeviceAction, savePushSubscriptionAction, setPushPreferenceAction } from "@/actions/push";
+import { removePushDeviceAction, saveOneSignalDeviceAction, savePushSubscriptionAction, sendSelfTestPushAction, setPushPreferenceAction } from "@/actions/push";
 import { LazyConfirmDialog } from "@/components/lazy-dialogs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,6 +39,14 @@ type Support =
   | "load_failed" // OneSignal's script could not be loaded (offline, or blocked)
   | "ready";
 
+/** Resolves `navigator.serviceWorker.ready` with a timeout so blocked/failed registrations never hang the UI. */
+function waitForServiceWorkerReady(timeoutMs = 3000): Promise<ServiceWorkerRegistration | null> {
+  return Promise.race([
+    navigator.serviceWorker.ready.catch(() => null),
+    new Promise<null>((resolve) => setTimeout(() => resolve(null), timeoutMs)),
+  ]);
+}
+
 /** The key goes to `subscribe` as bytes; it is stored and sent as URL-safe base64. */
 function keyToBytes(base64: string): Uint8Array<ArrayBuffer> {
   const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), "=").replace(/-/g, "+").replace(/_/g, "/");
@@ -66,6 +74,7 @@ export function NotificationSettings({ provider, publicKey, oneSignalAppId, devi
   const [typesExpanded, setTypesExpanded] = useState(initialDevices.length > 0);
   const [confirmDevice, setConfirmDevice] = useState<DeviceView | null>(null);
   const [devicePending, startDevice] = useTransition();
+  const [testPending, startTest] = useTransition();
   const [, startType] = useTransition();
 
   const hasSavedDevices = initialDevices.length > 0;
@@ -95,7 +104,7 @@ export function NotificationSettings({ provider, publicKey, oneSignalAppId, devi
         setEndpoint(subscription.optedIn ? (subscription.id ?? null) : null);
         return setSupport("ready");
       }
-      const registration = await navigator.serviceWorker.ready.catch(() => null);
+      const registration = await waitForServiceWorkerReady();
       const current = await registration?.pushManager.getSubscription().catch(() => null);
       if (cancelled) return;
       setEndpoint(current?.endpoint ?? null);
@@ -121,11 +130,20 @@ export function NotificationSettings({ provider, publicKey, oneSignalAppId, devi
     startDevice(async () => {
       try {
         if (provider === "onesignal") {
-          // Asked here, after a tap, never when the app opens.
+          const readPermission = (): NotificationPermission => Notification.permission;
+          // Request permission synchronously while the tap gesture is still active (critical on iOS standalone PWA before awaiting SDK download).
+          if (readPermission() === "default") {
+            const answer = await Notification.requestPermission();
+            setPermission(answer);
+            if (answer !== "granted") return;
+          }
           const oneSignal = await loadOneSignal(oneSignalAppId ?? "");
-          await oneSignal.Notifications.requestPermission();
-          setPermission(Notification.permission);
-          if (Notification.permission !== "granted") return;
+          if (readPermission() !== "granted") {
+            await oneSignal.Notifications.requestPermission();
+            const afterPerm = readPermission();
+            setPermission(afterPerm);
+            if (afterPerm !== "granted") return;
+          }
           await oneSignal.User.PushSubscription.optIn();
           const subscriptionId = await waitForSubscriptionId(oneSignal);
           if (!subscriptionId) {
@@ -144,7 +162,11 @@ export function NotificationSettings({ provider, publicKey, oneSignalAppId, devi
         const answer = await Notification.requestPermission();
         setPermission(answer);
         if (answer !== "granted") return;
-        const registration = await navigator.serviceWorker.ready;
+        const registration = await waitForServiceWorkerReady(5000);
+        if (!registration) {
+          toast.error(t("errors.subscribeFailed"));
+          return;
+        }
         const subscription =
           (await registration.pushManager.getSubscription()) ??
           (await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyToBytes(publicKey ?? "") }));
@@ -158,6 +180,22 @@ export function NotificationSettings({ provider, publicKey, oneSignalAppId, devi
       } catch {
         toast.error(t("errors.subscribeFailed"));
       }
+    });
+  }
+
+  function sendSelfTest() {
+    startTest(async () => {
+      const result = await sendSelfTestPushAction().catch(() => null);
+      if (!result) {
+        toast.error(t("errors.network"));
+        return;
+      }
+      if (!result.ok) {
+        toast.error(result.error === "cooldown" ? t("testCooldown") : t("errors.subscribeFailed"));
+        return;
+      }
+      if (result.result.sent > 0) toast.success(t("testSent"));
+      else toast.error(t("testFailed"));
     });
   }
 
@@ -186,12 +224,11 @@ export function NotificationSettings({ provider, publicKey, oneSignalAppId, devi
   }
 
   function toggleType(type: NotificationType, enabled: boolean) {
-    const before = off;
-    setOff(enabled ? off.filter((o) => o !== type) : [...off, type]);
+    setOff((prev) => (enabled ? prev.filter((o) => o !== type) : prev.includes(type) ? prev : [...prev, type]));
     startType(async () => {
       const result = await setPushPreferenceAction(type, enabled).catch(() => null);
       if (!result?.ok) {
-        setOff(before);
+        setOff((prev) => (enabled ? (prev.includes(type) ? prev : [...prev, type]) : prev.filter((o) => o !== type)));
         toast.error(t("errors.network"));
       }
     });
@@ -215,7 +252,12 @@ export function NotificationSettings({ provider, publicKey, oneSignalAppId, devi
           <p role="status" className="type-secondary text-muted-foreground">
             {t("notConfigured")}
           </p>
-        ) : support === "checking" ? null : support === "load_failed" ? (
+        ) : support === "checking" ? (
+          <div role="status" className="flex min-h-target items-center gap-stack type-secondary text-muted-foreground">
+            <LoaderIcon className="size-icon-sm shrink-0 motion-safe:animate-spin" aria-hidden />
+            <span>{t("checking")}</span>
+          </div>
+        ) : support === "load_failed" ? (
           <div role="status" className="flex flex-col items-start gap-item rounded-xl border bg-background p-inset-sm">
             <p className="type-secondary text-muted-foreground">{t("loadFailed")}</p>
             <Button
@@ -256,19 +298,34 @@ export function NotificationSettings({ provider, publicKey, oneSignalAppId, devi
           </p>
         ) : (
           // The person decides, here and only here: on asks the browser for permission (when it has not been given yet), off stops pushes on this device.
-          <div className="flex min-h-target items-center justify-between gap-item">
-            <Label htmlFor="push-this-device" className="type-body">
-              {t("deviceSwitch")}
-            </Label>
-            <div className="flex items-center gap-stack">
-              {devicePending ? <LoaderIcon className="size-icon shrink-0 text-muted-foreground motion-safe:animate-spin" aria-hidden /> : null}
-              <Switch
-                id="push-this-device"
-                checked={Boolean(thisDevice)}
-                disabled={devicePending}
-                onCheckedChange={(checked) => (checked ? turnOn() : thisDevice ? removeDevice(thisDevice, "turnedOff") : undefined)}
-              />
+          <div className="flex flex-col gap-item">
+            <div className="flex min-h-target items-center justify-between gap-item">
+              <Label htmlFor="push-this-device" className="type-body">
+                {t("deviceSwitch")}
+              </Label>
+              <div className="flex items-center gap-stack">
+                {devicePending ? <LoaderIcon className="size-icon shrink-0 text-muted-foreground motion-safe:animate-spin" aria-hidden /> : null}
+                <Switch
+                  id="push-this-device"
+                  checked={Boolean(thisDevice)}
+                  disabled={devicePending}
+                  onCheckedChange={(checked) => (checked ? turnOn() : thisDevice ? removeDevice(thisDevice, "turnedOff") : undefined)}
+                />
+              </div>
             </div>
+            {thisDevice ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="cta-sm"
+                disabled={testPending || devicePending}
+                onClick={sendSelfTest}
+                className="w-auto self-start px-inset"
+              >
+                {testPending ? <LoaderIcon className="motion-safe:animate-spin" aria-hidden /> : <BellIcon aria-hidden />}
+                {t("sendTest")}
+              </Button>
+            ) : null}
           </div>
         )}
 
@@ -306,20 +363,20 @@ export function NotificationSettings({ provider, publicKey, oneSignalAppId, devi
         ) : null}
 
         <section aria-labelledby="push-types" className="flex flex-col gap-item">
-          <button
-            type="button"
-            aria-expanded={typesExpanded}
-            onClick={() => setTypesExpanded((v) => !v)}
-            className="flex min-h-target items-center justify-between gap-item rounded-xl text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-          >
-            <span className="flex flex-col gap-tight">
-              <h3 id="push-types" className="type-label text-muted-foreground">
-                {t("typesTitle")}
-              </h3>
-              {!hasDevices ? <span className="type-secondary text-muted-foreground">{t("typesInactiveNote")}</span> : null}
-            </span>
-            {typesExpanded ? <AltArrowUpIcon className="size-icon-sm shrink-0 text-muted-foreground" aria-hidden /> : <AltArrowDownIcon className="size-icon-sm shrink-0 text-muted-foreground" aria-hidden />}
-          </button>
+          <h3 id="push-types" className="type-label text-muted-foreground">
+            <button
+              type="button"
+              aria-expanded={typesExpanded}
+              onClick={() => setTypesExpanded((v) => !v)}
+              className="flex min-h-target w-full items-center justify-between gap-item rounded-xl text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+            >
+              <span className="flex flex-col gap-tight">
+                <span>{t("typesTitle")}</span>
+                {!hasDevices ? <span className="type-secondary text-muted-foreground">{t("typesInactiveNote")}</span> : null}
+              </span>
+              {typesExpanded ? <AltArrowUpIcon className="size-icon-sm shrink-0 text-muted-foreground" aria-hidden /> : <AltArrowDownIcon className="size-icon-sm shrink-0 text-muted-foreground" aria-hidden />}
+            </button>
+          </h3>
 
           {typesExpanded ? (
             <div className={cn("flex flex-col gap-group", !hasDevices && "opacity-75")}>

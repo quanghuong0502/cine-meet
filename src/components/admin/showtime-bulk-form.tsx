@@ -57,7 +57,10 @@ export function ShowtimeBulkForm({ movies, formats, rooms, backHref, action, tod
   const errors = state.status === "error" ? (state.fieldErrors ?? {}) : {};
   const typed = state.status === "error" ? state.values : undefined;
   const days = datesBetween(from, to);
-  const total = days.length * times.length * chosenRooms.length;
+  // Auto-include a valid time still sitting in the `#time` input so forgetting to click "+ Add" never fails validation.
+  const validDraftTime = /^([01]?\d|2[0-3]):[0-5]\d$/.test(draft) ? draft.padStart(5, "0") : null;
+  const effectiveTimes = validDraftTime && !times.includes(validDraftTime) ? [...times, validDraftTime].sort() : times;
+  const total = days.length * effectiveTimes.length * chosenRooms.length;
   const tooMany = total > maxShowtimes;
   const roomGroups = useMemo(() => {
     const map = new Map<string, Option[]>();
@@ -124,7 +127,10 @@ export function ShowtimeBulkForm({ movies, formats, rooms, backHref, action, tod
       </div>
 
       <div className="flex flex-col gap-item">
-        {label("rooms", t("rooms"), true)}
+        <span className="type-label text-muted-foreground">
+          {t("rooms")}
+          <RequiredMark />
+        </span>
         <div role="group" aria-label={t("rooms")} className="flex flex-col gap-item">
           <input type="hidden" name="auditoriumIds" value={chosenRooms.join(",")} />
           {roomGroups.map(([group, groupRooms]) => (
@@ -191,7 +197,7 @@ export function ShowtimeBulkForm({ movies, formats, rooms, backHref, action, tod
             {t("addTime")}
           </Button>
         </div>
-        <input type="hidden" name="times" value={times.join(",")} />
+        <input type="hidden" name="times" value={effectiveTimes.join(",")} />
         {times.length > 0 ? (
           <ul className="flex flex-wrap gap-stack">
             {times.map((time) => (

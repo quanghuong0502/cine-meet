@@ -3,6 +3,7 @@
 import { Logout2Icon } from "@solar-icons/react/line-duotone";
 import { useTranslations } from "next-intl";
 import { useState, useTransition } from "react";
+import { toast } from "sonner";
 import { signOutAction } from "@/actions/sign-out";
 import { LazyConfirmDialog } from "@/components/lazy-dialogs";
 import { Button } from "@/components/ui/button";
@@ -15,7 +16,17 @@ export function SignOutButton({ className }: { className?: string }) {
   const [pending, start] = useTransition();
 
   function confirm() {
-    start(() => signOutAction());
+    start(async () => {
+      try {
+        await signOutAction();
+      } catch (err) {
+        if (err && typeof err === "object" && "digest" in err && String((err as { digest?: unknown }).digest).startsWith("NEXT_REDIRECT")) {
+          throw err;
+        }
+        setOpen(false);
+        toast.error(t("networkError"));
+      }
+    });
   }
 
   return (

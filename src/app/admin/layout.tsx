@@ -10,6 +10,7 @@ import { UserAvatar } from "@/components/user-avatar";
 import { ENABLED_ADMIN_NAV_ITEMS, MIN_BOTTOM_NAV_ITEMS } from "@/lib/admin-nav";
 import { requireAdmin } from "@/lib/auth/guards";
 import { PX } from "@/lib/ui-sizes";
+import { countOpenRoomReports } from "@/services/room-report.service";
 
 export default async function AdminLayout({
   children,
@@ -17,7 +18,7 @@ export default async function AdminLayout({
   children: React.ReactNode;
 }) {
   // proxy.ts only sees the JWT; this re-reads role and status from the database.
-  const admin = await requireAdmin();
+  const [admin, openReports] = await Promise.all([requireAdmin(), countOpenRoomReports().catch(() => 0)]);
   const hasBottomNav = ENABLED_ADMIN_NAV_ITEMS.length >= MIN_BOTTOM_NAV_ITEMS;
 
   return (
@@ -27,7 +28,7 @@ export default async function AdminLayout({
           <span className="px-inset-sm py-inset-xs">
             <Logo size={PX.logoCompact} wordmarkClassName="type-heading" />
           </span>
-          <AdminNav />
+          <AdminNav openReports={openReports} />
           <div className="mt-auto flex flex-col gap-tight border-t pt-item">
             <Link
               href="/admin/profile"
@@ -45,7 +46,7 @@ export default async function AdminLayout({
           <AppHeader area="admin" name={admin.name} image={admin.image} />
           <AdminMain hasBottomNav={hasBottomNav}>{children}</AdminMain>
         </div>
-        <AdminBottomNav />
+        <AdminBottomNav openReports={openReports} />
       </div>
     </ScopedIntlProvider>
   );

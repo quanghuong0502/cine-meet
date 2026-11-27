@@ -42,6 +42,13 @@ describe("sendOneSignal", () => {
     expect(sentBody(fetchMock)).not.toHaveProperty("send_after");
   });
 
+  it("resolves relative paths against AUTH_URL when configured", async () => {
+    vi.stubEnv("AUTH_URL", "https://seatmate.example/");
+    const fetchMock = mockFetch(200, { id: "msg-url" });
+    await sendOneSignal(IDS, PAYLOAD, { ttlSeconds: 60 });
+    expect(sentBody(fetchMock).url).toBe("https://seatmate.example/appointments/a1");
+  });
+
   it("holds the message until the time given (send_after)", async () => {
     const fetchMock = mockFetch(200, { id: "msg-2" });
     await sendOneSignal(IDS, PAYLOAD, { ttlSeconds: 60, sendAfter: new Date("2026-12-01T10:30:00Z") });
